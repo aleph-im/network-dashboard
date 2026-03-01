@@ -90,8 +90,15 @@ src/
 ### App Shell Layout
 
 **Context:** Consistent navigation across all pages.
-**Approach:** AppShell wraps all pages with fixed sidebar (left) and header (top). Main content area scrolls independently.
+**Approach:** AppShell wraps all pages with sidebar + header + scrollable content area. On desktop (`md+`), the sidebar is always visible. On mobile, it collapses to an off-canvas drawer triggered by a hamburger button in the header. The sidebar auto-closes on route change.
 **Key files:** `src/components/app-shell.tsx`, `src/components/app-sidebar.tsx`, `src/components/app-header.tsx`
+
+### Responsive Layout
+
+**Context:** Dashboard must work on mobile, tablet, and desktop.
+**Approach:** Two breakpoints: `md` (768px) for sidebar visibility, `lg` (1024px) for detail panel layout. Mobile sidebar is a fixed overlay with backdrop. Detail panels (Nodes, VMs) render as full-width slide-in overlays below `lg`, inline side panels above. Tables use `overflow-x-auto` for horizontal scrolling on narrow screens.
+**Key files:** `src/components/app-sidebar.tsx`, `src/app/nodes/page.tsx`, `src/app/vms/page.tsx`, `src/components/node-detail-panel.tsx`, `src/components/vm-detail-panel.tsx`
+**Notes:** Uses `bg-surface` token (renamed from `bg-card` in DS). Detail panels use `w-full lg:w-96` for responsive width.
 
 ---
 

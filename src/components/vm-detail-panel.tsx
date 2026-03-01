@@ -28,7 +28,7 @@ export function VMDetailPanel({ hash, onClose }: VMDetailPanelProps) {
 
   if (isLoading) {
     return (
-      <Card padding="md" className="w-96 space-y-3">
+      <Card padding="md" className="w-full lg:w-96 space-y-3">
         <Skeleton className="h-6 w-48" />
         <Skeleton className="h-4 w-full" />
         <Skeleton className="h-4 w-full" />
@@ -40,7 +40,7 @@ export function VMDetailPanel({ hash, onClose }: VMDetailPanelProps) {
   if (!vm) return null;
 
   return (
-    <Card padding="md" className="w-96">
+    <Card padding="md" className="w-full lg:w-96">
       <div className="mb-4 flex items-start justify-between">
         <h3 className="text-sm font-bold font-mono">
           {truncateHash(vm.hash, 12)}
