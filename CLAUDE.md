@@ -63,7 +63,7 @@ When the conversation drifts from the stated task:
 - When dev starts, create feature branch from main before any file edits
 - Branch naming: `feature/[plan-name]`
 
-**Before merging:** Update ALL docs before squash merging to main.
+**Before merging:** Update ALL docs in a single commit right before squash merging. Do not update docs incrementally during development — partial updates lead to forgotten files.
 - `docs/ARCHITECTURE.md` -- add/update patterns for any new architectural decisions, new files, or changed structure
 - `CLAUDE.md` -- update the Current Features list if user-facing behavior changed
 - `docs/DECISIONS.md` -- log any key decisions made during the feature
@@ -74,6 +74,7 @@ When the conversation drifts from the stated task:
 2. CLAUDE.md features updated?
 3. DECISIONS.md has implementation decisions?
 4. BACKLOG.md item moved to Completed?
+5. All four in a single commit?
 
 **During development:** Track intent, not metrics.
 
@@ -139,17 +140,18 @@ Why: brainstorm sessions accumulate rejected ideas, design exploration, and back
 
 ### Plans Must Include Doc Updates
 
-Every implementation plan must include a final step with this exact checklist. This is not optional — it's part of the definition of done, not a merge-time afterthought.
+Every implementation plan must include a final step with this exact checklist. This is not optional — it's part of the definition of done, not a merge-time afterthought. This must be the very last task before merge — do not update docs incrementally during development.
 
 The final plan task should be:
 
 ```
-### Task N: Update docs
+### Task N: Update docs (single commit, right before merge)
 
 - [ ] ARCHITECTURE.md — new patterns, new files, or changed structure
 - [ ] DECISIONS.md — design decisions made during this feature
 - [ ] BACKLOG.md — completed items moved, deferred ideas added
 - [ ] CLAUDE.md — Current Features list if user-facing behavior changed
+- [ ] All four files in one commit
 ```
 
 Copy this checklist verbatim into every plan. Do not paraphrase or summarize — the explicit checklist prevents items from being forgotten.
