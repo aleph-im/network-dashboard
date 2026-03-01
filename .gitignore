@@ -24,5 +24,11 @@ Thumbs.db
 # template
 .template-version
 
+# typescript
+tsconfig.tsbuildinfo
+
+# pnpm
+pnpm-workspace.yaml
+
 # debug
 npm-debug.log*

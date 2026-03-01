@@ -8,43 +8,105 @@ Technical patterns and decisions.
 
 | Layer | Technology |
 |-------|------------|
-| Framework | [Fill in] |
-| Language | [Fill in] |
-| Styling | [Fill in] |
-| Database | [Fill in] |
-| Deployment | [Fill in] |
+| Framework | Next.js 16 (App Router, static export) |
+| Language | TypeScript 5.x (strict, ESM only) |
+| Styling | Tailwind CSS 4 + @aleph-front/ds tokens |
+| Data | TanStack React Query (client-side polling) |
+| Deployment | Static export (`out/`) for IPFS hosting |
 
 ---
 
 ## Project Structure
 
 ```
-# Fill in after initial setup
+src/
+├── app/
+│   ├── layout.tsx         # Root layout (fonts, providers, app shell)
+│   ├── page.tsx            # Overview page
+│   ├── providers.tsx       # QueryClientProvider
+│   ├── globals.css         # Tailwind + DS tokens import
+│   ├── nodes/
+│   │   └── page.tsx        # Nodes page
+│   └── vms/
+│       └── page.tsx        # VMs page
+├── api/
+│   ├── types.ts            # Scheduler entity types
+│   ├── client.ts           # API client with mock fallback
+│   └── mock.ts             # Deterministic mock data (15 nodes, 40 VMs, 50 events)
+├── hooks/
+│   ├── use-nodes.ts        # useNodes, useNode (30s/15s polling)
+│   ├── use-vms.ts          # useVMs, useVM (30s/15s polling)
+│   ├── use-events.ts       # useEvents (10s polling)
+│   └── use-overview-stats.ts  # useOverviewStats (30s polling)
+├── components/
+│   ├── app-shell.tsx       # Layout: sidebar + header + content
+│   ├── app-sidebar.tsx     # Navigation sidebar
+│   ├── app-header.tsx      # Page title + theme toggle
+│   ├── theme-toggle.tsx    # Dark/light toggle with localStorage
+│   ├── stats-bar.tsx       # Overview stat cards row
+│   ├── node-health-summary.tsx  # Node health bar chart + legend
+│   ├── vm-allocation-summary.tsx # VM status breakdown
+│   ├── event-feed.tsx      # Chronological event list with category filters
+│   ├── node-table.tsx      # Nodes table with status filters
+│   ├── node-detail-panel.tsx # Node detail side panel
+│   ├── vm-table.tsx        # VMs table with status filters
+│   ├── vm-detail-panel.tsx # VM detail side panel
+│   └── resource-bar.tsx    # CPU/memory/disk usage bar
+└── lib/
+    └── format.ts           # relativeTime, truncateHash, formatPercent
 ```
 
 ---
 
 ## Patterns
 
-<!-- Document architectural patterns as they emerge during development.
+### API Client with Mock Fallback
 
-Format:
-### Pattern Name
-**Context:** [What problem this solves]
-**Approach:** [How it works]
-**Key files:** [Where to look]
-**Notes:** [Gotchas, edge cases]
--->
+**Context:** Dashboard must work without a live API (static export on IPFS).
+**Approach:** Each API function checks `NEXT_PUBLIC_USE_MOCKS` env var. If true, dynamically imports mock data. If false, fetches from `NEXT_PUBLIC_API_URL`. Runtime URL override via `?api=` query parameter.
+**Key files:** `src/api/client.ts`, `src/api/mock.ts`
+**Notes:** Dynamic imports keep mock data tree-shakeable in production builds.
+
+### React Query Polling
+
+**Context:** Real-time data without WebSockets.
+**Approach:** Each hook uses `refetchInterval` for automatic polling. Events poll at 10s, detail views at 15s, list views at 30s.
+**Key files:** `src/hooks/`
+**Notes:** `staleTime: 10_000` and `retry: 2` configured globally in providers.tsx.
+
+### DS Component Policy
+
+**Context:** Avoid duplicate UI primitives across projects.
+**Approach:** All reusable UI components live in `@aleph-front/ds` and are imported via subpath exports. Dashboard-specific compositions that combine DS components with domain logic live in `src/components/`.
+**Key files:** `node_modules/@aleph-front/ds/`, `src/components/`
+**Notes:** DS is linked via `file:` protocol. The `@ac/*` path alias must be mapped in tsconfig.json for DS internal imports to resolve.
+
+### Dark Theme Default
+
+**Context:** Operations dashboards are typically used in dark environments.
+**Approach:** `theme-dark` class on `<html>` element. ThemeToggle persists preference to localStorage and toggles the class. DS tokens resolve to dark variants via `@custom-variant dark`.
+**Key files:** `src/app/layout.tsx`, `src/components/theme-toggle.tsx`
+
+### App Shell Layout
+
+**Context:** Consistent navigation across all pages.
+**Approach:** AppShell wraps all pages with fixed sidebar (left) and header (top). Main content area scrolls independently.
+**Key files:** `src/components/app-shell.tsx`, `src/components/app-sidebar.tsx`, `src/components/app-header.tsx`
 
 ---
 
 ## Recipes
 
-<!-- Document common operations as step-by-step guides.
+### Adding a New Page
 
-Format:
-### Adding a New [Thing]
-1. Step one
-2. Step two
-3. Step three
--->
+1. Create `src/app/<route>/page.tsx`
+2. Add nav entry to `NAV_ITEMS` in `src/components/app-sidebar.tsx`
+3. Add route title to `ROUTE_TITLES` in `src/components/app-header.tsx`
+4. Verify with `pnpm build` (static export must include the route)
+
+### Adding a New API Endpoint
+
+1. Add types to `src/api/types.ts`
+2. Add mock data to `src/api/mock.ts`
+3. Add client function to `src/api/client.ts` (with mock fallback)
+4. Create hook in `src/hooks/` with appropriate `refetchInterval`

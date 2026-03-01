@@ -193,6 +193,26 @@ src/
 
 **All reusable UI components must be created in `@aleph-front/ds` (../aleph-cloud-ds) and imported here.** No generic components (Table, Badge, Card, etc.) should be created locally. Dashboard-specific compositions that combine DS components with domain logic live in `src/components/`.
 
+### DS Component Lifecycle
+
+When adding a new component to `@aleph-front/ds`, follow the "Adding a New Component" recipe in the DS repo's `docs/ARCHITECTURE.md` § Recipes. That recipe is the single source of truth — do not duplicate it here.
+
+**Key steps to remember (see DS ARCHITECTURE.md for full details):**
+- Build component, test, and subpath export
+- Create preview page + sidebar entry, then **ask the user to verify** before proceeding
+- Run `pnpm check` — all must pass
+- Update **all five docs**: DESIGN-SYSTEM.md, ARCHITECTURE.md, DECISIONS.md, BACKLOG.md, CLAUDE.md
+
+**Never commit a DS component without its preview page and full documentation.**
+
 ### Current Features
 
-- (none yet)
+- App shell with sidebar navigation (Overview, Nodes, VMs) and header with page title
+- Dark theme default with light/dark toggle (localStorage persistence)
+- Overview page: stat cards, node health bar, VM allocation summary, event feed with category filters
+- Nodes page: sortable table with status filters, StatusDot indicators, resource usage bars, detail panel with VMs and events
+- VMs page: sortable table with status filters, discrepancy highlighting, detail panel with scheduling history
+- API client with mock data fallback (`NEXT_PUBLIC_USE_MOCKS=true`)
+- React Query hooks with automatic polling (10-30s intervals)
+- Static export for IPFS deployment
+- `@aleph-front/ds` integration via `file:` link and `transpilePackages`
