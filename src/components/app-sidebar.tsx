@@ -1,5 +1,6 @@
 "use client";
 
+import { useEffect, useRef } from "react";
 import Link from "next/link";
 import { usePathname } from "next/navigation";
 
@@ -64,48 +65,84 @@ function NavIcon({ name }: { name: IconName }) {
   }
 }
 
-export function AppSidebar() {
+type AppSidebarProps = {
+  open: boolean;
+  onClose: () => void;
+};
+
+export function AppSidebar({ open, onClose }: AppSidebarProps) {
   const pathname = usePathname();
+  const prevPathname = useRef(pathname);
+
+  useEffect(() => {
+    if (prevPathname.current !== pathname) {
+      prevPathname.current = pathname;
+      onClose();
+    }
+  }, [pathname, onClose]);
 
   return (
-    <aside className="flex w-56 shrink-0 flex-col border-r border-edge bg-card">
-      <div className="flex items-center gap-2 border-b border-edge px-5 py-4">
-        <div className="size-7 rounded-lg bg-gradient-brand" />
-        <span className="text-sm font-bold tracking-tight text-foreground">
-          Aleph Cloud
-        </span>
-      </div>
+    <>
+      {/* Backdrop — mobile only */}
+      {open && (
+        <div
+          className="fixed inset-0 z-40 bg-black/50 md:hidden"
+          onClick={onClose}
+          aria-hidden="true"
+        />
+      )}
 
-      <nav className="flex-1 px-3 py-4">
-        <ul className="space-y-1">
-          {NAV_ITEMS.map((item) => {
-            const isActive = item.href === "/"
-              ? pathname === "/"
-              : pathname.startsWith(item.href);
+      <aside
+        className={`
+          fixed inset-y-0 left-0 z-50 flex w-64 flex-col
+          border-r border-edge bg-surface
+          transition-transform duration-200 ease-out
+          ${open ? "translate-x-0" : "-translate-x-full"}
+          md:static md:z-auto md:translate-x-0 md:transition-none
+        `}
+      >
+        <div className="flex items-center gap-2 border-b border-edge px-5 py-4">
+          <div className="size-7 rounded-lg bg-gradient-brand" />
+          <span className="text-sm font-bold tracking-tight text-foreground">
+            Aleph Cloud
+          </span>
+        </div>
 
-            return (
-              <li key={item.href}>
-                <Link
-                  href={item.href}
-                  className={`flex items-center gap-2.5 rounded-lg px-3 py-2 text-sm transition-colors ${
-                    isActive
-                      ? "bg-primary-600/10 text-primary-500 font-medium"
-                      : "text-muted-foreground hover:text-foreground hover:bg-muted"
-                  }`}
-                  style={{ transitionDuration: "var(--duration-fast)" }}
-                >
-                  <NavIcon name={item.icon} />
-                  {item.label}
-                </Link>
-              </li>
-            );
-          })}
-        </ul>
-      </nav>
+        <nav className="flex-1 px-3 py-4">
+          <ul className="space-y-1">
+            {NAV_ITEMS.map((item) => {
+              const isActive = item.href === "/"
+                ? pathname === "/"
+                : pathname.startsWith(item.href);
 
-      <div className="border-t border-edge px-5 py-3">
-        <p className="text-xs text-muted-foreground">Scheduler Dashboard</p>
-      </div>
-    </aside>
+              return (
+                <li key={item.href}>
+                  <Link
+                    href={item.href}
+                    className={`flex items-center gap-2.5 rounded-lg px-3 py-2 text-sm transition-colors ${
+                      isActive
+                        ? "bg-primary-600/10 text-primary-500 font-medium"
+                        : "text-muted-foreground hover:text-foreground hover:bg-muted"
+                    }`}
+                    style={{
+                      transitionDuration: "var(--duration-fast)",
+                    }}
+                  >
+                    <NavIcon name={item.icon} />
+                    {item.label}
+                  </Link>
+                </li>
+              );
+            })}
+          </ul>
+        </nav>
+
+        <div className="border-t border-edge px-5 py-3">
+          <p className="text-xs text-muted-foreground">
+            Scheduler Dashboard
+          </p>
+        </div>
+      </aside>
+    </>
   );
 }

@@ -18,6 +18,17 @@ Each entry includes:
 
 ---
 
+## Decision #7 - 2026-03-01
+**Context:** DS renamed `--card` token to `--surface`
+**Decision:** Replace all `bg-card` with `bg-surface` across the dashboard
+**Rationale:** The DS changed the token name. Tailwind's `bg-card` generates `background-color: var(--color-card)` which no longer resolves, causing transparent backgrounds. Silent failure — builds pass but visuals break.
+
+## Decision #6 - 2026-03-01
+**Context:** Making the dashboard responsive for mobile and tablet
+**Decision:** Off-canvas sidebar drawer on mobile (`md` breakpoint), slide-in detail panel overlays (`lg` breakpoint)
+**Rationale:** Sidebar at 256px + detail panel at 384px = 640px of fixed-width chrome, which overflows on anything below ~1100px. Mobile drawer with backdrop is the standard pattern for persistent navigation. Detail panels become full-width overlays below `lg` since there isn't enough room for table + panel side-by-side.
+**Alternatives considered:** Bottom navigation for mobile (too few nav items to justify), responsive table with column hiding (table already has overflow-x-auto which is sufficient).
+
 ## Decision #5 - 2026-03-01
 **Context:** DS components use `@ac/*` path alias internally
 **Decision:** Map `@ac/*` to `node_modules/@aleph-front/ds/src/*` in dashboard tsconfig

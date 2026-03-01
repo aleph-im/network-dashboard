@@ -207,7 +207,8 @@ When adding a new component to `@aleph-front/ds`, follow the "Adding a New Compo
 
 ### Current Features
 
-- App shell with sidebar navigation (Overview, Nodes, VMs) and header with page title
+- Responsive layout: off-canvas sidebar drawer on mobile, inline on desktop; detail panels as slide-in overlays on mobile, inline on desktop
+- App shell with sidebar navigation (Overview, Nodes, VMs) and header with page title and hamburger menu (mobile)
 - Dark theme default with light/dark toggle (localStorage persistence)
 - Overview page: stat cards, node health bar, VM allocation summary, event feed with category filters
 - Nodes page: sortable table with status filters, StatusDot indicators, resource usage bars, detail panel with VMs and events
