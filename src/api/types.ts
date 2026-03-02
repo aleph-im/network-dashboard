@@ -86,3 +86,7 @@ export type NodeFilters = {
 export type VMFilters = {
   status?: VMStatus;
 };
+
+export type StatsSnapshot = OverviewStats & {
+  timestamp: string;
+};
