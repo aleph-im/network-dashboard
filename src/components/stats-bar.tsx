@@ -69,10 +69,10 @@ function extractHistory(
 }
 
 const COLORS = {
-  primary: "var(--color-primary)",
-  success: "oklch(0.72 0.19 142)",
-  warning: "oklch(0.75 0.18 85)",
-  destructive: "var(--color-destructive)",
+  primary: "var(--color-primary-400)",
+  success: "var(--color-success-400)",
+  warning: "var(--color-warning-400)",
+  error: "var(--color-error-400)",
 } as const;
 
 export function StatsBar() {
@@ -140,7 +140,7 @@ export function StatsBar() {
             ? extractHistory(history, "missingVMs")
             : undefined
         }
-        color={COLORS.destructive}
+        color={COLORS.error}
       />
       <StatCard
         label="Unschedulable"
@@ -151,7 +151,7 @@ export function StatsBar() {
             ? extractHistory(history, "unschedulableVMs")
             : undefined
         }
-        color={COLORS.destructive}
+        color={COLORS.error}
       />
     </div>
   );
