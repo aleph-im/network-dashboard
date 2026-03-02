@@ -5,6 +5,7 @@ import type {
   NodeFilters,
   OverviewStats,
   SchedulerEvent,
+  StatsSnapshot,
   VM,
   VMDetail,
   VMFilters,
@@ -118,4 +119,12 @@ export async function getOverviewStats(): Promise<OverviewStats> {
     return mockOverviewStats;
   }
   return fetchApi<OverviewStats>("/stats");
+}
+
+export async function getStatsHistory(): Promise<StatsSnapshot[]> {
+  if (useMocks()) {
+    const { mockStatsHistory } = await import("@/api/mock");
+    return mockStatsHistory;
+  }
+  return fetchApi<StatsSnapshot[]>("/stats/history");
 }
