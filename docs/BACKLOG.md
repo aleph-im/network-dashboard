@@ -53,5 +53,6 @@ Ideas and scope creep captured for later consideration.
 <summary>Archived items</summary>
 
 - ✅ 2026-03-02 - Align DS color tokens with Tailwind conventions — resolved by Decision #11 (dashboard uses `--color-error-*` tokens directly)
+- ✅ 2026-03-03 - IPFS page refresh: add trailingSlash — fixed by adding `trailingSlash: true` to `next.config.ts`
 
 </details>
