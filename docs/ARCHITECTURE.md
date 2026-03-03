@@ -12,7 +12,7 @@ Technical patterns and decisions.
 | Language | TypeScript 5.x (strict, ESM only) |
 | Styling | Tailwind CSS 4 + @aleph-front/ds tokens |
 | Data | TanStack React Query (client-side polling) |
-| Deployment | Static export (`out/`) for IPFS hosting |
+| Deployment | Static export (`out/`) for IPFS hosting (`trailingSlash: true`) |
 
 ---
 

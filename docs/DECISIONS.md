@@ -18,6 +18,12 @@ Each entry includes:
 
 ---
 
+## Decision #12 - 2026-03-03
+**Context:** Page refresh on `/nodes` or `/vms` shows IPFS gateway directory listing instead of the app
+**Decision:** Add `trailingSlash: true` to `next.config.ts`
+**Rationale:** IPFS gateways do directory-based resolution. When a `nodes/` directory exists (from RSC data files), the gateway redirects `/nodes` → `/nodes/` and looks for `index.html` inside it. Without `trailingSlash`, Next.js exports `nodes.html` at the root — never found after the redirect. With `trailingSlash: true`, routes export as `nodes/index.html`, matching gateway expectations.
+**Alternatives considered:** Hash-based routing (significant refactor, loses clean URLs), `_redirects` file (not supported by `aleph.sh` gateway).
+
 ## Decision #11 - 2026-03-02
 **Context:** Sparkline colors invisible on dark backgrounds — `var(--color-destructive)` doesn't exist in the DS
 **Decision:** Use DS `--color-*-400` token vars instead of hardcoded OKLCH values or non-existent semantic aliases

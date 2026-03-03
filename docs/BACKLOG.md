@@ -45,6 +45,11 @@ Ideas and scope creep captured for later consideration.
 **Description:** Add time-series charts for CPU/memory/disk usage history on node detail views. Recharts is now used for stat card sparklines — same pattern can be extended to larger detail charts.
 **Priority:** Medium
 
+### 2026-03-03 - Automated IPFS deployment via Aleph CLI
+**Source:** Manual deployment friction
+**Description:** Investigate using the Aleph CLI to automatically push the `out/` directory to IPFS after build. Could be integrated into a GitHub Actions workflow or a local deploy script.
+**Priority:** Medium
+
 ---
 
 ## Completed / Rejected
