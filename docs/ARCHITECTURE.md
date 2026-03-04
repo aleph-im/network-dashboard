@@ -32,13 +32,14 @@ src/
 │   └── vms/
 │       └── page.tsx        # VMs page
 ├── api/
-│   ├── types.ts            # Scheduler entity types
-│   ├── client.ts           # API client (/api/v1) with mock fallback + snake→camel transform
+│   ├── types.ts            # Scheduler entity types + Aleph Message API types
+│   ├── client.ts           # API client (/api/v1 + api2.aleph.im) with mock fallback + snake→camel transform
 │   ├── mock.ts              # Deterministic mock data (15 nodes, 43 VMs, 40 history rows)
 │   └── mock.test.ts         # Mock data integrity tests
 ├── hooks/
 │   ├── use-nodes.ts        # useNodes, useNode (30s/15s polling)
 │   ├── use-vms.ts          # useVMs, useVM (30s/15s polling)
+│   ├── use-vm-creation-times.ts  # useVMCreationTimes (api2, 5min stale, no polling)
 │   └── use-overview-stats.ts  # useOverviewStats (30s polling)
 ├── components/
 │   ├── app-shell.tsx       # Layout: sidebar + header + content
@@ -49,13 +50,14 @@ src/
 │   ├── node-health-summary.tsx  # Node health bar chart + legend
 │   ├── vm-allocation-summary.tsx # VM status breakdown
 │   ├── top-nodes-card.tsx   # Top nodes by VM count card
+│   ├── latest-vms-card.tsx  # Latest VMs by creation time (progressive loading from api2)
 │   ├── node-table.tsx      # Nodes table with status filters
 │   ├── node-detail-panel.tsx # Node detail side panel
 │   ├── vm-table.tsx        # VMs table with status filters
 │   ├── vm-detail-panel.tsx # VM detail side panel
 │   └── resource-bar.tsx    # CPU/memory/disk usage bar
 └── lib/
-    ├── format.ts           # relativeTime, truncateHash, formatPercent
+    ├── format.ts           # relativeTime, relativeTimeFromUnix, truncateHash, formatPercent
     └── status-map.ts       # nodeStatusToDot() — maps API node statuses to DS StatusDot variants
 ```
 
@@ -69,6 +71,13 @@ src/
 **Approach:** Each API function checks `NEXT_PUBLIC_USE_MOCKS` env var. If true, dynamically imports mock data. If false, fetches from `NEXT_PUBLIC_API_URL` (default: `http://localhost:8081`). Runtime URL override via `?api=` query parameter. API endpoints are prefixed with `/api/v1`. Wire types (`Api*Row`) use snake_case matching the raw JSON; transform functions convert to camelCase app types. Detail endpoints (`getNode`, `getVM`) use `Promise.all` for parallel fetching of the resource + related VMs/history.
 **Key files:** `src/api/types.ts` (wire + app types), `src/api/client.ts`, `src/api/mock.ts`
 **Notes:** Dynamic imports keep mock data tree-shakeable in production builds. The `getOverviewStats` function fetches `/stats` + `/vms` + `/nodes` in parallel to derive per-status counts not available from `/stats` alone.
+
+### Progressive Loading from Multiple APIs
+
+**Context:** VM creation timestamps come from `api2.aleph.im`, not the scheduler API.
+**Approach:** The `LatestVMsCard` uses `useVMs()` for immediate scheduler data, then enriches with `useVMCreationTimes(hashes)` which calls `api2.aleph.im/api/v0/messages.json`. Before api2 responds, rows show hash + status badge with inline `Skeleton` for timestamps. Once timestamps arrive, rows re-sort by creation time and show relative dates. The api2 client function (`getMessagesByHashes`) lives alongside scheduler functions in `client.ts` with its own base URL (`NEXT_PUBLIC_ALEPH_API_URL`).
+**Key files:** `src/api/client.ts`, `src/hooks/use-vm-creation-times.ts`, `src/components/latest-vms-card.tsx`
+**Notes:** `staleTime: 5min` since creation timestamps are immutable. `refetchInterval: false` — no polling needed. Query key includes the hash array so it refetches when the VM list changes.
 
 ### React Query Polling
 

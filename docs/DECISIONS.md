@@ -18,6 +18,12 @@ Each entry includes:
 
 ---
 
+## Decision #19 - 2026-03-04
+**Context:** Adding Latest VMs card to overview page — VM creation timestamps not available from the scheduler API
+**Decision:** Progressive loading from two APIs — scheduler data renders immediately, creation timestamps from api2.aleph.im arrive asynchronously via a separate React Query hook
+**Rationale:** The scheduler API has no `createdAt` field. VM hashes are Aleph message `item_hash` values, so `api2.aleph.im/api/v0/messages.json?hashes=...` returns the creation timestamps. Rather than blocking the card render on both APIs, we show scheduler data immediately (hash + status badge) with inline Skeleton placeholders for timestamps. Once api2 responds, rows re-sort by creation time. `staleTime: 5min` and no polling since creation timestamps are immutable.
+**Alternatives considered:** Single combined API call (scheduler doesn't have the data), blocking render until both APIs respond (worse UX — scheduler is fast, api2 is slower), storing creation times in local cache permanently (timestamps never change but cache invalidation is simpler with React Query's staleTime)
+
 ## Decision #18 - 2026-03-04
 **Context:** `hasVms` checkbox on nodes page caused a visible delay when toggling
 **Decision:** Keep client-side filters out of the React Query key; apply them post-fetch in the component; wrap state setters in `useTransition`
