@@ -67,5 +67,6 @@ Ideas and scope creep captured for later consideration.
 - ✅ 2026-03-04 - DS npm publishing — migrated from `file:` link to npm `0.0.3`
 - ✅ 2026-03-04 - Real API integration — full type rewrite, client with `/api/v0` prefix, snake→camel transform layer, mock fallback preserved
 - ✅ 2026-03-04 - Verify real API integration end-to-end — addressed by API status page + v0→v1 switch (all 12 integration tests pass against v1)
+- ✅ 2026-03-04 - Top Nodes card on overview page — implemented with hasVms filter, sort params, checkbox UI, useTransition
 
 </details>

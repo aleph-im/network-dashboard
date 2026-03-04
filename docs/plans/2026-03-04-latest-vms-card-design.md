@@ -48,3 +48,35 @@ Queries api2, returns hash → Unix timestamp map. Long staleTime since creation
 
 - `LatestVMsCard` — new component in `src/components/latest-vms-card.tsx`
 - Reuses: `Card`, `Badge`, `Skeleton`, `Tooltip` from `@aleph-front/ds`
+- Place in the second column of the existing `lg:grid-cols-2` grid on `src/app/page.tsx` (TopNodesCard is in the first column)
+
+## Learnings from Top Nodes Card Implementation
+
+These patterns were discovered during the sibling card implementation and apply here:
+
+### TypeScript `exactOptionalPropertyTypes`
+The tsconfig has `exactOptionalPropertyTypes: true`. You cannot pass `undefined` as a value for optional properties. Use spread instead:
+```ts
+// BAD — TypeScript error
+{ status: statusFilter, hasVms: flag || undefined }
+// GOOD
+{ ...(statusFilter ? { status: statusFilter } : {}) }
+```
+
+### DS Table has no initial sort API
+The DS `Table` manages sort state internally and has no `initialSort` prop. To show pre-sorted data, sort the array before passing it as `data`. The Table's built-in sort then works on top.
+
+### Client-side filters must stay out of the React Query key
+If a filter is applied post-fetch (like `vmCount > 0`), including it in the query key triggers unnecessary refetches. Filter in the component, not in the API client. Wrap filter state setters in `useTransition` if the re-render is expensive (large tables).
+
+### DS Button for card CTAs
+Use `<Button variant="text" size="xs" asChild><Link href="...">CTA text</Link></Button>` for card footer links. Raw `<Link>` with text styling is not visible enough on dark backgrounds.
+
+### DS Checkbox available at `@aleph-front/ds/checkbox`
+Supports `size="xs"`, uses Radix UI under the hood. `onCheckedChange` returns `boolean | "indeterminate"` — cast with `v === true`.
+
+### Pluralization
+Remember `{count === 1 ? "VM" : "VMs"}` — easy to miss.
+
+### `.env.local` for real API during development
+`NEXT_PUBLIC_API_URL=https://rust-scheduler.aleph.im` is set in `.env.local` for local dev with real data. No need for `NEXT_PUBLIC_USE_MOCKS=true` when using this.
