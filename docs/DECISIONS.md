@@ -18,6 +18,12 @@ Each entry includes:
 
 ---
 
+## Decision #20 - 2026-03-04
+**Context:** api2.aleph.im hash lookups fail with 400 when sending all 426 VM hashes in a single GET request (~28KB URL)
+**Decision:** Batch hash lookups into chunks of 100, fetch in parallel with `Promise.all`
+**Rationale:** The api2 endpoint only supports GET (POST returns 405). Browser/server URL limits are ~8KB. 100 hashes × 66 chars ≈ 6.6KB per request, safely under the limit. `Promise.all` keeps latency low — 5 concurrent requests complete in roughly the same time as one.
+**Alternatives considered:** POST request (not supported by api2), reducing the number of VMs queried (would miss the truly latest ones), server-side proxy (adds infrastructure)
+
 ## Decision #19 - 2026-03-04
 **Context:** Adding Latest VMs card to overview page — VM creation timestamps not available from the scheduler API
 **Decision:** Progressive loading from two APIs — scheduler data renders immediately, creation timestamps from api2.aleph.im arrive asynchronously via a separate React Query hook

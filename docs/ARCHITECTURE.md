@@ -77,7 +77,7 @@ src/
 **Context:** VM creation timestamps come from `api2.aleph.im`, not the scheduler API.
 **Approach:** The `LatestVMsCard` uses `useVMs()` for immediate scheduler data, then enriches with `useVMCreationTimes(hashes)` which calls `api2.aleph.im/api/v0/messages.json`. Before api2 responds, rows show hash + status badge with inline `Skeleton` for timestamps. Once timestamps arrive, rows re-sort by creation time and show relative dates. The api2 client function (`getMessagesByHashes`) lives alongside scheduler functions in `client.ts` with its own base URL (`NEXT_PUBLIC_ALEPH_API_URL`).
 **Key files:** `src/api/client.ts`, `src/hooks/use-vm-creation-times.ts`, `src/components/latest-vms-card.tsx`
-**Notes:** `staleTime: 5min` since creation timestamps are immutable. `refetchInterval: false` — no polling needed. Query key includes the hash array so it refetches when the VM list changes.
+**Notes:** `staleTime: 5min` since creation timestamps are immutable. `refetchInterval: false` — no polling needed. Query key includes the hash array so it refetches when the VM list changes. Hash lookups are batched (100 per request) to stay under URL length limits.
 
 ### React Query Polling
 
