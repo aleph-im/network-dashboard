@@ -9,8 +9,8 @@ importers:
   .:
     dependencies:
       '@aleph-front/ds':
-        specifier: file:../aleph-cloud-ds/packages/ds
-        version: file:../aleph-cloud-ds/packages/ds(@types/react-dom@19.2.3(@types/react@19.2.14))(@types/react@19.2.14)(react-dom@19.2.4(react@19.2.4))(react@19.2.4)
+        specifier: 0.0.3
+        version: 0.0.3(@types/react-dom@19.2.3(@types/react@19.2.14))(@types/react@19.2.14)(react-dom@19.2.4(react@19.2.4))(react@19.2.4)
       '@tanstack/react-query':
         specifier: 5.75.5
         version: 5.75.5(react@19.2.4)
@@ -75,8 +75,8 @@ packages:
   '@adobe/css-tools@4.4.4':
     resolution: {integrity: sha512-Elp+iwUx5rN5+Y8xLt5/GRoG20WGoDCQ/1Fb+1LiGtvwbDavuSk0jhD/eZdckHAuzcDzccnkv+rEjyWfRx18gg==}
 
-  '@aleph-front/ds@file:../aleph-cloud-ds/packages/ds':
-    resolution: {directory: ../aleph-cloud-ds/packages/ds, type: directory}
+  '@aleph-front/ds@0.0.3':
+    resolution: {integrity: sha512-KTAJW4ZMfc+dD8PzlkHursfdsg8rV3s1S6d7TBdl/MNQbn4UeXJVRhlGDC5pEZ4OVhveTMkRRKiBkNBqRt85rA==}
     peerDependencies:
       react: ^19.0.0
       react-dom: ^19.0.0
@@ -2639,7 +2639,7 @@ snapshots:
 
   '@adobe/css-tools@4.4.4': {}
 
-  '@aleph-front/ds@file:../aleph-cloud-ds/packages/ds(@types/react-dom@19.2.3(@types/react@19.2.14))(@types/react@19.2.14)(react-dom@19.2.4(react@19.2.4))(react@19.2.4)':
+  '@aleph-front/ds@0.0.3(@types/react-dom@19.2.3(@types/react@19.2.14))(@types/react@19.2.14)(react-dom@19.2.4(react@19.2.4))(react@19.2.4)':
     dependencies:
       class-variance-authority: 0.7.1
       clsx: 2.1.1
