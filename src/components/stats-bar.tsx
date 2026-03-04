@@ -60,17 +60,17 @@ export function StatsBar() {
         isLoading={isLoading}
       />
       <StatCard
-        label="Orphaned"
+        label="Orphaned VMs"
         value={stats?.orphanedVMs}
         isLoading={isLoading}
       />
       <StatCard
-        label="Missing"
+        label="Missing VMs"
         value={stats?.missingVMs}
         isLoading={isLoading}
       />
       <StatCard
-        label="Unschedulable"
+        label="Unschedulable VMs"
         value={stats?.unschedulableVMs}
         isLoading={isLoading}
       />

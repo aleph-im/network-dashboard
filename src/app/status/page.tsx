@@ -247,7 +247,7 @@ export default function StatusPage() {
               }`}
             >
               {ep.status === "skipped"
-                ? "skipped"
+                ? "no data"
                 : ep.status === "pending"
                   ? "\u2026"
                   : ep.httpCode}

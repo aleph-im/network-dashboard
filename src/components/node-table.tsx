@@ -63,7 +63,7 @@ const columns: Column<Node>[] = [
   {
     header: "Status",
     accessor: (r) => (
-      <Badge variant={STATUS_VARIANT[r.status]} size="sm">
+      <Badge variant={STATUS_VARIANT[r.status]} size="sm" className="capitalize">
         {r.status}
       </Badge>
     ),

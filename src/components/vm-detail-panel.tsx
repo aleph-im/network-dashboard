@@ -3,6 +3,12 @@
 import Link from "next/link";
 import { Card } from "@aleph-front/ds/card";
 import { Badge } from "@aleph-front/ds/badge";
+import {
+  TooltipProvider,
+  Tooltip,
+  TooltipTrigger,
+  TooltipContent,
+} from "@aleph-front/ds/tooltip";
 import { Skeleton } from "@aleph-front/ds/ui/skeleton";
 import { useVM } from "@/hooks/use-vms";
 import { relativeTime, truncateHash } from "@/lib/format";
@@ -50,6 +56,7 @@ export function VMDetailPanel({ hash, onClose }: VMDetailPanelProps) {
         <button
           type="button"
           onClick={onClose}
+          aria-label="Close panel"
           className="text-muted-foreground hover:text-foreground"
         >
           <svg className="size-4" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
@@ -61,7 +68,16 @@ export function VMDetailPanel({ hash, onClose }: VMDetailPanelProps) {
       <dl className="space-y-2 text-sm">
         <div className="flex justify-between">
           <dt className="text-muted-foreground">Full Hash</dt>
-          <dd className="font-mono text-xs">{vm.hash}</dd>
+          <dd className="min-w-0 truncate font-mono text-xs">
+            <TooltipProvider>
+              <Tooltip>
+                <TooltipTrigger asChild>
+                  <span className="cursor-help">{vm.hash}</span>
+                </TooltipTrigger>
+                <TooltipContent>{vm.hash}</TooltipContent>
+              </Tooltip>
+            </TooltipProvider>
+          </dd>
         </div>
         <div className="flex justify-between">
           <dt className="text-muted-foreground">Type</dt>
@@ -72,7 +88,7 @@ export function VMDetailPanel({ hash, onClose }: VMDetailPanelProps) {
         <div className="flex justify-between">
           <dt className="text-muted-foreground">Status</dt>
           <dd>
-            <Badge variant={VM_STATUS_VARIANT[vm.status]} size="sm">
+            <Badge variant={VM_STATUS_VARIANT[vm.status]} size="sm" className="capitalize">
               {vm.status}
             </Badge>
           </dd>
@@ -84,6 +100,7 @@ export function VMDetailPanel({ hash, onClose }: VMDetailPanelProps) {
               <Badge
                 variant={vm.paymentStatus === "validated" ? "success" : "error"}
                 size="sm"
+                className="capitalize"
               >
                 {vm.paymentStatus}
               </Badge>
@@ -107,7 +124,7 @@ export function VMDetailPanel({ hash, onClose }: VMDetailPanelProps) {
             </svg>
           </Link>
         ) : (
-          <span className="text-sm text-muted-foreground">—</span>
+          <span className="text-sm text-muted-foreground">Not allocated</span>
         )}
       </div>
 
@@ -121,7 +138,7 @@ export function VMDetailPanel({ hash, onClose }: VMDetailPanelProps) {
               <li key={nodeHash}>
                 <Link
                   href={`/nodes?selected=${nodeHash}`}
-                  className="group/link inline-flex items-center gap-1 font-mono text-xs text-primary-300 hover:underline"
+                  className="group/link inline-flex items-center gap-1 font-mono text-xs font-bold text-primary-300 hover:underline"
                 >
                   {truncateHash(nodeHash)}
                   <svg className="size-3 transition-transform duration-150 group-hover/link:translate-x-0.5 group-hover/link:-translate-y-0.5" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
@@ -142,7 +159,7 @@ export function VMDetailPanel({ hash, onClose }: VMDetailPanelProps) {
           <div className="flex justify-between">
             <dt className="text-muted-foreground">vCPUs</dt>
             <dd className="tabular-nums">
-              {vm.requirements.vcpus ?? "—"}
+              {vm.requirements.vcpus ?? "None"}
             </dd>
           </div>
           <div className="flex justify-between">
@@ -150,7 +167,7 @@ export function VMDetailPanel({ hash, onClose }: VMDetailPanelProps) {
             <dd className="tabular-nums">
               {vm.requirements.memoryMb != null
                 ? `${vm.requirements.memoryMb} MB`
-                : "—"}
+                : "None"}
             </dd>
           </div>
           <div className="flex justify-between">
@@ -158,7 +175,7 @@ export function VMDetailPanel({ hash, onClose }: VMDetailPanelProps) {
             <dd className="tabular-nums">
               {vm.requirements.diskMb != null
                 ? `${vm.requirements.diskMb} MB`
-                : "—"}
+                : "None"}
             </dd>
           </div>
         </dl>
@@ -176,7 +193,7 @@ export function VMDetailPanel({ hash, onClose }: VMDetailPanelProps) {
                 className="flex items-center justify-between text-sm"
               >
                 <span className="text-xs text-muted-foreground">
-                  {row.action.replace(/_/g, " ")}
+                  <span className="capitalize">{row.action.replace(/_/g, " ")}</span>
                   {row.reason ? ` (${row.reason})` : ""}
                 </span>
                 <span className="text-xs text-muted-foreground tabular-nums">

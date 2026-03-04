@@ -87,7 +87,7 @@ const columns: Column<VM>[] = [
           <TooltipContent>{r.allocatedNode}</TooltipContent>
         </Tooltip>
       ) : (
-        <span className="text-xs text-muted-foreground">—</span>
+        <span className="text-xs text-muted-foreground">None</span>
       ),
     sortable: true,
     sortValue: (r) => r.allocatedNode ?? "",
@@ -95,7 +95,7 @@ const columns: Column<VM>[] = [
   {
     header: "Status",
     accessor: (r) => (
-      <Badge variant={VM_STATUS_VARIANT[r.status]} size="sm">
+      <Badge variant={VM_STATUS_VARIANT[r.status]} size="sm" className="capitalize">
         {r.status}
       </Badge>
     ),
@@ -114,10 +114,10 @@ const columns: Column<VM>[] = [
     align: "right",
   },
   {
-    header: "Mem (MB)",
+    header: "Memory",
     accessor: (r) => (
       <span className="text-xs tabular-nums">
-        {r.requirements.memoryMb ?? "—"}
+        {r.requirements.memoryMb != null ? `${r.requirements.memoryMb} MB` : "—"}
       </span>
     ),
     sortable: true,

@@ -87,7 +87,7 @@ export function LatestVMsCard() {
                     transitionDuration: "var(--duration-fast)",
                   }}
                 >
-                  <Badge variant={VM_STATUS_VARIANT[vm.status]}>
+                  <Badge variant={VM_STATUS_VARIANT[vm.status]} className="capitalize">
                     {vm.status}
                   </Badge>
                   <Tooltip>

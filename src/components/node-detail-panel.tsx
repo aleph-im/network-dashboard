@@ -4,6 +4,12 @@ import Link from "next/link";
 import { Card } from "@aleph-front/ds/card";
 import { Badge } from "@aleph-front/ds/badge";
 import { StatusDot } from "@aleph-front/ds/status-dot";
+import {
+  TooltipProvider,
+  Tooltip,
+  TooltipTrigger,
+  TooltipContent,
+} from "@aleph-front/ds/tooltip";
 import { Skeleton } from "@aleph-front/ds/ui/skeleton";
 import { useNode } from "@/hooks/use-nodes";
 import { ResourceBar } from "@/components/resource-bar";
@@ -66,6 +72,7 @@ export function NodeDetailPanel({ hash, onClose }: NodeDetailPanelProps) {
         <button
           type="button"
           onClick={onClose}
+          aria-label="Close panel"
           className="text-muted-foreground hover:text-foreground"
         >
           <svg className="size-4" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
@@ -77,7 +84,16 @@ export function NodeDetailPanel({ hash, onClose }: NodeDetailPanelProps) {
       <dl className="space-y-2 text-sm">
         <div className="flex justify-between">
           <dt className="text-muted-foreground">Full Hash</dt>
-          <dd className="font-mono text-xs">{node.hash}</dd>
+          <dd className="min-w-0 truncate font-mono text-xs">
+            <TooltipProvider>
+              <Tooltip>
+                <TooltipTrigger asChild>
+                  <span className="cursor-help">{node.hash}</span>
+                </TooltipTrigger>
+                <TooltipContent>{node.hash}</TooltipContent>
+              </Tooltip>
+            </TooltipProvider>
+          </dd>
         </div>
         {node.address && (
           <div className="flex justify-between">
@@ -88,7 +104,7 @@ export function NodeDetailPanel({ hash, onClose }: NodeDetailPanelProps) {
         <div className="flex justify-between">
           <dt className="text-muted-foreground">Status</dt>
           <dd>
-            <Badge variant={NODE_STATUS_VARIANT[node.status]} size="sm">
+            <Badge variant={NODE_STATUS_VARIANT[node.status]} size="sm" className="capitalize">
               {node.status}
             </Badge>
           </dd>
@@ -153,7 +169,7 @@ export function NodeDetailPanel({ hash, onClose }: NodeDetailPanelProps) {
                     <path strokeLinecap="round" strokeLinejoin="round" d="M7 17L17 7M7 7h10v10" />
                   </svg>
                 </Link>
-                <Badge variant={VM_STATUS_VARIANT[vm.status]} size="sm">
+                <Badge variant={VM_STATUS_VARIANT[vm.status]} size="sm" className="capitalize">
                   {vm.status}
                 </Badge>
               </li>
@@ -174,7 +190,7 @@ export function NodeDetailPanel({ hash, onClose }: NodeDetailPanelProps) {
                 className="flex items-center justify-between text-sm"
               >
                 <span className="text-xs text-muted-foreground">
-                  {row.action.replace(/_/g, " ")}
+                  <span className="capitalize">{row.action.replace(/_/g, " ")}</span>
                   {row.reason ? ` (${row.reason})` : ""}
                 </span>
                 <span className="text-xs text-muted-foreground tabular-nums">
