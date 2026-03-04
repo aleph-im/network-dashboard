@@ -18,6 +18,12 @@ Each entry includes:
 
 ---
 
+## Decision #17 - 2026-03-04
+**Context:** Adding two activity cards to the overview page (Top Nodes + Latest VMs)
+**Decision:** Split into two separate implementation plans and execute sequentially
+**Rationale:** Each card has different complexity — Top Nodes only needs scheduler data, while Latest VMs requires api2.aleph.im integration for creation timestamps. Separate plans avoid context bloat and allow independent review. The `hasVms` filter is client-side since the scheduler API doesn't support it natively.
+**Alternatives considered:** Single combined plan — rejected due to context window concerns
+
 ## Decision #16 - 2026-03-04
 **Context:** API status page design — considered adding a version dropdown to switch between v0/v1
 **Decision:** No version dropdown; hardcode `/api/v1` prefix

@@ -23,6 +23,16 @@ function NodesContent() {
       ? (statusParam as NodeStatus)
       : undefined;
 
+  const hasVms = searchParams.get("hasVms") === "true";
+
+  const sortParam = searchParams.get("sort");
+  const orderParam = searchParams.get("order");
+  const sortDirection = orderParam === "asc" ? "asc" : "desc";
+  const initialSort =
+    sortParam === "vms"
+      ? { field: "vms" as const, direction: sortDirection as "asc" | "desc" }
+      : undefined;
+
   const selectedParam = searchParams.get("selected");
   const [selectedNode, setSelectedNode] = useState<string | null>(
     selectedParam,
@@ -34,6 +44,8 @@ function NodesContent() {
         <NodeTable
           onSelectNode={setSelectedNode}
           initialStatus={initialStatus}
+          initialHasVms={hasVms}
+          initialSort={initialSort}
           selectedKey={selectedNode ?? undefined}
         />
       </div>

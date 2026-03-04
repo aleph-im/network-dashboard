@@ -15,6 +15,11 @@ Ideas and scope creep captured for later consideration.
 
 ## Open Items
 
+### 2026-03-04 - Latest VMs card on overview page
+**Source:** Overview page activity cards design (split into two plans)
+**Description:** Add a "Latest VMs" card to the overview page showing the 15 most recently created VMs. Requires api2.aleph.im integration for creation timestamps (progressive loading). See `docs/plans/2026-03-04-latest-vms-card-design.md`.
+**Priority:** High
+
 ### 2026-03-04 - Stats sparklines via client-side accumulation
 **Source:** Identified while working on real API migration (Decision #14)
 **Description:** The API has no `/stats/history` endpoint. Sparklines were removed during migration. Could accumulate stats snapshots client-side in React Query cache (or a simple in-memory ring buffer) to rebuild 24h trend data. Better solution: request a `/stats/history` endpoint from the backend team.

@@ -36,6 +36,7 @@ export type NodeDetail = Node & {
 
 export type NodeFilters = {
   status?: NodeStatus;
+  hasVms?: boolean;
 };
 
 // --- VM ---

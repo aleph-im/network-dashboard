@@ -1,6 +1,6 @@
 "use client";
 
-import { useState } from "react";
+import { useState, useTransition } from "react";
 import { Table, type Column } from "@aleph-front/ds/table";
 import { StatusDot } from "@aleph-front/ds/status-dot";
 import {
@@ -9,13 +9,14 @@ import {
   TooltipTrigger,
   TooltipContent,
 } from "@aleph-front/ds/tooltip";
+import { Checkbox } from "@aleph-front/ds/checkbox";
 import { Badge } from "@aleph-front/ds/badge";
 import { Skeleton } from "@aleph-front/ds/ui/skeleton";
 import { useNodes } from "@/hooks/use-nodes";
 import { ResourceBar } from "@/components/resource-bar";
 import { truncateHash, relativeTime } from "@/lib/format";
 import { nodeStatusToDot } from "@/lib/status-map";
-import type { Node, NodeStatus } from "@/api/types";
+import type { Node, NodeFilters, NodeStatus } from "@/api/types";
 
 const STATUS_FILTERS: { label: string; value: NodeStatus | undefined }[] = [
   { label: "All", value: undefined },
@@ -106,18 +107,42 @@ const columns: Column<Node>[] = [
   },
 ];
 
+type SortConfig = {
+  field: "vms";
+  direction: "asc" | "desc";
+};
+
 type NodeTableProps = {
   onSelectNode: (hash: string) => void;
   initialStatus?: NodeStatus | undefined;
+  initialHasVms?: boolean | undefined;
+  initialSort?: SortConfig | undefined;
   selectedKey?: string | undefined;
 };
 
-export function NodeTable({ onSelectNode, initialStatus, selectedKey }: NodeTableProps) {
+export function NodeTable({ onSelectNode, initialStatus, initialHasVms, initialSort, selectedKey }: NodeTableProps) {
+  const [, startTransition] = useTransition();
   const [statusFilter, setStatusFilter] = useState<NodeStatus | undefined>(
     initialStatus,
   );
-  const filters = statusFilter ? { status: statusFilter } : undefined;
+  const [hasVmsFilter, setHasVmsFilter] = useState(
+    initialHasVms ?? false,
+  );
+  const filters: NodeFilters | undefined = statusFilter
+    ? { status: statusFilter }
+    : undefined;
   const { data: nodes, isLoading } = useNodes(filters);
+
+  const filteredNodes = hasVmsFilter
+    ? (nodes ?? []).filter((n) => n.vmCount > 0)
+    : nodes;
+
+  const sortedNodes = initialSort
+    ? [...(filteredNodes ?? [])].sort((a, b) => {
+        const dir = initialSort.direction === "asc" ? 1 : -1;
+        return (a.vmCount - b.vmCount) * dir;
+      })
+    : filteredNodes;
 
   if (isLoading) {
     return (
@@ -136,7 +161,10 @@ export function NodeTable({ onSelectNode, initialStatus, selectedKey }: NodeTabl
           <button
             key={filter.label}
             type="button"
-            onClick={() => setStatusFilter(filter.value)}
+            onClick={() => startTransition(() => {
+              setStatusFilter(filter.value);
+              if (filter.value === undefined) setHasVmsFilter(false);
+            })}
             className={`rounded-md px-2.5 py-1 text-xs font-medium transition-colors ${
               statusFilter === filter.value
                 ? "bg-primary-600/10 text-primary-500"
@@ -147,10 +175,18 @@ export function NodeTable({ onSelectNode, initialStatus, selectedKey }: NodeTabl
             {filter.label}
           </button>
         ))}
+        <label className="ml-2 flex cursor-pointer items-center gap-1.5 text-xs font-medium text-muted-foreground select-none">
+          <Checkbox
+            size="xs"
+            checked={hasVmsFilter}
+            onCheckedChange={(v) => startTransition(() => setHasVmsFilter(v === true))}
+          />
+          Has VMs
+        </label>
       </div>
       <Table
         columns={columns}
-        data={nodes ?? []}
+        data={sortedNodes ?? []}
         keyExtractor={(r) => r.hash}
         onRowClick={(r) => onSelectNode(r.hash)}
         activeKey={selectedKey}

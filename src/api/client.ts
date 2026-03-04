@@ -144,6 +144,22 @@ function transformHistory(raw: ApiHistoryRow): HistoryRow {
   };
 }
 
+// --- Filter helpers ---
+
+function applyNodeFilters(
+  nodes: Node[],
+  filters?: NodeFilters,
+): Node[] {
+  let result = nodes;
+  if (filters?.status) {
+    result = result.filter((n) => n.status === filters.status);
+  }
+  if (filters?.hasVms) {
+    result = result.filter((n) => n.vmCount > 0);
+  }
+  return result;
+}
+
 // --- Public API ---
 
 export async function getNodes(
@@ -151,21 +167,14 @@ export async function getNodes(
 ): Promise<Node[]> {
   if (useMocks()) {
     const { mockNodes } = await import("@/api/mock");
-    const nodes = mockNodes;
-    if (filters?.status) {
-      return nodes.filter((n) => n.status === filters.status);
-    }
-    return nodes;
+    return applyNodeFilters(mockNodes, filters);
   }
   const data = await fetchApi<ApiNodeRow[] | { nodes: ApiNodeRow[] }>(
     "/api/v1/nodes",
   );
   const raw = unwrapArray(data);
   const nodes = raw.map(transformNode);
-  if (filters?.status) {
-    return nodes.filter((n) => n.status === filters.status);
-  }
-  return nodes;
+  return applyNodeFilters(nodes, filters);
 }
 
 export async function getNode(

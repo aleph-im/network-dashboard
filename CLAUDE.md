@@ -211,12 +211,12 @@ When adding a new component to `@aleph-front/ds`, follow the "Adding a New Compo
 - Responsive layout: off-canvas sidebar drawer on mobile, inline on desktop; detail panels as slide-in overlays on mobile, inline on desktop
 - App shell with sidebar navigation (Overview, Nodes, VMs) and header with page title and hamburger menu (mobile)
 - Dark theme default with light/dark toggle (localStorage persistence)
-- Overview page: stat cards (nodes, VMs, vCPU allocation), node health bar, VM allocation summary
+- Overview page: stat cards (nodes, VMs, vCPU allocation), node health bar, VM allocation summary, top nodes by VM count card
 - Nodes page: sortable table with status filters (healthy/unreachable/unknown/removed), StatusDot indicators, resource usage bars, detail panel with VMs and history
 - VMs page: sortable table with status filters (scheduled/unscheduled/orphaned/missing/unschedulable/unknown), detail panel with observed nodes and history
 - API status page: checks all 7 scheduler endpoints, shows StatusDot health + HTTP codes, recheck button, `?api=` URL override
 - API client (`/api/v1`) with snake→camel transform layer and mock data fallback (`NEXT_PUBLIC_USE_MOCKS=true`)
 - React Query hooks with automatic polling (15-30s intervals)
-- Cross-page navigation via URL search params (`?status=`, `?selected=`): overview cards link to filtered list pages, detail panels cross-link between nodes and VMs, selected row highlighted with left border accent
+- Cross-page navigation via URL search params (`?status=`, `?selected=`, `?hasVms=`): overview cards link to filtered list pages, detail panels cross-link between nodes and VMs, selected row highlighted with left border accent
 - Static export for IPFS deployment
 - `@aleph-front/ds` integration via npm (pinned version) and `transpilePackages`
