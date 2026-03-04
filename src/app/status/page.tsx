@@ -137,13 +137,13 @@ export default function StatusPage() {
         };
       }),
     );
-    for (const r of indResults) {
+    for (const [i, r] of indResults.entries()) {
       newResults.push(
         r.status === "fulfilled"
           ? r.value
           : {
-              path: "",
-              label: "",
+              path: `${API_PREFIX}${independent[i]!.path}`,
+              label: independent[i]!.label,
               status: "error",
               httpCode: null,
             },
@@ -169,13 +169,13 @@ export default function StatusPage() {
         return checkEndpoint(baseUrl, ep, resolvedPath);
       }),
     );
-    for (const r of depResults) {
+    for (const [i, r] of depResults.entries()) {
       newResults.push(
         r.status === "fulfilled"
           ? r.value
           : {
-              path: "",
-              label: "",
+              path: `${API_PREFIX}${dependent[i]!.path}`,
+              label: dependent[i]!.label,
               status: "error",
               httpCode: null,
             },
