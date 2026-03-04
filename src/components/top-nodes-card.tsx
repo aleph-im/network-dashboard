@@ -118,7 +118,7 @@ export function TopNodesCard() {
         </ol>
       </TooltipProvider>
 
-      <div className="mt-3 border-t border-border pt-3">
+      <div className="mt-6 pt-3">
         <Button variant="text" size="xs" asChild>
           <Link href="/nodes?hasVms=true&sort=vms&order=desc">
             View all nodes with VMs &rarr;

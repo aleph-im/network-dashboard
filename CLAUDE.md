@@ -62,7 +62,7 @@ When the conversation drifts from the stated task:
 - Brainstorm and plan on main
 - **Pull main before branching** — stale main causes merge conflicts
 - When dev starts, create feature branch from main before any file edits
-- Branch naming: `feature/[plan-name]`
+- Branch naming: `<type>/[name]` (e.g. `feature/`, `fix/`, `chore/`, `refactor/`)
 
 **Doc updates:** Update docs incrementally during development. When touching any doc file, always check all four — never update one in isolation.
 - `docs/ARCHITECTURE.md` -- add/update patterns for any new architectural decisions, new files, or changed structure
@@ -85,6 +85,17 @@ When the conversation drifts from the stated task:
 **Completion:** `gh pr merge --squash` keeps main history clean (one commit per feature). Never push directly to main — always go through a PR.
 
 Never interrupt based on file count or commit count.
+
+**Finishing a branch** (overrides the `finishing-a-development-branch` skill options):
+
+1. Run `pnpm check` — stop if anything fails
+2. Push branch: `git push -u origin <branch>`
+3. Create PR if none exists: `gh pr create --title "..." --body "..."`
+4. Squash-merge: `gh pr merge <number> --squash --delete-branch`
+5. Sync local main: `git checkout main && git pull --ff-only origin main`
+6. Delete local branch: `git branch -D <branch>`
+
+**Never merge locally.** Option 1 ("Merge back to main locally") from the finishing skill is not allowed — a hook blocks direct pushes to main, and local merges cause SHA divergence after squash-merge. Always go through the PR.
 
 ---
 

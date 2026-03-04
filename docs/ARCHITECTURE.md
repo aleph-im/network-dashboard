@@ -46,7 +46,7 @@ src/
 │   ├── app-sidebar.tsx     # Navigation sidebar
 │   ├── app-header.tsx      # Page title + theme toggle
 │   ├── theme-toggle.tsx    # Dark/light toggle with localStorage
-│   ├── stats-bar.tsx       # Overview stat cards row (no sparklines)
+│   ├── stats-bar.tsx       # Overview stats grid (cardless, semantic colors)
 │   ├── node-health-summary.tsx  # Node health bar chart + legend
 │   ├── vm-allocation-summary.tsx # VM status breakdown
 │   ├── top-nodes-card.tsx   # Top nodes by VM count card

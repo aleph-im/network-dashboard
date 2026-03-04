@@ -15,11 +15,11 @@ function renderWithQuery(ui: React.ReactElement) {
 describe("StatsBar", () => {
   it("renders all stat card labels", () => {
     renderWithQuery(<StatsBar />);
-    expect(screen.getByText("Total Nodes")).toBeInTheDocument();
-    expect(screen.getByText("Healthy Nodes")).toBeInTheDocument();
-    expect(screen.getByText("Total VMs")).toBeInTheDocument();
-    expect(screen.getByText("Orphaned VMs")).toBeInTheDocument();
-    expect(screen.getByText("Missing VMs")).toBeInTheDocument();
-    expect(screen.getByText("Unschedulable VMs")).toBeInTheDocument();
+    expect(screen.getByText("Nodes")).toBeInTheDocument();
+    expect(screen.getByText("Healthy")).toBeInTheDocument();
+    expect(screen.getByText("VMs")).toBeInTheDocument();
+    expect(screen.getByText("Orphaned")).toBeInTheDocument();
+    expect(screen.getByText("Missing")).toBeInTheDocument();
+    expect(screen.getByText("Unschedulable")).toBeInTheDocument();
   });
 });

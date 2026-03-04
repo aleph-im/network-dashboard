@@ -8,15 +8,15 @@ import { LatestVMsCard } from "@/components/latest-vms-card";
 
 export default function OverviewPage() {
   return (
-    <div className="space-y-6">
+    <div>
       <StatsBar />
 
-      <div className="grid grid-cols-1 gap-6 lg:grid-cols-2">
+      <div className="mt-8 grid grid-cols-1 gap-6 lg:grid-cols-2">
         <NodeHealthSummary />
         <VMAllocationSummary />
       </div>
 
-      <div className="grid grid-cols-1 gap-6 lg:grid-cols-2">
+      <div className="mt-14 grid grid-cols-1 gap-6 lg:grid-cols-2">
         <TopNodesCard />
         <LatestVMsCard />
       </div>

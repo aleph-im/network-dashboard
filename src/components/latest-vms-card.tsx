@@ -62,7 +62,7 @@ export function LatestVMsCard() {
   return (
     <Card title="Latest VMs" padding="md" className="flex-1">
       <TooltipProvider>
-        <ul className="divide-y divide-black/[0.06] dark:divide-white/[0.06]">
+        <ul className="divide-y divide-black/[0.06] [&>:last-child]:border-b-0 dark:divide-white/[0.06]">
           {sorted.map((vm) => {
             const createdAt = creationTimes?.get(vm.hash);
             return (
@@ -105,7 +105,7 @@ export function LatestVMsCard() {
         </ul>
       </TooltipProvider>
 
-      <div className="mt-3 border-t border-border pt-3">
+      <div className="mt-6 pt-3">
         <Button variant="text" size="xs" asChild>
           <Link href="/vms">View all VMs &rarr;</Link>
         </Button>
