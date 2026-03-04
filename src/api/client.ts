@@ -158,7 +158,7 @@ export async function getNodes(
     return nodes;
   }
   const data = await fetchApi<ApiNodeRow[] | { nodes: ApiNodeRow[] }>(
-    "/api/v0/nodes",
+    "/api/v1/nodes",
   );
   const raw = unwrapArray(data);
   const nodes = raw.map(transformNode);
@@ -176,12 +176,12 @@ export async function getNode(
     return getMockNodeDetail(hash);
   }
   const [rawNode, rawVms, rawHistory] = await Promise.all([
-    fetchApi<ApiNodeRow>(`/api/v0/nodes/${hash}`),
+    fetchApi<ApiNodeRow>(`/api/v1/nodes/${hash}`),
     fetchApi<ApiVmRow[] | { vms: ApiVmRow[] }>(
-      `/api/v0/vms?node=${hash}`,
+      `/api/v1/vms?node=${hash}`,
     ),
     fetchApi<ApiHistoryRow[] | { history: ApiHistoryRow[] }>(
-      `/api/v0/nodes/${hash}/history`,
+      `/api/v1/nodes/${hash}/history`,
     ),
   ]);
   return {
@@ -205,7 +205,7 @@ export async function getVMs(filters?: VmFilters): Promise<VM[]> {
   if (filters?.node) params.set("node", filters.node);
   const qs = params.toString();
   const data = await fetchApi<ApiVmRow[] | { vms: ApiVmRow[] }>(
-    `/api/v0/vms${qs ? `?${qs}` : ""}`,
+    `/api/v1/vms${qs ? `?${qs}` : ""}`,
   );
   return unwrapArray(data).map(transformVm);
 }
@@ -216,9 +216,9 @@ export async function getVM(hash: string): Promise<VmDetail> {
     return getMockVMDetail(hash);
   }
   const [rawVm, rawHistory] = await Promise.all([
-    fetchApi<ApiVmRow>(`/api/v0/vms/${hash}`),
+    fetchApi<ApiVmRow>(`/api/v1/vms/${hash}`),
     fetchApi<ApiHistoryRow[] | { history: ApiHistoryRow[] }>(
-      `/api/v0/vms/${hash}/history`,
+      `/api/v1/vms/${hash}/history`,
     ),
   ]);
   return {
@@ -233,10 +233,10 @@ export async function getOverviewStats(): Promise<OverviewStats> {
     return mockOverviewStats;
   }
   const [stats, rawVms, rawNodes] = await Promise.all([
-    fetchApi<ApiStats>("/api/v0/stats"),
-    fetchApi<ApiVmRow[] | { vms: ApiVmRow[] }>("/api/v0/vms"),
+    fetchApi<ApiStats>("/api/v1/stats"),
+    fetchApi<ApiVmRow[] | { vms: ApiVmRow[] }>("/api/v1/vms"),
     fetchApi<ApiNodeRow[] | { nodes: ApiNodeRow[] }>(
-      "/api/v0/nodes",
+      "/api/v1/nodes",
     ),
   ]);
   const nodes = unwrapArray(rawNodes).map(transformNode);
