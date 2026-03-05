@@ -15,6 +15,16 @@ Ideas and scope creep captured for later consideration.
 
 ## Open Items
 
+### 2026-03-05 - Mobile-responsive filter UI
+**Source:** Identified while brainstorming list page filtering overhaul
+**Description:** Adapt the new filter bar (search, collapsible filters, status pills with count badges) for mobile viewports. Desktop version comes first; mobile adaptation deferred.
+**Priority:** Medium
+
+### 2026-03-05 - Design critique: overview hierarchy, light theme, table scanability
+**Source:** UX critique session (`docs/plans/design-critique.md`)
+**Description:** Full design review identified 5 priority issues: (1) stats bar is a flat "AI dashboard hero" cliche — needs anomaly-first hierarchy, (2) light theme loses all brand identity, (3) Node Health and VM Allocation cards use mismatched visual languages, (4) tables lack visual differentiation for anomalous rows and show noise at 0% resource bars, (5) sidebar logo is a placeholder gradient square. Minor items include filter count indicators, empty states, and defaulting VMs page away from the orphaned-dominated "All" view.
+**Priority:** Medium
+
 ### 2026-03-04 - Stats sparklines via client-side accumulation
 **Source:** Identified while working on real API migration (Decision #14)
 **Description:** The API has no `/stats/history` endpoint. Sparklines were removed during migration. Could accumulate stats snapshots client-side in React Query cache (or a simple in-memory ring buffer) to rebuild 24h trend data. Better solution: request a `/stats/history` endpoint from the backend team.
