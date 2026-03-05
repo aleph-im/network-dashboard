@@ -21,10 +21,6 @@ function VMsContent() {
   const searchParams = useSearchParams();
   const viewHash = searchParams.get("view");
 
-  if (viewHash) {
-    return <VMDetailView hash={viewHash} />;
-  }
-
   const statusParam = searchParams.get("status");
   const initialStatus =
     statusParam && VALID_VM_STATUSES.has(statusParam)
@@ -33,6 +29,10 @@ function VMsContent() {
 
   const selectedParam = searchParams.get("selected");
   const [selectedVM, setSelectedVM] = useState<string | null>(selectedParam);
+
+  if (viewHash) {
+    return <VMDetailView hash={viewHash} />;
+  }
 
   return (
     <div className="flex gap-6">

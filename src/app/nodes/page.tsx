@@ -19,10 +19,6 @@ function NodesContent() {
   const searchParams = useSearchParams();
   const viewHash = searchParams.get("view");
 
-  if (viewHash) {
-    return <NodeDetailView hash={viewHash} />;
-  }
-
   const statusParam = searchParams.get("status");
   const initialStatus =
     statusParam && VALID_NODE_STATUSES.has(statusParam)
@@ -43,6 +39,10 @@ function NodesContent() {
   const [selectedNode, setSelectedNode] = useState<string | null>(
     selectedParam,
   );
+
+  if (viewHash) {
+    return <NodeDetailView hash={viewHash} />;
+  }
 
   return (
     <div className="flex gap-6">
