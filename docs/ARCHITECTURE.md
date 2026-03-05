@@ -42,9 +42,9 @@ src/
 ├── components/
 │   ├── app-shell.tsx       # Layout: sidebar + header + content
 │   ├── app-sidebar.tsx     # Navigation sidebar
-│   ├── app-header.tsx      # Page title + theme toggle
+│   ├── app-header.tsx      # Hamburger menu + theme toggle
 │   ├── theme-toggle.tsx    # Dark/light toggle with localStorage
-│   ├── stats-bar.tsx       # Overview stats grid (cardless, semantic colors)
+│   ├── stats-bar.tsx       # Overview stats grid (glass cards, noise texture, semantic colors)
 │   ├── node-health-summary.tsx  # Node health bar chart + legend
 │   ├── vm-allocation-summary.tsx # VM status breakdown
 │   ├── top-nodes-card.tsx   # Top nodes by VM count card
@@ -110,15 +110,15 @@ src/
 ### App Shell Layout
 
 **Context:** Consistent navigation across all pages.
-**Approach:** AppShell wraps all pages with sidebar + header + scrollable content area. Three-layer visual hierarchy: sidebar and header use `bg-background` (darkest, borderless) as app chrome; main content area uses `bg-surface` with `rounded-tl-2xl` as a recessed panel; individual cards sit inside with their own borders. On desktop (`md+`), the sidebar is always visible. On mobile, it collapses to an off-canvas drawer triggered by a hamburger button in the header. The sidebar auto-closes on route change.
+**Approach:** AppShell wraps all pages with sidebar + header + scrollable content area. Three-layer visual hierarchy: sidebar and header use `bg-background` (dark mode) / `bg-muted/40` (light mode) as app chrome; main content area uses `bg-surface` with `rounded-tl-2xl` as a recessed panel; individual cards sit inside with their own borders. A subtle accent-colored radial glow (`main-glow::before`) adds depth to the content area. The header contains only the hamburger menu (mobile) and theme toggle (right-aligned). Scroll position resets to top on route change via `usePathname` + ref. On desktop (`md+`), the sidebar is always visible. On mobile, it collapses to an off-canvas drawer. The sidebar auto-closes on route change.
 **Key files:** `src/components/app-shell.tsx`, `src/components/app-sidebar.tsx`, `src/components/app-header.tsx`
 
 ### Overview Page Redesign
 
 **Context:** The overview page needed more visual impact, spacing, and contextual help for users unfamiliar with Aleph Cloud terminology.
-**Approach:** Hero stat cards with `text-4xl` numbers in rigid-square italic font, each in its own card with colored status indicators (green/amber/red), status-tinted backgrounds via CSS custom property `--stat-tint` at 7% opacity, and explanatory subtitles. Content cards have larger `text-2xl` titles with `?` info tooltips (DS Tooltip component) and `padding="lg"`. Page has a `text-4xl` title with subtitle, and `mt-12` / `gap-8` spacing between sections. A shared `CardHeader` component provides the title + tooltip pattern for all 4 content cards.
+**Approach:** Hero stat cards with `text-4xl` numbers in rigid-square italic font, each in its own glassmorphism card (`bg-white/[0.03]`, `border-white/[0.06]`) with colored status indicators (green/amber/red), status-tinted backgrounds via CSS custom property `--stat-tint` at 7% opacity, SVG noise texture (`feTurbulence`) at 3% opacity for depth, and explanatory subtitles. Content cards have larger `text-2xl` titles with `?` info tooltips (DS Tooltip component) and `padding="lg"`. Page has a `text-4xl` title with subtitle, and `mt-12` / `gap-8` spacing between sections. A shared `CardHeader` component provides the title + tooltip pattern for all 4 content cards.
 **Key files:** `src/app/page.tsx`, `src/components/stats-bar.tsx`, `src/components/card-header.tsx`, `src/app/globals.css`
-**Notes:** Stats grid uses `xl` breakpoint for 6 columns (not `lg`) to prevent "UNSCHEDULABLE" label truncation. The `.stat-card::before` pseudo-element reads `--stat-tint` from inline styles for dynamic color tinting. The `.card-glow` utility adds `shadow-brand` on hover.
+**Notes:** Stats grid uses `xl` breakpoint for 6 columns (not `lg`) to prevent "UNSCHEDULABLE" label truncation. The `.stat-card::before` pseudo-element reads `--stat-tint` from inline styles for dynamic color tinting. The `.stat-card::after` pseudo-element adds an SVG noise grain texture. The `.card-glow` utility adds `shadow-brand` on hover.
 
 ### Cross-Page Navigation via URL Search Params
 
@@ -146,7 +146,7 @@ src/
 **Context:** Dashboard must work on mobile, tablet, and desktop.
 **Approach:** Two breakpoints: `md` (768px) for sidebar visibility, `lg` (1024px) for detail panel layout. Mobile sidebar is a fixed overlay with backdrop. Detail panels (Nodes, VMs) render as full-width slide-in overlays below `lg`, inline side panels above. Tables use `overflow-x-auto` for horizontal scrolling on narrow screens.
 **Key files:** `src/components/app-sidebar.tsx`, `src/app/nodes/page.tsx`, `src/app/vms/page.tsx`, `src/components/node-detail-panel.tsx`, `src/components/vm-detail-panel.tsx`
-**Notes:** Uses `bg-surface` token (renamed from `bg-card` in DS). Detail panels use `w-full lg:w-96` for responsive width.
+**Notes:** Uses `bg-surface` token (renamed from `bg-card` in DS). Detail panels use glass card styling (`bg-white/[0.03]`, `border-white/[0.06]`, `variant="ghost"`), `lg:sticky lg:top-0` to stay visible while scrolling, and truncate long lists (6 VMs, 5 history entries) with "+N more" indicators to keep the "View full details →" CTA reachable.
 
 ---
 
@@ -156,8 +156,7 @@ src/
 
 1. Create `src/app/<route>/page.tsx`
 2. Add nav entry to `NAV_ITEMS` in `src/components/app-sidebar.tsx`
-3. Add route title to `ROUTE_TITLES` in `src/components/app-header.tsx`
-4. Verify with `pnpm build` (static export must include the route)
+3. Verify with `pnpm build` (static export must include the route)
 
 ### API Status Page
 

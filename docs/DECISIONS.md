@@ -18,6 +18,17 @@ Each entry includes:
 
 ---
 
+## Decision #27 - 2026-03-05
+**Context:** Detail panels for nodes/VMs could become very tall (30+ VMs, long history) pushing the "View full details →" CTA below the viewport
+**Decision:** Truncate lists to 6 VMs / 6 observed nodes / 5 history entries with "+N more" indicator, sticky panel on desktop, no internal scroll
+**Rationale:** Internal scroll inside a card that's already inside a scrolling page creates nested scroll confusion. Truncating with "+N more" makes it obvious there's more data on the full detail view, nudging users toward the CTA. Sticky positioning keeps the panel visible while browsing the table.
+**Alternatives considered:** Internal scroll with fixed CTA footer (nested scroll UX), collapsible accordion sections (more complex, still tall when expanded)
+
+## Decision #26 - 2026-03-05
+**Context:** Stat cards had solid `bg-surface` backgrounds — the original design spec called for glassmorphism/noise texture
+**Decision:** Glass card treatment: `bg-white/[0.03]` + `border-white/[0.06]` + SVG noise texture (`feTurbulence` at 3% opacity) via `::after` pseudo-element. Same treatment applied to detail panels.
+**Rationale:** True `backdrop-blur` doesn't work on a flat solid background (nothing to blur). The noise texture via inline SVG `feTurbulence` creates perceived depth without an image file. Very low opacity (3%) keeps it subtle. The semi-transparent white background lifts the card just enough off the dark surface.
+
 ## Decision #25 - 2026-03-05
 **Context:** Overview page redesign — sidebar/header had straight edges with borders while content cards had rounded corners, creating visual disconnect
 **Decision:** Recessed content panel pattern — sidebar and header use `bg-background` (darkest layer, no borders), main content area uses `bg-surface` with `rounded-tl-2xl`
