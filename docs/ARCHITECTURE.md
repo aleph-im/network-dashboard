@@ -49,6 +49,7 @@ src/
 │   ├── vm-allocation-summary.tsx # VM status breakdown
 │   ├── top-nodes-card.tsx   # Top nodes by VM count card
 │   ├── latest-vms-card.tsx  # Latest VMs by creation time (progressive loading from api2)
+│   ├── card-header.tsx     # Shared card header with title + info tooltip
 │   ├── node-table.tsx      # Nodes table with status filters
 │   ├── node-detail-panel.tsx # Node detail side panel (quick-peek)
 │   ├── node-detail-view.tsx # Node full-width detail view (?view= param)
@@ -109,8 +110,15 @@ src/
 ### App Shell Layout
 
 **Context:** Consistent navigation across all pages.
-**Approach:** AppShell wraps all pages with sidebar + header + scrollable content area. On desktop (`md+`), the sidebar is always visible. On mobile, it collapses to an off-canvas drawer triggered by a hamburger button in the header. The sidebar auto-closes on route change.
+**Approach:** AppShell wraps all pages with sidebar + header + scrollable content area. Three-layer visual hierarchy: sidebar and header use `bg-background` (darkest, borderless) as app chrome; main content area uses `bg-surface` with `rounded-tl-2xl` as a recessed panel; individual cards sit inside with their own borders. On desktop (`md+`), the sidebar is always visible. On mobile, it collapses to an off-canvas drawer triggered by a hamburger button in the header. The sidebar auto-closes on route change.
 **Key files:** `src/components/app-shell.tsx`, `src/components/app-sidebar.tsx`, `src/components/app-header.tsx`
+
+### Overview Page Redesign
+
+**Context:** The overview page needed more visual impact, spacing, and contextual help for users unfamiliar with Aleph Cloud terminology.
+**Approach:** Hero stat cards with `text-4xl` numbers in rigid-square italic font, each in its own card with colored status indicators (green/amber/red), status-tinted backgrounds via CSS custom property `--stat-tint` at 7% opacity, and explanatory subtitles. Content cards have larger `text-2xl` titles with `?` info tooltips (DS Tooltip component) and `padding="lg"`. Page has a `text-4xl` title with subtitle, and `mt-12` / `gap-8` spacing between sections. A shared `CardHeader` component provides the title + tooltip pattern for all 4 content cards.
+**Key files:** `src/app/page.tsx`, `src/components/stats-bar.tsx`, `src/components/card-header.tsx`, `src/app/globals.css`
+**Notes:** Stats grid uses `xl` breakpoint for 6 columns (not `lg`) to prevent "UNSCHEDULABLE" label truncation. The `.stat-card::before` pseudo-element reads `--stat-tint` from inline styles for dynamic color tinting. The `.card-glow` utility adds `shadow-brand` on hover.
 
 ### Cross-Page Navigation via URL Search Params
 

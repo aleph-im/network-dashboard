@@ -220,9 +220,9 @@ When adding a new component to `@aleph-front/ds`, follow the "Adding a New Compo
 ### Current Features
 
 - Responsive layout: off-canvas sidebar drawer on mobile, inline on desktop; detail panels as slide-in overlays on mobile, inline on desktop
-- App shell with sidebar navigation (Overview, Nodes, VMs) and header with page title and hamburger menu (mobile)
+- App shell with borderless sidebar and header on darkest background, recessed content panel (`bg-surface`, `rounded-tl-2xl`), hamburger menu (mobile)
 - Dark theme default with light/dark toggle (localStorage persistence)
-- Overview page: stat cards (nodes, VMs, vCPU allocation), node health bar, VM allocation summary, top nodes by VM count card, latest VMs by creation time card (progressive loading from api2.aleph.im)
+- Overview page: hero stat cards (text-4xl numbers, colored status indicators, tinted backgrounds, explanatory subtitles, hover tooltips), node health bar, VM allocation summary, top nodes by VM count card, latest VMs by creation time card (progressive loading from api2.aleph.im), page title with subtitle, `?` info tooltips on all card headers, hover glow on content cards
 - Nodes page: sortable table with status filters (healthy/unreachable/unknown/removed) and "Has VMs" checkbox filter, StatusDot indicators, resource usage bars, side panel with VMs and history, full detail view via `?view=hash` (owner, IPv6, discoveredAt, complete history table)
 - VMs page: sortable table with status filters (scheduled/unscheduled/orphaned/missing/unschedulable/unknown), side panel with observed nodes and history, full detail view via `?view=hash` (allocatedAt, lastObservedAt, paymentType, complete history table)
 - API status page: checks all 7 scheduler endpoints, shows StatusDot health + HTTP codes, recheck button, `?api=` URL override

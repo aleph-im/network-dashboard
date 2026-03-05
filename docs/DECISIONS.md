@@ -18,6 +18,17 @@ Each entry includes:
 
 ---
 
+## Decision #25 - 2026-03-05
+**Context:** Overview page redesign — sidebar/header had straight edges with borders while content cards had rounded corners, creating visual disconnect
+**Decision:** Recessed content panel pattern — sidebar and header use `bg-background` (darkest layer, no borders), main content area uses `bg-surface` with `rounded-tl-2xl`
+**Rationale:** Creates a three-layer visual hierarchy (dark chrome → lighter content panel → cards) without a literal wrapping card. A wrapping card was considered but rejected: double borders, padding stacking on mobile, and loss of individual card identity. The rounded top-left corner where content meets sidebar is enough to create the inset effect.
+**Alternatives considered:** One big card wrapping all content (double borders, padding stacking), keeping borders but rounding sidebar (doesn't match the flat chrome pattern)
+
+## Decision #24 - 2026-03-05
+**Context:** Overview page redesign — content cards initially used the DS `noise` variant (purple radial gradient + SVG grain texture) for depth
+**Decision:** Reverted to default card variant (flat surface + border). Also removed the gradient underline from card headers.
+**Rationale:** The purple background was too dominant and clashed with the dark theme. The gradient underline next to card titles added visual noise without clear purpose. Both were user-rejected during iterative review. Keeping the default variant lets the stat cards (which do have subtle tinted backgrounds) stand out as the hero section.
+
 ## Decision #23 - 2026-03-05
 **Context:** Adding dedicated detail views for nodes and VMs — needed a routing strategy for full-width entity pages
 **Decision:** Use `?view=hash` search params on existing `/nodes` and `/vms` pages instead of dynamic route segments (`/nodes/[hash]`)
