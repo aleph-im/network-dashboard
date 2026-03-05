@@ -58,20 +58,20 @@ export function TopNodesCard() {
   return (
     <Card title="Top Nodes" padding="md" className="flex-1">
       <TooltipProvider>
-        <ol className="space-y-1">
+        <ol className="grid grid-cols-[auto_auto_1fr] gap-x-3">
           {topNodes.map((node, i) => {
             const pct = (node.vmCount / maxCount) * 100;
             return (
-              <li key={node.hash}>
+              <li key={node.hash} className="contents">
                 <Link
                   href={`/nodes?selected=${node.hash}`}
-                  className="group flex items-center gap-3 rounded-md px-2 py-2 transition-colors hover:bg-muted"
+                  className="col-span-full grid min-h-12 grid-cols-subgrid items-center rounded-md border-b border-black/[0.06] px-2 py-1.5 transition-colors last:border-b-0 hover:bg-muted dark:border-white/[0.06]"
                   style={{
                     transitionDuration: "var(--duration-fast)",
                   }}
                 >
                   {/* Rank */}
-                  <span className="w-5 shrink-0 text-right text-xs tabular-nums text-muted-foreground">
+                  <span className="text-right text-xs tabular-nums text-muted-foreground">
                     {i + 1}
                   </span>
 
@@ -82,7 +82,7 @@ export function TopNodesCard() {
                   />
 
                   {/* Name + bar */}
-                  <div className="min-w-0 flex-1">
+                  <div className="min-w-0">
                     <div className="flex items-baseline justify-between gap-2">
                       <Tooltip>
                         <TooltipTrigger asChild>

@@ -13,7 +13,7 @@ import {
 import { Skeleton } from "@aleph-front/ds/ui/skeleton";
 import { useVMs } from "@/hooks/use-vms";
 import { useVMCreationTimes } from "@/hooks/use-vm-creation-times";
-import { truncateHash, relativeTimeFromUnix } from "@/lib/format";
+import { relativeTimeFromUnix } from "@/lib/format";
 import { VM_STATUS_VARIANT } from "@/lib/status-map";
 
 const MAX_ROWS = 15;
@@ -62,14 +62,14 @@ export function LatestVMsCard() {
   return (
     <Card title="Latest VMs" padding="md" className="flex-1">
       <TooltipProvider>
-        <ul className="divide-y divide-black/[0.06] [&>:last-child]:border-b-0 dark:divide-white/[0.06]">
+        <ul className="grid grid-cols-[auto_1fr_auto] gap-x-6">
           {sorted.map((vm) => {
             const createdAt = creationTimes?.get(vm.hash);
             return (
-              <li key={vm.hash}>
+              <li key={vm.hash} className="contents">
                 <Link
                   href={`/vms?selected=${vm.hash}`}
-                  className="flex items-center gap-3 rounded-md px-2 py-2.5 transition-colors hover:bg-muted"
+                  className="col-span-full grid min-h-12 grid-cols-subgrid items-center rounded-md border-b border-black/[0.06] px-2 py-1.5 transition-colors last:border-b-0 hover:bg-muted dark:border-white/[0.06]"
                   style={{
                     transitionDuration: "var(--duration-fast)",
                   }}
@@ -77,21 +77,21 @@ export function LatestVMsCard() {
                   <Badge
                     variant={VM_STATUS_VARIANT[vm.status]}
                     size="sm"
-                    className="w-24 shrink-0 justify-center capitalize"
+                    className="capitalize"
                   >
                     {vm.status}
                   </Badge>
 
                   <Tooltip>
                     <TooltipTrigger asChild>
-                      <span className="min-w-0 flex-1 truncate font-mono text-xs">
-                        {truncateHash(vm.hash)}
+                      <span className="block min-w-0 truncate font-mono text-xs text-muted-foreground">
+                        {vm.hash}
                       </span>
                     </TooltipTrigger>
                     <TooltipContent>{vm.hash}</TooltipContent>
                   </Tooltip>
 
-                  <span className="ml-auto shrink-0 text-xs tabular-nums text-muted-foreground">
+                  <span className="text-xs tabular-nums text-muted-foreground">
                     {createdAt != null ? (
                       relativeTimeFromUnix(createdAt)
                     ) : (

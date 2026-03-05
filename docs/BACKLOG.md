@@ -20,11 +20,6 @@ Ideas and scope creep captured for later consideration.
 **Description:** The API has no `/stats/history` endpoint. Sparklines were removed during migration. Could accumulate stats snapshots client-side in React Query cache (or a simple in-memory ring buffer) to rebuild 24h trend data. Better solution: request a `/stats/history` endpoint from the backend team.
 **Priority:** Medium
 
-### 2026-03-04 - DS StatusDot variants for unreachable/removed
-**Source:** Identified while working on real API migration
-**Description:** The DS `StatusDot` only accepts `"healthy" | "degraded" | "error" | "offline" | "unknown"`. API node statuses include `"unreachable"` and `"removed"` which we map to `"error"` and `"offline"` respectively via `nodeStatusToDot()`. Consider adding native `"unreachable"` and `"removed"` variants to the DS for semantic accuracy.
-**Priority:** Low
-
 ### 2026-03-01 - WebSocket migration
 **Source:** Design doc
 **Description:** Replace polling with WebSocket connections for real-time event streaming. Would reduce latency and server load compared to 10-30s polling intervals.
@@ -65,5 +60,6 @@ Ideas and scope creep captured for later consideration.
 - ✅ 2026-03-04 - Verify real API integration end-to-end — addressed by API status page + v0→v1 switch (all 12 integration tests pass against v1)
 - ✅ 2026-03-04 - Top Nodes card on overview page — implemented with hasVms filter, sort params, checkbox UI, useTransition
 - ✅ 2026-03-04 - Latest VMs card on overview page — progressive loading from scheduler + api2.aleph.im
+- ❌ 2026-03-05 - DS StatusDot variants for unreachable/removed — rejected; the mapping layer (`status-map.ts`) is the right pattern for translating domain statuses to generic DS variants
 
 </details>
