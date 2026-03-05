@@ -29,7 +29,6 @@ export function CardHeader({ title, info }: CardHeaderProps) {
           </TooltipContent>
         </Tooltip>
       </TooltipProvider>
-      <div className="gradient-underline mt-1 ml-auto flex-1" />
     </div>
   );
 }

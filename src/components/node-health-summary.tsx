@@ -42,7 +42,7 @@ export function NodeHealthSummary() {
 
   if (isLoading) {
     return (
-      <Card variant="noise" padding="lg" className="card-glow flex-1">
+      <Card padding="lg" className="card-glow flex-1">
         <CardHeader
           title="Node Health"
           info="Distribution of compute nodes by health status"
@@ -73,7 +73,7 @@ export function NodeHealthSummary() {
   ];
 
   return (
-    <Card variant="noise" padding="lg" className="card-glow flex-1">
+    <Card padding="lg" className="card-glow flex-1">
       <CardHeader
         title="Node Health"
         info="Distribution of compute nodes by health status"

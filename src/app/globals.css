@@ -28,16 +28,6 @@ h1, h2, h3, h4, h5, h6 {
   box-shadow: var(--shadow-brand);
 }
 
-.gradient-underline {
-  background: linear-gradient(
-    90deg,
-    var(--color-primary-400),
-    var(--color-primary-600)
-  );
-  height: 2px;
-  border-radius: 1px;
-}
-
 .stat-card {
   position: relative;
   overflow: hidden;

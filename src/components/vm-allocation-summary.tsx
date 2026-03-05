@@ -20,7 +20,7 @@ export function VMAllocationSummary() {
 
   if (isLoading) {
     return (
-      <Card variant="noise" padding="lg" className="card-glow flex-1">
+      <Card padding="lg" className="card-glow flex-1">
         <CardHeader
           title="VM Allocation"
           info="Breakdown of virtual machines by scheduling status"
@@ -44,7 +44,7 @@ export function VMAllocationSummary() {
   ];
 
   return (
-    <Card variant="noise" padding="lg" className="card-glow flex-1">
+    <Card padding="lg" className="card-glow flex-1">
       <CardHeader
         title="VM Allocation"
         info="Breakdown of virtual machines by scheduling status"

@@ -29,7 +29,7 @@ export function TopNodesCard() {
 
   if (isLoading) {
     return (
-      <Card variant="noise" padding="lg" className="card-glow flex-1">
+      <Card padding="lg" className="card-glow flex-1">
         <CardHeader
           title="Top Nodes"
           info="Nodes ranked by number of VMs currently assigned"
@@ -50,7 +50,7 @@ export function TopNodesCard() {
 
   if (topNodes.length === 0) {
     return (
-      <Card variant="noise" padding="lg" className="card-glow flex-1">
+      <Card padding="lg" className="card-glow flex-1">
         <CardHeader
           title="Top Nodes"
           info="Nodes ranked by number of VMs currently assigned"
@@ -65,7 +65,7 @@ export function TopNodesCard() {
   const maxCount = topNodes[0]?.vmCount ?? 1;
 
   return (
-    <Card variant="noise" padding="lg" className="card-glow flex-1">
+    <Card padding="lg" className="card-glow flex-1">
       <CardHeader
         title="Top Nodes"
         info="Nodes ranked by number of VMs currently assigned"

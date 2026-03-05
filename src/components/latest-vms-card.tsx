@@ -26,7 +26,7 @@ export function LatestVMsCard() {
 
   if (isLoading) {
     return (
-      <Card variant="noise" padding="lg" className="card-glow flex-1">
+      <Card padding="lg" className="card-glow flex-1">
         <CardHeader
           title="Latest VMs"
           info="Most recently created virtual machines across the network"
@@ -44,7 +44,7 @@ export function LatestVMsCard() {
 
   if (allVMs.length === 0) {
     return (
-      <Card variant="noise" padding="lg" className="card-glow flex-1">
+      <Card padding="lg" className="card-glow flex-1">
         <CardHeader
           title="Latest VMs"
           info="Most recently created virtual machines across the network"
@@ -69,7 +69,7 @@ export function LatestVMsCard() {
     .slice(0, MAX_ROWS);
 
   return (
-    <Card variant="noise" padding="lg" className="card-glow flex-1">
+    <Card padding="lg" className="card-glow flex-1">
       <CardHeader
         title="Latest VMs"
         info="Most recently created virtual machines across the network"
