@@ -30,7 +30,7 @@ export function NodeDetailPanel({ hash, onClose }: NodeDetailPanelProps) {
 
   if (isLoading) {
     return (
-      <Card padding="md" className="w-full lg:w-96 space-y-3">
+      <Card padding="md" variant="ghost" className="w-full lg:w-96 space-y-3 rounded-xl border border-white/[0.06] bg-white/[0.03]">
         <Skeleton className="h-6 w-48" />
         <Skeleton className="h-4 w-full" />
         <Skeleton className="h-4 w-full" />
@@ -42,7 +42,7 @@ export function NodeDetailPanel({ hash, onClose }: NodeDetailPanelProps) {
   if (!node) return null;
 
   return (
-    <Card padding="md" className="w-full lg:w-96">
+    <Card padding="md" variant="ghost" className="w-full rounded-xl border border-white/[0.06] bg-white/[0.03] lg:sticky lg:top-0 lg:w-96">
       <div className="mb-4 flex items-start justify-between">
         <div className="flex items-center gap-2">
           <StatusDot status={nodeStatusToDot(node.status)} />
@@ -136,7 +136,7 @@ export function NodeDetailPanel({ hash, onClose }: NodeDetailPanelProps) {
             VMs ({node.vms.length})
           </h4>
           <ul className="space-y-1">
-            {node.vms.map((vm) => (
+            {node.vms.slice(0, 6).map((vm) => (
               <li
                 key={vm.hash}
                 className="flex items-center justify-between text-sm"
@@ -156,6 +156,11 @@ export function NodeDetailPanel({ hash, onClose }: NodeDetailPanelProps) {
               </li>
             ))}
           </ul>
+          {node.vms.length > 6 && (
+            <p className="mt-1.5 text-xs text-muted-foreground">
+              +{node.vms.length - 6} more
+            </p>
+          )}
         </div>
       )}
 
@@ -165,7 +170,7 @@ export function NodeDetailPanel({ hash, onClose }: NodeDetailPanelProps) {
             History
           </h4>
           <ul className="space-y-1">
-            {node.history.slice(0, 10).map((row) => (
+            {node.history.slice(0, 5).map((row) => (
               <li
                 key={row.id}
                 className="flex items-center justify-between text-sm"
@@ -180,6 +185,11 @@ export function NodeDetailPanel({ hash, onClose }: NodeDetailPanelProps) {
               </li>
             ))}
           </ul>
+          {node.history.length > 5 && (
+            <p className="mt-1.5 text-xs text-muted-foreground">
+              +{node.history.length - 5} more
+            </p>
+          )}
         </div>
       )}
 

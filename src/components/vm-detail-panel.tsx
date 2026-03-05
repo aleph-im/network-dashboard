@@ -24,7 +24,7 @@ export function VMDetailPanel({ hash, onClose }: VMDetailPanelProps) {
 
   if (isLoading) {
     return (
-      <Card padding="md" className="w-full lg:w-96 space-y-3">
+      <Card padding="md" variant="ghost" className="w-full lg:w-96 space-y-3 rounded-xl border border-white/[0.06] bg-white/[0.03]">
         <Skeleton className="h-6 w-48" />
         <Skeleton className="h-4 w-full" />
         <Skeleton className="h-4 w-full" />
@@ -36,7 +36,7 @@ export function VMDetailPanel({ hash, onClose }: VMDetailPanelProps) {
   if (!vm) return null;
 
   return (
-    <Card padding="md" className="w-full lg:w-96">
+    <Card padding="md" variant="ghost" className="w-full rounded-xl border border-white/[0.06] bg-white/[0.03] lg:sticky lg:top-0 lg:w-96">
       <div className="mb-4 flex items-start justify-between">
         <h3 className="text-sm font-bold font-mono">
           {truncateHash(vm.hash, 12)}
@@ -122,7 +122,7 @@ export function VMDetailPanel({ hash, onClose }: VMDetailPanelProps) {
             Observed Nodes ({vm.observedNodes.length})
           </h4>
           <ul className="space-y-1">
-            {vm.observedNodes.map((nodeHash) => (
+            {vm.observedNodes.slice(0, 6).map((nodeHash) => (
               <li key={nodeHash}>
                 <Link
                   href={`/nodes?view=${nodeHash}`}
@@ -136,6 +136,11 @@ export function VMDetailPanel({ hash, onClose }: VMDetailPanelProps) {
               </li>
             ))}
           </ul>
+          {vm.observedNodes.length > 6 && (
+            <p className="mt-1.5 text-xs text-muted-foreground">
+              +{vm.observedNodes.length - 6} more
+            </p>
+          )}
         </div>
       )}
 
@@ -175,7 +180,7 @@ export function VMDetailPanel({ hash, onClose }: VMDetailPanelProps) {
             History
           </h4>
           <ul className="space-y-1">
-            {vm.history.slice(0, 10).map((row) => (
+            {vm.history.slice(0, 5).map((row) => (
               <li
                 key={row.id}
                 className="flex items-center justify-between text-sm"
@@ -190,6 +195,11 @@ export function VMDetailPanel({ hash, onClose }: VMDetailPanelProps) {
               </li>
             ))}
           </ul>
+          {vm.history.length > 5 && (
+            <p className="mt-1.5 text-xs text-muted-foreground">
+              +{vm.history.length - 5} more
+            </p>
+          )}
         </div>
       )}
 

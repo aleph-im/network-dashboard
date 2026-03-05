@@ -95,7 +95,7 @@ export function AppSidebar({ open, onClose }: AppSidebarProps) {
       <aside
         className={`
           fixed inset-y-0 left-0 z-50 flex w-64 flex-col
-          bg-background
+          bg-muted/40 dark:bg-background
           transition-transform duration-200 ease-out
           ${open ? "translate-x-0" : "-translate-x-full"}
           md:static md:z-auto md:translate-x-0 md:transition-none
@@ -165,11 +165,6 @@ export function AppSidebar({ open, onClose }: AppSidebarProps) {
           </Link>
         </div>
 
-        <div className="px-5 py-3">
-          <p className="text-xs text-muted-foreground">
-            Scheduler Dashboard
-          </p>
-        </div>
       </aside>
     </>
   );
