@@ -110,6 +110,9 @@ function transformNode(raw: ApiNodeRow): Node {
     resources: transformNodeResources(raw),
     vmCount: raw.vm_count,
     updatedAt: raw.updated_at,
+    owner: raw.owner,
+    supportsIpv6: raw.supports_ipv6,
+    discoveredAt: raw.discovered_at,
   };
 }
 
@@ -127,6 +130,9 @@ function transformVm(raw: ApiVmRow): VM {
     },
     paymentStatus: raw.payment_status,
     updatedAt: raw.updated_at,
+    allocatedAt: raw.allocated_at,
+    lastObservedAt: raw.last_observed_at,
+    paymentType: raw.payment_type,
   };
 }
 

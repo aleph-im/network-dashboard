@@ -27,6 +27,9 @@ export type Node = {
   resources: NodeResources | null;
   vmCount: number;
   updatedAt: string;
+  owner: string | null;
+  supportsIpv6: boolean | null;
+  discoveredAt: string | null;
 };
 
 export type NodeDetail = Node & {
@@ -66,6 +69,9 @@ export type VM = {
   requirements: VmRequirements;
   paymentStatus: "validated" | "invalidated" | null;
   updatedAt: string;
+  allocatedAt: string | null;
+  lastObservedAt: string | null;
+  paymentType: string | null;
 };
 
 export type VmDetail = VM & {
