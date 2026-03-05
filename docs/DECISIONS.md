@@ -18,6 +18,11 @@ Each entry includes:
 
 ---
 
+## Decision #22 - 2026-03-05
+**Context:** The mock data layer (`NEXT_PUBLIC_USE_MOCKS`, `mock.ts`, `useMocks()` guards) was no longer in use — real API integration has been stable since Decision #14
+**Decision:** Remove the entire mock data system: `mock.ts`, `mock.test.ts`, `useMocks()` function, all 6 mock guards in `client.ts`, and the `NEXT_PUBLIC_USE_MOCKS` env var
+**Rationale:** Dead code adds maintenance burden and misleads both developers and LLMs. The mock layer was a scaffolding tool for early development — with real API integration proven and the API status page providing diagnostics, there's no remaining use case. The `.env.example` defaulting to mocks was actively misleading for new clones.
+
 ## Decision #21 - 2026-03-04
 **Context:** Global git hook blocks `git push origin main`, conflicting with the local squash merge + push workflow
 **Decision:** Switch to `gh pr merge --squash` for all feature completions — never push directly to main
@@ -129,7 +134,7 @@ Each entry includes:
 ## Decision #2 - 2026-03-01
 **Context:** How to fetch data in a static-exported app
 **Decision:** React Query with `refetchInterval` polling over server components
-**Rationale:** `output: "export"` disables server components with data fetching. React Query provides caching, deduplication, and automatic polling. Mock data layer swappable via env flag for development without a live API.
+**Rationale:** `output: "export"` disables server components with data fetching. React Query provides caching, deduplication, and automatic polling.
 **Alternatives considered:** Server components (incompatible with static export), SWR (less feature-rich), manual fetch+useState (no caching/deduplication).
 
 ## Decision #1 - 2026-03-01

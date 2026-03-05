@@ -33,9 +33,7 @@ src/
 │       └── page.tsx        # VMs page
 ├── api/
 │   ├── types.ts            # Scheduler entity types + Aleph Message API types
-│   ├── client.ts           # API client (/api/v1 + api2.aleph.im) with mock fallback + snake→camel transform
-│   ├── mock.ts              # Deterministic mock data (15 nodes, 43 VMs, 40 history rows)
-│   └── mock.test.ts         # Mock data integrity tests
+│   └── client.ts           # API client (/api/v1 + api2.aleph.im) with snake→camel transform
 ├── hooks/
 │   ├── use-nodes.ts        # useNodes, useNode (30s/15s polling)
 │   ├── use-vms.ts          # useVMs, useVM (30s/15s polling)
@@ -65,12 +63,12 @@ src/
 
 ## Patterns
 
-### API Client with Mock Fallback
+### API Client
 
-**Context:** Dashboard must work without a live API (static export on IPFS).
-**Approach:** Each API function checks `NEXT_PUBLIC_USE_MOCKS` env var. If true, dynamically imports mock data. If false, fetches from `NEXT_PUBLIC_API_URL` (default: `http://localhost:8081`). Runtime URL override via `?api=` query parameter. API endpoints are prefixed with `/api/v1`. Wire types (`Api*Row`) use snake_case matching the raw JSON; transform functions convert to camelCase app types. Detail endpoints (`getNode`, `getVM`) use `Promise.all` for parallel fetching of the resource + related VMs/history.
-**Key files:** `src/api/types.ts` (wire + app types), `src/api/client.ts`, `src/api/mock.ts`
-**Notes:** Dynamic imports keep mock data tree-shakeable in production builds. The `getOverviewStats` function fetches `/stats` + `/vms` + `/nodes` in parallel to derive per-status counts not available from `/stats` alone.
+**Context:** Dashboard fetches live data from the scheduler API.
+**Approach:** Fetches from `NEXT_PUBLIC_API_URL` (default: `http://localhost:8081`). Runtime URL override via `?api=` query parameter. API endpoints are prefixed with `/api/v1`. Wire types (`Api*Row`) use snake_case matching the raw JSON; transform functions convert to camelCase app types. Detail endpoints (`getNode`, `getVM`) use `Promise.all` for parallel fetching of the resource + related VMs/history.
+**Key files:** `src/api/types.ts` (wire + app types), `src/api/client.ts`
+**Notes:** The `getOverviewStats` function fetches `/stats` + `/vms` + `/nodes` in parallel to derive per-status counts not available from `/stats` alone.
 
 ### Progressive Loading from Multiple APIs
 
@@ -153,6 +151,5 @@ src/
 ### Adding a New API Endpoint
 
 1. Add types to `src/api/types.ts`
-2. Add mock data to `src/api/mock.ts`
-3. Add client function to `src/api/client.ts` (with mock fallback)
-4. Create hook in `src/hooks/` with appropriate `refetchInterval`
+2. Add client function to `src/api/client.ts`
+3. Create hook in `src/hooks/` with appropriate `refetchInterval`

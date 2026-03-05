@@ -27,10 +27,6 @@ function getBaseUrl(): string {
   );
 }
 
-function useMocks(): boolean {
-  return process.env["NEXT_PUBLIC_USE_MOCKS"] === "true";
-}
-
 async function fetchApi<T>(path: string): Promise<T> {
   const res = await fetch(`${getBaseUrl()}${path}`);
   if (!res.ok) {
@@ -166,10 +162,6 @@ function applyNodeFilters(
 export async function getNodes(
   filters?: NodeFilters,
 ): Promise<Node[]> {
-  if (useMocks()) {
-    const { mockNodes } = await import("@/api/mock");
-    return applyNodeFilters(mockNodes, filters);
-  }
   const data = await fetchApi<ApiNodeRow[] | { nodes: ApiNodeRow[] }>(
     "/api/v1/nodes",
   );
@@ -181,10 +173,6 @@ export async function getNodes(
 export async function getNode(
   hash: string,
 ): Promise<NodeDetail> {
-  if (useMocks()) {
-    const { getMockNodeDetail } = await import("@/api/mock");
-    return getMockNodeDetail(hash);
-  }
   const [rawNode, rawVms, rawHistory] = await Promise.all([
     fetchApi<ApiNodeRow>(`/api/v1/nodes/${hash}`),
     fetchApi<ApiVmRow[] | { vms: ApiVmRow[] }>(
@@ -202,14 +190,6 @@ export async function getNode(
 }
 
 export async function getVMs(filters?: VmFilters): Promise<VM[]> {
-  if (useMocks()) {
-    const { mockVMs } = await import("@/api/mock");
-    const vms = mockVMs;
-    if (filters?.status) {
-      return vms.filter((v) => v.status === filters.status);
-    }
-    return vms;
-  }
   const params = new URLSearchParams();
   if (filters?.status) params.set("status", filters.status);
   if (filters?.node) params.set("node", filters.node);
@@ -221,10 +201,6 @@ export async function getVMs(filters?: VmFilters): Promise<VM[]> {
 }
 
 export async function getVM(hash: string): Promise<VmDetail> {
-  if (useMocks()) {
-    const { getMockVMDetail } = await import("@/api/mock");
-    return getMockVMDetail(hash);
-  }
   const [rawVm, rawHistory] = await Promise.all([
     fetchApi<ApiVmRow>(`/api/v1/vms/${hash}`),
     fetchApi<ApiHistoryRow[] | { history: ApiHistoryRow[] }>(
@@ -238,10 +214,6 @@ export async function getVM(hash: string): Promise<VmDetail> {
 }
 
 export async function getOverviewStats(): Promise<OverviewStats> {
-  if (useMocks()) {
-    const { mockOverviewStats } = await import("@/api/mock");
-    return mockOverviewStats;
-  }
   const [stats, rawVms, rawNodes] = await Promise.all([
     fetchApi<ApiStats>("/api/v1/stats"),
     fetchApi<ApiVmRow[] | { vms: ApiVmRow[] }>("/api/v1/vms"),
@@ -304,10 +276,6 @@ export async function getMessagesByHashes(
   hashes: string[],
 ): Promise<Map<string, number>> {
   if (hashes.length === 0) return new Map();
-  if (useMocks()) {
-    const { mockVMCreationTimes } = await import("@/api/mock");
-    return mockVMCreationTimes;
-  }
   const batches: string[][] = [];
   for (let i = 0; i < hashes.length; i += HASHES_PER_BATCH) {
     batches.push(hashes.slice(i, i + HASHES_PER_BATCH));

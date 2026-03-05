@@ -60,7 +60,8 @@ Ideas and scope creep captured for later consideration.
 - ✅ 2026-03-02 - Align DS color tokens with Tailwind conventions — resolved by Decision #11 (dashboard uses `--color-error-*` tokens directly)
 - ✅ 2026-03-03 - IPFS page refresh: add trailingSlash — fixed by adding `trailingSlash: true` to `next.config.ts`
 - ✅ 2026-03-04 - DS npm publishing — migrated from `file:` link to npm `0.0.3`
-- ✅ 2026-03-04 - Real API integration — full type rewrite, client with `/api/v0` prefix, snake→camel transform layer, mock fallback preserved
+- ✅ 2026-03-04 - Real API integration — full type rewrite, client with `/api/v1` prefix, snake→camel transform layer
+- ✅ 2026-03-05 - Remove mock data layer — mock.ts, mock.test.ts, useMocks() guards, NEXT_PUBLIC_USE_MOCKS env var
 - ✅ 2026-03-04 - Verify real API integration end-to-end — addressed by API status page + v0→v1 switch (all 12 integration tests pass against v1)
 - ✅ 2026-03-04 - Top Nodes card on overview page — implemented with hasVms filter, sort params, checkbox UI, useTransition
 - ✅ 2026-03-04 - Latest VMs card on overview page — progressive loading from scheduler + api2.aleph.im

@@ -196,7 +196,7 @@ pnpm check        # lint + typecheck + test
 ```
 src/
 ├── app/           # Next.js App Router pages
-├── api/           # API client, types, mock data
+├── api/           # API client and types
 ├── hooks/         # React Query hooks
 └── components/    # Dashboard-specific compositions
 ```
@@ -226,7 +226,7 @@ When adding a new component to `@aleph-front/ds`, follow the "Adding a New Compo
 - Nodes page: sortable table with status filters (healthy/unreachable/unknown/removed) and "Has VMs" checkbox filter, StatusDot indicators, resource usage bars, detail panel with VMs and history
 - VMs page: sortable table with status filters (scheduled/unscheduled/orphaned/missing/unschedulable/unknown), detail panel with observed nodes and history
 - API status page: checks all 7 scheduler endpoints, shows StatusDot health + HTTP codes, recheck button, `?api=` URL override
-- API client (`/api/v1`) with snake→camel transform layer and mock data fallback (`NEXT_PUBLIC_USE_MOCKS=true`)
+- API client (`/api/v1`) with snake→camel transform layer
 - React Query hooks with automatic polling (15-30s intervals)
 - Cross-page navigation via URL search params (`?status=`, `?selected=`, `?hasVms=`, `?sort=`, `?order=`): overview cards link to filtered list pages, detail panels cross-link between nodes and VMs, selected row highlighted with left border accent
 - Static export for IPFS deployment
