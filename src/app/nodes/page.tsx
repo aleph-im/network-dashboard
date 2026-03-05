@@ -5,6 +5,7 @@ import { useSearchParams } from "next/navigation";
 import { useState } from "react";
 import { NodeTable } from "@/components/node-table";
 import { NodeDetailPanel } from "@/components/node-detail-panel";
+import { NodeDetailView } from "@/components/node-detail-view";
 import type { NodeStatus } from "@/api/types";
 
 const VALID_NODE_STATUSES = new Set<string>([
@@ -16,6 +17,11 @@ const VALID_NODE_STATUSES = new Set<string>([
 
 function NodesContent() {
   const searchParams = useSearchParams();
+  const viewHash = searchParams.get("view");
+
+  if (viewHash) {
+    return <NodeDetailView hash={viewHash} />;
+  }
 
   const statusParam = searchParams.get("status");
   const initialStatus =

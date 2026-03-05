@@ -5,6 +5,7 @@ import { useSearchParams } from "next/navigation";
 import { useState } from "react";
 import { VMTable } from "@/components/vm-table";
 import { VMDetailPanel } from "@/components/vm-detail-panel";
+import { VMDetailView } from "@/components/vm-detail-view";
 import type { VmStatus } from "@/api/types";
 
 const VALID_VM_STATUSES = new Set<string>([
@@ -18,6 +19,11 @@ const VALID_VM_STATUSES = new Set<string>([
 
 function VMsContent() {
   const searchParams = useSearchParams();
+  const viewHash = searchParams.get("view");
+
+  if (viewHash) {
+    return <VMDetailView hash={viewHash} />;
+  }
 
   const statusParam = searchParams.get("status");
   const initialStatus =
