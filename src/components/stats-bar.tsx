@@ -31,7 +31,7 @@ function Stat({
       <Tooltip>
         <TooltipTrigger asChild>
           <div
-            className="stat-card border border-edge bg-surface p-6"
+            className="stat-card border border-white/[0.06] bg-white/[0.03] p-6"
             style={{
               "--stat-tint": tint ?? "transparent",
             } as React.CSSProperties}
