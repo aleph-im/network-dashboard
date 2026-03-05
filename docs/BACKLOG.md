@@ -60,6 +60,7 @@ Ideas and scope creep captured for later consideration.
 - ✅ 2026-03-04 - Verify real API integration end-to-end — addressed by API status page + v0→v1 switch (all 12 integration tests pass against v1)
 - ✅ 2026-03-04 - Top Nodes card on overview page — implemented with hasVms filter, sort params, checkbox UI, useTransition
 - ✅ 2026-03-04 - Latest VMs card on overview page — progressive loading from scheduler + api2.aleph.im
+- ✅ 2026-03-05 - Dedicated detail views for nodes and VMs — full-width views via `?view=hash`, complete history tables, new API fields (owner, IPv6, discoveredAt, allocatedAt, etc.)
 - ❌ 2026-03-05 - DS StatusDot variants for unreachable/removed — rejected; the mapping layer (`status-map.ts`) is the right pattern for translating domain statuses to generic DS variants
 
 </details>

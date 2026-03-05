@@ -18,6 +18,12 @@ Each entry includes:
 
 ---
 
+## Decision #23 - 2026-03-05
+**Context:** Adding dedicated detail views for nodes and VMs — needed a routing strategy for full-width entity pages
+**Decision:** Use `?view=hash` search params on existing `/nodes` and `/vms` pages instead of dynamic route segments (`/nodes/[hash]`)
+**Rationale:** IPFS static export can't resolve arbitrary dynamic paths — `next build` would need to know every possible hash at build time. Search params work because the pages are already statically exported, and the `?view=` param is read client-side. This also keeps the URL structure flat and avoids Next.js dynamic route complexity.
+**Alternatives considered:** Dynamic routes with `generateStaticParams` (impossible — hashes aren't known at build time), hash-based routing (breaks clean URLs), separate `/node-detail` page (unnecessary — same page, different view)
+
 ## Decision #22 - 2026-03-05
 **Context:** The mock data layer (`NEXT_PUBLIC_USE_MOCKS`, `mock.ts`, `useMocks()` guards) was no longer in use — real API integration has been stable since Decision #14
 **Decision:** Remove the entire mock data system: `mock.ts`, `mock.test.ts`, `useMocks()` function, all 6 mock guards in `client.ts`, and the `NEXT_PUBLIC_USE_MOCKS` env var

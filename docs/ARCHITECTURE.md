@@ -50,12 +50,14 @@ src/
 │   ├── top-nodes-card.tsx   # Top nodes by VM count card
 │   ├── latest-vms-card.tsx  # Latest VMs by creation time (progressive loading from api2)
 │   ├── node-table.tsx      # Nodes table with status filters
-│   ├── node-detail-panel.tsx # Node detail side panel
+│   ├── node-detail-panel.tsx # Node detail side panel (quick-peek)
+│   ├── node-detail-view.tsx # Node full-width detail view (?view= param)
 │   ├── vm-table.tsx        # VMs table with status filters
-│   ├── vm-detail-panel.tsx # VM detail side panel
+│   ├── vm-detail-panel.tsx # VM detail side panel (quick-peek)
+│   ├── vm-detail-view.tsx  # VM full-width detail view (?view= param)
 │   └── resource-bar.tsx    # CPU/memory/disk usage bar
 └── lib/
-    ├── format.ts           # relativeTime, relativeTimeFromUnix, truncateHash, formatPercent
+    ├── format.ts           # relativeTime, relativeTimeFromUnix, truncateHash, formatPercent, formatDateTime
     └── status-map.ts       # Status-to-visual maps: nodeStatusToDot(), NODE_STATUS_VARIANT, VM_STATUS_VARIANT
 ```
 
@@ -113,9 +115,16 @@ src/
 ### Cross-Page Navigation via URL Search Params
 
 **Context:** Users need to drill from overview cards to filtered list pages, and between node/VM detail panels.
-**Approach:** URL search params (`?status=`, `?selected=`, `?hasVms=`, `?sort=`, `?order=`) are the cross-page communication mechanism. Pages read params on mount via `useSearchParams()` to initialize local state (read-once, no write-back). Overview cards use `<Link>` to navigate with status filters. Detail panels use `<Link>` for cross-entity references. Requires `<Suspense>` boundary in static exports since search params aren't known at build time.
+**Approach:** URL search params (`?status=`, `?selected=`, `?hasVms=`, `?sort=`, `?order=`, `?view=`) are the cross-page communication mechanism. Pages read params on mount via `useSearchParams()` to initialize local state (read-once, no write-back). Overview cards use `<Link>` to navigate with status filters. Detail panels use `<Link>` for cross-entity references. Requires `<Suspense>` boundary in static exports since search params aren't known at build time.
 **Key files:** `src/app/nodes/page.tsx`, `src/app/vms/page.tsx`, `src/components/node-health-summary.tsx`, `src/components/vm-allocation-summary.tsx`, `src/components/node-detail-panel.tsx`, `src/components/vm-detail-panel.tsx`
 **Notes:** Tables accept `initialStatus`, `initialHasVms`, and `initialSort` props to seed filter/sort state from URL params. Validation via `Set.has()` prevents invalid status values from breaking the UI. DS Table `activeKey` prop highlights the selected row with a left border accent (`inset box-shadow`); the same accent appears on hover for all clickable rows. The DS Table has no initial sort API — pre-sort data before passing it to `<Table>`.
+
+### Detail Views (Full-Width)
+
+**Context:** Side panels show truncated data (10 history rows, no owner/IPv6/payment fields). Users need a full view with all metadata and complete history.
+**Approach:** Search-param-based view switching. When `?view=hash` is present on `/nodes` or `/vms`, the page renders a `NodeDetailView` or `VMDetailView` instead of the table+panel layout. Side panels remain as quick-peek with a "View full details →" link. The `AppHeader` reads `?view=` to show entity-specific titles (e.g. "Node: abc12..."). Cross-links between detail views use `?view=` (not `?selected=`).
+**Key files:** `src/components/node-detail-view.tsx`, `src/components/vm-detail-view.tsx`, `src/app/nodes/page.tsx`, `src/app/vms/page.tsx`, `src/components/app-header.tsx`
+**Notes:** Uses search params instead of dynamic route segments (`/nodes/[hash]`) because IPFS static export can't resolve arbitrary dynamic paths. The `AppHeader` wraps `useSearchParams()` in a `<Suspense>` boundary to avoid hydration issues. New API fields surfaced: `owner`, `supportsIpv6`, `discoveredAt` (nodes), `allocatedAt`, `lastObservedAt`, `paymentType` (VMs).
 
 ### Client-Side Filtering Performance
 
