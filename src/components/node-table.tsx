@@ -11,6 +11,8 @@ import {
 } from "@aleph-front/ds/tooltip";
 import { Checkbox } from "@aleph-front/ds/checkbox";
 import { Badge } from "@aleph-front/ds/badge";
+import { Button } from "@aleph-front/ds/button";
+import { Input } from "@aleph-front/ds/input";
 import { Skeleton } from "@aleph-front/ds/ui/skeleton";
 import { useNodes } from "@/hooks/use-nodes";
 import { useDebounce } from "@/hooks/use-debounce";
@@ -257,7 +259,7 @@ export function NodeTable({
       <div className="mb-3 flex items-center gap-2">
         <div className="relative flex-1">
           <svg
-            className="absolute left-2.5 top-1/2 h-4 w-4 -translate-y-1/2 text-muted-foreground"
+            className="pointer-events-none absolute left-4 top-1/2 h-4 w-4 -translate-y-1/2 text-muted-foreground"
             xmlns="http://www.w3.org/2000/svg"
             viewBox="0 0 24 24"
             fill="none"
@@ -269,18 +271,18 @@ export function NodeTable({
             <circle cx="11" cy="11" r="8" />
             <path d="m21 21-4.3-4.3" />
           </svg>
-          <input
-            type="text"
+          <Input
+            size="sm"
             value={searchInput}
             onChange={(e) => setSearchInput(e.target.value)}
             placeholder="Search hash, owner, name..."
-            className="h-8 w-full rounded-md border border-border bg-background pl-9 pr-8 text-sm placeholder:text-muted-foreground focus:outline-none focus:ring-1 focus:ring-primary-500"
+            className="pl-10 pr-9"
           />
           {searchInput && (
             <button
               type="button"
               onClick={() => setSearchInput("")}
-              className="absolute right-2 top-1/2 -translate-y-1/2 text-muted-foreground hover:text-foreground"
+              className="absolute right-3 top-1/2 -translate-y-1/2 text-muted-foreground hover:text-foreground"
             >
               <svg
                 className="h-4 w-4"
@@ -294,20 +296,17 @@ export function NodeTable({
             </button>
           )}
         </div>
-        <button
-          type="button"
+        <Button
+          variant="text"
+          size="xs"
           onClick={() => setFiltersOpen((v) => !v)}
-          className={`relative flex h-8 items-center gap-1.5 rounded-md border px-3 text-xs font-medium transition-colors ${
-            filtersOpen
-              ? "border-primary-500 bg-primary-600/10 text-primary-500"
-              : "border-border text-muted-foreground hover:text-foreground hover:bg-muted"
-          }`}
+          className="relative"
         >
           Filters
           {hasActiveAdvanced && !filtersOpen && (
             <span className="absolute -right-1 -top-1 h-2 w-2 rounded-full bg-primary-500" />
           )}
-        </button>
+        </Button>
       </div>
 
       {/* Status pills */}
@@ -385,7 +384,8 @@ export function NodeTable({
 
           <div className="flex items-center gap-1.5 text-xs text-muted-foreground">
             <span>CPU &ge;</span>
-            <input
+            <Input
+              size="sm"
               type="number"
               min={0}
               max={100}
@@ -398,13 +398,14 @@ export function NodeTable({
                     : rest;
                 })
               }
-              className="h-7 w-16 rounded border border-border bg-background px-2 text-xs tabular-nums focus:outline-none focus:ring-1 focus:ring-primary-500"
+              className="w-18 tabular-nums"
               placeholder="%"
             />
           </div>
           <div className="flex items-center gap-1.5 text-xs text-muted-foreground">
             <span>Mem &ge;</span>
-            <input
+            <Input
+              size="sm"
               type="number"
               min={0}
               max={100}
@@ -417,13 +418,14 @@ export function NodeTable({
                     : rest;
                 })
               }
-              className="h-7 w-16 rounded border border-border bg-background px-2 text-xs tabular-nums focus:outline-none focus:ring-1 focus:ring-primary-500"
+              className="w-18 tabular-nums"
               placeholder="%"
             />
           </div>
           <div className="flex items-center gap-1.5 text-xs text-muted-foreground">
             <span>Disk &ge;</span>
-            <input
+            <Input
+              size="sm"
               type="number"
               min={0}
               max={100}
@@ -436,19 +438,20 @@ export function NodeTable({
                     : rest;
                 })
               }
-              className="h-7 w-16 rounded border border-border bg-background px-2 text-xs tabular-nums focus:outline-none focus:ring-1 focus:ring-primary-500"
+              className="w-18 tabular-nums"
               placeholder="%"
             />
           </div>
 
           {hasActiveAdvanced && (
-            <button
-              type="button"
+            <Button
+              variant="text"
+              size="xs"
               onClick={clearAdvanced}
-              className="ml-auto text-xs text-muted-foreground hover:text-foreground"
+              className="ml-auto"
             >
               Clear all
-            </button>
+            </Button>
           )}
         </div>
       </CollapsibleSection>
