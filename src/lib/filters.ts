@@ -26,20 +26,26 @@ export function countByStatus<T>(
   return counts;
 }
 
-/** Check if a range filter is active (not spanning the full 0–100). */
-export function isRangeActive(range: [number, number]): boolean {
-  return range[0] > 0 || range[1] < 100;
+/** Check if a range filter is active (not spanning the full extent). */
+export function isRangeActive(
+  range: [number, number],
+  max = 100,
+): boolean {
+  return range[0] > 0 || range[1] < max;
 }
 
 // --- Node advanced filters ---
 
+export const NODE_VM_COUNT_MAX = 100;
+export const NODE_VCPUS_MAX = 128;
+export const NODE_MEMORY_GB_MAX = 512;
+
 export type NodeAdvancedFilters = {
-  hasVms?: boolean;
   staked?: boolean;
   supportsIpv6?: boolean;
-  cpuRange?: [number, number];
-  memoryRange?: [number, number];
-  diskRange?: [number, number];
+  vmCountRange?: [number, number];
+  vcpusTotalRange?: [number, number];
+  memoryTotalGbRange?: [number, number];
 };
 
 export function applyNodeAdvancedFilters(
@@ -47,34 +53,39 @@ export function applyNodeAdvancedFilters(
   filters: NodeAdvancedFilters,
 ): Node[] {
   let result = nodes;
-  if (filters.hasVms) {
-    result = result.filter((n) => n.vmCount > 0);
-  }
   if (filters.staked) {
     result = result.filter((n) => n.staked);
   }
   if (filters.supportsIpv6) {
     result = result.filter((n) => n.supportsIpv6 === true);
   }
-  if (filters.cpuRange && isRangeActive(filters.cpuRange)) {
-    const [min, max] = filters.cpuRange;
+  if (
+    filters.vmCountRange &&
+    isRangeActive(filters.vmCountRange, NODE_VM_COUNT_MAX)
+  ) {
+    const [min, max] = filters.vmCountRange;
+    result = result.filter(
+      (n) => n.vmCount >= min && n.vmCount <= max,
+    );
+  }
+  if (
+    filters.vcpusTotalRange &&
+    isRangeActive(filters.vcpusTotalRange, NODE_VCPUS_MAX)
+  ) {
+    const [min, max] = filters.vcpusTotalRange;
     result = result.filter((n) => {
-      const v = n.resources?.cpuUsagePct ?? 0;
+      const v = n.resources?.vcpusTotal ?? 0;
       return v >= min && v <= max;
     });
   }
-  if (filters.memoryRange && isRangeActive(filters.memoryRange)) {
-    const [min, max] = filters.memoryRange;
+  if (
+    filters.memoryTotalGbRange &&
+    isRangeActive(filters.memoryTotalGbRange, NODE_MEMORY_GB_MAX)
+  ) {
+    const [min, max] = filters.memoryTotalGbRange;
     result = result.filter((n) => {
-      const v = n.resources?.memoryUsagePct ?? 0;
-      return v >= min && v <= max;
-    });
-  }
-  if (filters.diskRange && isRangeActive(filters.diskRange)) {
-    const [min, max] = filters.diskRange;
-    result = result.filter((n) => {
-      const v = n.resources?.diskUsagePct ?? 0;
-      return v >= min && v <= max;
+      const gb = (n.resources?.memoryTotalMb ?? 0) / 1024;
+      return gb >= min && gb <= max;
     });
   }
   return result;
@@ -94,20 +105,30 @@ export const VM_VCPUS_MAX = 32;
 export const VM_MEMORY_MB_MAX = 65536;
 
 const ALL_VM_TYPES: Set<VmType> = new Set([
-  "MicroVm",
-  "PersistentProgram",
-  "Instance",
+  "microvm",
+  "persistent_program",
+  "instance",
 ]);
+
+const ALL_PAYMENT_STATUSES = new Set(["validated", "invalidated"]);
 
 export function applyVmAdvancedFilters(
   vms: VM[],
   filters: VmAdvancedFilters,
 ): VM[] {
   let result = vms;
-  if (filters.vmTypes && filters.vmTypes.size < ALL_VM_TYPES.size) {
+  if (
+    filters.vmTypes &&
+    filters.vmTypes.size > 0 &&
+    filters.vmTypes.size < ALL_VM_TYPES.size
+  ) {
     result = result.filter((v) => filters.vmTypes!.has(v.type));
   }
-  if (filters.paymentStatuses) {
+  if (
+    filters.paymentStatuses &&
+    filters.paymentStatuses.size > 0 &&
+    filters.paymentStatuses.size < ALL_PAYMENT_STATUSES.size
+  ) {
     result = result.filter(
       (v) =>
         v.paymentStatus != null &&

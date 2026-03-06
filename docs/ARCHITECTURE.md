@@ -38,7 +38,8 @@ src/
 │   ├── use-nodes.ts        # useNodes, useNode (30s/15s polling)
 │   ├── use-vms.ts          # useVMs, useVM (30s/15s polling)
 │   ├── use-vm-creation-times.ts  # useVMCreationTimes (api2, 5min stale, no polling)
-│   └── use-overview-stats.ts  # useOverviewStats (30s polling)
+│   ├── use-overview-stats.ts  # useOverviewStats (30s polling)
+│   └── use-debounce.ts     # useDebounce hook (generic, configurable delay)
 ├── components/
 │   ├── app-shell.tsx       # Layout: sidebar + header + content
 │   ├── app-sidebar.tsx     # Navigation sidebar
@@ -50,16 +51,19 @@ src/
 │   ├── top-nodes-card.tsx   # Top nodes by VM count card
 │   ├── latest-vms-card.tsx  # Latest VMs by creation time (progressive loading from api2)
 │   ├── card-header.tsx     # Shared card header with title + info tooltip
-│   ├── node-table.tsx      # Nodes table with status filters
+│   ├── collapsible-section.tsx # CSS grid-template-rows animated expand/collapse
+│   ├── node-table.tsx      # Nodes table with search, filters, count badges
 │   ├── node-detail-panel.tsx # Node detail side panel (quick-peek)
 │   ├── node-detail-view.tsx # Node full-width detail view (?view= param)
-│   ├── vm-table.tsx        # VMs table with status filters
+│   ├── vm-table.tsx        # VMs table with search, filters, count badges
 │   ├── vm-detail-panel.tsx # VM detail side panel (quick-peek)
 │   ├── vm-detail-view.tsx  # VM full-width detail view (?view= param)
 │   └── resource-bar.tsx    # CPU/memory/disk usage bar
-└── lib/
-    ├── format.ts           # relativeTime, relativeTimeFromUnix, truncateHash, formatPercent, formatDateTime
-    └── status-map.ts       # Status-to-visual maps: nodeStatusToDot(), NODE_STATUS_VARIANT, VM_STATUS_VARIANT
+├── lib/
+│   ├── filters.ts          # Filter pipeline: textSearch, countByStatus, applyNodeAdvancedFilters, applyVmAdvancedFilters
+│   ├── filters.test.ts     # Filter unit tests (25 tests)
+│   ├── format.ts           # relativeTime, relativeTimeFromUnix, truncateHash, formatPercent, formatDateTime
+│   └── status-map.ts       # Status-to-visual maps: nodeStatusToDot(), NODE_STATUS_VARIANT, VM_STATUS_VARIANT
 ```
 
 ---
@@ -134,12 +138,12 @@ src/
 **Key files:** `src/components/node-detail-view.tsx`, `src/components/vm-detail-view.tsx`, `src/app/nodes/page.tsx`, `src/app/vms/page.tsx`, `src/components/app-header.tsx`
 **Notes:** Uses search params instead of dynamic route segments (`/nodes/[hash]`) because IPFS static export can't resolve arbitrary dynamic paths. The `AppHeader` wraps `useSearchParams()` in a `<Suspense>` boundary to avoid hydration issues. New API fields surfaced: `owner`, `supportsIpv6`, `discoveredAt` (nodes), `allocatedAt`, `lastObservedAt`, `paymentType` (VMs).
 
-### Client-Side Filtering Performance
+### List Page Filter Pipeline
 
-**Context:** Toggling the `hasVms` checkbox caused a visible delay on the nodes table.
-**Approach:** Client-side filters (like `hasVms`) must NOT be part of the React Query key. Changing the key causes a new network request + loading state. Instead, filter in the component after `useNodes()` returns. Wrap filter state setters in `useTransition` so the checkbox/button updates instantly while the expensive table re-render is deferred.
-**Key files:** `src/components/node-table.tsx`
-**Notes:** Only server-supported filters (like `status`) belong in the query key. Client-side filters should be applied post-fetch in the component. This pattern applies to any future client-side filter (e.g., search, sorting).
+**Context:** Both Nodes and VMs pages need text search, status filters, and advanced filters (checkboxes, range sliders) — all client-side.
+**Approach:** Four-stage pipeline applied in `useMemo`: (1) `textSearch` matches query against configurable fields, (2) `applyNodeAdvancedFilters` / `applyVmAdvancedFilters` applies checkbox and range filters, (3) `countByStatus` computes per-status counts on the filtered set (for badge display), (4) status filter selects a single status. Status is applied last so count badges show accurate per-status breakdowns after search+advanced filters. All filters are client-side post-fetch — none go in the React Query key. State setters wrapped in `useTransition` for responsive UI. Search input debounced at 300ms via `useDebounce`. The `CollapsibleSection` component uses CSS `grid-template-rows` animation for smooth expand/collapse. Filter panel uses a 3-column layout (`lg:grid-cols-3`) with glassmorphism card styling.
+**Key files:** `src/lib/filters.ts` (pure filter functions + types), `src/lib/filters.test.ts`, `src/hooks/use-debounce.ts`, `src/components/collapsible-section.tsx`, `src/components/node-table.tsx`, `src/components/vm-table.tsx`
+**Notes:** Multi-select filters (VM type, payment status) treat "all selected" and "none selected" identically as "no filter." Count badges show `filtered/total` format when non-status filters are active. The `VmType` values are lowercase (`"microvm"`, `"persistent_program"`, `"instance"`) matching the API wire format.
 
 ### Responsive Layout
 

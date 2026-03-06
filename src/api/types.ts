@@ -52,7 +52,7 @@ export type VmStatus =
   | "orphaned"
   | "unknown";
 
-export type VmType = "MicroVm" | "PersistentProgram" | "Instance";
+export type VmType = "microvm" | "persistent_program" | "instance";
 
 export type VmRequirements = {
   vcpus: number | null;

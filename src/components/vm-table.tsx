@@ -50,11 +50,50 @@ const STATUS_LABELS: Record<string, string> = {
 };
 
 const ALL_VM_TYPES: VmType[] = [
-  "MicroVm",
-  "PersistentProgram",
-  "Instance",
+  "microvm",
+  "persistent_program",
+  "instance",
 ];
 const ALL_PAYMENT_STATUSES = ["validated", "invalidated"] as const;
+
+const VM_TYPE_OPTIONS: {
+  value: VmType;
+  label: string;
+  desc: string;
+}[] = [
+  {
+    value: "microvm",
+    label: "Micro VM",
+    desc: "— short-lived functions",
+  },
+  {
+    value: "persistent_program",
+    label: "Persistent Program",
+    desc: "— always-on services",
+  },
+  {
+    value: "instance",
+    label: "Instance",
+    desc: "— full virtual machines",
+  },
+];
+
+const PAYMENT_OPTIONS: {
+  value: string;
+  label: string;
+  desc: string;
+}[] = [
+  {
+    value: "validated",
+    label: "Validated",
+    desc: "— payment confirmed",
+  },
+  {
+    value: "invalidated",
+    label: "Invalidated",
+    desc: "— payment rejected or expired",
+  },
+];
 
 const VM_SEARCH_FIELDS = (v: VM) => [v.hash, v.allocatedNode];
 
@@ -182,17 +221,21 @@ export function VMTable({
   const [filtersOpen, setFiltersOpen] = useState(false);
   const [advanced, setAdvanced] = useState<VmAdvancedFilters>({});
 
-  const hasActiveAdvanced =
-    (advanced.vmTypes != null &&
-      advanced.vmTypes.size < ALL_VM_TYPES.length) ||
-    advanced.paymentStatuses != null ||
-    advanced.hasAllocatedNode ||
-    (advanced.vcpusRange != null &&
+  const activeAdvancedCount = [
+    advanced.vmTypes != null &&
+      advanced.vmTypes.size > 0 &&
+      advanced.vmTypes.size < ALL_VM_TYPES.length,
+    advanced.paymentStatuses != null &&
+      advanced.paymentStatuses.size > 0 &&
+      advanced.paymentStatuses.size < ALL_PAYMENT_STATUSES.length,
+    advanced.hasAllocatedNode,
+    advanced.vcpusRange != null &&
       (advanced.vcpusRange[0] > 0 ||
-        advanced.vcpusRange[1] < VM_VCPUS_MAX)) ||
-    (advanced.memoryMbRange != null &&
+        advanced.vcpusRange[1] < VM_VCPUS_MAX),
+    advanced.memoryMbRange != null &&
       (advanced.memoryMbRange[0] > 0 ||
-        advanced.memoryMbRange[1] < VM_MEMORY_MB_MAX));
+        advanced.memoryMbRange[1] < VM_MEMORY_MB_MAX),
+  ].filter(Boolean).length;
 
   // Data — fetch full dataset
   const { data: allVms, isLoading } = useVMs();
@@ -226,7 +269,7 @@ export function VMTable({
     }, [allVms, debouncedQuery, advanced, statusFilter]);
 
   const hasNonStatusFilters =
-    debouncedQuery.trim() !== "" || hasActiveAdvanced;
+    debouncedQuery.trim() !== "" || activeAdvancedCount > 0;
 
   function formatCount(status: VmStatus | undefined): string {
     const key = status ?? "all";
@@ -306,9 +349,43 @@ export function VMTable({
 
   return (
     <TooltipProvider>
-      {/* Search bar + Filters toggle */}
-      <div className="mb-4 flex items-center gap-3">
-        <div className="relative flex-1">
+      {/* Status pills + Filters toggle + Search */}
+      <div className="mb-4 flex flex-wrap items-center gap-2">
+        {ALL_STATUSES.map((status) => {
+          const key = status ?? "all";
+          const label = STATUS_LABELS[key];
+          return (
+            <button
+              key={key}
+              type="button"
+              onClick={() =>
+                startTransition(() => setStatusFilter(status))
+              }
+              className={`rounded-full px-3.5 py-1.5 text-sm font-bold transition-colors ${
+                statusFilter === status
+                  ? "bg-primary-600/15 text-primary-400"
+                  : "text-muted-foreground hover:text-foreground hover:bg-muted"
+              }`}
+            >
+              {label}{" "}
+              <span className="tabular-nums opacity-60">
+                ({formatCount(status)})
+              </span>
+            </button>
+          );
+        })}
+        <Button
+          variant="text"
+          size="sm"
+          onClick={() => setFiltersOpen((v) => !v)}
+          className="relative"
+        >
+          Filters
+          {activeAdvancedCount > 0 && !filtersOpen && (
+            <span className="absolute -right-1 -top-1 h-2.5 w-2.5 rounded-full bg-primary-500" />
+          )}
+        </Button>
+        <div className="relative ml-auto w-64">
           <svg
             className="pointer-events-none absolute left-5 top-1/2 h-4 w-4 -translate-y-1/2 text-muted-foreground"
             xmlns="http://www.w3.org/2000/svg"
@@ -347,195 +424,182 @@ export function VMTable({
             </button>
           )}
         </div>
-        <Button
-          variant="text"
-          size="sm"
-          onClick={() => setFiltersOpen((v) => !v)}
-          className="relative"
-        >
-          Filters
-          {hasActiveAdvanced && !filtersOpen && (
-            <span className="absolute -right-1 -top-1 h-2.5 w-2.5 rounded-full bg-primary-500" />
-          )}
-        </Button>
-      </div>
-
-      {/* Status pills */}
-      <div className="mb-4 flex flex-wrap gap-2">
-        {ALL_STATUSES.map((status) => {
-          const key = status ?? "all";
-          const label = STATUS_LABELS[key];
-          return (
-            <button
-              key={key}
-              type="button"
-              onClick={() =>
-                startTransition(() => setStatusFilter(status))
-              }
-              className={`rounded-full px-3.5 py-1.5 text-sm font-bold transition-colors ${
-                statusFilter === status
-                  ? "bg-primary-600/15 text-primary-400"
-                  : "text-muted-foreground hover:text-foreground hover:bg-muted"
-              }`}
-            >
-              {label}{" "}
-              <span className="tabular-nums opacity-60">
-                ({formatCount(status)})
-              </span>
-            </button>
-          );
-        })}
       </div>
 
       {/* Collapsible advanced filters */}
       <CollapsibleSection open={filtersOpen}>
-        <div className="mb-4 space-y-5 rounded-xl border border-border bg-muted/30 p-5">
-          {/* Toggle pills + checkbox row */}
-          <div className="flex flex-wrap items-start gap-x-6 gap-y-4">
-            {/* VM Type multi-select */}
-            <div className="space-y-1.5">
-              <span className="text-sm font-semibold text-muted-foreground">
-                Type
+        <div className="stat-card mb-4 border border-white/[0.06] bg-white/[0.03]">
+          {/* Header */}
+          <div className="flex items-center justify-between border-b border-white/[0.06] px-5 py-3">
+            <span className="text-xs font-semibold uppercase tracking-widest text-muted-foreground/70">
+              Advanced Filters
+            </span>
+            <Button
+              variant="text"
+              size="xs"
+              onClick={clearAdvanced}
+              disabled={activeAdvancedCount === 0}
+              className="disabled:opacity-30"
+            >
+              Reset
+              {activeAdvancedCount > 0 && (
+                <span className="ml-1 tabular-nums">
+                  ({activeAdvancedCount})
+                </span>
+              )}
+            </Button>
+          </div>
+
+          {/* Content: three-column layout */}
+          <div className="grid grid-cols-1 gap-8 p-6 pb-8 sm:grid-cols-2 sm:p-8 sm:pb-10 lg:grid-cols-3 lg:gap-10">
+            {/* VM Type */}
+            <div>
+              <span className="mb-4 block text-xs font-semibold uppercase tracking-wider text-muted-foreground/50">
+                VM Type
               </span>
-              <div className="flex gap-1.5">
-                {ALL_VM_TYPES.map((type) => {
-                  const selected =
-                    !advanced.vmTypes || advanced.vmTypes.has(type);
-                  return (
-                    <button
-                      key={type}
-                      type="button"
-                      onClick={() => toggleVmType(type)}
-                      className={`rounded-full px-3 py-1 text-sm font-bold transition-colors ${
-                        selected
-                          ? "bg-primary-600/15 text-primary-400"
-                          : "text-muted-foreground hover:text-foreground hover:bg-muted"
-                      }`}
-                    >
-                      {type}
-                    </button>
-                  );
-                })}
+              <div className="space-y-2.5">
+                {VM_TYPE_OPTIONS.map(({ value, label, desc }) => (
+                  <label
+                    key={value}
+                    className="flex cursor-pointer items-center gap-2.5 text-sm font-semibold text-muted-foreground select-none"
+                  >
+                    <Checkbox
+                      size="sm"
+                      checked={
+                        !advanced.vmTypes ||
+                        advanced.vmTypes.has(value)
+                      }
+                      onCheckedChange={() =>
+                        toggleVmType(value)
+                      }
+                    />
+                    <span>
+                      {label}
+                      <span className="ml-1.5 text-xs font-normal text-muted-foreground/50">
+                        {desc}
+                      </span>
+                    </span>
+                  </label>
+                ))}
               </div>
             </div>
 
-            {/* Payment Status multi-select */}
-            <div className="space-y-1.5">
-              <span className="text-sm font-semibold text-muted-foreground">
-                Payment
+            {/* Payment & Allocation */}
+            <div>
+              <span className="mb-4 block text-xs font-semibold uppercase tracking-wider text-muted-foreground/50">
+                Payment & Allocation
               </span>
-              <div className="flex gap-1.5">
-                {ALL_PAYMENT_STATUSES.map((ps) => {
-                  const selected =
-                    !advanced.paymentStatuses ||
-                    advanced.paymentStatuses.has(ps);
-                  return (
-                    <button
-                      key={ps}
-                      type="button"
-                      onClick={() => togglePaymentStatus(ps)}
-                      className={`rounded-full px-3 py-1 text-sm font-bold capitalize transition-colors ${
-                        selected
-                          ? "bg-primary-600/15 text-primary-400"
-                          : "text-muted-foreground hover:text-foreground hover:bg-muted"
-                      }`}
-                    >
-                      {ps}
-                    </button>
-                  );
-                })}
+              <div className="space-y-2.5">
+                {PAYMENT_OPTIONS.map(({ value, label, desc }) => (
+                  <label
+                    key={value}
+                    className="flex cursor-pointer items-center gap-2.5 text-sm font-semibold text-muted-foreground select-none"
+                  >
+                    <Checkbox
+                      size="sm"
+                      checked={
+                        !advanced.paymentStatuses ||
+                        advanced.paymentStatuses.has(value)
+                      }
+                      onCheckedChange={() =>
+                        togglePaymentStatus(value)
+                      }
+                    />
+                    <span>
+                      {label}
+                      <span className="ml-1.5 text-xs font-normal text-muted-foreground/50">
+                        {desc}
+                      </span>
+                    </span>
+                  </label>
+                ))}
               </div>
-            </div>
-
-            {/* Has Node checkbox */}
-            <div className="space-y-1.5">
-              <span className="text-sm font-semibold text-muted-foreground">
-                &nbsp;
-              </span>
-              <label className="flex cursor-pointer items-center gap-2 text-sm font-semibold text-muted-foreground select-none">
+              <div className="border-t border-white/[0.04] pt-1.5" />
+              <label className="flex cursor-pointer items-center gap-2.5 text-sm font-semibold text-muted-foreground select-none">
                 <Checkbox
                   size="sm"
                   checked={advanced.hasAllocatedNode ?? false}
                   onCheckedChange={(v) =>
                     updateAdvanced((p) => {
-                      const { hasAllocatedNode: _, ...rest } = p;
+                      const { hasAllocatedNode: _, ...rest } =
+                        p;
                       return v === true
                         ? { ...rest, hasAllocatedNode: true }
                         : rest;
                     })
                   }
                 />
-                Has Node
+                <span>
+                  Allocated to a node
+                  <span className="ml-1.5 text-xs font-normal text-muted-foreground/50">
+                    — running on a CRN
+                  </span>
+                </span>
               </label>
             </div>
-          </div>
 
-          {/* Range sliders */}
-          <div className="grid grid-cols-1 gap-5 sm:grid-cols-2">
-            <div className="space-y-2">
-              <div className="flex items-center justify-between text-sm font-semibold text-muted-foreground">
-                <span>vCPUs</span>
-                <span className="tabular-nums text-xs">
-                  {advanced.vcpusRange?.[0] ?? 0}–
-                  {advanced.vcpusRange?.[1] ?? VM_VCPUS_MAX}
-                </span>
+            {/* Requirements */}
+            <div>
+              <span className="mb-4 block text-xs font-semibold uppercase tracking-wider text-muted-foreground/50">
+                Requirements
+              </span>
+              <div className="space-y-6">
+                <div className="space-y-3">
+                  <div className="flex items-center justify-between text-sm font-semibold text-muted-foreground">
+                    <span>vCPUs</span>
+                    <span className="tabular-nums text-xs">
+                      {advanced.vcpusRange?.[0] ?? 0}–
+                      {advanced.vcpusRange?.[1] ?? VM_VCPUS_MAX}
+                    </span>
+                  </div>
+                  <Slider
+                    size="sm"
+                    min={0}
+                    max={VM_VCPUS_MAX}
+                    step={1}
+                    value={
+                      advanced.vcpusRange ?? [0, VM_VCPUS_MAX]
+                    }
+                    onValueChange={(val) =>
+                      updateAdvanced((p) => ({
+                        ...p,
+                        vcpusRange: val as [number, number],
+                      }))
+                    }
+                    showTooltip
+                  />
+                </div>
+                <div className="space-y-3">
+                  <div className="flex items-center justify-between text-sm font-semibold text-muted-foreground">
+                    <span>Memory</span>
+                    <span className="tabular-nums text-xs">
+                      {advanced.memoryMbRange?.[0] ?? 0} MB–
+                      {advanced.memoryMbRange?.[1] ??
+                        VM_MEMORY_MB_MAX}{" "}
+                      MB
+                    </span>
+                  </div>
+                  <Slider
+                    size="sm"
+                    min={0}
+                    max={VM_MEMORY_MB_MAX}
+                    step={256}
+                    value={
+                      advanced.memoryMbRange ??
+                      [0, VM_MEMORY_MB_MAX]
+                    }
+                    onValueChange={(val) =>
+                      updateAdvanced((p) => ({
+                        ...p,
+                        memoryMbRange: val as [number, number],
+                      }))
+                    }
+                    showTooltip
+                  />
+                </div>
               </div>
-              <Slider
-                size="sm"
-                min={0}
-                max={VM_VCPUS_MAX}
-                step={1}
-                value={
-                  advanced.vcpusRange ?? [0, VM_VCPUS_MAX]
-                }
-                onValueChange={(val) =>
-                  updateAdvanced((p) => ({
-                    ...p,
-                    vcpusRange: val as [number, number],
-                  }))
-                }
-                showTooltip
-              />
-            </div>
-            <div className="space-y-2">
-              <div className="flex items-center justify-between text-sm font-semibold text-muted-foreground">
-                <span>Memory</span>
-                <span className="tabular-nums text-xs">
-                  {advanced.memoryMbRange?.[0] ?? 0} MB–
-                  {advanced.memoryMbRange?.[1] ?? VM_MEMORY_MB_MAX} MB
-                </span>
-              </div>
-              <Slider
-                size="sm"
-                min={0}
-                max={VM_MEMORY_MB_MAX}
-                step={256}
-                value={
-                  advanced.memoryMbRange ?? [0, VM_MEMORY_MB_MAX]
-                }
-                onValueChange={(val) =>
-                  updateAdvanced((p) => ({
-                    ...p,
-                    memoryMbRange: val as [number, number],
-                  }))
-                }
-                showTooltip
-              />
             </div>
           </div>
-
-          {/* Clear all */}
-          {hasActiveAdvanced && (
-            <div className="flex justify-end">
-              <Button
-                variant="text"
-                size="xs"
-                onClick={clearAdvanced}
-              >
-                Clear all
-              </Button>
-            </div>
-          )}
         </div>
       </CollapsibleSection>
 

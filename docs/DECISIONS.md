@@ -18,6 +18,21 @@ Each entry includes:
 
 ---
 
+## Decision #30 - 2026-03-06
+**Context:** VM type filter checkboxes didn't match any data — all 455 VMs showed as filtered out
+**Decision:** Update `VmType` to lowercase values (`"microvm"`, `"persistent_program"`, `"instance"`) matching the API wire format
+**Rationale:** The API sends lowercase `vm_type` values but the TypeScript type had PascalCase (`"MicroVm"`, `"Instance"`). The client transform passed values through as-is, so the filter compared PascalCase constants against lowercase data. The type definition was speculative (written before verifying real data). All 455 VMs in production are type `"instance"`.
+
+## Decision #29 - 2026-03-06
+**Context:** Multi-select filter checkboxes (VM type, payment status) — what should "all unchecked" mean?
+**Decision:** "All unchecked" = "no filter active" (show everything), same as "all checked"
+**Rationale:** Users interpret deselecting all options as "I don't care about this filter" not "show me nothing." The filter function skips when the set is empty (size 0) or full (size === total options). Same principle applies to payment statuses.
+
+## Decision #28 - 2026-03-06
+**Context:** List page filter panels needed better layout — two-column layout was cramped, filter groups ran together, pill toggle buttons for VM type/payment were confusing
+**Decision:** Three-column layout with checkboxes, descriptions, and generous spacing. VM Type / Payment & Allocation / Requirements (VMs); Properties / Workload / Hardware (Nodes). Glassmorphism card with subtle dividers between sub-groups.
+**Rationale:** Checkboxes are unambiguous for multi-select (vs pill toggles where "highlighted" could mean selected or active). Descriptions explain domain terms ("Micro VM — short-lived functions"). Three columns use the available width better and give each filter group its own visual column. Dividers at 4% white opacity separate sub-groups without competing with card borders.
+
 ## Decision #27 - 2026-03-05
 **Context:** Detail panels for nodes/VMs could become very tall (30+ VMs, long history) pushing the "View full details →" CTA below the viewport
 **Decision:** Truncate lists to 6 VMs / 6 observed nodes / 5 history entries with "+N more" indicator, sticky panel on desktop, no internal scroll

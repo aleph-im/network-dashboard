@@ -24,7 +24,7 @@ const makeNode = (overrides: Partial<Node> = {}): Node => ({
 
 const makeVm = (overrides: Partial<VM> = {}): VM => ({
   hash: "vm_hash_001",
-  type: "MicroVm",
+  type: "microvm",
   allocatedNode: null,
   observedNodes: [],
   status: "scheduled",
@@ -90,13 +90,6 @@ describe("countByStatus", () => {
 });
 
 describe("applyNodeAdvancedFilters", () => {
-  it("filters by hasVms", () => {
-    const nodes = [makeNode({ vmCount: 3 }), makeNode({ vmCount: 0 })];
-    const result = applyNodeAdvancedFilters(nodes, { hasVms: true });
-    expect(result).toHaveLength(1);
-    expect(result[0]?.vmCount).toBe(3);
-  });
-
   it("filters by staked", () => {
     const nodes = [
       makeNode({ staked: true }),
@@ -118,48 +111,97 @@ describe("applyNodeAdvancedFilters", () => {
     expect(result).toHaveLength(1);
   });
 
-  it("filters by cpuRange", () => {
+  it("filters by vmCountRange", () => {
+    const nodes = [
+      makeNode({ vmCount: 5 }),
+      makeNode({ vmCount: 15 }),
+      makeNode({ vmCount: 0 }),
+    ];
+    const result = applyNodeAdvancedFilters(nodes, {
+      vmCountRange: [3, 10],
+    });
+    expect(result).toHaveLength(1);
+    expect(result[0]?.vmCount).toBe(5);
+  });
+
+  it("does not filter when vmCountRange spans full extent", () => {
+    const nodes = [makeNode(), makeNode()];
+    expect(
+      applyNodeAdvancedFilters(nodes, { vmCountRange: [0, 100] }),
+    ).toHaveLength(2);
+  });
+
+  it("filters by vcpusTotalRange", () => {
     const nodes = [
       makeNode({
         resources: {
-          cpuUsagePct: 80,
+          vcpusTotal: 16,
+          memoryTotalMb: 0,
+          diskTotalMb: 0,
+          vcpusAvailable: 8,
+          memoryAvailableMb: 0,
+          diskAvailableMb: 0,
+          cpuUsagePct: 0,
           memoryUsagePct: 0,
           diskUsagePct: 0,
-          vcpusTotal: 8,
+        },
+      }),
+      makeNode({
+        resources: {
+          vcpusTotal: 4,
           memoryTotalMb: 0,
           diskTotalMb: 0,
           vcpusAvailable: 2,
           memoryAvailableMb: 0,
           diskAvailableMb: 0,
-        },
-      }),
-      makeNode({
-        resources: {
-          cpuUsagePct: 20,
+          cpuUsagePct: 0,
           memoryUsagePct: 0,
           diskUsagePct: 0,
-          vcpusTotal: 8,
-          memoryTotalMb: 0,
-          diskTotalMb: 0,
-          vcpusAvailable: 6,
-          memoryAvailableMb: 0,
-          diskAvailableMb: 0,
         },
       }),
       makeNode({ resources: null }),
     ];
     const result = applyNodeAdvancedFilters(nodes, {
-      cpuRange: [50, 100],
+      vcpusTotalRange: [8, 128],
     });
     expect(result).toHaveLength(1);
-    expect(result[0]?.resources?.cpuUsagePct).toBe(80);
+    expect(result[0]?.resources?.vcpusTotal).toBe(16);
   });
 
-  it("does not filter when cpuRange spans full 0-100", () => {
-    const nodes = [makeNode(), makeNode()];
-    expect(
-      applyNodeAdvancedFilters(nodes, { cpuRange: [0, 100] }),
-    ).toHaveLength(2);
+  it("filters by memoryTotalGbRange (converts MB to GB)", () => {
+    const nodes = [
+      makeNode({
+        resources: {
+          vcpusTotal: 8,
+          memoryTotalMb: 32768,
+          diskTotalMb: 0,
+          vcpusAvailable: 4,
+          memoryAvailableMb: 16384,
+          diskAvailableMb: 0,
+          cpuUsagePct: 0,
+          memoryUsagePct: 0,
+          diskUsagePct: 0,
+        },
+      }),
+      makeNode({
+        resources: {
+          vcpusTotal: 4,
+          memoryTotalMb: 4096,
+          diskTotalMb: 0,
+          vcpusAvailable: 2,
+          memoryAvailableMb: 2048,
+          diskAvailableMb: 0,
+          cpuUsagePct: 0,
+          memoryUsagePct: 0,
+          diskUsagePct: 0,
+        },
+      }),
+    ];
+    const result = applyNodeAdvancedFilters(nodes, {
+      memoryTotalGbRange: [16, 512],
+    });
+    expect(result).toHaveLength(1);
+    expect(result[0]?.resources?.memoryTotalMb).toBe(32768);
   });
 
   it("combines multiple filters with AND logic", () => {
@@ -169,7 +211,7 @@ describe("applyNodeAdvancedFilters", () => {
       makeNode({ vmCount: 0, staked: true }),
     ];
     const result = applyNodeAdvancedFilters(nodes, {
-      hasVms: true,
+      vmCountRange: [1, 100],
       staked: true,
     });
     expect(result).toHaveLength(1);
@@ -184,22 +226,45 @@ describe("applyNodeAdvancedFilters", () => {
 describe("applyVmAdvancedFilters", () => {
   it("filters by vmTypes", () => {
     const vms = [
-      makeVm({ type: "MicroVm" }),
-      makeVm({ type: "PersistentProgram" }),
-      makeVm({ type: "Instance" }),
+      makeVm({ type: "microvm" }),
+      makeVm({ type: "persistent_program" }),
+      makeVm({ type: "instance" }),
     ];
     const result = applyVmAdvancedFilters(vms, {
-      vmTypes: new Set(["MicroVm", "Instance"]),
+      vmTypes: new Set(["microvm", "instance"]),
     });
     expect(result).toHaveLength(2);
   });
 
   it("does not filter when vmTypes includes all types", () => {
-    const vms = [makeVm({ type: "MicroVm" })];
+    const vms = [makeVm({ type: "microvm" })];
     const result = applyVmAdvancedFilters(vms, {
-      vmTypes: new Set(["MicroVm", "PersistentProgram", "Instance"]),
+      vmTypes: new Set(["microvm", "persistent_program", "instance"]),
     });
     expect(result).toHaveLength(1);
+  });
+
+  it("shows all when vmTypes is empty set (none selected)", () => {
+    const vms = [
+      makeVm({ type: "microvm" }),
+      makeVm({ type: "persistent_program" }),
+      makeVm({ type: "instance" }),
+    ];
+    const result = applyVmAdvancedFilters(vms, {
+      vmTypes: new Set(),
+    });
+    expect(result).toHaveLength(3);
+  });
+
+  it("shows all when paymentStatuses is empty set", () => {
+    const vms = [
+      makeVm({ paymentStatus: "validated" }),
+      makeVm({ paymentStatus: null }),
+    ];
+    const result = applyVmAdvancedFilters(vms, {
+      paymentStatuses: new Set(),
+    });
+    expect(result).toHaveLength(2);
   });
 
   it("filters by paymentStatuses", () => {
