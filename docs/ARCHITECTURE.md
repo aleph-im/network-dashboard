@@ -37,7 +37,7 @@ src/
 ├── hooks/
 │   ├── use-nodes.ts        # useNodes, useNode (30s/15s polling)
 │   ├── use-vms.ts          # useVMs, useVM (30s/15s polling)
-│   ├── use-vm-creation-times.ts  # useVMCreationTimes (api2, 5min stale, no polling)
+│   ├── use-vm-creation-times.ts  # useVMMessageInfo (api2, 5min stale, no polling)
 │   ├── use-overview-stats.ts  # useOverviewStats (30s polling)
 │   └── use-debounce.ts     # useDebounce hook (generic, configurable delay)
 ├── components/
@@ -96,7 +96,7 @@ src/
 **Context:** Avoid duplicate UI primitives across projects.
 **Approach:** All reusable UI components live in `@aleph-front/ds` and are imported via subpath exports. Dashboard-specific compositions that combine DS components with domain logic live in `src/components/`.
 **Key files:** `node_modules/@aleph-front/ds/`, `src/components/`
-**Notes:** DS is installed from npm (pinned version). The `@ac/*` path alias must be mapped in tsconfig.json (and vitest.config.ts) for DS internal imports to resolve. DS color tokens use `error`/`success`/`warning` naming (not Tailwind's `destructive`). Always verify token vars exist in DS `tokens.css` before use.
+**Notes:** DS is installed from npm (pinned version). The `@ac/*` path alias must be mapped in tsconfig.json (and vitest.config.ts) for DS internal imports to resolve. DS color tokens use `error`/`success`/`warning` naming (not Tailwind's `destructive`). Always verify token vars exist in DS `tokens.css` before use. Hash display uses `CopyableText` from `@aleph-front/ds/copyable-text` (middle-ellipsis, copy button, optional external link) — no local hash display component.
 
 ### Status Mapping
 

@@ -1,5 +1,6 @@
 import type {
   AlephMessage,
+  AlephMessageInfo,
   ApiHistoryRow,
   ApiNodeRow,
   ApiStats,
@@ -237,6 +238,8 @@ export async function getOverviewStats(): Promise<OverviewStats> {
     ).length,
     unknownNodes: nodes.filter((n) => n.status === "unknown")
       .length,
+    removedNodes: nodes.filter((n) => n.status === "removed")
+      .length,
     totalVMs: vms.length,
     scheduledVMs: vms.filter((v) => v.status === "scheduled")
       .length,
@@ -280,17 +283,21 @@ async function fetchMessageBatch(
 
 export async function getMessagesByHashes(
   hashes: string[],
-): Promise<Map<string, number>> {
+): Promise<Map<string, AlephMessageInfo>> {
   if (hashes.length === 0) return new Map();
   const batches: string[][] = [];
   for (let i = 0; i < hashes.length; i += HASHES_PER_BATCH) {
     batches.push(hashes.slice(i, i + HASHES_PER_BATCH));
   }
   const results = await Promise.all(batches.map(fetchMessageBatch));
-  const map = new Map<string, number>();
+  const map = new Map<string, AlephMessageInfo>();
   for (const messages of results) {
     for (const msg of messages) {
-      map.set(msg.item_hash, msg.time);
+      map.set(msg.item_hash, {
+        time: msg.time,
+        name: msg.content?.metadata?.name ?? null,
+        explorerUrl: `https://explorer.aleph.cloud/address/${msg.chain}/${msg.sender}/message/${msg.type}/${msg.item_hash}`,
+      });
     }
   }
   return map;

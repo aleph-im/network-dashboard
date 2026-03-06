@@ -3,14 +3,10 @@
 import Link from "next/link";
 import { Card } from "@aleph-front/ds/card";
 import { Badge } from "@aleph-front/ds/badge";
-import {
-  TooltipProvider,
-  Tooltip,
-  TooltipTrigger,
-  TooltipContent,
-} from "@aleph-front/ds/tooltip";
 import { Skeleton } from "@aleph-front/ds/ui/skeleton";
 import { useVM } from "@/hooks/use-vms";
+import { useVMMessageInfo } from "@/hooks/use-vm-creation-times";
+import { CopyableText } from "@aleph-front/ds/copyable-text";
 import { relativeTime, truncateHash } from "@/lib/format";
 import { VM_STATUS_VARIANT } from "@/lib/status-map";
 
@@ -21,6 +17,7 @@ type VMDetailPanelProps = {
 
 export function VMDetailPanel({ hash, onClose }: VMDetailPanelProps) {
   const { data: vm, isLoading } = useVM(hash);
+  const { data: messageInfo } = useVMMessageInfo([hash]);
 
   if (isLoading) {
     return (
@@ -54,17 +51,16 @@ export function VMDetailPanel({ hash, onClose }: VMDetailPanelProps) {
       </div>
 
       <dl className="space-y-2 text-sm">
-        <div className="flex justify-between">
+        <div className="flex items-center justify-between">
           <dt className="text-muted-foreground">Full Hash</dt>
           <dd className="min-w-0 truncate font-mono text-xs">
-            <TooltipProvider>
-              <Tooltip>
-                <TooltipTrigger asChild>
-                  <span className="cursor-help">{vm.hash}</span>
-                </TooltipTrigger>
-                <TooltipContent>{vm.hash}</TooltipContent>
-              </Tooltip>
-            </TooltipProvider>
+            <CopyableText
+              text={vm.hash}
+              startChars={16}
+              endChars={6}
+              size="sm"
+              {...(messageInfo?.get(vm.hash)?.explorerUrl ? { href: messageInfo.get(vm.hash)!.explorerUrl } : {})}
+            />
           </dd>
         </div>
         <div className="flex justify-between">

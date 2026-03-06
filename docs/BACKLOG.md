@@ -15,6 +15,11 @@ Ideas and scope creep captured for later consideration.
 
 ## Open Items
 
+### 2026-03-06 - VM detail: show owner wallet address
+**Source:** User feedback during UI fixes
+**Description:** Add the owner (wallet address) to the VM detail view. The Aleph message API (`api2.aleph.im`) returns a `sender` field per message — this is the owner. Could reuse the `AlephMessageInfo` data already fetched, or fetch it on the detail view.
+**Priority:** Medium
+
 ### 2026-03-05 - Mobile-responsive filter UI
 **Source:** Identified while brainstorming list page filtering overhaul
 **Description:** Adapt the new filter bar (search, collapsible filters, status pills with count badges) for mobile viewports. Desktop version comes first; mobile adaptation deferred.

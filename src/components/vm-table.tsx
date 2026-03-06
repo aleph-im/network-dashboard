@@ -3,21 +3,17 @@
 import { useState, useTransition, useMemo } from "react";
 import { Table, type Column } from "@aleph-front/ds/table";
 import { Badge } from "@aleph-front/ds/badge";
-import {
-  TooltipProvider,
-  Tooltip,
-  TooltipTrigger,
-  TooltipContent,
-} from "@aleph-front/ds/tooltip";
+import { TooltipProvider } from "@aleph-front/ds/tooltip";
 import { Checkbox } from "@aleph-front/ds/checkbox";
 import { Button } from "@aleph-front/ds/button";
 import { Input } from "@aleph-front/ds/input";
 import { Slider } from "@aleph-front/ds/slider";
 import { Skeleton } from "@aleph-front/ds/ui/skeleton";
 import { useVMs } from "@/hooks/use-vms";
+import { useVMMessageInfo } from "@/hooks/use-vm-creation-times";
 import { useDebounce } from "@/hooks/use-debounce";
 import { CollapsibleSection } from "@/components/collapsible-section";
-import { truncateHash } from "@/lib/format";
+import { CopyableText } from "@aleph-front/ds/copyable-text";
 import {
   textSearch,
   countByStatus,
@@ -27,7 +23,7 @@ import {
   type VmAdvancedFilters,
 } from "@/lib/filters";
 import { VM_STATUS_VARIANT } from "@/lib/status-map";
-import type { VM, VmStatus, VmType } from "@/api/types";
+import type { AlephMessageInfo, VM, VmStatus, VmType } from "@/api/types";
 
 const ALL_STATUSES: (VmStatus | undefined)[] = [
   undefined,
@@ -95,7 +91,7 @@ const PAYMENT_OPTIONS: {
   },
 ];
 
-const VM_SEARCH_FIELDS = (v: VM) => [v.hash, v.allocatedNode];
+const VM_BASE_SEARCH_FIELDS = (v: VM) => [v.hash, v.allocatedNode];
 
 function isDiscrepancy(vm: VM): boolean {
   return (
@@ -105,25 +101,51 @@ function isDiscrepancy(vm: VM): boolean {
   );
 }
 
-const columns: Column<VM>[] = [
+function buildColumns(
+  msgInfo: Map<string, AlephMessageInfo> | undefined,
+): Column<VM>[] {
+  return [
+  {
+    header: "Status",
+    accessor: (r) => (
+      <Badge
+        variant={VM_STATUS_VARIANT[r.status]}
+        size="sm"
+        className="capitalize"
+      >
+        {r.status}
+      </Badge>
+    ),
+    sortable: true,
+    sortValue: (r) => r.status,
+  },
   {
     header: "Hash",
     accessor: (r) => (
-      <Tooltip>
-        <TooltipTrigger asChild>
-          <span
-            className={`cursor-help font-mono text-sm ${
-              isDiscrepancy(r) ? "text-warning-400" : ""
-            }`}
-          >
-            {truncateHash(r.hash)}
-          </span>
-        </TooltipTrigger>
-        <TooltipContent>{r.hash}</TooltipContent>
-      </Tooltip>
+      <CopyableText
+        text={r.hash}
+        startChars={10}
+        endChars={4}
+        size="sm"
+        className={isDiscrepancy(r) ? "text-warning-400" : ""}
+        {...(msgInfo?.get(r.hash)?.explorerUrl ? { href: msgInfo.get(r.hash)!.explorerUrl } : {})}
+      />
     ),
     sortable: true,
     sortValue: (r) => r.hash,
+  },
+  {
+    header: "Name",
+    accessor: (r) => {
+      const name = msgInfo?.get(r.hash)?.name;
+      return name ? (
+        <span className="text-sm">{name}</span>
+      ) : (
+        <span className="text-xs text-muted-foreground">{"\u2014"}</span>
+      );
+    },
+    sortable: true,
+    sortValue: (r) => msgInfo?.get(r.hash)?.name ?? "",
   },
   {
     header: "Type",
@@ -139,33 +161,18 @@ const columns: Column<VM>[] = [
     header: "Node",
     accessor: (r) =>
       r.allocatedNode ? (
-        <Tooltip>
-          <TooltipTrigger asChild>
-            <span className="cursor-help font-mono text-xs text-muted-foreground">
-              {truncateHash(r.allocatedNode)}
-            </span>
-          </TooltipTrigger>
-          <TooltipContent>{r.allocatedNode}</TooltipContent>
-        </Tooltip>
+        <CopyableText
+          text={r.allocatedNode}
+          startChars={8}
+          endChars={4}
+          size="sm"
+          className="text-muted-foreground"
+        />
       ) : (
         <span className="text-xs text-muted-foreground">None</span>
       ),
     sortable: true,
     sortValue: (r) => r.allocatedNode ?? "",
-  },
-  {
-    header: "Status",
-    accessor: (r) => (
-      <Badge
-        variant={VM_STATUS_VARIANT[r.status]}
-        size="sm"
-        className="capitalize"
-      >
-        {r.status}
-      </Badge>
-    ),
-    sortable: true,
-    sortValue: (r) => r.status,
   },
   {
     header: "vCPUs",
@@ -191,7 +198,8 @@ const columns: Column<VM>[] = [
     sortValue: (r) => r.requirements.memoryMb ?? 0,
     align: "right",
   },
-];
+  ];
+}
 
 type VMTableProps = {
   onSelectVM: (hash: string) => void;
@@ -215,7 +223,7 @@ export function VMTable({
   // Status filter
   const [statusFilter, setStatusFilter] = useState<
     VmStatus | undefined
-  >(initialStatus);
+  >(initialStatus ?? "scheduled");
 
   // Advanced filters
   const [filtersOpen, setFiltersOpen] = useState(false);
@@ -239,6 +247,8 @@ export function VMTable({
 
   // Data — fetch full dataset
   const { data: allVms, isLoading } = useVMs();
+  const hashes = useMemo(() => (allVms ?? []).map((v) => v.hash), [allVms]);
+  const { data: messageInfo } = useVMMessageInfo(hashes);
 
   // Filter pipeline
   const { displayedRows, filteredCounts, unfilteredCounts } =
@@ -246,10 +256,14 @@ export function VMTable({
       const all = allVms ?? [];
       const uCounts = countByStatus(all, (v) => v.status);
 
+      const vmSearchFields = (v: VM) => [
+        ...VM_BASE_SEARCH_FIELDS(v),
+        messageInfo?.get(v.hash)?.name,
+      ];
       const afterSearch = textSearch(
         all,
         debouncedQuery,
-        VM_SEARCH_FIELDS,
+        vmSearchFields,
       );
       const afterAdvanced = applyVmAdvancedFilters(
         afterSearch,
@@ -266,7 +280,7 @@ export function VMTable({
         filteredCounts: fCounts,
         unfilteredCounts: uCounts,
       };
-    }, [allVms, debouncedQuery, advanced, statusFilter]);
+    }, [allVms, debouncedQuery, advanced, statusFilter, messageInfo]);
 
   const hasNonStatusFilters =
     debouncedQuery.trim() !== "" || activeAdvancedCount > 0;
@@ -403,7 +417,7 @@ export function VMTable({
             size="md"
             value={searchInput}
             onChange={(e) => setSearchInput(e.target.value)}
-            placeholder="Search hash, node..."
+            placeholder="Search hash, name, node..."
             className="pl-12 pr-10"
           />
           {searchInput && (
@@ -604,7 +618,7 @@ export function VMTable({
       </CollapsibleSection>
 
       <Table
-        columns={columns}
+        columns={buildColumns(messageInfo)}
         data={displayedRows}
         keyExtractor={(r) => r.hash}
         onRowClick={(r) => onSelectVM(r.hash)}

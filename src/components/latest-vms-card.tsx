@@ -13,7 +13,7 @@ import {
 import { Skeleton } from "@aleph-front/ds/ui/skeleton";
 import { CardHeader } from "@/components/card-header";
 import { useVMs } from "@/hooks/use-vms";
-import { useVMCreationTimes } from "@/hooks/use-vm-creation-times";
+import { useVMMessageInfo } from "@/hooks/use-vm-creation-times";
 import { relativeTimeFromUnix } from "@/lib/format";
 import { VM_STATUS_VARIANT } from "@/lib/status-map";
 
@@ -22,7 +22,7 @@ const MAX_ROWS = 15;
 export function LatestVMsCard() {
   const { data: vms, isLoading } = useVMs();
   const hashes = (vms ?? []).map((v) => v.hash);
-  const { data: creationTimes } = useVMCreationTimes(hashes);
+  const { data: messageInfo } = useVMMessageInfo(hashes);
 
   if (isLoading) {
     return (
@@ -56,8 +56,8 @@ export function LatestVMsCard() {
 
   const sorted = [...allVMs]
     .sort((a, b) => {
-      const timeA = creationTimes?.get(a.hash);
-      const timeB = creationTimes?.get(b.hash);
+      const timeA = messageInfo?.get(a.hash)?.time;
+      const timeB = messageInfo?.get(b.hash)?.time;
       if (timeA != null && timeB != null) return timeB - timeA;
       if (timeA != null) return -1;
       if (timeB != null) return 1;
@@ -78,7 +78,8 @@ export function LatestVMsCard() {
       <TooltipProvider>
         <ul className="grid grid-cols-[auto_1fr_auto] gap-x-6">
           {sorted.map((vm) => {
-            const createdAt = creationTimes?.get(vm.hash);
+            const msgInfo = messageInfo?.get(vm.hash);
+            const createdAt = msgInfo?.time;
             return (
               <li key={vm.hash} className="contents">
                 <Link

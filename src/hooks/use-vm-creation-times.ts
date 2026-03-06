@@ -1,9 +1,9 @@
 import { useQuery } from "@tanstack/react-query";
 import { getMessagesByHashes } from "@/api/client";
 
-export function useVMCreationTimes(hashes: string[]) {
+export function useVMMessageInfo(hashes: string[]) {
   return useQuery({
-    queryKey: ["vm-creation-times", hashes],
+    queryKey: ["vm-message-info", hashes],
     queryFn: () => getMessagesByHashes(hashes),
     enabled: hashes.length > 0,
     staleTime: 5 * 60_000,

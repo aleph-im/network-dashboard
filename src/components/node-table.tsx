@@ -3,12 +3,7 @@
 import { useState, useTransition, useMemo } from "react";
 import { Table, type Column } from "@aleph-front/ds/table";
 import { StatusDot } from "@aleph-front/ds/status-dot";
-import {
-  TooltipProvider,
-  Tooltip,
-  TooltipTrigger,
-  TooltipContent,
-} from "@aleph-front/ds/tooltip";
+import { TooltipProvider } from "@aleph-front/ds/tooltip";
 import { Checkbox } from "@aleph-front/ds/checkbox";
 import { Badge } from "@aleph-front/ds/badge";
 import { Button } from "@aleph-front/ds/button";
@@ -18,7 +13,8 @@ import { Skeleton } from "@aleph-front/ds/ui/skeleton";
 import { useNodes } from "@/hooks/use-nodes";
 import { useDebounce } from "@/hooks/use-debounce";
 import { CollapsibleSection } from "@/components/collapsible-section";
-import { truncateHash, relativeTime } from "@/lib/format";
+import { CopyableText } from "@aleph-front/ds/copyable-text";
+import { relativeTime } from "@/lib/format";
 import {
   textSearch,
   countByStatus,
@@ -63,21 +59,6 @@ const columns: Column<Node>[] = [
     align: "center",
   },
   {
-    header: "Hash",
-    accessor: (r) => (
-      <Tooltip>
-        <TooltipTrigger asChild>
-          <span className="cursor-help font-mono text-sm">
-            {truncateHash(r.hash)}
-          </span>
-        </TooltipTrigger>
-        <TooltipContent>{r.hash}</TooltipContent>
-      </Tooltip>
-    ),
-    sortable: true,
-    sortValue: (r) => r.hash,
-  },
-  {
     header: "Status",
     accessor: (r) => (
       <Badge
@@ -90,6 +71,23 @@ const columns: Column<Node>[] = [
     ),
     sortable: true,
     sortValue: (r) => r.status,
+  },
+  {
+    header: "Hash",
+    accessor: (r) => <CopyableText text={r.hash} startChars={10} endChars={4} size="sm" />,
+    sortable: true,
+    sortValue: (r) => r.hash,
+  },
+  {
+    header: "Name",
+    accessor: (r) =>
+      r.name ? (
+        <span className="text-sm">{r.name}</span>
+      ) : (
+        <span className="text-xs text-muted-foreground">{"\u2014"}</span>
+      ),
+    sortable: true,
+    sortValue: (r) => r.name ?? "",
   },
   {
     header: "vCPUs",
@@ -125,7 +123,7 @@ const columns: Column<Node>[] = [
     ),
     sortable: true,
     sortValue: (r) => r.vmCount,
-    align: "center",
+    align: "right",
   },
   {
     header: "Updated",
@@ -170,7 +168,7 @@ export function NodeTable({
   // Status filter
   const [statusFilter, setStatusFilter] = useState<
     NodeStatus | undefined
-  >(initialStatus);
+  >(initialStatus ?? "healthy");
 
   // Advanced filters
   const [filtersOpen, setFiltersOpen] = useState(false);

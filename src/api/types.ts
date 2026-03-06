@@ -107,6 +107,7 @@ export type OverviewStats = {
   healthyNodes: number;
   unreachableNodes: number;
   unknownNodes: number;
+  removedNodes: number;
   totalVMs: number;
   scheduledVMs: number;
   orphanedVMs: number;
@@ -175,5 +176,19 @@ export type ApiStats = {
 
 export type AlephMessage = {
   item_hash: string;
+  sender: string;
+  chain: string;
+  type: string;
   time: number;
+  content?: {
+    metadata?: {
+      name?: string;
+    };
+  };
+};
+
+export type AlephMessageInfo = {
+  time: number;
+  name: string | null;
+  explorerUrl: string;
 };

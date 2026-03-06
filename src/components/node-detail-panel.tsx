@@ -4,13 +4,8 @@ import Link from "next/link";
 import { Card } from "@aleph-front/ds/card";
 import { Badge } from "@aleph-front/ds/badge";
 import { StatusDot } from "@aleph-front/ds/status-dot";
-import {
-  TooltipProvider,
-  Tooltip,
-  TooltipTrigger,
-  TooltipContent,
-} from "@aleph-front/ds/tooltip";
 import { Skeleton } from "@aleph-front/ds/ui/skeleton";
+import { CopyableText } from "@aleph-front/ds/copyable-text";
 import { useNode } from "@/hooks/use-nodes";
 import { ResourceBar } from "@/components/resource-bar";
 import { relativeTime, truncateHash } from "@/lib/format";
@@ -63,17 +58,10 @@ export function NodeDetailPanel({ hash, onClose }: NodeDetailPanelProps) {
       </div>
 
       <dl className="space-y-2 text-sm">
-        <div className="flex justify-between">
+        <div className="flex items-center justify-between">
           <dt className="text-muted-foreground">Full Hash</dt>
           <dd className="min-w-0 truncate font-mono text-xs">
-            <TooltipProvider>
-              <Tooltip>
-                <TooltipTrigger asChild>
-                  <span className="cursor-help">{node.hash}</span>
-                </TooltipTrigger>
-                <TooltipContent>{node.hash}</TooltipContent>
-              </Tooltip>
-            </TooltipProvider>
+            <CopyableText text={node.hash} startChars={16} endChars={6} size="sm" />
           </dd>
         </div>
         {node.address && (

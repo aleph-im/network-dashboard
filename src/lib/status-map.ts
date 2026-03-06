@@ -32,6 +32,6 @@ export const VM_STATUS_VARIANT: Record<VmStatus, BadgeVariant> = {
   unscheduled: "default",
   orphaned: "warning",
   missing: "error",
-  unschedulable: "error",
+  unschedulable: "warning",
   unknown: "default",
 };

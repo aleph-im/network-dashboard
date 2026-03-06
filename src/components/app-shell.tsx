@@ -21,7 +21,7 @@ export function AppShell({ children }: { children: ReactNode }) {
       <AppSidebar open={sidebarOpen} onClose={closeSidebar} />
       <div className="flex flex-1 flex-col overflow-hidden bg-muted/40 dark:bg-background">
         <AppHeader onMenuClick={openSidebar} />
-        <main ref={mainRef} className="main-glow relative flex-1 overflow-y-auto rounded-tl-2xl bg-surface p-4 md:p-6">
+        <main ref={mainRef} className="main-glow relative flex-1 overflow-x-clip overflow-y-auto rounded-tl-2xl bg-surface p-4 md:p-6">
           {children}
         </main>
       </div>

@@ -18,6 +18,11 @@ Each entry includes:
 
 ---
 
+## Decision #31 - 2026-03-06
+**Context:** The dashboard had a local `CopyableHash` component for displaying truncated hashes with copy-to-clipboard. The DS now ships `CopyableText` with the same functionality plus middle-ellipsis, clip-path animation, Phosphor icons, and size variants.
+**Decision:** Replace local `CopyableHash` with DS `CopyableText` (`@aleph-front/ds/copyable-text`). Delete the local component and its CSS keyframe animation.
+**Rationale:** DS-first component policy (Decision #3). The DS version is strictly better: middle-ellipsis preserves both prefix and suffix of hashes (useful for visual disambiguation), clip-path circle-reveal animation is smoother than CSS keyframe icon swap, and Phosphor icons are consistent with the rest of the DS. No reason to maintain a local version.
+
 ## Decision #30 - 2026-03-06
 **Context:** VM type filter checkboxes didn't match any data — all 455 VMs showed as filtered out
 **Decision:** Update `VmType` to lowercase values (`"microvm"`, `"persistent_program"`, `"instance"`) matching the API wire format
