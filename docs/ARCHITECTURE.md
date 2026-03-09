@@ -168,6 +168,14 @@ src/
 **Approach:** Standalone client component at `/status` that fires fetch requests to all 8 API endpoints on mount. Checks `/health` (root-level) first, then uses a two-phase strategy: hits independent endpoints (stats, nodes list, vms list), then resolves `:hash` placeholders from list results for dependent endpoints (node/vm detail + history). `Promise.allSettled` ensures one failure doesn't block others. StatusDot shows health, HTTP codes displayed alongside. Base URL comes from `NEXT_PUBLIC_API_URL` with `?api=` query param override. Sidebar link is separated from main nav via `border-t` to signal it's a utility page, not primary navigation.
 **Key files:** `src/app/status/page.tsx`, `src/components/app-sidebar.tsx`
 
+### Deploying to IPFS
+
+**Context:** Static export deployed to IPFS via Aleph Cloud with delegated billing.
+**Approach:** Manual `workflow_dispatch` trigger in GitHub Actions. The workflow builds the site, uploads `out/` to IPFS via the Aleph SDK (not CLI — the CLI lacks delegation support), and prints the gateway URL in the job summary. Uses `aiohttp.FormData` with explicit filenames for correct MIME type inference. CIDv0→CIDv1 conversion for subdomain gateway format.
+**Key files:** `.github/workflows/deploy.yml`, `scripts/deploy-ipfs.py`
+**Auth:** CI wallet signs messages, main wallet (`0xB136...`) pays via `address` parameter in `create_store()`. CI wallet private key stored as `ALEPH_PRIVATE_KEY` GitHub Actions secret.
+**Gateway URL format:** `https://<cidv1>.ipfs.aleph.sh/`
+
 ### Adding a New API Endpoint
 
 1. Add types to `src/api/types.ts`

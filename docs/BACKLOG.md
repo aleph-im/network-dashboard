@@ -60,10 +60,6 @@ Ideas and scope creep captured for later consideration.
 **Description:** Add time-series charts for CPU/memory/disk usage history on node detail views. Recharts was removed during API migration — would need to re-add or use a lighter charting library.
 **Priority:** Medium
 
-### 2026-03-03 - Automated IPFS deployment via Aleph CLI
-**Source:** Manual deployment friction
-**Description:** Investigate using the Aleph CLI to automatically push the `out/` directory to IPFS after build. Could be integrated into a GitHub Actions workflow or a local deploy script.
-**Priority:** Medium
 
 ---
 
@@ -131,5 +127,6 @@ Ideas and scope creep captured for later consideration.
 - ✅ 2026-03-09 - GPU requirements on VMs — Requires GPU filter, GPU row in detail view/panel
 - ✅ 2026-03-09 - Confidential computing indicators — ShieldCheck icon in tables, checkbox filters, detail panel/view rows
 - ✅ 2026-03-09 - CPU info on nodes — CPU column, vendor filter (AMD/Intel), CPU section in detail panel/view
+- ✅ 2026-03-09 - Automated IPFS deployment — `workflow_dispatch` GitHub Actions workflow using Aleph SDK with delegated billing, CIDv0→CIDv1 conversion, gateway URL in job summary
 
 </details>

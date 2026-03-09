@@ -18,6 +18,12 @@ Each entry includes:
 
 ---
 
+## Decision #35 - 2026-03-09
+**Context:** Setting up automated IPFS deployment. The Aleph CLI doesn't expose the `address` parameter on `file upload` / `file pin`, which is needed for delegated billing (CI wallet signs, main wallet pays). The CLI always checks the signer's balance, failing with "insufficient funds" even when the main wallet has credits.
+**Decision:** Use the Aleph Python SDK directly via `scripts/deploy-ipfs.py` instead of the CLI. Pass `address=owner_wallet` to `create_store()` for delegated billing. Use `aiohttp.FormData` with explicit `filename=` for IPFS directory uploads. Manual trigger (`workflow_dispatch`) only.
+**Rationale:** The SDK's `create_store(address=...)` is the only way to bill a different wallet than the signer. `FormData` with explicit filenames is required because the IPFS `/api/v0/add` endpoint uses the `filename` from `Content-Disposition` headers to build the directory tree — without it, the gateway serves all files as `text/plain` (can't infer MIME types without extensions). Manual trigger chosen over auto-deploy because deployments should be intentional.
+**Alternatives considered:** Using CLI directly (no delegation support), sending ALEPH tokens to CI wallet (unnecessary ongoing cost), auto-deploy on push to main (deployments should be deliberate)
+
 ## Decision #34 - 2026-03-09
 **Context:** Adding CPU info to the nodes page. The API returns `cpu_vendor` (CPUID string like "AuthenticAMD"/"GenuineIntel"), `cpu_architecture` (e.g. "x86_64"), and `cpu_features` (e.g. ["sev", "sev_snp"]). The vendor filter initially included an "Unknown" option for nodes with null cpu_vendor.
 **Decision:** Map CPUID vendor strings to display labels (AMD, Intel) via `formatCpuLabel()`. Show CPU column in table, vendor multi-select filter (AMD/Intel only), CPU section in detail panel/view. Features shown only in detail views (conditional). Remove "Unknown" from vendor filter options.
