@@ -349,8 +349,11 @@ export function NodeTable({
           size="sm"
           onClick={() => setFiltersOpen((v) => !v)}
           className="relative"
+          aria-label="Toggle filters"
         >
-          Filters
+          <svg className="size-4" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
+            <path strokeLinecap="round" strokeLinejoin="round" d="M3 4h18M6 8h12M9 12h6M11 16h2" />
+          </svg>
           {activeAdvancedCount > 0 && !filtersOpen && (
             <span className="absolute -right-1 -top-1 h-2.5 w-2.5 rounded-full bg-primary-500" />
           )}
