@@ -18,6 +18,7 @@ import {
   relativeTime,
   truncateHash,
   formatDateTime,
+  formatCpuLabel,
 } from "@/lib/format";
 import {
   nodeStatusToDot,
@@ -135,6 +136,14 @@ export function NodeDetailView({ hash }: NodeDetailViewProps) {
               "No"
             )}
           </MetaItem>
+          <MetaItem label="CPU">
+            {formatCpuLabel(node.cpuVendor, node.cpuArchitecture)}
+          </MetaItem>
+          {node.cpuFeatures.length > 0 && (
+            <MetaItem label="CPU Features">
+              {node.cpuFeatures.join(", ")}
+            </MetaItem>
+          )}
           {node.discoveredAt && (
             <MetaItem label="Discovered">
               {formatDateTime(node.discoveredAt)}
