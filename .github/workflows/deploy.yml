@@ -37,6 +37,9 @@ jobs:
         with:
           python-version: "3.12"
 
+      - name: Install system dependencies
+        run: sudo apt-get update && sudo apt-get install -y libsecp256k1-dev
+
       - name: Install aleph-client
         run: pip install aleph-client
 
@@ -46,7 +49,7 @@ jobs:
           OUTPUT=$(aleph file upload out/ \
             --storage-engine ipfs \
             --private-key "$ALEPH_PRIVATE_KEY" \
-            --channel ALEPH-CLOUDSOLUTIONS)
+            --channel ALEPH-CLOUDSOLUTIONS 2>&1) || { echo "$OUTPUT"; exit 1; }
 
           CID_V0=$(echo "$OUTPUT" | python3 -c "import sys,json; print(json.load(sys.stdin)['content']['item_hash'])")
           echo "cid_v0=$CID_V0" >> "$GITHUB_OUTPUT"
