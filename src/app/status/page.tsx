@@ -1,6 +1,8 @@
 "use client";
 
 import { useCallback, useEffect, useState } from "react";
+import { Pulse } from "@phosphor-icons/react";
+import { Button } from "@aleph-front/ds/button";
 import { StatusDot } from "@aleph-front/ds/status-dot";
 
 type EndpointStatus = {
@@ -119,6 +121,7 @@ export default function StatusPage() {
 
   const runChecks = useCallback(async () => {
     setChecking(true);
+    const minDelay = new Promise((r) => setTimeout(r, 600));
     const baseUrl = getBaseUrl();
     const newResults: EndpointStatus[] = [];
     const listData: Record<string, unknown> = {};
@@ -204,6 +207,7 @@ export default function StatusPage() {
       );
     }
 
+    await minDelay;
     setResults([healthResult, ...newResults]);
     setChecking(false);
   }, []);
@@ -221,14 +225,18 @@ export default function StatusPage() {
           Checking endpoints at{" "}
           <code className="text-xs">{baseUrl}</code>
         </p>
-        <button
-          type="button"
+        <Button
+          variant="text"
+          size="xs"
+          className="shrink-0"
+          iconLeft={
+            <Pulse className={checking ? "animate-pulse" : ""} />
+          }
           onClick={runChecks}
           disabled={checking}
-          className="rounded-lg bg-primary-600/10 px-3 py-1.5 text-sm font-medium text-primary-400 transition-colors hover:bg-primary-600/20 disabled:opacity-50"
         >
-          {checking ? "Checking\u2026" : "Recheck"}
-        </button>
+          {checking ? "Checking" : "Recheck"}
+        </Button>
       </div>
 
       <ul className="divide-y divide-edge rounded-xl border border-edge bg-surface">
