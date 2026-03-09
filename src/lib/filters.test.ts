@@ -232,6 +232,19 @@ describe("applyNodeAdvancedFilters", () => {
     expect(result).toHaveLength(2);
   });
 
+  it("filters by confidentialComputing", () => {
+    const nodes = [
+      makeNode({ confidentialComputing: true }),
+      makeNode({ confidentialComputing: false }),
+      makeNode(),
+    ];
+    const result = applyNodeAdvancedFilters(nodes, {
+      confidentialComputing: true,
+    });
+    expect(result).toHaveLength(1);
+    expect(result[0]?.confidentialComputing).toBe(true);
+  });
+
   it("returns all when no filters active", () => {
     const nodes = [makeNode(), makeNode()];
     expect(applyNodeAdvancedFilters(nodes, {})).toHaveLength(2);
@@ -340,6 +353,19 @@ describe("applyVmAdvancedFilters", () => {
     ];
     const result = applyVmAdvancedFilters(vms, { requiresGpu: true });
     expect(result).toHaveLength(1);
+  });
+
+  it("filters by requiresConfidential", () => {
+    const vms = [
+      makeVm({ requiresConfidential: true }),
+      makeVm({ requiresConfidential: false }),
+      makeVm(),
+    ];
+    const result = applyVmAdvancedFilters(vms, {
+      requiresConfidential: true,
+    });
+    expect(result).toHaveLength(1);
+    expect(result[0]?.requiresConfidential).toBe(true);
   });
 
   it("returns all when no filters active", () => {
