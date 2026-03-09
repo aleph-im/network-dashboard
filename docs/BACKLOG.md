@@ -15,11 +15,6 @@ Ideas and scope creep captured for later consideration.
 
 ## Open Items
 
-### 2026-03-09 - Confidential computing indicators
-**Source:** API pagination migration — new fields already in API responses
-**Description:** Nodes have `confidential_computing_enabled`, VMs have `requires_confidential`. Add badge/indicator on both tables and detail views, checkbox filter on both pages.
-**Priority:** Medium
-
 ### 2026-03-09 - CPU architecture info
 **Source:** API pagination migration — new fields already in API responses
 **Description:** Both nodes and VMs have `cpu_architecture`, `cpu_vendor`, `cpu_features`. Add architecture column/filter to node table (x86/ARM), show details in detail views.
@@ -139,5 +134,6 @@ Ideas and scope creep captured for later consideration.
 - ✅ 2026-03-06 - List page filtering — text search, count badges, collapsible advanced filters (checkboxes, range sliders, 3-column layout) on both Nodes and VMs pages
 - ✅ 2026-03-09 - GPU info on nodes — GPU badge column, Has GPU filter, GPU card in detail view/panel
 - ✅ 2026-03-09 - GPU requirements on VMs — Requires GPU filter, GPU row in detail view/panel
+- ✅ 2026-03-09 - Confidential computing indicators — ShieldCheck icon in tables, checkbox filters, detail panel/view rows
 
 </details>

@@ -1,6 +1,7 @@
 "use client";
 
 import Link from "next/link";
+import { ShieldCheck } from "@phosphor-icons/react";
 import { Card } from "@aleph-front/ds/card";
 import { Badge } from "@aleph-front/ds/badge";
 import { StatusDot } from "@aleph-front/ds/status-dot";
@@ -124,6 +125,16 @@ export function NodeDetailView({ hash }: NodeDetailViewProps) {
               {node.supportsIpv6 ? "Yes" : "No"}
             </MetaItem>
           )}
+          <MetaItem label="Confidential">
+            {node.confidentialComputing ? (
+              <span className="inline-flex items-center gap-1">
+                <ShieldCheck size={14} weight="fill" className="text-primary-400" />
+                Enabled
+              </span>
+            ) : (
+              "No"
+            )}
+          </MetaItem>
           {node.discoveredAt && (
             <MetaItem label="Discovered">
               {formatDateTime(node.discoveredAt)}

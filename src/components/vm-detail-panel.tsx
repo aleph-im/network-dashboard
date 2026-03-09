@@ -1,6 +1,7 @@
 "use client";
 
 import Link from "next/link";
+import { ShieldCheck } from "@phosphor-icons/react";
 import { Card } from "@aleph-front/ds/card";
 import { Badge } from "@aleph-front/ds/badge";
 import { Skeleton } from "@aleph-front/ds/ui/skeleton";
@@ -186,6 +187,19 @@ export function VMDetailPanel({ hash, onClose }: VMDetailPanelProps) {
               </dd>
             </div>
           )}
+          <div className="flex justify-between">
+            <dt className="text-muted-foreground">Confidential</dt>
+            <dd className="flex items-center gap-1">
+              {vm.requiresConfidential ? (
+                <>
+                  <ShieldCheck size={14} weight="fill" className="text-primary-400" />
+                  <span className="text-sm">Required</span>
+                </>
+              ) : (
+                <span className="text-sm text-muted-foreground">No</span>
+              )}
+            </dd>
+          </div>
         </dl>
       </div>
 

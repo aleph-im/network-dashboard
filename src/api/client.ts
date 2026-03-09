@@ -137,6 +137,7 @@ function transformNode(raw: ApiNodeRow): Node {
       used: raw.gpus.used.map(transformGpu),
       available: raw.gpus.available.map(transformGpu),
     },
+    confidentialComputing: raw.confidential_computing_enabled,
   };
 }
 
@@ -158,6 +159,7 @@ function transformVm(raw: ApiVmRow): VM {
     lastObservedAt: raw.last_observed_at,
     paymentType: raw.payment_type,
     gpuRequirements: raw.gpu_requirements.map(transformGpu),
+    requiresConfidential: raw.requires_confidential,
   };
 }
 

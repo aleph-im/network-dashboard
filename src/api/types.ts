@@ -37,6 +37,7 @@ export type Node = {
   supportsIpv6: boolean | null;
   discoveredAt: string | null;
   gpus: { used: GpuDevice[]; available: GpuDevice[] };
+  confidentialComputing: boolean;
 };
 
 export type NodeDetail = Node & {
@@ -80,6 +81,7 @@ export type VM = {
   lastObservedAt: string | null;
   paymentType: string | null;
   gpuRequirements: GpuDevice[];
+  requiresConfidential: boolean;
 };
 
 export type VmDetail = VM & {

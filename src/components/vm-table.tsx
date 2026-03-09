@@ -3,7 +3,13 @@
 import { useState, useTransition, useMemo } from "react";
 import { Table, type Column } from "@aleph-front/ds/table";
 import { Badge } from "@aleph-front/ds/badge";
-import { TooltipProvider } from "@aleph-front/ds/tooltip";
+import {
+  Tooltip,
+  TooltipTrigger,
+  TooltipContent,
+  TooltipProvider,
+} from "@aleph-front/ds/tooltip";
+import { ShieldCheck } from "@phosphor-icons/react";
 import { Checkbox } from "@aleph-front/ds/checkbox";
 import { Button } from "@aleph-front/ds/button";
 import { Input } from "@aleph-front/ds/input";
@@ -138,10 +144,22 @@ function buildColumns(
     header: "Name",
     accessor: (r) => {
       const name = msgInfo?.get(r.hash)?.name;
-      return name ? (
-        <span className="text-sm">{name}</span>
-      ) : (
-        <span className="text-xs text-muted-foreground">{"\u2014"}</span>
+      return (
+        <span className="inline-flex items-center gap-1.5">
+          {name ? (
+            <span className="text-sm">{name}</span>
+          ) : (
+            <span className="text-xs text-muted-foreground">{"\u2014"}</span>
+          )}
+          {r.requiresConfidential && (
+            <Tooltip>
+              <TooltipTrigger asChild>
+                <ShieldCheck size={14} weight="fill" className="shrink-0 text-primary-400" />
+              </TooltipTrigger>
+              <TooltipContent>Requires confidential computing</TooltipContent>
+            </Tooltip>
+          )}
+        </span>
       );
     },
     sortable: true,
@@ -238,6 +256,7 @@ export function VMTable({
       advanced.paymentStatuses.size < ALL_PAYMENT_STATUSES.length,
     advanced.hasAllocatedNode,
     advanced.requiresGpu,
+    advanced.requiresConfidential,
     advanced.vcpusRange != null &&
       (advanced.vcpusRange[0] > 0 ||
         advanced.vcpusRange[1] < VM_VCPUS_MAX),
@@ -568,6 +587,26 @@ export function VMTable({
                   Requires GPU
                   <span className="ml-1.5 text-xs font-normal text-muted-foreground/50">
                     — needs GPU hardware
+                  </span>
+                </span>
+              </label>
+              <label className="flex cursor-pointer items-center gap-2.5 text-sm font-semibold text-muted-foreground select-none">
+                <Checkbox
+                  size="sm"
+                  checked={advanced.requiresConfidential ?? false}
+                  onCheckedChange={(v) =>
+                    updateAdvanced((p) => {
+                      const { requiresConfidential: _, ...rest } = p;
+                      return v === true
+                        ? { ...rest, requiresConfidential: true }
+                        : rest;
+                    })
+                  }
+                />
+                <span>
+                  Requires Confidential
+                  <span className="ml-1.5 text-xs font-normal text-muted-foreground/50">
+                    — requires TEE
                   </span>
                 </span>
               </label>

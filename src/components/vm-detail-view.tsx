@@ -1,6 +1,7 @@
 "use client";
 
 import Link from "next/link";
+import { ShieldCheck } from "@phosphor-icons/react";
 import { Card } from "@aleph-front/ds/card";
 import { Badge } from "@aleph-front/ds/badge";
 import {
@@ -239,6 +240,16 @@ export function VMDetailView({ hash }: VMDetailViewProps) {
               </span>
             </MetaItem>
           )}
+          <MetaItem label="Confidential">
+            {vm.requiresConfidential ? (
+              <span className="inline-flex items-center gap-1">
+                <ShieldCheck size={14} weight="fill" className="text-primary-400" />
+                Required
+              </span>
+            ) : (
+              "No"
+            )}
+          </MetaItem>
         </dl>
       </Card>
 

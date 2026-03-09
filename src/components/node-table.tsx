@@ -3,7 +3,13 @@
 import { useState, useTransition, useMemo } from "react";
 import { Table, type Column } from "@aleph-front/ds/table";
 import { StatusDot } from "@aleph-front/ds/status-dot";
-import { TooltipProvider } from "@aleph-front/ds/tooltip";
+import {
+  Tooltip,
+  TooltipTrigger,
+  TooltipContent,
+  TooltipProvider,
+} from "@aleph-front/ds/tooltip";
+import { ShieldCheck } from "@phosphor-icons/react";
 import { Checkbox } from "@aleph-front/ds/checkbox";
 import { Badge } from "@aleph-front/ds/badge";
 import { Button } from "@aleph-front/ds/button";
@@ -80,12 +86,23 @@ const columns: Column<Node>[] = [
   },
   {
     header: "Name",
-    accessor: (r) =>
-      r.name ? (
-        <span className="text-sm">{r.name}</span>
-      ) : (
-        <span className="text-xs text-muted-foreground">{"\u2014"}</span>
-      ),
+    accessor: (r) => (
+      <span className="inline-flex items-center gap-1.5">
+        {r.name ? (
+          <span className="text-sm">{r.name}</span>
+        ) : (
+          <span className="text-xs text-muted-foreground">{"\u2014"}</span>
+        )}
+        {r.confidentialComputing && (
+          <Tooltip>
+            <TooltipTrigger asChild>
+              <ShieldCheck size={14} weight="fill" className="shrink-0 text-primary-400" />
+            </TooltipTrigger>
+            <TooltipContent>Supports confidential computing (TEE)</TooltipContent>
+          </Tooltip>
+        )}
+      </span>
+    ),
     sortable: true,
     sortValue: (r) => r.name ?? "",
   },
@@ -196,6 +213,7 @@ export function NodeTable({
     advanced.staked,
     advanced.supportsIpv6,
     advanced.hasGpu,
+    advanced.confidentialComputing,
     advanced.vmCountRange != null &&
       isRangeActive(advanced.vmCountRange, NODE_VM_COUNT_MAX),
     advanced.vcpusTotalRange != null &&
@@ -454,6 +472,26 @@ export function NodeTable({
                     Has GPU
                     <span className="ml-1.5 text-xs font-normal text-muted-foreground/50">
                       — has one or more GPUs
+                    </span>
+                  </span>
+                </label>
+                <label className="flex cursor-pointer items-center gap-2.5 text-sm font-semibold text-muted-foreground select-none">
+                  <Checkbox
+                    size="sm"
+                    checked={advanced.confidentialComputing ?? false}
+                    onCheckedChange={(v) =>
+                      updateAdvanced((p) => {
+                        const { confidentialComputing: _, ...rest } = p;
+                        return v === true
+                          ? { ...rest, confidentialComputing: true }
+                          : rest;
+                      })
+                    }
+                  />
+                  <span>
+                    Confidential
+                    <span className="ml-1.5 text-xs font-normal text-muted-foreground/50">
+                      — supports TEE
                     </span>
                   </span>
                 </label>
