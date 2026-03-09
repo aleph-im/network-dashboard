@@ -20,7 +20,7 @@ import { useNodes } from "@/hooks/use-nodes";
 import { useDebounce } from "@/hooks/use-debounce";
 import { CollapsibleSection } from "@/components/collapsible-section";
 import { CopyableText } from "@aleph-front/ds/copyable-text";
-import { relativeTime, formatGpuLabel } from "@/lib/format";
+import { relativeTime, formatGpuLabel, formatCpuLabel } from "@/lib/format";
 import {
   textSearch,
   countByStatus,
@@ -134,6 +134,16 @@ const columns: Column<Node>[] = [
     align: "right",
   },
   {
+    header: "CPU",
+    accessor: (r) => (
+      <span className="text-xs">
+        {formatCpuLabel(r.cpuVendor, r.cpuArchitecture)}
+      </span>
+    ),
+    sortable: true,
+    sortValue: (r) => formatCpuLabel(r.cpuVendor, r.cpuArchitecture),
+  },
+  {
     header: "GPU",
     accessor: (r) => {
       const allGpus = [...r.gpus.used, ...r.gpus.available];
@@ -214,6 +224,9 @@ export function NodeTable({
     advanced.supportsIpv6,
     advanced.hasGpu,
     advanced.confidentialComputing,
+    advanced.cpuVendors != null &&
+      advanced.cpuVendors.size > 0 &&
+      advanced.cpuVendors.size < 3,
     advanced.vmCountRange != null &&
       isRangeActive(advanced.vmCountRange, NODE_VM_COUNT_MAX),
     advanced.vcpusTotalRange != null &&
@@ -495,6 +508,47 @@ export function NodeTable({
                     </span>
                   </span>
                 </label>
+              </div>
+              <div className="mt-4 border-t border-white/[0.04] pt-3">
+                <span className="mb-2.5 block text-xs font-normal text-muted-foreground/50">
+                  CPU Vendor
+                </span>
+                <div className="space-y-2.5">
+                  {(
+                    [
+                      ["AuthenticAMD", "AMD"],
+                      ["GenuineIntel", "Intel"],
+                      ["unknown", "Unknown"],
+                    ] as const
+                  ).map(([value, label]) => (
+                    <label
+                      key={value}
+                      className="flex cursor-pointer items-center gap-2.5 text-sm font-semibold text-muted-foreground select-none"
+                    >
+                      <Checkbox
+                        size="sm"
+                        checked={advanced.cpuVendors?.has(value) ?? false}
+                        onCheckedChange={(checked) =>
+                          updateAdvanced((p) => {
+                            const next = new Set(p.cpuVendors);
+                            if (checked === true) {
+                              next.add(value);
+                            } else {
+                              next.delete(value);
+                            }
+                            return next.size > 0
+                              ? { ...p, cpuVendors: next }
+                              : (() => {
+                                  const { cpuVendors: _, ...rest } = p;
+                                  return rest;
+                                })();
+                          })
+                        }
+                      />
+                      <span>{label}</span>
+                    </label>
+                  ))}
+                </div>
               </div>
             </div>
 
