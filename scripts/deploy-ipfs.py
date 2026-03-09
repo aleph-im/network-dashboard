@@ -33,11 +33,6 @@ from aleph.sdk.types import StorageEnum
 async def upload_directory_to_ipfs(directory: Path) -> str:
     """Upload directory to IPFS gateway, return CIDv0."""
     params = {"recursive": "true", "wrap-with-directory": "true"}
-    files = {}
-    for path in directory.rglob("*"):
-        if path.is_file():
-            relative = path.relative_to(directory)
-            files[str(relative)] = open(path, "rb")  # noqa: SIM115
 
     url = (
         urlparse(settings.IPFS_GATEWAY)
@@ -45,14 +40,23 @@ async def upload_directory_to_ipfs(directory: Path) -> str:
         .geturl()
     )
 
+    form = aiohttp.FormData()
+    file_handles = []
+    for path in sorted(directory.rglob("*")):
+        if path.is_file():
+            relative = str(path.relative_to(directory))
+            fh = open(path, "rb")  # noqa: SIM115
+            file_handles.append(fh)
+            form.add_field("file", fh, filename=relative)
+
     try:
         async with aiohttp.ClientSession() as session:
-            response = await session.post(url, params=params, data=files)
+            response = await session.post(url, params=params, data=form)
             response.raise_for_status()
             text = await response.text()
     finally:
-        for f in files.values():
-            f.close()
+        for fh in file_handles:
+            fh.close()
 
     cid = None
     for line in text.strip().splitlines():
