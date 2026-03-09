@@ -21,6 +21,9 @@ async function apiFetch(path: string): Promise<Response> {
 
 function unwrap<T>(data: T[] | Record<string, T[]>): T[] {
   if (Array.isArray(data)) return data;
+  if ("items" in data && Array.isArray(data["items"])) {
+    return data["items"] as T[];
+  }
   const values = Object.values(data);
   if (values.length === 1 && Array.isArray(values[0])) {
     return values[0];
@@ -29,6 +32,15 @@ function unwrap<T>(data: T[] | Record<string, T[]>): T[] {
 }
 
 describe.skipIf(skip)("live API integration", () => {
+  // --- Health check ---
+
+  it("GET /health is reachable", async () => {
+    const res = await apiFetch("/health");
+    expect(res.ok, `/health returned ${res.status}`).toBe(true);
+    const data = await res.json();
+    expect(data).toMatchObject({ status: "ok" });
+  });
+
   // --- Connectivity: verify endpoints respond ---
 
   it("GET /api/v1/nodes is reachable", async () => {
