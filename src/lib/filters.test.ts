@@ -21,6 +21,9 @@ const makeNode = (overrides: Partial<Node> = {}): Node => ({
   discoveredAt: null,
   gpus: { used: [], available: [] },
   confidentialComputing: false,
+  cpuArchitecture: null,
+  cpuVendor: null,
+  cpuFeatures: [],
   ...overrides,
 });
 

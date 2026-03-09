@@ -138,6 +138,9 @@ function transformNode(raw: ApiNodeRow): Node {
       available: raw.gpus.available.map(transformGpu),
     },
     confidentialComputing: raw.confidential_computing_enabled,
+    cpuArchitecture: raw.cpu_architecture,
+    cpuVendor: raw.cpu_vendor,
+    cpuFeatures: raw.cpu_features,
   };
 }
 

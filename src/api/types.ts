@@ -38,6 +38,9 @@ export type Node = {
   discoveredAt: string | null;
   gpus: { used: GpuDevice[]; available: GpuDevice[] };
   confidentialComputing: boolean;
+  cpuArchitecture: string | null;
+  cpuVendor: string | null;
+  cpuFeatures: string[];
 };
 
 export type NodeDetail = Node & {
