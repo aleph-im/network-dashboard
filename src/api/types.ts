@@ -18,6 +18,12 @@ export type NodeResources = {
   diskUsagePct: number;
 };
 
+export type GpuDevice = {
+  vendor: string;
+  model: string;
+  deviceName: string;
+};
+
 export type Node = {
   hash: string;
   name: string | null;
@@ -30,6 +36,7 @@ export type Node = {
   owner: string | null;
   supportsIpv6: boolean | null;
   discoveredAt: string | null;
+  gpus: { used: GpuDevice[]; available: GpuDevice[] };
 };
 
 export type NodeDetail = Node & {
@@ -72,6 +79,7 @@ export type VM = {
   allocatedAt: string | null;
   lastObservedAt: string | null;
   paymentType: string | null;
+  gpuRequirements: GpuDevice[];
 };
 
 export type VmDetail = VM & {
@@ -133,6 +141,11 @@ export type ApiNodeRow = {
   memory_available_mb: number | null;
   disk_available_mb: number | null;
   supports_ipv6: boolean | null;
+  confidential_computing_enabled: boolean;
+  cpu_architecture: string | null;
+  cpu_vendor: string | null;
+  cpu_features: string[];
+  gpus: { used: ApiGpu[]; available: ApiGpu[] };
   payment_receiver: string | null;
   vm_count: number;
   discovered_at: string | null;
@@ -153,6 +166,11 @@ export type ApiVmRow = {
   payment_type: string | null;
   payment_status: "validated" | "invalidated" | null;
   updated_at: string;
+  requires_confidential: boolean;
+  gpu_requirements: ApiGpu[];
+  cpu_architecture: string | null;
+  cpu_vendor: string | null;
+  cpu_features: string[];
 };
 
 export type ApiHistoryRow = {
@@ -162,6 +180,14 @@ export type ApiHistoryRow = {
   action: HistoryAction;
   reason: string | null;
   timestamp: string;
+};
+
+export type ApiGpu = {
+  vendor: string;
+  model: string;
+  device_name: string;
+  device_class: string;
+  device_id: string;
 };
 
 export type ApiStats = {

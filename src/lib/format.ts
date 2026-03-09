@@ -45,3 +45,19 @@ export function formatDateTime(isoDate: string): string {
     minute: "2-digit",
   });
 }
+
+export function formatGpuLabel(
+  gpus: { model: string; deviceName: string }[],
+): string {
+  if (gpus.length === 0) return "";
+  const groups = new Map<string, number>();
+  for (const gpu of gpus) {
+    const label = gpu.model || gpu.deviceName;
+    groups.set(label, (groups.get(label) ?? 0) + 1);
+  }
+  return [...groups.entries()]
+    .map(([label, count]) =>
+      count > 1 ? `${count}x ${label}` : label,
+    )
+    .join(", ");
+}

@@ -75,7 +75,7 @@ src/
 **Context:** Dashboard fetches live data from the scheduler API.
 **Approach:** Fetches from `NEXT_PUBLIC_API_URL` (default: `http://localhost:8081`). Runtime URL override via `?api=` query parameter. API endpoints are prefixed with `/api/v1`. Wire types (`Api*Row`) use snake_case matching the raw JSON; transform functions convert to camelCase app types. List endpoints return paginated responses (`{items: T[], pagination: {page, page_size, total_items, total_pages}}`). The `fetchAllPages()` helper fetches page 1 to learn `total_pages`, then fetches remaining pages in parallel (max 200 items/page). Public functions (`getNodes`, `getVMs`, `getOverviewStats`) return full arrays — pagination is encapsulated in the client layer. Detail endpoints (`getNode`, `getVM`) use `fetchApi` for the bare object + `fetchAllPages` for related VMs/history.
 **Key files:** `src/api/types.ts` (wire + app + pagination types), `src/api/client.ts`
-**Notes:** The `getOverviewStats` function fetches `/stats` + `/vms` + `/nodes` in parallel to derive per-status counts not available from `/stats` alone.
+**Notes:** The `getOverviewStats` function fetches `/stats` + `/vms` + `/nodes` in parallel to derive per-status counts not available from `/stats` alone. GPU fields (`gpus` on nodes, `gpu_requirements` on VMs) are transformed via `transformGpu` to the app-level `GpuDevice` type (vendor, model, deviceName). Additional wire fields (confidential_computing, cpu_architecture, cpu_vendor, cpu_features) are typed but not yet surfaced in the UI.
 
 ### Progressive Loading from Multiple APIs
 
@@ -143,7 +143,7 @@ src/
 **Context:** Both Nodes and VMs pages need text search, status filters, and advanced filters (checkboxes, range sliders) — all client-side.
 **Approach:** Four-stage pipeline applied in `useMemo`: (1) `textSearch` matches query against configurable fields, (2) `applyNodeAdvancedFilters` / `applyVmAdvancedFilters` applies checkbox and range filters, (3) `countByStatus` computes per-status counts on the filtered set (for badge display), (4) status filter selects a single status. Status is applied last so count badges show accurate per-status breakdowns after search+advanced filters. All filters are client-side post-fetch — none go in the React Query key. State setters wrapped in `useTransition` for responsive UI. Search input debounced at 300ms via `useDebounce`. The `CollapsibleSection` component uses CSS `grid-template-rows` animation for smooth expand/collapse. Filter panel uses a 3-column layout (`lg:grid-cols-3`) with glassmorphism card styling.
 **Key files:** `src/lib/filters.ts` (pure filter functions + types), `src/lib/filters.test.ts`, `src/hooks/use-debounce.ts`, `src/components/collapsible-section.tsx`, `src/components/node-table.tsx`, `src/components/vm-table.tsx`
-**Notes:** Multi-select filters (VM type, payment status) treat "all selected" and "none selected" identically as "no filter." Count badges show `filtered/total` format when non-status filters are active. The `VmType` values are lowercase (`"microvm"`, `"persistent_program"`, `"instance"`) matching the API wire format.
+**Notes:** Multi-select filters (VM type, payment status) treat "all selected" and "none selected" identically as "no filter." Count badges show `filtered/total` format when non-status filters are active. The `VmType` values are lowercase (`"microvm"`, `"persistent_program"`, `"instance"`) matching the API wire format. Boolean checkbox filters: Staked, IPv6, Has GPU (nodes); Allocated to a node, Requires GPU (VMs).
 
 ### Responsive Layout
 

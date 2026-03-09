@@ -176,6 +176,16 @@ export function VMDetailPanel({ hash, onClose }: VMDetailPanelProps) {
                 : "None"}
             </dd>
           </div>
+          {vm.gpuRequirements.length > 0 && (
+            <div className="flex justify-between">
+              <dt className="text-muted-foreground">GPU</dt>
+              <dd className="text-xs">
+                {vm.gpuRequirements
+                  .map((g) => `${g.vendor} ${g.model || g.deviceName}`)
+                  .join(", ")}
+              </dd>
+            </div>
+          )}
         </dl>
       </div>
 

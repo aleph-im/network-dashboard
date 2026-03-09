@@ -19,6 +19,7 @@ const makeNode = (overrides: Partial<Node> = {}): Node => ({
   owner: null,
   supportsIpv6: null,
   discoveredAt: null,
+  gpus: { used: [], available: [] },
   ...overrides,
 });
 
@@ -34,6 +35,7 @@ const makeVm = (overrides: Partial<VM> = {}): VM => ({
   allocatedAt: null,
   lastObservedAt: null,
   paymentType: null,
+  gpuRequirements: [],
   ...overrides,
 });
 
@@ -217,6 +219,17 @@ describe("applyNodeAdvancedFilters", () => {
     expect(result).toHaveLength(1);
   });
 
+  it("filters by hasGpu", () => {
+    const gpu = { vendor: "NVIDIA", model: "RTX 6000", deviceName: "AD102GL" };
+    const nodes = [
+      makeNode({ gpus: { used: [gpu], available: [] } }),
+      makeNode({ gpus: { used: [], available: [gpu] } }),
+      makeNode(),
+    ];
+    const result = applyNodeAdvancedFilters(nodes, { hasGpu: true });
+    expect(result).toHaveLength(2);
+  });
+
   it("returns all when no filters active", () => {
     const nodes = [makeNode(), makeNode()];
     expect(applyNodeAdvancedFilters(nodes, {})).toHaveLength(2);
@@ -313,6 +326,17 @@ describe("applyVmAdvancedFilters", () => {
     const result = applyVmAdvancedFilters(vms, {
       memoryMbRange: [1024, 65536],
     });
+    expect(result).toHaveLength(1);
+  });
+
+  it("filters by requiresGpu", () => {
+    const gpu = { vendor: "NVIDIA", model: "", deviceName: "AD102GL [L40S]" };
+    const vms = [
+      makeVm({ gpuRequirements: [gpu] }),
+      makeVm({ gpuRequirements: [] }),
+      makeVm(),
+    ];
+    const result = applyVmAdvancedFilters(vms, { requiresGpu: true });
     expect(result).toHaveLength(1);
   });
 

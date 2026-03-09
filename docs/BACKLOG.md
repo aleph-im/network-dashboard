@@ -15,16 +15,6 @@ Ideas and scope creep captured for later consideration.
 
 ## Open Items
 
-### 2026-03-09 - GPU info on nodes
-**Source:** API pagination migration — new fields already in API responses
-**Description:** Nodes have `gpus: {used, available}`. Show GPU model/count in node table column + detail view, add "has GPU" filter to advanced filters.
-**Priority:** Medium
-
-### 2026-03-09 - GPU requirements on VMs
-**Source:** API pagination migration — new fields already in API responses
-**Description:** VMs have `gpu_requirements`. Show in VM detail view, add filter for GPU-requiring VMs.
-**Priority:** Medium
-
 ### 2026-03-09 - Confidential computing indicators
 **Source:** API pagination migration — new fields already in API responses
 **Description:** Nodes have `confidential_computing_enabled`, VMs have `requires_confidential`. Add badge/indicator on both tables and detail views, checkbox filter on both pages.
@@ -124,7 +114,7 @@ Ideas and scope creep captured for later consideration.
 **Description:** Flag nodes losing VMs or going unreachable frequently. Client-side heuristic from history data — detect patterns like repeated status changes.
 
 ### 2026-03-09 - Aleph Cloud hosting architecture research
-**Description:** The current static export + client-side polling model won't scale long-term (fetching all pages on every poll, no persistent state, no indexing). Research how to run a proper frontend + backend on Aleph Cloud. Key questions: Can we run a backend VM on Aleph that indexes scheduler data and serves it via API? Can we use Aleph messages (STORE, AGGREGATE, POST) to persist historical snapshots, user preferences, or pre-computed stats? What's the deployment model — VM instance for the backend, static IPFS for the frontend, or both on a single instance? Look at existing Aleph Cloud apps (explorer, account) for patterns.
+**Description:** The current static export + client-side polling model won't scale long-term (fetching all pages on every poll, no persistent state, no indexing). Research how to run a proper frontend + backend on Aleph Cloud. Key questions: Can we run a backend VM on Aleph that indexes scheduler data and serves it via API? Can we use Aleph messages (STORE, AGGREGATE, POST) to persist historical snapshots, user preferences, or pre-computed stats? What's the deployment model — VM instance for the backend, static IPFS for the frontend, or both on a single instance? Look at existing Aleph Cloud apps (explorer, account) for patterns. Also consider filter state persistence as part of this — advanced filters (e.g. Has GPU) are lost on navigation because they live in React state, not URL params. The right solution depends on the architecture: URL params for static, server-side filter state or proper routing for a backend model.
 
 ### 2026-03-09 - Bookmarkable filter URLs
 **Description:** Write active filters back to URL search params (currently read-once on mount). Enables sharing filtered views via URL.
@@ -147,5 +137,7 @@ Ideas and scope creep captured for later consideration.
 - ✅ 2026-03-05 - Dedicated detail views for nodes and VMs — full-width views via `?view=hash`, complete history tables, new API fields (owner, IPv6, discoveredAt, allocatedAt, etc.)
 - ❌ 2026-03-05 - DS StatusDot variants for unreachable/removed — rejected; the mapping layer (`status-map.ts`) is the right pattern for translating domain statuses to generic DS variants
 - ✅ 2026-03-06 - List page filtering — text search, count badges, collapsible advanced filters (checkboxes, range sliders, 3-column layout) on both Nodes and VMs pages
+- ✅ 2026-03-09 - GPU info on nodes — GPU badge column, Has GPU filter, GPU card in detail view/panel
+- ✅ 2026-03-09 - GPU requirements on VMs — Requires GPU filter, GPU row in detail view/panel
 
 </details>

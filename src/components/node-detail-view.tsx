@@ -182,6 +182,29 @@ export function NodeDetailView({ hash }: NodeDetailViewProps) {
         </Card>
       )}
 
+      {/* GPUs */}
+      {(node.gpus.used.length > 0 || node.gpus.available.length > 0) && (
+        <Card padding="md">
+          <h3 className="mb-3 text-xs font-semibold uppercase tracking-wider text-muted-foreground">
+            GPUs ({node.gpus.used.length + node.gpus.available.length})
+          </h3>
+          <ul className="space-y-2">
+            {node.gpus.used.map((gpu, i) => (
+              <li key={`used-${i}`} className="flex items-center justify-between text-sm">
+                <span>{gpu.vendor} {gpu.model || gpu.deviceName}</span>
+                <Badge variant="warning" size="sm">in use</Badge>
+              </li>
+            ))}
+            {node.gpus.available.map((gpu, i) => (
+              <li key={`avail-${i}`} className="flex items-center justify-between text-sm">
+                <span>{gpu.vendor} {gpu.model || gpu.deviceName}</span>
+                <Badge variant="success" size="sm">available</Badge>
+              </li>
+            ))}
+          </ul>
+        </Card>
+      )}
+
       {/* VMs */}
       {node.vms.length > 0 && (
         <Card padding="md">
