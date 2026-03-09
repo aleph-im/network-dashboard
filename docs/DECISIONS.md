@@ -18,6 +18,11 @@ Each entry includes:
 
 ---
 
+## Decision #33 - 2026-03-09
+**Context:** Adding GPU info to the dashboard. The API returns `gpus: { used: [...], available: [...] }` on nodes and `gpu_requirements: [...]` on VMs. Each GPU object has vendor, model, device_name, device_class, device_id.
+**Decision:** Keep only vendor, model, and deviceName in the app type (`GpuDevice`). Drop device_class and device_id (PCI identifiers). Display as badge with `formatGpuLabel` (groups by model, count prefix). Simple "Has GPU" / "Requires GPU" boolean checkbox filters.
+**Rationale:** PCI identifiers aren't useful for display. Boolean filters are appropriate given the small GPU population (8/543 nodes, 4/462 VMs) — model-based filtering can be added later when GPU adoption grows. The badge column pattern matches existing vCPUs/Memory columns.
+
 ## Decision #32 - 2026-03-09
 **Context:** New Rust scheduler v1 API now returns paginated responses (max 200 items/page). v0 is incompatible (different schema with `node_id`/`url` instead of `node_hash`/`address`). API reference doc had incorrect paths (showed v0 paths with v1 schema).
 **Decision:** Stay on /api/v1/, add `fetchAllPages()` helper to fetch all pages in parallel and return full arrays. No component changes needed.

@@ -15,16 +15,6 @@ Ideas and scope creep captured for later consideration.
 
 ## Open Items
 
-### 2026-03-09 - GPU info on nodes
-**Source:** API pagination migration — new fields already in API responses
-**Description:** Nodes have `gpus: {used, available}`. Show GPU model/count in node table column + detail view, add "has GPU" filter to advanced filters.
-**Priority:** Medium
-
-### 2026-03-09 - GPU requirements on VMs
-**Source:** API pagination migration — new fields already in API responses
-**Description:** VMs have `gpu_requirements`. Show in VM detail view, add filter for GPU-requiring VMs.
-**Priority:** Medium
-
 ### 2026-03-09 - Confidential computing indicators
 **Source:** API pagination migration — new fields already in API responses
 **Description:** Nodes have `confidential_computing_enabled`, VMs have `requires_confidential`. Add badge/indicator on both tables and detail views, checkbox filter on both pages.
@@ -147,5 +137,7 @@ Ideas and scope creep captured for later consideration.
 - ✅ 2026-03-05 - Dedicated detail views for nodes and VMs — full-width views via `?view=hash`, complete history tables, new API fields (owner, IPv6, discoveredAt, allocatedAt, etc.)
 - ❌ 2026-03-05 - DS StatusDot variants for unreachable/removed — rejected; the mapping layer (`status-map.ts`) is the right pattern for translating domain statuses to generic DS variants
 - ✅ 2026-03-06 - List page filtering — text search, count badges, collapsible advanced filters (checkboxes, range sliders, 3-column layout) on both Nodes and VMs pages
+- ✅ 2026-03-09 - GPU info on nodes — GPU badge column, Has GPU filter, GPU card in detail view/panel
+- ✅ 2026-03-09 - GPU requirements on VMs — Requires GPU filter, GPU row in detail view/panel
 
 </details>
