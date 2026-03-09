@@ -1,10 +1,12 @@
 import type {
   AlephMessage,
   AlephMessageInfo,
+  ApiGpu,
   ApiHistoryRow,
   ApiNodeRow,
   ApiStats,
   ApiVmRow,
+  GpuDevice,
   HistoryRow,
   Node,
   NodeDetail,
@@ -82,6 +84,14 @@ function transformNodeStatus(
   return map[raw];
 }
 
+function transformGpu(raw: ApiGpu): GpuDevice {
+  return {
+    vendor: raw.vendor,
+    model: raw.model,
+    deviceName: raw.device_name,
+  };
+}
+
 function transformNodeResources(
   raw: ApiNodeRow,
 ): NodeResources | null {
@@ -123,6 +133,10 @@ function transformNode(raw: ApiNodeRow): Node {
     owner: raw.owner,
     supportsIpv6: raw.supports_ipv6,
     discoveredAt: raw.discovered_at,
+    gpus: {
+      used: raw.gpus.used.map(transformGpu),
+      available: raw.gpus.available.map(transformGpu),
+    },
   };
 }
 
@@ -143,6 +157,7 @@ function transformVm(raw: ApiVmRow): VM {
     allocatedAt: raw.allocated_at,
     lastObservedAt: raw.last_observed_at,
     paymentType: raw.payment_type,
+    gpuRequirements: raw.gpu_requirements.map(transformGpu),
   };
 }
 
