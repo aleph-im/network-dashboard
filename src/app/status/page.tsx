@@ -63,12 +63,15 @@ function unwrapFirstHash(
   let arr: unknown[];
   if (Array.isArray(data)) {
     arr = data;
-  } else if (
-    data &&
-    typeof data === "object" &&
-    key in data
-  ) {
-    arr = (data as Record<string, unknown[]>)[key]!;
+  } else if (data && typeof data === "object") {
+    const obj = data as Record<string, unknown>;
+    if ("items" in obj && Array.isArray(obj["items"])) {
+      arr = obj["items"];
+    } else if (key in obj) {
+      arr = (obj as Record<string, unknown[]>)[key]!;
+    } else {
+      return null;
+    }
   } else {
     return null;
   }
@@ -103,14 +106,15 @@ async function checkEndpoint(
 }
 
 export default function StatusPage() {
-  const [results, setResults] = useState<EndpointStatus[]>(
-    ENDPOINTS.map((e) => ({
+  const [results, setResults] = useState<EndpointStatus[]>([
+    { path: "/health", label: "Health", status: "pending", httpCode: null },
+    ...ENDPOINTS.map((e) => ({
       path: `${API_PREFIX}${e.path}`,
       label: e.label,
-      status: "pending",
+      status: "pending" as const,
       httpCode: null,
     })),
-  );
+  ]);
   const [checking, setChecking] = useState(false);
 
   const runChecks = useCallback(async () => {
@@ -118,6 +122,24 @@ export default function StatusPage() {
     const baseUrl = getBaseUrl();
     const newResults: EndpointStatus[] = [];
     const listData: Record<string, unknown> = {};
+
+    let healthResult: EndpointStatus;
+    try {
+      const res = await fetch(`${baseUrl}/health`);
+      healthResult = {
+        path: "/health",
+        label: "Health",
+        status: res.ok ? "healthy" : "error",
+        httpCode: res.status,
+      };
+    } catch {
+      healthResult = {
+        path: "/health",
+        label: "Health",
+        status: "error",
+        httpCode: null,
+      };
+    }
 
     const independent = ENDPOINTS.filter((e) => !e.dependsOn);
     const indResults = await Promise.allSettled(
@@ -182,7 +204,7 @@ export default function StatusPage() {
       );
     }
 
-    setResults(newResults);
+    setResults([healthResult, ...newResults]);
     setChecking(false);
   }, []);
 
