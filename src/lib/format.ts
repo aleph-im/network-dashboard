@@ -46,6 +46,22 @@ export function formatDateTime(isoDate: string): string {
   });
 }
 
+const CPU_VENDOR_LABELS: Record<string, string> = {
+  AuthenticAMD: "AMD",
+  GenuineIntel: "Intel",
+};
+
+export function formatCpuLabel(
+  vendor: string | null,
+  architecture: string | null,
+): string {
+  const v = vendor ? (CPU_VENDOR_LABELS[vendor] ?? vendor) : null;
+  if (v && architecture) return `${v} ${architecture}`;
+  if (v) return v;
+  if (architecture) return architecture;
+  return "Unknown";
+}
+
 export function formatGpuLabel(
   gpus: { model: string; deviceName: string }[],
 ): string {
