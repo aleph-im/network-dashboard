@@ -43,6 +43,7 @@ export const NODE_MEMORY_GB_MAX = 512;
 export type NodeAdvancedFilters = {
   staked?: boolean;
   supportsIpv6?: boolean;
+  hasGpu?: boolean;
   vmCountRange?: [number, number];
   vcpusTotalRange?: [number, number];
   memoryTotalGbRange?: [number, number];
@@ -58,6 +59,11 @@ export function applyNodeAdvancedFilters(
   }
   if (filters.supportsIpv6) {
     result = result.filter((n) => n.supportsIpv6 === true);
+  }
+  if (filters.hasGpu) {
+    result = result.filter(
+      (n) => n.gpus.used.length + n.gpus.available.length > 0,
+    );
   }
   if (
     filters.vmCountRange &&
@@ -97,6 +103,7 @@ export type VmAdvancedFilters = {
   vmTypes?: Set<VmType>;
   paymentStatuses?: Set<string>;
   hasAllocatedNode?: boolean;
+  requiresGpu?: boolean;
   vcpusRange?: [number, number];
   memoryMbRange?: [number, number];
 };
@@ -137,6 +144,9 @@ export function applyVmAdvancedFilters(
   }
   if (filters.hasAllocatedNode) {
     result = result.filter((v) => v.allocatedNode != null);
+  }
+  if (filters.requiresGpu) {
+    result = result.filter((v) => v.gpuRequirements.length > 0);
   }
   if (filters.vcpusRange) {
     const [min, max] = filters.vcpusRange;
