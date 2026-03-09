@@ -172,6 +172,20 @@ export type ApiStats = {
   total_vcpus_capacity: number;
 };
 
+// --- Pagination ---
+
+export type PaginationInfo = {
+  page: number;
+  page_size: number;
+  total_items: number;
+  total_pages: number;
+};
+
+export type PaginatedResponse<T> = {
+  items: T[];
+  pagination: PaginationInfo;
+};
+
 // --- Aleph Message API (api2) ---
 
 export type AlephMessage = {

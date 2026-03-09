@@ -12,6 +12,7 @@ import type {
   NodeResources,
   NodeStatus,
   OverviewStats,
+  PaginatedResponse,
   VM,
   VmDetail,
   VmFilters,
@@ -38,17 +39,25 @@ async function fetchApi<T>(path: string): Promise<T> {
   return res.json() as Promise<T>;
 }
 
-/**
- * The API spec documents bare arrays, but the live server wraps list
- * endpoints in objects like `{"nodes": [...]}`. Handle both shapes.
- */
-function unwrapArray<T>(data: T[] | Record<string, T[]>): T[] {
-  if (Array.isArray(data)) return data;
-  const values = Object.values(data);
-  if (values.length === 1 && Array.isArray(values[0])) {
-    return values[0];
+const MAX_PAGE_SIZE = 200;
+
+async function fetchAllPages<T>(path: string): Promise<T[]> {
+  const separator = path.includes("?") ? "&" : "?";
+  const firstPage = await fetchApi<PaginatedResponse<T>>(
+    `${path}${separator}page=1&page_size=${MAX_PAGE_SIZE}`,
+  );
+  if (firstPage.pagination.total_pages <= 1) {
+    return firstPage.items;
   }
-  return [];
+  const remaining = Array.from(
+    { length: firstPage.pagination.total_pages - 1 },
+    (_, i) =>
+      fetchApi<PaginatedResponse<T>>(
+        `${path}${separator}page=${i + 2}&page_size=${MAX_PAGE_SIZE}`,
+      ),
+  );
+  const pages = await Promise.all(remaining);
+  return [firstPage, ...pages].flatMap((p) => p.items);
 }
 
 // --- Transform helpers ---
@@ -169,10 +178,7 @@ function applyNodeFilters(
 export async function getNodes(
   filters?: NodeFilters,
 ): Promise<Node[]> {
-  const data = await fetchApi<ApiNodeRow[] | { nodes: ApiNodeRow[] }>(
-    "/api/v1/nodes",
-  );
-  const raw = unwrapArray(data);
+  const raw = await fetchAllPages<ApiNodeRow>("/api/v1/nodes");
   const nodes = raw.map(transformNode);
   return applyNodeFilters(nodes, filters);
 }
@@ -182,17 +188,15 @@ export async function getNode(
 ): Promise<NodeDetail> {
   const [rawNode, rawVms, rawHistory] = await Promise.all([
     fetchApi<ApiNodeRow>(`/api/v1/nodes/${hash}`),
-    fetchApi<ApiVmRow[] | { vms: ApiVmRow[] }>(
-      `/api/v1/vms?node=${hash}`,
-    ),
-    fetchApi<ApiHistoryRow[] | { history: ApiHistoryRow[] }>(
+    fetchAllPages<ApiVmRow>(`/api/v1/vms?node=${hash}`),
+    fetchAllPages<ApiHistoryRow>(
       `/api/v1/nodes/${hash}/history`,
     ),
   ]);
   return {
     ...transformNode(rawNode),
-    vms: unwrapArray(rawVms).map(transformVm),
-    history: unwrapArray(rawHistory).map(transformHistory),
+    vms: rawVms.map(transformVm),
+    history: rawHistory.map(transformHistory),
   };
 }
 
@@ -201,35 +205,33 @@ export async function getVMs(filters?: VmFilters): Promise<VM[]> {
   if (filters?.status) params.set("status", filters.status);
   if (filters?.node) params.set("node", filters.node);
   const qs = params.toString();
-  const data = await fetchApi<ApiVmRow[] | { vms: ApiVmRow[] }>(
+  const raw = await fetchAllPages<ApiVmRow>(
     `/api/v1/vms${qs ? `?${qs}` : ""}`,
   );
-  return unwrapArray(data).map(transformVm);
+  return raw.map(transformVm);
 }
 
 export async function getVM(hash: string): Promise<VmDetail> {
   const [rawVm, rawHistory] = await Promise.all([
     fetchApi<ApiVmRow>(`/api/v1/vms/${hash}`),
-    fetchApi<ApiHistoryRow[] | { history: ApiHistoryRow[] }>(
+    fetchAllPages<ApiHistoryRow>(
       `/api/v1/vms/${hash}/history`,
     ),
   ]);
   return {
     ...transformVm(rawVm),
-    history: unwrapArray(rawHistory).map(transformHistory),
+    history: rawHistory.map(transformHistory),
   };
 }
 
 export async function getOverviewStats(): Promise<OverviewStats> {
   const [stats, rawVms, rawNodes] = await Promise.all([
     fetchApi<ApiStats>("/api/v1/stats"),
-    fetchApi<ApiVmRow[] | { vms: ApiVmRow[] }>("/api/v1/vms"),
-    fetchApi<ApiNodeRow[] | { nodes: ApiNodeRow[] }>(
-      "/api/v1/nodes",
-    ),
+    fetchAllPages<ApiVmRow>("/api/v1/vms"),
+    fetchAllPages<ApiNodeRow>("/api/v1/nodes"),
   ]);
-  const nodes = unwrapArray(rawNodes).map(transformNode);
-  const vms = unwrapArray(rawVms).map(transformVm);
+  const nodes = rawNodes.map(transformNode);
+  const vms = rawVms.map(transformVm);
   return {
     totalNodes: stats.total_nodes,
     healthyNodes: stats.healthy_nodes,
