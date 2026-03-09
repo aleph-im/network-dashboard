@@ -230,6 +230,15 @@ export function VMDetailView({ hash }: VMDetailViewProps) {
                 : "None"}
             </span>
           </MetaItem>
+          {vm.gpuRequirements.length > 0 && (
+            <MetaItem label="GPU">
+              <span>
+                {vm.gpuRequirements
+                  .map((g) => `${g.vendor} ${g.model || g.deviceName}`)
+                  .join(", ")}
+              </span>
+            </MetaItem>
+          )}
         </dl>
       </Card>
 

@@ -237,6 +237,7 @@ export function VMTable({
       advanced.paymentStatuses.size > 0 &&
       advanced.paymentStatuses.size < ALL_PAYMENT_STATUSES.length,
     advanced.hasAllocatedNode,
+    advanced.requiresGpu,
     advanced.vcpusRange != null &&
       (advanced.vcpusRange[0] > 0 ||
         advanced.vcpusRange[1] < VM_VCPUS_MAX),
@@ -547,6 +548,26 @@ export function VMTable({
                   Allocated to a node
                   <span className="ml-1.5 text-xs font-normal text-muted-foreground/50">
                     — running on a CRN
+                  </span>
+                </span>
+              </label>
+              <label className="flex cursor-pointer items-center gap-2.5 text-sm font-semibold text-muted-foreground select-none">
+                <Checkbox
+                  size="sm"
+                  checked={advanced.requiresGpu ?? false}
+                  onCheckedChange={(v) =>
+                    updateAdvanced((p) => {
+                      const { requiresGpu: _, ...rest } = p;
+                      return v === true
+                        ? { ...rest, requiresGpu: true }
+                        : rest;
+                    })
+                  }
+                />
+                <span>
+                  Requires GPU
+                  <span className="ml-1.5 text-xs font-normal text-muted-foreground/50">
+                    — needs GPU hardware
                   </span>
                 </span>
               </label>

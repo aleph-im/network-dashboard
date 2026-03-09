@@ -118,6 +118,27 @@ export function NodeDetailPanel({ hash, onClose }: NodeDetailPanelProps) {
         </div>
       )}
 
+      {(node.gpus.used.length > 0 || node.gpus.available.length > 0) && (
+        <div className="mt-4 space-y-1.5 border-t border-edge pt-3">
+          <h4 className="text-xs font-semibold uppercase tracking-wider text-muted-foreground">
+            GPUs ({node.gpus.used.length + node.gpus.available.length})
+          </h4>
+          <ul className="space-y-1">
+            {[...node.gpus.used, ...node.gpus.available].map((gpu, i) => (
+              <li key={i} className="flex items-center justify-between text-sm">
+                <span className="text-xs">{gpu.vendor} {gpu.model || gpu.deviceName}</span>
+                <Badge
+                  variant={i < node.gpus.used.length ? "warning" : "success"}
+                  size="sm"
+                >
+                  {i < node.gpus.used.length ? "in use" : "available"}
+                </Badge>
+              </li>
+            ))}
+          </ul>
+        </div>
+      )}
+
       {node.vms.length > 0 && (
         <div className="mt-4 space-y-1.5 border-t border-edge pt-3">
           <h4 className="text-xs font-semibold uppercase tracking-wider text-muted-foreground">

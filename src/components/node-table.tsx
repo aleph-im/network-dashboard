@@ -14,7 +14,7 @@ import { useNodes } from "@/hooks/use-nodes";
 import { useDebounce } from "@/hooks/use-debounce";
 import { CollapsibleSection } from "@/components/collapsible-section";
 import { CopyableText } from "@aleph-front/ds/copyable-text";
-import { relativeTime } from "@/lib/format";
+import { relativeTime, formatGpuLabel } from "@/lib/format";
 import {
   textSearch,
   countByStatus,
@@ -117,6 +117,20 @@ const columns: Column<Node>[] = [
     align: "right",
   },
   {
+    header: "GPU",
+    accessor: (r) => {
+      const allGpus = [...r.gpus.used, ...r.gpus.available];
+      if (allGpus.length === 0) return null;
+      return (
+        <Badge variant="default" size="sm">
+          {formatGpuLabel(allGpus)}
+        </Badge>
+      );
+    },
+    sortable: true,
+    sortValue: (r) => r.gpus.used.length + r.gpus.available.length,
+  },
+  {
     header: "VMs",
     accessor: (r) => (
       <span className="tabular-nums">{r.vmCount}</span>
@@ -181,6 +195,7 @@ export function NodeTable({
   const activeAdvancedCount = [
     advanced.staked,
     advanced.supportsIpv6,
+    advanced.hasGpu,
     advanced.vmCountRange != null &&
       isRangeActive(advanced.vmCountRange, NODE_VM_COUNT_MAX),
     advanced.vcpusTotalRange != null &&
@@ -419,6 +434,26 @@ export function NodeTable({
                     IPv6
                     <span className="ml-1.5 text-xs font-normal text-muted-foreground/50">
                       — supports IPv6 networking
+                    </span>
+                  </span>
+                </label>
+                <label className="flex cursor-pointer items-center gap-2.5 text-sm font-semibold text-muted-foreground select-none">
+                  <Checkbox
+                    size="sm"
+                    checked={advanced.hasGpu ?? false}
+                    onCheckedChange={(v) =>
+                      updateAdvanced((p) => {
+                        const { hasGpu: _, ...rest } = p;
+                        return v === true
+                          ? { ...rest, hasGpu: true }
+                          : rest;
+                      })
+                    }
+                  />
+                  <span>
+                    Has GPU
+                    <span className="ml-1.5 text-xs font-normal text-muted-foreground/50">
+                      — has one or more GPUs
                     </span>
                   </span>
                 </label>
