@@ -46,24 +46,10 @@ jobs:
       - name: Upload to IPFS
         id: upload
         run: |
-          OUTPUT=$(aleph file upload out/ \
-            --storage-engine ipfs \
-            --private-key "$ALEPH_PRIVATE_KEY" \
-            --channel ALEPH-CLOUDSOLUTIONS 2>&1) || { echo "$OUTPUT"; exit 1; }
-
-          CID_V0=$(echo "$OUTPUT" | python3 -c "import sys,json; print(json.load(sys.stdin)['content']['item_hash'])")
-          echo "cid_v0=$CID_V0" >> "$GITHUB_OUTPUT"
-
-          CID_V1=$(python3 -c "
-          import base58, base64
-          multihash = base58.b58decode('$CID_V0')
-          cidv1_bytes = bytes([0x01, 0x70]) + multihash
-          b32 = base64.b32encode(cidv1_bytes).decode().lower().rstrip('=')
-          print(f'b{b32}')
-          ")
-          echo "cid_v1=$CID_V1" >> "$GITHUB_OUTPUT"
+          python3 scripts/deploy-ipfs.py out/
         env:
           ALEPH_PRIVATE_KEY: ${{ secrets.ALEPH_PRIVATE_KEY }}
+          ALEPH_OWNER_ADDRESS: "0xB136a85c95a0ea573793AB9739c7dF8682B87fCa"
 
       - name: Write job summary
         run: |
