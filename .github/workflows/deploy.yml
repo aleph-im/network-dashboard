@@ -1,0 +1,75 @@
+name: Deploy to IPFS
+
+on:
+  workflow_dispatch:
+
+jobs:
+  deploy:
+    runs-on: ubuntu-latest
+    permissions:
+      contents: read
+
+    steps:
+      - name: Checkout
+        uses: actions/checkout@de0fac2e4500dabe0009e67214ff5f5447ce83dd # v6.0.2
+        with:
+          persist-credentials: false
+
+      - name: Setup pnpm
+        uses: pnpm/action-setup@9fd676a19091d4595eefd76e4bd31c97133911f1 # v4.2.0
+
+      - name: Setup Node
+        uses: actions/setup-node@53b83947a5a98c8d113130e565377fae1a50d02f # v6.3.0
+        with:
+          node-version: 22
+          cache: pnpm
+
+      - name: Install dependencies
+        run: pnpm install --frozen-lockfile
+
+      - name: Build
+        run: pnpm build
+        env:
+          NEXT_PUBLIC_API_URL: https://rust-scheduler.aleph.im
+
+      - name: Setup Python
+        uses: actions/setup-python@a309ff8b426b58ec0e2a45f0f869d46889d02405 # v6.2.0
+        with:
+          python-version: "3.12"
+
+      - name: Install aleph-client
+        run: pip install aleph-client
+
+      - name: Upload to IPFS
+        id: upload
+        run: |
+          OUTPUT=$(aleph file upload out/ \
+            --storage-engine ipfs \
+            --private-key "$ALEPH_PRIVATE_KEY" \
+            --channel ALEPH-CLOUDSOLUTIONS)
+
+          CID_V0=$(echo "$OUTPUT" | python3 -c "import sys,json; print(json.load(sys.stdin)['content']['item_hash'])")
+          echo "cid_v0=$CID_V0" >> "$GITHUB_OUTPUT"
+
+          CID_V1=$(python3 -c "
+          import base58, base64
+          multihash = base58.b58decode('$CID_V0')
+          cidv1_bytes = bytes([0x01, 0x70]) + multihash
+          b32 = base64.b32encode(cidv1_bytes).decode().lower().rstrip('=')
+          print(f'b{b32}')
+          ")
+          echo "cid_v1=$CID_V1" >> "$GITHUB_OUTPUT"
+        env:
+          ALEPH_PRIVATE_KEY: ${{ secrets.ALEPH_PRIVATE_KEY }}
+
+      - name: Write job summary
+        run: |
+          cat >> "$GITHUB_STEP_SUMMARY" <<EOF
+          ## Deployed to IPFS
+
+          | | |
+          |---|---|
+          | **CID (v0)** | \`${{ steps.upload.outputs.cid_v0 }}\` |
+          | **CID (v1)** | \`${{ steps.upload.outputs.cid_v1 }}\` |
+          | **Gateway** | https://${{ steps.upload.outputs.cid_v1 }}.ipfs.aleph.sh/ |
+          EOF
