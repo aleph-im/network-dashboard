@@ -9,8 +9,8 @@ importers:
   .:
     dependencies:
       '@aleph-front/ds':
-        specifier: 0.5.0
-        version: 0.5.0(@types/react-dom@19.2.3(@types/react@19.2.14))(@types/react@19.2.14)(react-dom@19.2.4(react@19.2.4))(react@19.2.4)
+        specifier: 0.6.0
+        version: 0.6.0(@types/react-dom@19.2.3(@types/react@19.2.14))(@types/react@19.2.14)(react-dom@19.2.4(react@19.2.4))(react@19.2.4)
       '@phosphor-icons/react':
         specifier: 2.1.10
         version: 2.1.10(react-dom@19.2.4(react@19.2.4))(react@19.2.4)
@@ -75,8 +75,8 @@ packages:
   '@adobe/css-tools@4.4.4':
     resolution: {integrity: sha512-Elp+iwUx5rN5+Y8xLt5/GRoG20WGoDCQ/1Fb+1LiGtvwbDavuSk0jhD/eZdckHAuzcDzccnkv+rEjyWfRx18gg==}
 
-  '@aleph-front/ds@0.5.0':
-    resolution: {integrity: sha512-4i4ReRQrXAVCYLLEnUPN+XESmNDUJuJeIxGJl/S+5gtZylL3+R9hKNW26hXm3FryGlcaWNK5KNaOfOpMnGJG5Q==}
+  '@aleph-front/ds@0.6.0':
+    resolution: {integrity: sha512-ITGyzhF2K9YpXeSo+dh7KpjMbbhP7d0RxJVrwokJyx5kyIsUecYtIWWQ4tjDIxFHpHYQVespWa/qTSQzn6EsDg==}
     peerDependencies:
       react: ^19.0.0
       react-dom: ^19.0.0
@@ -2541,7 +2541,7 @@ snapshots:
 
   '@adobe/css-tools@4.4.4': {}
 
-  '@aleph-front/ds@0.5.0(@types/react-dom@19.2.3(@types/react@19.2.14))(@types/react@19.2.14)(react-dom@19.2.4(react@19.2.4))(react@19.2.4)':
+  '@aleph-front/ds@0.6.0(@types/react-dom@19.2.3(@types/react@19.2.14))(@types/react@19.2.14)(react-dom@19.2.4(react@19.2.4))(react@19.2.4)':
     dependencies:
       '@phosphor-icons/react': 2.1.10(react-dom@19.2.4(react@19.2.4))(react@19.2.4)
       class-variance-authority: 0.7.1
