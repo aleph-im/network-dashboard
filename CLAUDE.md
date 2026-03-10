@@ -104,9 +104,8 @@ Never interrupt based on file count or commit count.
 On "sync up" or "catch me up":
 
 1. Read `docs/DECISIONS.md`, `docs/BACKLOG.md`, `docs/ARCHITECTURE.md`
-2. Check git status (branch, uncommitted changes, unpushed commits)
-3. Check recent git log for context
-4. Summarize:
+2. Check git status and recent git log — use **separate parallel Bash calls** (not chained with `&&`), so each matches `Bash(git status*)` / `Bash(git log*)` allow rules and avoids permission prompts
+3. Summarize:
    - Last decision logged
    - Open backlog items
    - Any blockers
