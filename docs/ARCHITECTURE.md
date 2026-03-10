@@ -39,6 +39,7 @@ src/
 │   ├── use-vms.ts          # useVMs, useVM (30s/15s polling)
 │   ├── use-vm-creation-times.ts  # useVMMessageInfo (api2, 5min stale, no polling)
 │   ├── use-overview-stats.ts  # useOverviewStats (30s polling)
+│   ├── use-health.ts       # useHealth — /health endpoint polling (30s)
 │   └── use-debounce.ts     # useDebounce hook (generic, configurable delay)
 ├── components/
 │   ├── app-shell.tsx       # Layout: sidebar + header + content
@@ -52,6 +53,8 @@ src/
 │   ├── latest-vms-card.tsx  # Latest VMs by creation time (progressive loading from api2)
 │   ├── card-header.tsx     # Shared card header with title + info tooltip
 │   ├── collapsible-section.tsx # CSS grid-template-rows animated expand/collapse
+│   ├── filter-toolbar.tsx  # Shared: status pills + filter toggle + search input
+│   ├── filter-panel.tsx    # Shared: collapsible glassmorphism panel chrome + reset
 │   ├── node-table.tsx      # Nodes table with search, filters, count badges
 │   ├── node-detail-panel.tsx # Node detail side panel (quick-peek)
 │   ├── node-detail-view.tsx # Node full-width detail view (?view= param)
@@ -114,8 +117,8 @@ src/
 ### App Shell Layout
 
 **Context:** Consistent navigation across all pages.
-**Approach:** AppShell wraps all pages with sidebar + header + scrollable content area. Three-layer visual hierarchy: sidebar and header use `bg-background` (dark mode) / `bg-muted/40` (light mode) as app chrome; main content area uses `bg-surface` with `rounded-tl-2xl` as a recessed panel; individual cards sit inside with their own borders. A subtle accent-colored radial glow (`main-glow::before`) adds depth to the content area. The header contains only the hamburger menu (mobile) and theme toggle (right-aligned). Scroll position resets to top on route change via `usePathname` + ref. On desktop (`md+`), the sidebar is always visible. On mobile, it collapses to an off-canvas drawer. The sidebar auto-closes on route change.
-**Key files:** `src/components/app-shell.tsx`, `src/components/app-sidebar.tsx`, `src/components/app-header.tsx`
+**Approach:** AppShell wraps all pages with sidebar + header + scrollable content area. Three-layer visual hierarchy: sidebar and header use `bg-background` (dark mode) / `bg-muted/40` (light mode) as app chrome; main content area uses `bg-surface` with `rounded-tl-2xl` as a recessed panel; individual cards sit inside with their own borders. A subtle accent-colored radial glow (`main-glow::before`) adds depth to the content area. The header contains only the hamburger menu (mobile) and theme toggle (right-aligned). Scroll position resets to top on route change via `usePathname` + ref. On desktop (`md+`), the sidebar is always visible. On mobile, it collapses to an off-canvas drawer. The sidebar auto-closes on route change. The sidebar header uses `LogoFull` from the DS (icon + "Aleph Cloud" wordmark). The API Status link shows a `StatusDot` with an animated SVG ring (`poll-ring` CSS animation) that draws over 30s matching the health poll interval, color-coded by `/health` endpoint status.
+**Key files:** `src/components/app-shell.tsx`, `src/components/app-sidebar.tsx`, `src/components/app-header.tsx`, `src/hooks/use-health.ts`
 
 ### Overview Page Redesign
 
@@ -142,8 +145,8 @@ src/
 
 **Context:** Both Nodes and VMs pages need text search, status filters, and advanced filters (checkboxes, range sliders) — all client-side.
 **Approach:** Four-stage pipeline applied in `useMemo`: (1) `textSearch` matches query against configurable fields, (2) `applyNodeAdvancedFilters` / `applyVmAdvancedFilters` applies checkbox and range filters, (3) `countByStatus` computes per-status counts on the filtered set (for badge display), (4) status filter selects a single status. Status is applied last so count badges show accurate per-status breakdowns after search+advanced filters. All filters are client-side post-fetch — none go in the React Query key. State setters wrapped in `useTransition` for responsive UI. Search input debounced at 300ms via `useDebounce`. The `CollapsibleSection` component uses CSS `grid-template-rows` animation for smooth expand/collapse. Filter panel uses a 3-column layout (`lg:grid-cols-3`) with glassmorphism card styling.
-**Key files:** `src/lib/filters.ts` (pure filter functions + types), `src/lib/filters.test.ts`, `src/hooks/use-debounce.ts`, `src/components/collapsible-section.tsx`, `src/components/node-table.tsx`, `src/components/vm-table.tsx`
-**Notes:** Multi-select filters (VM type, payment status, CPU vendor) treat "all selected" and "none selected" identically as "no filter." Count badges show `filtered/total` format when non-status filters are active. The `VmType` values are lowercase (`"microvm"`, `"persistent_program"`, `"instance"`) matching the API wire format. Boolean checkbox filters: Staked, IPv6, Has GPU, Confidential (nodes); Allocated to a node, Requires GPU, Requires Confidential (VMs). Multi-select: CPU Vendor (AMD, Intel) on nodes. Filter panel uses a 4-column layout on nodes (`lg:grid-cols-4`: Properties, CPU Vendor, Workload, Hardware).
+**Key files:** `src/lib/filters.ts` (pure filter functions + types), `src/lib/filters.test.ts`, `src/hooks/use-debounce.ts`, `src/components/collapsible-section.tsx`, `src/components/filter-toolbar.tsx`, `src/components/filter-panel.tsx`, `src/components/node-table.tsx`, `src/components/vm-table.tsx`
+**Notes:** The visual shell (status pills, filter toggle button, search input, glassmorphism panel chrome with reset) is shared via `FilterToolbar` and `FilterPanel` — both tables compose these with their own status config, filter content, and grid layout. `FilterToolbar` is generic over the status type. Multi-select filters (VM type, payment status, CPU vendor) treat "all selected" and "none selected" identically as "no filter." Count badges show `filtered/total` format when non-status filters are active. The `VmType` values are lowercase (`"microvm"`, `"persistent_program"`, `"instance"`) matching the API wire format. Boolean checkbox filters: Staked, IPv6, Has GPU, Confidential (nodes); Allocated to a node, Requires GPU, Requires Confidential (VMs). Multi-select: CPU Vendor (AMD, Intel) on nodes. Filter panel uses a 4-column layout on nodes (`lg:grid-cols-4`: Properties, CPU Vendor, Workload, Hardware).
 
 ### Responsive Layout
 
