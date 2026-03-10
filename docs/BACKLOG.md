@@ -25,9 +25,9 @@ Ideas and scope creep captured for later consideration.
 **Description:** On the overview page's Latest VMs card, the hash column shows a tooltip on hover (from `CopyableText`). Remove the tooltip — the hash is already visible and the tooltip adds noise in this compact card context.
 **Priority:** Low
 
-### 2026-03-06 - VM detail: show owner wallet address
-**Source:** User feedback during UI fixes
-**Description:** Add the owner (wallet address) to the VM detail view. The Aleph message API (`api2.aleph.im`) returns a `sender` field per message — this is the owner. Could reuse the `AlephMessageInfo` data already fetched, or fetch it on the detail view.
+### 2026-03-10 - Wallet view page
+**Source:** Evolved from "VM detail: show owner wallet address" (2026-03-06)
+**Description:** Add a wallet view at `/wallet?address=...` accessible by clicking any wallet address in the dashboard (node owner, VM sender). Phase 1 shows data queryable from existing APIs: nodes owned (scheduler API, filter by `owner`), VMs owned (`api2 messages.json?addresses=<wallet>`), and permissions given (`api2 aggregates/<wallet>.json?keys=security` → `content.authorizations[]`). Permissions received (reverse lookup — who has authorized this wallet) requires a separate indexer (see Investigate section). Also add owner wallet to VM detail view as part of this work.
 **Priority:** Medium
 
 ### 2026-03-05 - Mobile-responsive filter UI
@@ -101,6 +101,10 @@ Ideas and scope creep captured for later consideration.
 
 ### 2026-03-09 - Aleph Cloud hosting architecture research
 **Description:** The current static export + client-side polling model won't scale long-term (fetching all pages on every poll, no persistent state, no indexing). Research how to run a proper frontend + backend on Aleph Cloud. Key questions: Can we run a backend VM on Aleph that indexes scheduler data and serves it via API? Can we use Aleph messages (STORE, AGGREGATE, POST) to persist historical snapshots, user preferences, or pre-computed stats? What's the deployment model — VM instance for the backend, static IPFS for the frontend, or both on a single instance? Look at existing Aleph Cloud apps (explorer, account) for patterns. Also consider filter state persistence as part of this — advanced filters (e.g. Has GPU) are lost on navigation because they live in React state, not URL params. The right solution depends on the architecture: URL params for static, server-side filter state or proper routing for a backend model.
+
+### 2026-03-10 - Authorization reverse-index indexer
+**Source:** Wallet view research (2026-03-10)
+**Description:** Build a backend indexer that scans Aleph `security` AGGREGATE messages and builds a reverse index of permissions received per address. The api2 API only supports forward lookups (address → who it authorized), not reverse (address → who authorized it). The indexer would need to: scan all security aggregates, build a reverse mapping, stay current with new AGGREGATE messages (polling or WebSocket). Key decisions: where it runs (Aleph VM instance?), storage format (in-memory, SQLite, Aleph AGGREGATE/POST?), API shape for the dashboard to query. Once available, the wallet view adds a "Permissions received" section.
 
 ### 2026-03-09 - Bookmarkable filter URLs
 **Description:** Write active filters back to URL search params (currently read-once on mount). Enables sharing filtered views via URL.
