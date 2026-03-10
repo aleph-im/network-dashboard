@@ -272,7 +272,7 @@ export function NodeTable({
 
   const {
     page, pageSize, totalPages, startItem, endItem,
-    totalItems, pageItems, setPage, setPageSize, pageSizeOptions,
+    totalItems, pageItems, setPage, setPageSize,
   } = usePagination(sortedRows);
 
   useEffect(() => {
@@ -589,7 +589,6 @@ export function NodeTable({
         startItem={startItem}
         endItem={endItem}
         totalItems={totalItems}
-        pageSizeOptions={pageSizeOptions}
         onPageChange={setPage}
         onPageSizeChange={setPageSize}
       />

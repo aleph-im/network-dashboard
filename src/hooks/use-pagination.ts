@@ -1,7 +1,6 @@
 import { useState, useMemo } from "react";
 
 const DEFAULT_PAGE_SIZE = 50;
-const PAGE_SIZE_OPTIONS = [25, 50, 100] as const;
 
 type UsePaginationResult<T> = {
   page: number;
@@ -13,7 +12,6 @@ type UsePaginationResult<T> = {
   pageItems: T[];
   setPage: (page: number) => void;
   setPageSize: (size: number) => void;
-  pageSizeOptions: readonly number[];
 };
 
 export function usePagination<T>(
@@ -55,6 +53,5 @@ export function usePagination<T>(
     pageItems,
     setPage,
     setPageSize: handleSetPageSize,
-    pageSizeOptions: PAGE_SIZE_OPTIONS,
   };
 }
