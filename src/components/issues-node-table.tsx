@@ -297,11 +297,13 @@ function IssuesNodeDetailPanel({
 type IssuesNodeTableProps = {
   issueNodes: IssueNode[];
   isLoading: boolean;
+  leading?: React.ReactNode;
 };
 
 export function IssuesNodeTable({
   issueNodes,
   isLoading,
+  leading,
 }: IssuesNodeTableProps) {
   const [, startTransition] = useTransition();
   const [searchInput, setSearchInput] = useState("");
@@ -394,6 +396,7 @@ export function IssuesNodeTable({
       <div className="flex gap-6">
         <div className="flex-1 min-w-0">
           <FilterToolbar
+            leading={leading}
             statuses={STATUS_PILLS}
             activeStatus={statusFilter}
             onStatusChange={(s) =>

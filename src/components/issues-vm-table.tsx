@@ -282,12 +282,14 @@ type IssuesVMTableProps = {
   issueVMs: IssueVM[];
   isLoading: boolean;
   initialStatus?: DiscrepancyStatus;
+  leading?: React.ReactNode;
 };
 
 export function IssuesVMTable({
   issueVMs,
   isLoading,
   initialStatus,
+  leading,
 }: IssuesVMTableProps) {
   const [, startTransition] = useTransition();
   const [searchInput, setSearchInput] = useState("");
@@ -369,6 +371,7 @@ export function IssuesVMTable({
       <div className="flex gap-6">
         <div className="flex-1 min-w-0">
           <FilterToolbar
+            leading={leading}
             statuses={STATUS_PILLS}
             activeStatus={statusFilter}
             onStatusChange={(s) =>

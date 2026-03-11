@@ -74,33 +74,34 @@ function IssuesContent() {
     router.replace(`${pathname}?${params.toString()}`);
   }
 
+  const toggle = (
+    <PerspectiveToggle
+      value={perspective}
+      onChange={handlePerspectiveChange}
+    />
+  );
+
   return (
     <div>
-      <div className="mb-8 flex flex-wrap items-center gap-4">
-        <div>
-          <h1 className="text-4xl">Issues</h1>
-          <p className="mt-2 text-base text-muted-foreground">
-            Scheduling discrepancies between plan and reality
-          </p>
-        </div>
-        <div className="ml-auto">
-          <PerspectiveToggle
-            value={perspective}
-            onChange={handlePerspectiveChange}
-          />
-        </div>
+      <div className="mb-8">
+        <h1 className="text-4xl">Issues</h1>
+        <p className="mt-2 text-base text-muted-foreground">
+          Scheduling discrepancies between plan and reality
+        </p>
       </div>
 
       {perspective === "vms" ? (
         <IssuesVMTable
           issueVMs={issueVMs}
           isLoading={isLoading}
+          leading={toggle}
           {...(initialVmStatus ? { initialStatus: initialVmStatus } : {})}
         />
       ) : (
         <IssuesNodeTable
           issueNodes={issueNodes}
           isLoading={isLoading}
+          leading={toggle}
         />
       )}
     </div>

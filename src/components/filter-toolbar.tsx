@@ -18,6 +18,7 @@ type FilterToolbarProps<S> = {
   searchValue: string;
   onSearchChange: (value: string) => void;
   searchPlaceholder: string;
+  leading?: ReactNode;
 };
 
 export function FilterToolbar<S>({
@@ -31,9 +32,16 @@ export function FilterToolbar<S>({
   searchValue,
   onSearchChange,
   searchPlaceholder,
+  leading,
 }: FilterToolbarProps<S>): ReactNode {
   return (
     <div className="mb-4 flex flex-wrap items-center gap-2">
+      {leading && (
+        <>
+          {leading}
+          <div className="mx-2 h-6 w-px bg-white/[0.08]" />
+        </>
+      )}
       {statuses.map((s, i) => (
         <button
           key={i}
