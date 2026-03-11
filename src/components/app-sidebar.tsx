@@ -6,14 +6,42 @@ import { usePathname } from "next/navigation";
 import { LogoFull } from "@aleph-front/ds/logo";
 import { StatusDot } from "@aleph-front/ds/status-dot";
 import { useHealth } from "@/hooks/use-health";
+import { useOverviewStats } from "@/hooks/use-overview-stats";
 
-const NAV_ITEMS = [
-  { label: "Overview", href: "/", icon: "grid" },
-  { label: "Nodes", href: "/nodes", icon: "server" },
-  { label: "VMs", href: "/vms", icon: "cpu" },
-] as const;
+type NavItem = {
+  label: string;
+  href: string;
+  icon: IconName;
+};
 
-type IconName = (typeof NAV_ITEMS)[number]["icon"];
+type NavSection = {
+  title: string;
+  items: NavItem[];
+};
+
+const NAV_SECTIONS: NavSection[] = [
+  {
+    title: "Dashboard",
+    items: [
+      { label: "Overview", href: "/", icon: "grid" },
+    ],
+  },
+  {
+    title: "Resources",
+    items: [
+      { label: "Nodes", href: "/nodes", icon: "server" },
+      { label: "VMs", href: "/vms", icon: "cpu" },
+    ],
+  },
+  {
+    title: "Operations",
+    items: [
+      { label: "Issues", href: "/issues", icon: "warning" },
+    ],
+  },
+];
+
+type IconName = "grid" | "server" | "cpu" | "warning";
 
 function NavIcon({ name }: { name: IconName }) {
   switch (name) {
@@ -65,6 +93,22 @@ function NavIcon({ name }: { name: IconName }) {
           />
         </svg>
       );
+    case "warning":
+      return (
+        <svg
+          className="size-4"
+          fill="none"
+          viewBox="0 0 24 24"
+          stroke="currentColor"
+          strokeWidth={2}
+        >
+          <path
+            strokeLinecap="round"
+            strokeLinejoin="round"
+            d="M12 9v3.75m-9.303 3.376c-.866 1.5.217 3.374 1.948 3.374h14.71c1.73 0 2.813-1.874 1.948-3.374L13.949 3.378c-.866-1.5-3.032-1.5-3.898 0L2.697 16.126ZM12 15.75h.007v.008H12v-.008Z"
+          />
+        </svg>
+      );
   }
 }
 
@@ -79,12 +123,23 @@ export function AppSidebar({ open, onClose }: AppSidebarProps) {
   const healthStatus = healthLoading ? "unknown" as const : healthy ? "healthy" as const : "error" as const;
   const prevPathname = useRef(pathname);
 
+  const { data: stats } = useOverviewStats();
+  const issueCount =
+    (stats?.orphanedVMs ?? 0) +
+    (stats?.missingVMs ?? 0) +
+    (stats?.unschedulableVMs ?? 0);
+
   useEffect(() => {
     if (prevPathname.current !== pathname) {
       prevPathname.current = pathname;
       onClose();
     }
   }, [pathname, onClose]);
+
+  function isActive(href: string): boolean {
+    if (href === "/") return pathname === "/";
+    return pathname.startsWith(href);
+  }
 
   return (
     <>
@@ -111,36 +166,42 @@ export function AppSidebar({ open, onClose }: AppSidebarProps) {
         </div>
 
         <nav className="flex-1 px-3 py-4">
-          <ul className="space-y-1">
-            {NAV_ITEMS.map((item) => {
-              const isActive = item.href === "/"
-                ? pathname === "/"
-                : pathname.startsWith(item.href);
-
-              return (
-                <li key={item.href}>
-                  <Link
-                    href={item.href}
-                    className={`flex items-center gap-2.5 rounded-lg px-3 py-2 text-sm transition-colors ${
-                      isActive
-                        ? "bg-primary-600/10 text-primary-400 font-medium"
-                        : "text-muted-foreground hover:text-foreground hover:bg-muted"
-                    }`}
-                    style={{
-                      transitionDuration: "var(--duration-fast)",
-                    }}
-                  >
-                    <NavIcon name={item.icon} />
-                    {item.label}
-                  </Link>
-                </li>
-              );
-            })}
-          </ul>
+          {NAV_SECTIONS.map((section) => (
+            <div key={section.title} className="mb-4">
+              <p className="mb-1 px-3 text-[10px] font-semibold uppercase tracking-widest text-muted-foreground/40">
+                {section.title}
+              </p>
+              <ul className="space-y-1">
+                {section.items.map((item) => (
+                  <li key={item.href}>
+                    <Link
+                      href={item.href}
+                      className={`flex items-center gap-2.5 rounded-lg px-3 py-2 text-sm transition-colors ${
+                        isActive(item.href)
+                          ? "bg-primary-600/10 text-primary-400 font-medium"
+                          : "text-muted-foreground hover:text-foreground hover:bg-muted"
+                      }`}
+                      style={{
+                        transitionDuration: "var(--duration-fast)",
+                      }}
+                    >
+                      <NavIcon name={item.icon} />
+                      {item.label}
+                      {item.href === "/issues" && issueCount > 0 && (
+                        <span className="ml-auto rounded-full bg-warning-400/15 px-2 py-0.5 text-[10px] font-bold tabular-nums text-warning-400">
+                          {issueCount}
+                        </span>
+                      )}
+                    </Link>
+                  </li>
+                ))}
+              </ul>
+            </div>
+          ))}
         </nav>
 
         {/* Bottom utility link */}
-        <div className="px-3 py-4">
+        <div className="border-t border-white/[0.06] px-3 py-4">
           <Link
             href="/status"
             className={`flex items-center gap-2.5 rounded-lg px-3 py-2 text-sm transition-colors ${

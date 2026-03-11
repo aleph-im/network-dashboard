@@ -193,6 +193,18 @@ function applyNodeFilters(
   return result;
 }
 
+function countAffectedNodes(vms: VM[]): number {
+  const nodeHashes = new Set<string>();
+  for (const vm of vms) {
+    if (vm.status === "orphaned") {
+      for (const n of vm.observedNodes) nodeHashes.add(n);
+    } else if (vm.status === "missing" && vm.allocatedNode) {
+      nodeHashes.add(vm.allocatedNode);
+    }
+  }
+  return nodeHashes.size;
+}
+
 // --- Public API ---
 
 export async function getNodes(
@@ -208,10 +220,12 @@ export async function getNode(
 ): Promise<NodeDetail> {
   const [rawNode, rawVms, rawHistory] = await Promise.all([
     fetchApi<ApiNodeRow>(`/api/v1/nodes/${hash}`),
-    fetchAllPages<ApiVmRow>(`/api/v1/vms?node=${hash}`),
+    fetchAllPages<ApiVmRow>(`/api/v1/vms?node=${hash}`).catch(
+      () => [] as ApiVmRow[],
+    ),
     fetchAllPages<ApiHistoryRow>(
       `/api/v1/nodes/${hash}/history`,
-    ),
+    ).catch(() => [] as ApiHistoryRow[]),
   ]);
   return {
     ...transformNode(rawNode),
@@ -236,7 +250,7 @@ export async function getVM(hash: string): Promise<VmDetail> {
     fetchApi<ApiVmRow>(`/api/v1/vms/${hash}`),
     fetchAllPages<ApiHistoryRow>(
       `/api/v1/vms/${hash}/history`,
-    ),
+    ).catch(() => [] as ApiHistoryRow[]),
   ]);
   return {
     ...transformVm(rawVm),
@@ -272,6 +286,7 @@ export async function getOverviewStats(): Promise<OverviewStats> {
     ).length,
     totalVcpusAllocated: stats.total_vcpus_allocated,
     totalVcpusCapacity: stats.total_vcpus_capacity,
+    affectedNodes: countAffectedNodes(vms),
   };
 }
 

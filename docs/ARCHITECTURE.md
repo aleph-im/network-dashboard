@@ -25,6 +25,8 @@ src/
 │   ├── page.tsx            # Overview page
 │   ├── providers.tsx       # QueryClientProvider
 │   ├── globals.css         # Tailwind + DS tokens import
+│   ├── issues/
+│   │   └── page.tsx        # Issues page (scheduling discrepancies, VM/Node perspectives)
 │   ├── nodes/
 │   │   └── page.tsx        # Nodes page
 │   ├── status/
@@ -40,6 +42,7 @@ src/
 │   ├── use-vm-creation-times.ts  # useVMMessageInfo (api2, 5min stale, no polling)
 │   ├── use-overview-stats.ts  # useOverviewStats (30s polling)
 │   ├── use-health.ts       # useHealth — /health endpoint polling (30s)
+│   ├── use-issues.ts       # useIssues — derived discrepancy data from useVMs + useNodes
 │   ├── use-debounce.ts     # useDebounce hook (generic, configurable delay)
 │   └── use-pagination.ts   # usePagination hook (client-side page/pageSize state + slice)
 ├── components/
@@ -63,6 +66,8 @@ src/
 │   ├── vm-table.tsx        # VMs table with search, filters, count badges
 │   ├── vm-detail-panel.tsx # VM detail side panel (quick-peek)
 │   ├── vm-detail-view.tsx  # VM full-width detail view (?view= param)
+│   ├── issues-vm-table.tsx # Issues page: VM perspective table + detail panel
+│   ├── issues-node-table.tsx # Issues page: Node perspective table + detail panel
 │   └── resource-bar.tsx    # CPU/memory/disk usage bar
 ├── lib/
 │   ├── filters.ts          # Filter pipeline: textSearch, countByStatus, applyNodeAdvancedFilters, applyVmAdvancedFilters
@@ -141,14 +146,28 @@ src/
 **Context:** Side panels show truncated data (10 history rows, no owner/IPv6/payment fields). Users need a full view with all metadata and complete history.
 **Approach:** Search-param-based view switching. When `?view=hash` is present on `/nodes` or `/vms`, the page renders a `NodeDetailView` or `VMDetailView` instead of the table+panel layout. Side panels remain as quick-peek with a "View full details →" link. The `AppHeader` reads `?view=` to show entity-specific titles (e.g. "Node: abc12..."). Cross-links between detail views use `?view=` (not `?selected=`).
 **Key files:** `src/components/node-detail-view.tsx`, `src/components/vm-detail-view.tsx`, `src/app/nodes/page.tsx`, `src/app/vms/page.tsx`, `src/components/app-header.tsx`
-**Notes:** Uses search params instead of dynamic route segments (`/nodes/[hash]`) because IPFS static export can't resolve arbitrary dynamic paths. The `AppHeader` wraps `useSearchParams()` in a `<Suspense>` boundary to avoid hydration issues. New API fields surfaced: `owner`, `supportsIpv6`, `discoveredAt` (nodes), `allocatedAt`, `lastObservedAt`, `paymentType` (VMs). VM panels/detail views cross-reference the allocated node via `useNode(hash)` to display the node name alongside the hash link.
+**Notes:** Uses search params instead of dynamic route segments (`/nodes/[hash]`) because IPFS static export can't resolve arbitrary dynamic paths. The `AppHeader` wraps `useSearchParams()` in a `<Suspense>` boundary to avoid hydration issues. New API fields surfaced: `owner`, `supportsIpv6`, `discoveredAt` (nodes), `allocatedAt`, `lastObservedAt`, `paymentType` (VMs). VM panels/detail views cross-reference the allocated node via `useNode(hash)` to display the node name alongside the hash link. Both detail views show an error card (with back link and error message) instead of rendering blank when the API call fails. Secondary fetches (history, related VMs) use `.catch(() => [])` so the primary entity still renders even if history endpoints fail.
 
 ### List Page Filter Pipeline
 
 **Context:** Both Nodes and VMs pages need text search, status filters, and advanced filters (checkboxes, range sliders) — all client-side.
 **Approach:** Four-stage pipeline applied in `useMemo`: (1) `textSearch` matches query against configurable fields, (2) `applyNodeAdvancedFilters` / `applyVmAdvancedFilters` applies checkbox and range filters, (3) `countByStatus` computes per-status counts on the filtered set (for badge display), (4) status filter selects a single status. Status is applied last so count badges show accurate per-status breakdowns after search+advanced filters. All filters are client-side post-fetch — none go in the React Query key. State setters wrapped in `useTransition` for responsive UI. Search input debounced at 300ms via `useDebounce`. The `CollapsibleSection` component uses CSS `grid-template-rows` animation for smooth expand/collapse. Filter panel uses a 3-column layout (`lg:grid-cols-3`) with glassmorphism card styling.
 **Key files:** `src/lib/filters.ts` (pure filter functions + types), `src/lib/filters.test.ts`, `src/hooks/use-debounce.ts`, `src/components/collapsible-section.tsx`, `src/components/filter-toolbar.tsx`, `src/components/filter-panel.tsx`, `src/components/node-table.tsx`, `src/components/vm-table.tsx`
-**Notes:** The visual shell (status pills, filter toggle button, search input, glassmorphism panel chrome with reset) is shared via `FilterToolbar` and `FilterPanel` — both tables compose these with their own status config, filter content, and grid layout. `FilterToolbar` is generic over the status type. Multi-select filters (VM type, payment status, CPU vendor) treat "all selected" and "none selected" identically as "no filter." Count badges show `filtered/total` format when non-status filters are active. The `VmType` values are lowercase (`"microvm"`, `"persistent_program"`, `"instance"`) matching the API wire format. Boolean checkbox filters: Staked, IPv6, Has GPU, Confidential (nodes); Allocated to a node, Requires GPU, Requires Confidential (VMs). Multi-select: CPU Vendor (AMD, Intel) on nodes. Filter panel uses a 4-column layout on nodes (`lg:grid-cols-4`: Properties, CPU Vendor, Workload, Hardware).
+**Notes:** The visual shell (status pills, filter toggle button, search input, glassmorphism panel chrome with reset) is shared via `FilterToolbar` and `FilterPanel` — both tables compose these with their own status config, filter content, and grid layout. `FilterToolbar` is generic over the status type and accepts an optional `leading` slot (rendered before status pills, separated by a vertical divider) for page-specific controls like the Issues perspective toggle. Multi-select filters (VM type, payment status, CPU vendor) treat "all selected" and "none selected" identically as "no filter." Count badges show `filtered/total` format when non-status filters are active. The `VmType` values are lowercase (`"microvm"`, `"persistent_program"`, `"instance"`) matching the API wire format. Boolean checkbox filters: Staked, IPv6, Has GPU, Confidential (nodes); Allocated to a node, Requires GPU, Requires Confidential (VMs). Multi-select: CPU Vendor (AMD, Intel) on nodes. Filter panel uses a 4-column layout on nodes (`lg:grid-cols-4`: Properties, CPU Vendor, Workload, Hardware).
+
+### Issues Page — Derived Data Views
+
+**Context:** DevOps investigating scheduling discrepancies (orphaned, missing, unschedulable VMs) had no dedicated view.
+**Approach:** `/issues` page with a VMs|Nodes perspective toggle (`?perspective=vms|nodes`). No new API calls — `useIssues()` hook combines `useVMs()` + `useNodes()` to derive discrepancy sets. VM perspective shows discrepancy VMs with status, issue explanation, schedule vs reality. Node perspective cross-references discrepancy VMs against nodes to show per-node orphaned/missing counts. Status pills and text search, no advanced filters (data set is small). Overview page has an "Issues" section with Affected VMs / Affected Nodes stat cards linking to the issues page.
+**Key files:** `src/app/issues/page.tsx`, `src/hooks/use-issues.ts`, `src/components/issues-vm-table.tsx`, `src/components/issues-node-table.tsx`
+**Notes:** `affectedNodes` count is computed in `getOverviewStats()` for the overview card (unique nodes involved in any discrepancy). `IssueVM` extends `VM` with `issueDescription`. `IssueNode` bundles a `Node` with discrepancy counts and the list of discrepancy VMs associated with it. The perspective toggle is a local segmented pill (not a DS component), rendered inline with status pills via `FilterToolbar`'s `leading` slot.
+
+### Sidebar Categories
+
+**Context:** With 5+ nav items, flat navigation list needed structure.
+**Approach:** Three categories: Dashboard (Overview), Resources (Nodes, VMs), Operations (Issues). Small uppercase section titles as visual grouping only (not clickable, no collapse). Issues link shows an amber count badge with the total discrepancy VM count from `useOverviewStats()`, updating with 30s polling. API Status at the bottom, border-separated.
+**Key files:** `src/components/app-sidebar.tsx`
+**Notes:** `NAV_SECTIONS` array drives the rendering. The sidebar now imports `useOverviewStats()` for the badge count.
 
 ### Client-Side Pagination
 

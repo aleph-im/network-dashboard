@@ -15,10 +15,10 @@ Ideas and scope creep captured for later consideration.
 
 ## Open Items
 
-### 2026-03-06 - Clickable stat cards on overview page
-**Source:** User request
-**Description:** Stat cards (Healthy, Unreachable, Scheduled, etc.) should be clickable and navigate to the corresponding filtered list page (e.g. clicking "Healthy" goes to `/nodes/?status=healthy`). Currently they're display-only.
-**Priority:** Medium
+### 2026-03-11 - Issues page filter icon review
+**Source:** User feedback
+**Description:** The filter icon (advanced filters toggle) on the Issues page is currently a no-op (`filtersOpen={false}`, `onFiltersToggle={() => {}}`). Decide whether advanced filters are useful for the Issues tables (e.g. filter by node, resource range) and either implement them or remove the icon entirely.
+**Priority:** Low
 
 ### 2026-03-06 - Remove tooltip from hash in Latest VMs card
 **Source:** User request
@@ -128,5 +128,7 @@ Ideas and scope creep captured for later consideration.
 - ✅ 2026-03-09 - CPU info on nodes — CPU column, vendor filter (AMD/Intel), CPU section in detail panel/view
 - ✅ 2026-03-09 - Automated IPFS deployment — `workflow_dispatch` GitHub Actions workflow using Aleph SDK with delegated billing, CIDv0→CIDv1 conversion, gateway URL in job summary
 - ✅ 2026-03-10 - Pagination UI for large datasets — client-side pagination with DS `Pagination` component, page-size dropdown (25/50/100), `usePagination` hook
+- ✅ 2026-03-11 - Clickable stat cards on overview page — all stat cards now Link to filtered list pages, Issues section with Affected VMs/Nodes cards
+- ✅ 2026-03-11 - Issues page — dedicated `/issues` page with VM/Node perspectives for scheduling discrepancies, sidebar categories with issue count badge
 
 </details>

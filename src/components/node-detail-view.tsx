@@ -46,7 +46,7 @@ function MetaItem({
 }
 
 export function NodeDetailView({ hash }: NodeDetailViewProps) {
-  const { data: node, isLoading } = useNode(hash);
+  const { data: node, isLoading, error } = useNode(hash);
 
   if (isLoading) {
     return (
@@ -58,7 +58,26 @@ export function NodeDetailView({ hash }: NodeDetailViewProps) {
     );
   }
 
-  if (!node) return null;
+  if (!node) {
+    return (
+      <div className="space-y-4">
+        <Link
+          href="/nodes"
+          className="text-sm text-muted-foreground hover:text-foreground"
+        >
+          ← Nodes
+        </Link>
+        <Card padding="md" variant="ghost" className="border border-white/[0.06] bg-white/[0.03]">
+          <h3 className="text-sm font-semibold">Node not found</h3>
+          <p className="mt-1 text-sm text-muted-foreground">
+            {error
+              ? `Failed to load node ${hash}: ${error.message}`
+              : `No node found with hash ${hash}`}
+          </p>
+        </Card>
+      </div>
+    );
+  }
 
   return (
     <div className="space-y-6">

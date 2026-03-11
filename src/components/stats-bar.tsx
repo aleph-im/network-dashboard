@@ -1,6 +1,7 @@
 "use client";
 
 import { useEffect, useState } from "react";
+import Link from "next/link";
 import { Skeleton } from "@aleph-front/ds/ui/skeleton";
 import {
   TooltipProvider,
@@ -19,6 +20,8 @@ type StatProps = {
   color?: string | undefined;
   tint?: string | undefined;
   icon?: React.ReactNode;
+  href?: string;
+  className?: string;
 };
 
 function DonutRing({
@@ -80,7 +83,7 @@ function DonutRing({
   );
 }
 
-function Stat({
+function StatCard({
   label,
   value,
   total,
@@ -89,57 +92,73 @@ function Stat({
   color,
   tint,
   icon,
-}: StatProps) {
+}: Omit<StatProps, "href">) {
   const showRing = color && !isLoading && value !== undefined && total;
+
+  return (
+    <div
+      className="stat-card flex h-full flex-col border border-white/[0.06] bg-white/[0.03] p-6"
+      style={{
+        "--stat-tint": tint ?? "transparent",
+      } as React.CSSProperties}
+    >
+      {showRing ? (
+        <div className="absolute right-5 top-5">
+          <DonutRing
+            value={value}
+            total={total}
+            color={color}
+            icon={icon}
+          />
+        </div>
+      ) : null}
+      <div className="flex items-center gap-2">
+        {color ? (
+          <span
+            className="inline-block size-2.5 rounded-full"
+            style={{ backgroundColor: color }}
+          />
+        ) : null}
+        <p className="text-xs font-semibold uppercase tracking-widest text-muted-foreground/70">
+          {label}
+        </p>
+      </div>
+      {isLoading ? (
+        <Skeleton className="mt-3 h-11 w-24" />
+      ) : (
+        <p
+          className="mt-3 font-heading text-4xl font-extrabold tabular-nums tracking-tight"
+          {...(color ? { style: { color } } : {})}
+        >
+          {value ?? 0}
+        </p>
+      )}
+      <p className="mt-auto pt-2 text-xs leading-relaxed text-muted-foreground/60">
+        {subtitle}
+      </p>
+    </div>
+  );
+}
+
+function Stat(props: StatProps) {
+  const { href, className, ...cardProps } = props;
 
   return (
     <TooltipProvider>
       <Tooltip>
         <TooltipTrigger asChild>
-          <div
-            className="stat-card border border-white/[0.06] bg-white/[0.03] p-6"
-            style={{
-              "--stat-tint": tint ?? "transparent",
-            } as React.CSSProperties}
-          >
-            {showRing ? (
-              <div className="absolute right-5 top-5">
-                <DonutRing
-                  value={value}
-                  total={total}
-                  color={color}
-                  icon={icon}
-                />
-              </div>
-            ) : null}
-            <div className="flex items-center gap-2">
-              {color ? (
-                <span
-                  className="inline-block size-2.5 rounded-full"
-                  style={{ backgroundColor: color }}
-                />
-              ) : null}
-              <p className="text-xs font-semibold uppercase tracking-widest text-muted-foreground/70">
-                {label}
-              </p>
+          {href ? (
+            <Link href={href} className={`block ${className ?? ""}`}>
+              <StatCard {...cardProps} />
+            </Link>
+          ) : (
+            <div className={className}>
+              <StatCard {...cardProps} />
             </div>
-            {isLoading ? (
-              <Skeleton className="mt-3 h-11 w-24" />
-            ) : (
-              <p
-                className="mt-3 font-heading text-4xl font-extrabold tabular-nums tracking-tight"
-                {...(color ? { style: { color } } : {})}
-              >
-                {value ?? 0}
-              </p>
-            )}
-            <p className="mt-2 text-xs leading-relaxed text-muted-foreground/60">
-              {subtitle}
-            </p>
-          </div>
+          )}
         </TooltipTrigger>
         <TooltipContent side="bottom" className="max-w-[280px]">
-          {subtitle}
+          {props.subtitle}
         </TooltipContent>
       </Tooltip>
     </TooltipProvider>
@@ -187,119 +206,186 @@ export function StatsBar() {
   const hasMissing = (stats?.missingVMs ?? 0) > 0;
   const hasUnschedulable = (stats?.unschedulableVMs ?? 0) > 0;
 
-  return (
-    <div className="grid grid-cols-1 gap-8 lg:grid-cols-2">
-      {/* Nodes */}
-      <div>
-        <p className="mb-3 text-xs font-semibold uppercase tracking-widest text-muted-foreground/50">
-          Nodes
-        </p>
-        <div className="grid grid-cols-2 gap-4">
-          <Stat
-            label="Total"
-            value={stats?.totalNodes}
-            total={undefined}
-            subtitle="Compute nodes registered with the scheduler"
-            isLoading={isLoading}
-          />
-          <Stat
-            label="Healthy"
-            value={stats?.healthyNodes}
-            total={stats?.totalNodes}
-            subtitle="Nodes that passed their last health check"
-            isLoading={isLoading}
-            color="var(--color-success-500)"
-            tint="var(--color-success-500)"
-            icon={iconCheck}
-          />
-          <Stat
-            label="Unreachable"
-            value={stats?.unreachableNodes}
-            total={stats?.totalNodes}
-            subtitle="Nodes that failed their last health check"
-            isLoading={isLoading}
-            icon={iconWifiSlash}
-            {...(hasUnreachable
-              ? {
-                  color: "var(--color-error-400)",
-                  tint: "var(--color-error-400)",
-                }
-              : {})}
-          />
-          <Stat
-            label="Removed"
-            value={stats?.removedNodes}
-            total={stats?.totalNodes}
-            subtitle="Nodes that have been deregistered from the scheduler"
-            isLoading={isLoading}
-            icon={iconTrash}
-            {...(hasRemoved
-              ? {
-                  color: "var(--color-muted-foreground)",
-                  tint: "var(--color-muted-foreground)",
-                }
-              : {})}
-          />
-        </div>
-      </div>
+  const affectedVMs =
+    (stats?.orphanedVMs ?? 0) +
+    (stats?.missingVMs ?? 0) +
+    (stats?.unschedulableVMs ?? 0);
+  const hasIssues = affectedVMs > 0;
 
-      {/* VMs */}
-      <div>
-        <p className="mb-3 text-xs font-semibold uppercase tracking-widest text-muted-foreground/50">
-          Virtual Machines
-        </p>
-        <div className="grid grid-cols-2 gap-4">
-          <Stat
-            label="Total"
-            value={stats?.totalVMs}
-            total={undefined}
-            subtitle="Virtual machines currently scheduled across the network"
-            isLoading={isLoading}
-          />
-          <Stat
-            label="Orphaned"
-            value={stats?.orphanedVMs}
-            total={stats?.totalVMs}
-            subtitle="VMs whose assigned node is no longer responding"
-            isLoading={isLoading}
-            icon={iconQuestion}
-            {...(hasOrphaned
-              ? {
-                  color: "var(--color-warning-400)",
-                  tint: "var(--color-warning-400)",
-                }
-              : {})}
-          />
-          <Stat
-            label="Missing"
-            value={stats?.missingVMs}
-            total={stats?.totalVMs}
-            subtitle="VMs expected to be running but not found on any node"
-            isLoading={isLoading}
-            icon={iconWarning}
-            {...(hasMissing
-              ? {
-                  color: "var(--color-error-400)",
-                  tint: "var(--color-error-400)",
-                }
-              : {})}
-          />
-          <Stat
-            label="Unschedulable"
-            value={stats?.unschedulableVMs}
-            total={stats?.totalVMs}
-            subtitle="VMs that cannot be placed due to resource constraints"
-            isLoading={isLoading}
-            icon={iconProhibit}
-            {...(hasUnschedulable
-              ? {
-                  color: "var(--color-warning-400)",
-                  tint: "var(--color-warning-400)",
-                }
-              : {})}
-          />
-        </div>
-      </div>
+  const issueVmSubtitle = isLoading
+    ? "Loading..."
+    : `${stats?.orphanedVMs ?? 0} orphaned \u00b7 ${stats?.missingVMs ?? 0} missing \u00b7 ${stats?.unschedulableVMs ?? 0} unschedulable`;
+
+  const issueNodeSubtitle = isLoading
+    ? "Loading..."
+    : `Unique nodes involved in scheduling discrepancies`;
+
+  return (
+    <div className="grid grid-cols-2 gap-4 lg:grid-cols-5">
+      {/* Section labels */}
+      <p className="col-span-2 mb-[-8px] text-xs font-semibold uppercase tracking-widest text-muted-foreground/50">
+        Nodes
+      </p>
+      <p className="col-span-2 mb-[-8px] text-xs font-semibold uppercase tracking-widest text-muted-foreground/50 max-lg:hidden lg:pl-4">
+        Virtual Machines
+      </p>
+      <p className="col-span-1 mb-[-8px] text-xs font-semibold uppercase tracking-widest text-muted-foreground/50 max-lg:hidden lg:pl-4">
+        Issues
+      </p>
+
+      {/* Nodes (cols 1-2) */}
+      <Stat
+        label="Total"
+        value={stats?.totalNodes}
+        total={undefined}
+        subtitle="Compute nodes registered with the scheduler"
+        isLoading={isLoading}
+        href="/nodes"
+      />
+      <Stat
+        label="Healthy"
+        value={stats?.healthyNodes}
+        total={stats?.totalNodes}
+        subtitle="Nodes that passed their last health check"
+        isLoading={isLoading}
+        color="var(--color-success-500)"
+        tint="var(--color-success-500)"
+        icon={iconCheck}
+        href="/nodes?status=healthy"
+      />
+
+      {/* VMs (cols 3-4) — first row */}
+      <p className="col-span-2 mb-[-8px] text-xs font-semibold uppercase tracking-widest text-muted-foreground/50 lg:hidden">
+        Virtual Machines
+      </p>
+      <Stat
+        label="Total"
+        value={stats?.totalVMs}
+        total={undefined}
+        subtitle="Virtual machines currently scheduled across the network"
+        isLoading={isLoading}
+        href="/vms"
+        className="lg:pl-4"
+      />
+      <Stat
+        label="Orphaned"
+        value={stats?.orphanedVMs}
+        total={stats?.totalVMs}
+        subtitle="VMs whose assigned node is no longer responding"
+        isLoading={isLoading}
+        icon={iconQuestion}
+        href="/vms?status=orphaned"
+        {...(hasOrphaned
+          ? {
+              color: "var(--color-warning-400)",
+              tint: "var(--color-warning-400)",
+            }
+          : {})}
+      />
+
+      {/* Issues (col 5) — first card */}
+      <p className="col-span-2 mb-[-8px] text-xs font-semibold uppercase tracking-widest text-muted-foreground/50 lg:hidden">
+        Issues
+      </p>
+      <Stat
+        label="Affected VMs"
+        value={isLoading ? undefined : affectedVMs}
+        total={stats?.totalVMs}
+        subtitle={issueVmSubtitle}
+        isLoading={isLoading}
+        icon={iconWarning}
+        href="/issues?perspective=vms"
+        className="lg:pl-4"
+        {...(hasIssues
+          ? {
+              color: "var(--color-warning-400)",
+              tint: "var(--color-warning-400)",
+            }
+          : {})}
+      />
+
+      {/* Nodes (cols 1-2) — second row */}
+      <Stat
+        label="Unreachable"
+        value={stats?.unreachableNodes}
+        total={stats?.totalNodes}
+        subtitle="Nodes that failed their last health check"
+        isLoading={isLoading}
+        icon={iconWifiSlash}
+        href="/nodes?status=unreachable"
+        {...(hasUnreachable
+          ? {
+              color: "var(--color-error-400)",
+              tint: "var(--color-error-400)",
+            }
+          : {})}
+      />
+      <Stat
+        label="Removed"
+        value={stats?.removedNodes}
+        total={stats?.totalNodes}
+        subtitle="Nodes that have been deregistered from the scheduler"
+        isLoading={isLoading}
+        icon={iconTrash}
+        href="/nodes?status=removed"
+        {...(hasRemoved
+          ? {
+              color: "var(--color-muted-foreground)",
+              tint: "var(--color-muted-foreground)",
+            }
+          : {})}
+      />
+
+      {/* VMs (cols 3-4) — second row */}
+      <Stat
+        label="Missing"
+        value={stats?.missingVMs}
+        total={stats?.totalVMs}
+        subtitle="VMs expected to be running but not found on any node"
+        isLoading={isLoading}
+        icon={iconWarning}
+        href="/vms?status=missing"
+        className="lg:pl-4"
+        {...(hasMissing
+          ? {
+              color: "var(--color-error-400)",
+              tint: "var(--color-error-400)",
+            }
+          : {})}
+      />
+      <Stat
+        label="Unschedulable"
+        value={stats?.unschedulableVMs}
+        total={stats?.totalVMs}
+        subtitle="VMs that cannot be placed due to resource constraints"
+        isLoading={isLoading}
+        icon={iconProhibit}
+        href="/vms?status=unschedulable"
+        {...(hasUnschedulable
+          ? {
+              color: "var(--color-warning-400)",
+              tint: "var(--color-warning-400)",
+            }
+          : {})}
+      />
+
+      {/* Issues (col 5) — second card */}
+      <Stat
+        label="Affected Nodes"
+        value={stats?.affectedNodes}
+        total={stats?.totalNodes}
+        subtitle={issueNodeSubtitle}
+        isLoading={isLoading}
+        icon={iconWarning}
+        href="/issues?perspective=nodes"
+        className="lg:pl-4"
+        {...(hasIssues
+          ? {
+              color: "var(--color-warning-400)",
+              tint: "var(--color-warning-400)",
+            }
+          : {})}
+      />
     </div>
   );
 }

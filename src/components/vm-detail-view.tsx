@@ -40,7 +40,7 @@ function MetaItem({
 }
 
 export function VMDetailView({ hash }: VMDetailViewProps) {
-  const { data: vm, isLoading } = useVM(hash);
+  const { data: vm, isLoading, error } = useVM(hash);
   const { data: allocatedNodeData } = useNode(vm?.allocatedNode ?? "");
 
   if (isLoading) {
@@ -53,7 +53,26 @@ export function VMDetailView({ hash }: VMDetailViewProps) {
     );
   }
 
-  if (!vm) return null;
+  if (!vm) {
+    return (
+      <div className="space-y-4">
+        <Link
+          href="/vms"
+          className="text-sm text-muted-foreground hover:text-foreground"
+        >
+          ← Virtual Machines
+        </Link>
+        <Card padding="md" variant="ghost" className="border border-white/[0.06] bg-white/[0.03]">
+          <h3 className="text-sm font-semibold">VM not found</h3>
+          <p className="mt-1 text-sm text-muted-foreground">
+            {error
+              ? `Failed to load VM ${hash}: ${error.message}`
+              : `No VM found with hash ${hash}`}
+          </p>
+        </Card>
+      </div>
+    );
+  }
 
   return (
     <div className="space-y-6">

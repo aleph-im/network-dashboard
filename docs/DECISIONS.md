@@ -18,6 +18,21 @@ Each entry includes:
 
 ---
 
+## Decision #39 - 2026-03-11
+**Context:** Issues page design — whether to create a derived "misplaced" status for VMs running on a different node than allocated
+**Decision:** Stick with API statuses only (orphaned, missing, unschedulable). No derived statuses.
+**Rationale:** The API's categorization is the source of truth. Inventing client-side statuses risks inconsistency if the API adds its own interpretation later. The three discrepancy statuses already cover the meaningful divergences between plan and reality.
+
+## Decision #38 - 2026-03-11
+**Context:** Issues page — whether to add advanced filters (VM type, payment, resource ranges) like the Nodes/VMs pages
+**Decision:** Deferred. Status pills + text search only.
+**Rationale:** The discrepancy data set is small (typically dozens, not hundreds). Advanced filters add complexity without proportional value. Can be added later if the data set grows.
+
+## Decision #37 - 2026-03-11
+**Context:** Making overview stat cards clickable — the `Stat` component uses `TooltipTrigger asChild` wrapping a `<div>`, which conflicts with nesting a `<Link>`
+**Decision:** Split into `StatCard` (visual-only) and `Stat` (wraps with tooltip + optional Link). When `href` is provided, a `<Link>` wraps the card content.
+**Rationale:** Keeps the tooltip on hover and navigation on click without conflicting interactive elements. The `asChild` pattern works cleanly with the Link as the trigger element.
+
 ## Decision #36 - 2026-03-10
 **Context:** Both list pages display 400–500+ rows at once, making scanning difficult. The DS now ships a `Pagination` component (v0.6.0).
 **Decision:** Client-side pagination with `usePagination` hook, DS `Pagination` component, page-size dropdown (25/50/100, default 50), in-memory state only (no URL persistence).
