@@ -105,12 +105,30 @@ On "sync up" or "catch me up":
 
 1. Read `docs/DECISIONS.md`, `docs/BACKLOG.md`, `docs/ARCHITECTURE.md`
 2. Check git status and recent git log — use **separate parallel Bash calls** (not chained with `&&`), so each matches `Bash(git status*)` / `Bash(git log*)` allow rules and avoids permission prompts
-3. Summarize:
-   - Last decision logged
-   - Open backlog items
-   - Any blockers
-   - Git status
-5. State readiness
+3. Present the summary as a structured table, not prose paragraphs:
+
+```
+## Sync Up
+
+| Area | Status |
+|------|--------|
+| **Branch** | `main` — clean / 2 uncommitted files |
+| **Last commit** | `abc1234` — Short commit message |
+| **Last decision** | #N — Summary of decision |
+| **Blockers** | None / description |
+
+### Open Backlog
+
+| Priority | Items |
+|----------|-------|
+| **High** | Item 1, Item 2 |
+| **Medium** | Item 3, Item 4 |
+| **Low** | Item 5 |
+
+Ready to go — what are we working on?
+```
+
+4. State readiness
 
 ---
 
