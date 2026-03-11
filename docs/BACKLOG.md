@@ -15,6 +15,11 @@ Ideas and scope creep captured for later consideration.
 
 ## Open Items
 
+### 2026-03-11 - Issues page filter icon review
+**Source:** User feedback
+**Description:** The filter icon (advanced filters toggle) on the Issues page is currently a no-op (`filtersOpen={false}`, `onFiltersToggle={() => {}}`). Decide whether advanced filters are useful for the Issues tables (e.g. filter by node, resource range) and either implement them or remove the icon entirely.
+**Priority:** Low
+
 ### 2026-03-06 - Remove tooltip from hash in Latest VMs card
 **Source:** User request
 **Description:** On the overview page's Latest VMs card, the hash column shows a tooltip on hover (from `CopyableText`). Remove the tooltip — the hash is already visible and the tooltip adds noise in this compact card context.
