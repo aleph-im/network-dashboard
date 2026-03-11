@@ -96,7 +96,7 @@ function StatCard({
 
   return (
     <div
-      className="stat-card border border-white/[0.06] bg-white/[0.03] p-6"
+      className="stat-card flex h-full flex-col border border-white/[0.06] bg-white/[0.03] p-6"
       style={{
         "--stat-tint": tint ?? "transparent",
       } as React.CSSProperties}
@@ -132,7 +132,7 @@ function StatCard({
           {value ?? 0}
         </p>
       )}
-      <p className="mt-2 text-xs leading-relaxed text-muted-foreground/60">
+      <p className="mt-auto pt-2 text-xs leading-relaxed text-muted-foreground/60">
         {subtitle}
       </p>
     </div>
