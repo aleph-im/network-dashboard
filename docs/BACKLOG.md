@@ -15,6 +15,17 @@ Ideas and scope creep captured for later consideration.
 
 ## Open Items
 
+### 2026-03-11 - Update pnpm/action-setup to Node.js 24
+**Source:** GitHub Actions deprecation warning on deploy
+**Description:** `pnpm/action-setup` is pinned to a version running Node.js 20, which GitHub will force to Node.js 24 starting June 2nd, 2026. Update to a newer release that supports Node.js 24 before the deadline.
+**Priority:** Medium
+**Deadline:** 2026-06-02
+
+### 2026-03-11 - Wallet identity hub (User Command Center evolution)
+**Source:** Wallet view brainstorming
+**Description:** Expand the wallet view beyond ops/debugging into a richer identity hub: wallet balance, ALEPH staking, transaction history, etc. Part of a broader evolution from an ops dashboard to a User Command Center. Build on top of the Phase 1 ops-focused wallet view.
+**Priority:** Low
+
 ### 2026-03-11 - Issues page filter icon review
 **Source:** User feedback
 **Description:** The filter icon (advanced filters toggle) on the Issues page is currently a no-op (`filtersOpen={false}`, `onFiltersToggle={() => {}}`). Decide whether advanced filters are useful for the Issues tables (e.g. filter by node, resource range) and either implement them or remove the icon entirely.
@@ -25,10 +36,6 @@ Ideas and scope creep captured for later consideration.
 **Description:** On the overview page's Latest VMs card, the hash column shows a tooltip on hover (from `CopyableText`). Remove the tooltip — the hash is already visible and the tooltip adds noise in this compact card context.
 **Priority:** Low
 
-### 2026-03-10 - Wallet view page
-**Source:** Evolved from "VM detail: show owner wallet address" (2026-03-06)
-**Description:** Add a wallet view at `/wallet?address=...` accessible by clicking any wallet address in the dashboard (node owner, VM sender). Phase 1: current permissions given (`api2 aggregates/<wallet>.json?keys=security` → `content.authorizations[]`). Permissions received: waiting on Olivier's CCN endpoint. Permission history and nodes/VMs owned: deferred. Also add owner wallet to VM detail view as part of this work.
-**Priority:** Medium
 
 ### 2026-03-05 - Mobile-responsive filter UI
 **Source:** Identified while brainstorming list page filtering overhaul
@@ -97,9 +104,9 @@ Ideas and scope creep captured for later consideration.
 ### 2026-03-09 - Aleph Cloud hosting architecture research
 **Description:** The current static export + client-side polling model won't scale long-term (fetching all pages on every poll, no persistent state, no indexing). Research how to run a proper frontend + backend on Aleph Cloud. Key questions: Can we run a backend VM on Aleph that indexes scheduler data and serves it via API? Can we use Aleph messages (STORE, AGGREGATE, POST) to persist historical snapshots, user preferences, or pre-computed stats? What's the deployment model — VM instance for the backend, static IPFS for the frontend, or both on a single instance? Look at existing Aleph Cloud apps (explorer, account) for patterns. Also consider filter state persistence as part of this — advanced filters (e.g. Has GPU) are lost on navigation because they live in React state, not URL params. The right solution depends on the architecture: URL params for static, server-side filter state or proper routing for a backend model.
 
-### 2026-03-10 - ~~Authorization reverse-index indexer~~ → Olivier building CCN endpoint
+### 2026-03-10 - ~~Authorization reverse-index indexer~~ → Integrated via api2 endpoints
 **Source:** Wallet view research (2026-03-10)
-**Description:** ~~Build a backend indexer for reverse permission lookups.~~ Olivier will add a reverse permission lookup endpoint to pyaleph (CCN). No custom indexer needed. Wait for the endpoint, then integrate into the wallet view. Update the wallet view backlog item when the endpoint shape is known.
+**Description:** ~~Build a backend indexer for reverse permission lookups.~~ Integrated using api2's existing `/api/v0/authorizations/granted/` and `/api/v0/authorizations/received/` endpoints in the wallet view. If Olivier's CCN endpoint offers additional data, can enhance later.
 
 ### 2026-03-09 - Bookmarkable filter URLs
 **Description:** Write active filters back to URL search params (currently read-once on mount). Enables sharing filtered views via URL.
@@ -130,5 +137,6 @@ Ideas and scope creep captured for later consideration.
 - ✅ 2026-03-10 - Pagination UI for large datasets — client-side pagination with DS `Pagination` component, page-size dropdown (25/50/100), `usePagination` hook
 - ✅ 2026-03-11 - Clickable stat cards on overview page — all stat cards now Link to filtered list pages, Issues section with Affected VMs/Nodes cards
 - ✅ 2026-03-11 - Issues page — dedicated `/issues` page with VM/Node perspectives for scheduling discrepancies, sidebar categories with issue count badge
+- ✅ 2026-03-11 - Wallet view page — `/wallet?address=0x...` with owned nodes, VMs with scheduler status, activity timeline, granted/received permissions, clickable wallet addresses in node detail views
 
 </details>

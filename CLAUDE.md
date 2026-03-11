@@ -249,5 +249,6 @@ When adding a new component to `@aleph-front/ds`, follow the "Adding a New Compo
 - API client (`/api/v1`) with snake→camel transform layer, `fetchAllPages()` for paginated responses (max 200/page, parallel fetching)
 - React Query hooks with automatic polling (15-30s intervals)
 - Cross-page navigation via URL search params (`?status=`, `?selected=`, `?hasVms=`, `?sort=`, `?order=`, `?view=`): overview cards link to filtered list pages, detail panels cross-link between nodes and VMs via `?view=`, selected row highlighted with left border accent
+- Wallet view page: `/wallet?address=0x...` showing owned nodes (from scheduler), created VMs with scheduler status (api2 cross-ref), activity timeline with manual refresh (all message types), permissions granted/received with inline scope tags, wallet-to-wallet navigation, Explorer deep links. Entry points: clickable wallet addresses in node detail view/panel.
 - Static export for IPFS deployment
 - `@aleph-front/ds` integration via npm (pinned version) and `transpilePackages`

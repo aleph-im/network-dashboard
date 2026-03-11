@@ -18,6 +18,27 @@ Each entry includes:
 
 ---
 
+## Decision #43 - 2026-03-11
+**Context:** Wallet view — whether to add a sidebar nav entry for the wallet page
+**Decision:** No sidebar entry. Wallet is a utility page reached via clicking wallet addresses.
+**Rationale:** Users don't navigate to the wallet page independently — they arrive by clicking an owner address in a node detail view or a permission address on another wallet. Adding it to the sidebar would imply it's a primary navigation destination. Follows the same pattern as detail views (`?view=hash`) which also aren't in the sidebar.
+
+## Decision #42 - 2026-03-11
+**Context:** Wallet view activity section — auto-polling vs manual refresh
+**Decision:** Manual refresh button with `staleTime: 5min` and no auto-polling.
+**Rationale:** Wallet activity data is fetched from api2 which is slower than the scheduler API. Auto-polling at 15-30s would hammer api2 unnecessarily. Manual refresh gives operators control during active troubleshooting. `staleTime: 5min` means returning to the page within 5 minutes uses cached data.
+
+## Decision #41 - 2026-03-11
+**Context:** Wallet view — how to get VMs owned by a wallet
+**Decision:** Fetch from api2 `messages.json?addresses=` (INSTANCE+PROGRAM types), then cross-reference against `useVMs()` for scheduler status.
+**Rationale:** The scheduler API has no owner/wallet field on VMs. VM hashes are Aleph message item_hashes, so api2's `addresses` filter returns messages created by the wallet. Cross-referencing with the scheduler cache (already loaded) adds status without extra scheduler API calls. VMs not in the scheduler show "not tracked" — they exist on the network but aren't managed by this scheduler.
+**Alternatives considered:** Adding a wallet filter to the scheduler API (backend change, not available), fetching all VMs and filtering client-side (VMs don't have an owner field in the scheduler)
+
+## Decision #40 - 2026-03-11
+**Context:** Wallet view page — inline section components vs separate files
+**Decision:** Keep all section components (SummaryStats, NodesSection, VMsSection, ActivitySection, PermissionsCard) inline in the page file.
+**Rationale:** These components are tightly coupled to the wallet page — display-only, no reuse outside this context. Splitting them into 5 separate files would scatter related code without any organizational benefit. The file is ~400 lines, which is manageable for a single-page component.
+
 ## Decision #39 - 2026-03-11
 **Context:** Issues page design — whether to create a derived "misplaced" status for VMs running on a different node than allocated
 **Decision:** Stick with API statuses only (orphaned, missing, unschedulable). No derived statuses.

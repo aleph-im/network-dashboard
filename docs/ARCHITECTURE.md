@@ -27,6 +27,8 @@ src/
 │   ├── globals.css         # Tailwind + DS tokens import
 │   ├── issues/
 │   │   └── page.tsx        # Issues page (scheduling discrepancies, VM/Node perspectives)
+│   ├── wallet/
+│   │   └── page.tsx        # Wallet view (owned nodes, VMs, activity, permissions)
 │   ├── nodes/
 │   │   └── page.tsx        # Nodes page
 │   ├── status/
@@ -43,6 +45,7 @@ src/
 │   ├── use-overview-stats.ts  # useOverviewStats (30s polling)
 │   ├── use-health.ts       # useHealth — /health endpoint polling (30s)
 │   ├── use-issues.ts       # useIssues — derived discrepancy data from useVMs + useNodes
+│   ├── use-wallet.ts       # useWalletNodes, useWalletVMs, useWalletActivity, useAuthorizations
 │   ├── use-debounce.ts     # useDebounce hook (generic, configurable delay)
 │   └── use-pagination.ts   # usePagination hook (client-side page/pageSize state + slice)
 ├── components/
@@ -72,8 +75,8 @@ src/
 ├── lib/
 │   ├── filters.ts          # Filter pipeline: textSearch, countByStatus, applyNodeAdvancedFilters, applyVmAdvancedFilters
 │   ├── filters.test.ts     # Filter unit tests (32 tests)
-│   ├── format.ts           # relativeTime, relativeTimeFromUnix, truncateHash, formatPercent, formatDateTime, formatCpuLabel, formatGpuLabel
-│   └── status-map.ts       # Status-to-visual maps: nodeStatusToDot(), NODE_STATUS_VARIANT, VM_STATUS_VARIANT
+│   ├── format.ts           # relativeTime, relativeTimeFromUnix, truncateHash, formatPercent, formatDateTime, formatCpuLabel, formatGpuLabel, explorerWalletUrl
+│   └── status-map.ts       # Status-to-visual maps: nodeStatusToDot(), NODE_STATUS_VARIANT, VM_STATUS_VARIANT, MESSAGE_TYPE_VARIANT
 ```
 
 ---
@@ -161,6 +164,13 @@ src/
 **Approach:** `/issues` page with a VMs|Nodes perspective toggle (`?perspective=vms|nodes`). No new API calls — `useIssues()` hook combines `useVMs()` + `useNodes()` to derive discrepancy sets. VM perspective shows discrepancy VMs with status, issue explanation, schedule vs reality. Node perspective cross-references discrepancy VMs against nodes to show per-node orphaned/missing counts. Status pills and text search, no advanced filters (data set is small). Overview page has an "Issues" section with Affected VMs / Affected Nodes stat cards linking to the issues page.
 **Key files:** `src/app/issues/page.tsx`, `src/hooks/use-issues.ts`, `src/components/issues-vm-table.tsx`, `src/components/issues-node-table.tsx`
 **Notes:** `affectedNodes` count is computed in `getOverviewStats()` for the overview card (unique nodes involved in any discrepancy). `IssueVM` extends `VM` with `issueDescription`. `IssueNode` bundles a `Node` with discrepancy counts and the list of discrepancy VMs associated with it. The perspective toggle is a local segmented pill (not a DS component), rendered inline with status pills via `FilterToolbar`'s `leading` slot.
+
+### Wallet View — Cross-API Entity Page
+
+**Context:** Ops needs to investigate a specific wallet's resources and activity across the scheduler and Aleph network.
+**Approach:** `/wallet?address=0x...` page combines data from three sources: scheduler API (nodes filtered by owner, VMs cross-referenced by hash), api2 messages endpoint (VM ownership via sender, activity timeline), and api2 authorization endpoints (granted/received permissions). `useWalletNodes()` filters existing `useNodes()` cache — no extra API call. `useWalletVMs()` fetches message hashes from api2 then cross-references against `useVMs()` for scheduler status. Activity section has a manual refresh button (invalidates React Query cache) for live troubleshooting. All wallet addresses in the dashboard (node owner, permission addresses) are clickable `<Link>`s to the wallet view, enabling wallet-to-wallet navigation.
+**Key files:** `src/app/wallet/page.tsx`, `src/hooks/use-wallet.ts`, `src/api/client.ts`
+**Notes:** VMs not found in the scheduler show "not tracked" status. Activity items link to Explorer for deep detail. Permissions show inline scope tags (types, channels, post_types, aggregate_keys). No sidebar entry — wallet view is a utility page reached via address links.
 
 ### Sidebar Categories
 
