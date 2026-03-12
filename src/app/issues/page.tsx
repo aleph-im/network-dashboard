@@ -2,47 +2,13 @@
 
 import { Suspense } from "react";
 import { useSearchParams, useRouter, usePathname } from "next/navigation";
+import { Tabs, TabsList, TabsTrigger } from "@aleph-front/ds/tabs";
 import { useIssues } from "@/hooks/use-issues";
 import { IssuesVMTable } from "@/components/issues-vm-table";
 import { IssuesNodeTable } from "@/components/issues-node-table";
 import type { DiscrepancyStatus } from "@/hooks/use-issues";
 
 type Perspective = "vms" | "nodes";
-
-function PerspectiveToggle({
-  value,
-  onChange,
-}: {
-  value: Perspective;
-  onChange: (p: Perspective) => void;
-}) {
-  return (
-    <div className="inline-flex rounded-full border border-white/[0.08] bg-white/[0.03] p-0.5">
-      <button
-        type="button"
-        onClick={() => onChange("vms")}
-        className={`rounded-full px-4 py-1.5 text-sm font-bold transition-colors ${
-          value === "vms"
-            ? "bg-primary-600/15 text-primary-400"
-            : "text-muted-foreground hover:text-foreground"
-        }`}
-      >
-        VMs
-      </button>
-      <button
-        type="button"
-        onClick={() => onChange("nodes")}
-        className={`rounded-full px-4 py-1.5 text-sm font-bold transition-colors ${
-          value === "nodes"
-            ? "bg-primary-600/15 text-primary-400"
-            : "text-muted-foreground hover:text-foreground"
-        }`}
-      >
-        Nodes
-      </button>
-    </div>
-  );
-}
 
 const VALID_DISCREPANCY_STATUSES = new Set<string>([
   "orphaned",
@@ -67,7 +33,7 @@ function IssuesContent() {
 
   const { issueVMs, issueNodes, isLoading } = useIssues();
 
-  function handlePerspectiveChange(p: Perspective) {
+  function handlePerspectiveChange(p: string) {
     const params = new URLSearchParams(searchParams.toString());
     params.set("perspective", p);
     params.delete("status");
@@ -75,10 +41,12 @@ function IssuesContent() {
   }
 
   const toggle = (
-    <PerspectiveToggle
-      value={perspective}
-      onChange={handlePerspectiveChange}
-    />
+    <Tabs value={perspective} onValueChange={handlePerspectiveChange}>
+      <TabsList variant="pill">
+        <TabsTrigger value="vms">VMs</TabsTrigger>
+        <TabsTrigger value="nodes">Nodes</TabsTrigger>
+      </TabsList>
+    </Tabs>
   );
 
   return (

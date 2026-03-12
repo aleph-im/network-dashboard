@@ -163,7 +163,7 @@ src/
 **Context:** DevOps investigating scheduling discrepancies (orphaned, missing, unschedulable VMs) had no dedicated view.
 **Approach:** `/issues` page with a VMs|Nodes perspective toggle (`?perspective=vms|nodes`). No new API calls — `useIssues()` hook combines `useVMs()` + `useNodes()` to derive discrepancy sets. VM perspective shows discrepancy VMs with status, issue explanation, schedule vs reality. Node perspective cross-references discrepancy VMs against nodes to show per-node orphaned/missing counts. Status pills and text search, no advanced filters (data set is small). Overview page has an "Issues" section with Affected VMs / Affected Nodes stat cards linking to the issues page.
 **Key files:** `src/app/issues/page.tsx`, `src/hooks/use-issues.ts`, `src/components/issues-vm-table.tsx`, `src/components/issues-node-table.tsx`
-**Notes:** `affectedNodes` count is computed in `getOverviewStats()` for the overview card (unique nodes involved in any discrepancy). `IssueVM` extends `VM` with `issueDescription`. `IssueNode` bundles a `Node` with discrepancy counts and the list of discrepancy VMs associated with it. The perspective toggle is a local segmented pill (not a DS component), rendered inline with status pills via `FilterToolbar`'s `leading` slot.
+**Notes:** `affectedNodes` count is computed in `getOverviewStats()` for the overview card (unique nodes involved in any discrepancy). `IssueVM` extends `VM` with `issueDescription`. `IssueNode` bundles a `Node` with discrepancy counts and the list of discrepancy VMs associated with it. The perspective toggle uses DS `Tabs` with `variant="pill"` (`@aleph-front/ds/tabs`), rendered inline with status pills via `FilterToolbar`'s `leading` slot.
 
 ### Wallet View — Cross-API Entity Page
 
