@@ -15,12 +15,6 @@ Ideas and scope creep captured for later consideration.
 
 ## Open Items
 
-### 2026-03-11 - Update pnpm/action-setup to Node.js 24
-**Source:** GitHub Actions deprecation warning on deploy
-**Description:** `pnpm/action-setup` is pinned to a version running Node.js 20, which GitHub will force to Node.js 24 starting June 2nd, 2026. Update to a newer release that supports Node.js 24 before the deadline.
-**Priority:** Medium
-**Deadline:** 2026-06-02
-
 ### 2026-03-11 - Wallet identity hub (User Command Center evolution)
 **Source:** Wallet view brainstorming
 **Description:** Expand the wallet view beyond ops/debugging into a richer identity hub: wallet balance, ALEPH staking, transaction history, etc. Part of a broader evolution from an ops dashboard to a User Command Center. Build on top of the Phase 1 ops-focused wallet view.
@@ -138,5 +132,6 @@ Ideas and scope creep captured for later consideration.
 - ✅ 2026-03-11 - Clickable stat cards on overview page — all stat cards now Link to filtered list pages, Issues section with Affected VMs/Nodes cards
 - ✅ 2026-03-11 - Issues page — dedicated `/issues` page with VM/Node perspectives for scheduling discrepancies, sidebar categories with issue count badge
 - ✅ 2026-03-11 - Wallet view page — `/wallet?address=0x...` with owned nodes, VMs with scheduler status, activity timeline, granted/received permissions, clickable wallet addresses in node detail views
+- ✅ 2026-03-13 - Update pnpm/action-setup to Node.js 24 — updated to a version compatible with Node.js 24
 
 </details>
