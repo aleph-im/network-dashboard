@@ -14,7 +14,7 @@ import { useDebounce } from "@/hooks/use-debounce";
 import { FilterToolbar } from "@/components/filter-toolbar";
 import { textSearch, countByStatus } from "@/lib/filters";
 import { VM_STATUS_VARIANT } from "@/lib/status-map";
-import { relativeTime, truncateHash } from "@/lib/format";
+import { relativeTime } from "@/lib/format";
 import type { IssueVM, DiscrepancyStatus } from "@/hooks/use-issues";
 import { getIssueDescription } from "@/hooks/use-issues";
 
@@ -89,11 +89,11 @@ const columns: Column<IssueVM>[] = [
     accessor: (r) => {
       const firstNode = r.observedNodes[0];
       return firstNode ? (
-        <span className="text-xs font-mono">
-          {truncateHash(firstNode, 8)}
+        <span className="inline-flex items-center gap-1">
+          <CopyableText text={firstNode} startChars={8} endChars={8} size="sm" />
           {r.observedNodes.length > 1 && (
-            <span className="text-muted-foreground">
-              {" "}+{r.observedNodes.length - 1}
+            <span className="text-xs text-muted-foreground">
+              +{r.observedNodes.length - 1}
             </span>
           )}
         </span>
@@ -132,9 +132,7 @@ function IssuesVmDetailPanel({ vm, onClose }: IssuesVmDetailPanelProps) {
       className="w-full rounded-xl border border-white/[0.06] bg-white/[0.03] lg:sticky lg:top-0 lg:w-96"
     >
       <div className="mb-4 flex items-start justify-between">
-        <h3 className="text-sm font-bold font-mono">
-          {truncateHash(vm.hash, 12)}
-        </h3>
+        <CopyableText text={vm.hash} startChars={8} endChars={8} size="sm" />
         <button
           type="button"
           onClick={onClose}
@@ -177,12 +175,14 @@ function IssuesVmDetailPanel({ vm, onClose }: IssuesVmDetailPanelProps) {
             <dt className="text-muted-foreground">Scheduled on</dt>
             <dd>
               {vm.allocatedNode ? (
-                <Link
+                <CopyableText
+                  text={vm.allocatedNode}
+                  startChars={8}
+                  endChars={8}
+                  size="sm"
                   href={`/nodes?view=${vm.allocatedNode}`}
-                  className="font-mono text-xs text-primary-300 hover:underline"
-                >
-                  {truncateHash(vm.allocatedNode)}
-                </Link>
+                  className="text-primary-400"
+                />
               ) : (
                 <span className="text-xs text-muted-foreground">
                   None
@@ -196,13 +196,15 @@ function IssuesVmDetailPanel({ vm, onClose }: IssuesVmDetailPanelProps) {
               {vm.observedNodes.length > 0 ? (
                 <span className="space-y-0.5">
                   {vm.observedNodes.map((n) => (
-                    <Link
+                    <CopyableText
                       key={n}
+                      text={n}
+                      startChars={8}
+                      endChars={8}
+                      size="sm"
                       href={`/nodes?view=${n}`}
-                      className="block font-mono text-xs text-primary-300 hover:underline text-right"
-                    >
-                      {truncateHash(n)}
-                    </Link>
+                      className="text-primary-400"
+                    />
                   ))}
                 </span>
               ) : (
