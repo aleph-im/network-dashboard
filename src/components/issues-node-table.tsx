@@ -252,7 +252,6 @@ function IssuesNodeDetailPanel({
                 endChars={8}
                 size="sm"
                 href={`/vms?view=${vm.hash}`}
-                className="text-primary-400"
               />
               <Badge fill="outline"
                 variant={VM_STATUS_VARIANT[vm.status]}

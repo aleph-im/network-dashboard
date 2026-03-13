@@ -136,7 +136,6 @@ export function VMDetailView({ hash }: VMDetailViewProps) {
                 endChars={8}
                 size="sm"
                 href={`/wallet?address=${messageInfo.get(vm.hash)!.sender}`}
-                className="text-primary-400"
               />
             </MetaItem>
           )}
@@ -175,7 +174,6 @@ export function VMDetailView({ hash }: VMDetailViewProps) {
               endChars={8}
               size="sm"
               href={`/nodes?view=${vm.allocatedNode}`}
-              className="text-primary-400"
             />
             {allocatedNodeData?.name && (
               <span className="text-sm text-muted-foreground">
@@ -205,7 +203,6 @@ export function VMDetailView({ hash }: VMDetailViewProps) {
                   endChars={8}
                   size="sm"
                   href={`/nodes?view=${nodeHash}`}
-                  className="text-primary-400"
                 />
               </li>
             ))}
@@ -295,7 +292,6 @@ export function VMDetailView({ hash }: VMDetailViewProps) {
                         endChars={8}
                         size="sm"
                         href={`/nodes?view=${row.nodeHash}`}
-                        className="text-primary-400"
                       />
                     </td>
                     <td className="py-1.5 pr-4 text-muted-foreground">

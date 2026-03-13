@@ -181,7 +181,6 @@ function IssuesVmDetailPanel({ vm, onClose }: IssuesVmDetailPanelProps) {
                   endChars={8}
                   size="sm"
                   href={`/nodes?view=${vm.allocatedNode}`}
-                  className="text-primary-400"
                 />
               ) : (
                 <span className="text-xs text-muted-foreground">
@@ -203,7 +202,6 @@ function IssuesVmDetailPanel({ vm, onClose }: IssuesVmDetailPanelProps) {
                       endChars={8}
                       size="sm"
                       href={`/nodes?view=${n}`}
-                      className="text-primary-400"
                     />
                   ))}
                 </span>

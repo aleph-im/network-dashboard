@@ -60,7 +60,7 @@ export function VMDetailPanel({ hash, onClose }: VMDetailPanelProps) {
               startChars={10}
               endChars={10}
               size="sm"
-              {...(messageInfo?.get(vm.hash)?.explorerUrl ? { href: messageInfo.get(vm.hash)!.explorerUrl, className: "text-primary-400" } : {})}
+              {...(messageInfo?.get(vm.hash)?.explorerUrl ? { href: messageInfo.get(vm.hash)!.explorerUrl } : {})}
             />
           </dd>
         </div>
@@ -104,7 +104,6 @@ export function VMDetailPanel({ hash, onClose }: VMDetailPanelProps) {
             endChars={8}
             size="sm"
             href={`/wallet?address=${messageInfo.get(vm.hash)!.sender}`}
-            className="text-primary-400"
           />
         </div>
       )}
@@ -121,7 +120,6 @@ export function VMDetailPanel({ hash, onClose }: VMDetailPanelProps) {
               endChars={8}
               size="sm"
               href={`/nodes?view=${vm.allocatedNode}`}
-              className="text-primary-400"
             />
             {allocatedNodeData?.name && (
               <span className="truncate text-xs text-muted-foreground">
@@ -148,7 +146,6 @@ export function VMDetailPanel({ hash, onClose }: VMDetailPanelProps) {
                   endChars={8}
                   size="sm"
                   href={`/nodes?view=${nodeHash}`}
-                  className="text-primary-400"
                 />
               </li>
             ))}

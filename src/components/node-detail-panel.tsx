@@ -119,7 +119,6 @@ export function NodeDetailPanel({ hash, onClose }: NodeDetailPanelProps) {
             endChars={8}
             size="sm"
             href={`/wallet?address=${node.owner}`}
-            className="text-primary-400"
           />
         </div>
       )}
@@ -212,7 +211,6 @@ export function NodeDetailPanel({ hash, onClose }: NodeDetailPanelProps) {
                   endChars={8}
                   size="sm"
                   href={`/vms?view=${vm.hash}`}
-                  className="text-primary-400"
                 />
                 <Badge fill="outline" variant={VM_STATUS_VARIANT[vm.status]} size="sm">
                   {vm.status}

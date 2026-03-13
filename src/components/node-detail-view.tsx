@@ -142,7 +142,6 @@ export function NodeDetailView({ hash }: NodeDetailViewProps) {
                 endChars={8}
                 size="sm"
                 href={`/wallet?address=${node.owner}`}
-                className="text-primary-400"
               />
             </MetaItem>
           )}
@@ -268,7 +267,6 @@ export function NodeDetailView({ hash }: NodeDetailViewProps) {
                   endChars={8}
                   size="sm"
                   href={`/vms?view=${vm.hash}`}
-                  className="text-primary-400"
                 />
                 <Badge fill="outline"
                   variant={VM_STATUS_VARIANT[vm.status]}
@@ -317,7 +315,6 @@ export function NodeDetailView({ hash }: NodeDetailViewProps) {
                         endChars={8}
                         size="sm"
                         href={`/vms?view=${row.vmHash}`}
-                        className="text-primary-400"
                       />
                     </td>
                     <td className="py-1.5 pr-4 text-muted-foreground">

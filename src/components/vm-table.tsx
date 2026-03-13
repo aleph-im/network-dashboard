@@ -115,7 +115,7 @@ function buildColumns(
         startChars={8}
         endChars={8}
         size="sm"
-        {...(msgInfo?.get(r.hash)?.explorerUrl ? { href: msgInfo.get(r.hash)!.explorerUrl, className: "text-primary-400" } : {})}
+        {...(msgInfo?.get(r.hash)?.explorerUrl ? { href: msgInfo.get(r.hash)!.explorerUrl } : {})}
       />
     ),
     sortable: true,

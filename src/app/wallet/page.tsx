@@ -101,7 +101,6 @@ function NodesSection({ nodes }: { nodes: Node[] }) {
                     endChars={8}
                     size="sm"
                     href={`/nodes?view=${node.hash}`}
-                    className="text-primary-400"
                   />
                 </td>
                 <td className="py-2 pr-4 text-xs">
@@ -167,7 +166,7 @@ function VMsSection({ vms }: { vms: WalletVM[] }) {
                     startChars={8}
                     endChars={8}
                     size="sm"
-                    {...(vm.schedulerStatus ? { href: `/vms?view=${vm.hash}`, className: "text-primary-400" } : {})}
+                    {...(vm.schedulerStatus ? { href: `/vms?view=${vm.hash}` } : {})}
                   />
                 </td>
                 <td className="py-2 pr-4 text-xs">
@@ -298,7 +297,6 @@ function ActivitySection({
                         endChars={8}
                         size="sm"
                         href={item.explorerUrl}
-                        className="text-primary-400"
                       />
                     </td>
                     <td className="py-2">
@@ -394,7 +392,6 @@ function PermissionsCard({
                   endChars={8}
                   size="sm"
                   href={`/wallet?address=${addr}`}
-                  className="text-primary-400"
                 />
                 {scopes[0]?.alias && (
                   <span className="text-xs text-muted-foreground">
@@ -479,7 +476,6 @@ function WalletContent() {
             endChars={8}
             size="sm"
             href={explorerWalletUrl(address)}
-            className="text-primary-400"
           />
         </div>
       </div>
