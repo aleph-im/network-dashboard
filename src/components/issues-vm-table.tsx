@@ -39,10 +39,9 @@ const columns: Column<IssueVM>[] = [
     accessor: (r) => (
       <CopyableText
         text={r.hash}
-        startChars={10}
-        endChars={4}
+        startChars={8}
+        endChars={8}
         size="sm"
-        className="text-warning-400"
       />
     ),
     sortable: true,
@@ -76,9 +75,8 @@ const columns: Column<IssueVM>[] = [
         <CopyableText
           text={r.allocatedNode}
           startChars={8}
-          endChars={4}
+          endChars={8}
           size="sm"
-          className="text-muted-foreground"
         />
       ) : (
         <span className="text-xs text-muted-foreground">{"\u2014"}</span>

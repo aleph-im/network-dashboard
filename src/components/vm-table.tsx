@@ -90,14 +90,6 @@ const PAYMENT_OPTIONS: {
 
 const VM_BASE_SEARCH_FIELDS = (v: VM) => [v.hash, v.allocatedNode];
 
-function isDiscrepancy(vm: VM): boolean {
-  return (
-    vm.status === "orphaned" ||
-    vm.status === "missing" ||
-    vm.status === "unschedulable"
-  );
-}
-
 function buildColumns(
   msgInfo: Map<string, AlephMessageInfo> | undefined,
 ): Column<VM>[] {
@@ -120,11 +112,10 @@ function buildColumns(
     accessor: (r) => (
       <CopyableText
         text={r.hash}
-        startChars={10}
-        endChars={4}
+        startChars={8}
+        endChars={8}
         size="sm"
-        className={isDiscrepancy(r) ? "text-warning-400" : ""}
-        {...(msgInfo?.get(r.hash)?.explorerUrl ? { href: msgInfo.get(r.hash)!.explorerUrl } : {})}
+        {...(msgInfo?.get(r.hash)?.explorerUrl ? { href: msgInfo.get(r.hash)!.explorerUrl, className: "text-primary-400" } : {})}
       />
     ),
     sortable: true,
@@ -172,9 +163,8 @@ function buildColumns(
         <CopyableText
           text={r.allocatedNode}
           startChars={8}
-          endChars={4}
+          endChars={8}
           size="sm"
-          className="text-muted-foreground"
         />
       ) : (
         <span className="text-xs text-muted-foreground">None</span>

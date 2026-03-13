@@ -52,9 +52,9 @@ const columns: Column<IssueNode>[] = [
           <CopyableText
             text={r.node.hash}
             startChars={8}
-            endChars={4}
+            endChars={8}
             size="sm"
-            className={r.node.name ? "ml-1.5 text-muted-foreground" : ""}
+            {...(r.node.name ? { className: "ml-1.5" } : {})}
           />
         </span>
       </span>
@@ -177,8 +177,8 @@ function IssuesNodeDetailPanel({
           <dd className="min-w-0 truncate font-mono text-xs">
             <CopyableText
               text={node.hash}
-              startChars={16}
-              endChars={6}
+              startChars={10}
+              endChars={10}
               size="sm"
             />
           </dd>

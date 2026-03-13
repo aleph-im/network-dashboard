@@ -488,10 +488,11 @@ function WalletContent() {
         <div className="mt-3 flex items-center gap-3">
           <CopyableText
             text={address}
-            startChars={10}
-            endChars={6}
+            startChars={8}
+            endChars={8}
             size="sm"
             href={explorerWalletUrl(address)}
+            className="text-primary-400"
           />
         </div>
       </div>

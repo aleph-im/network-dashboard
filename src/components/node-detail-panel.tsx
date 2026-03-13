@@ -62,7 +62,7 @@ export function NodeDetailPanel({ hash, onClose }: NodeDetailPanelProps) {
         <div className="flex items-center justify-between">
           <dt className="text-muted-foreground">Full Hash</dt>
           <dd className="min-w-0 truncate font-mono text-xs">
-            <CopyableText text={node.hash} startChars={16} endChars={6} size="sm" />
+            <CopyableText text={node.hash} startChars={10} endChars={10} size="sm" />
           </dd>
         </div>
         {node.address && (

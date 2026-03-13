@@ -72,7 +72,7 @@ const columns: Column<Node>[] = [
   },
   {
     header: "Hash",
-    accessor: (r) => <CopyableText text={r.hash} startChars={10} endChars={4} size="sm" />,
+    accessor: (r) => <CopyableText text={r.hash} startChars={8} endChars={8} size="sm" />,
     sortable: true,
     sortValue: (r) => r.hash,
   },

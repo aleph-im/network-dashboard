@@ -59,10 +59,10 @@ export function VMDetailPanel({ hash, onClose }: VMDetailPanelProps) {
           <dd className="min-w-0 truncate font-mono text-xs">
             <CopyableText
               text={vm.hash}
-              startChars={16}
-              endChars={6}
+              startChars={10}
+              endChars={10}
               size="sm"
-              {...(messageInfo?.get(vm.hash)?.explorerUrl ? { href: messageInfo.get(vm.hash)!.explorerUrl } : {})}
+              {...(messageInfo?.get(vm.hash)?.explorerUrl ? { href: messageInfo.get(vm.hash)!.explorerUrl, className: "text-primary-400" } : {})}
             />
           </dd>
         </div>
