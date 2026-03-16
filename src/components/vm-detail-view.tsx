@@ -1,6 +1,6 @@
 "use client";
 
-import Link from "next/link";
+import { useRouter } from "next/navigation";
 import { ShieldCheck } from "@phosphor-icons/react";
 import { Card } from "@aleph-front/ds/card";
 import { Badge } from "@aleph-front/ds/badge";
@@ -41,6 +41,7 @@ function MetaItem({
 }
 
 export function VMDetailView({ hash }: VMDetailViewProps) {
+  const router = useRouter();
   const { data: vm, isLoading, error } = useVM(hash);
   const { data: messageInfo } = useVMMessageInfo([hash]);
   const { data: allocatedNodeData } = useNode(vm?.allocatedNode ?? "");
@@ -58,13 +59,13 @@ export function VMDetailView({ hash }: VMDetailViewProps) {
   if (!vm) {
     return (
       <div className="space-y-4">
-        <Link
-          href="/vms"
+        <button
+          onClick={() => router.back()}
           className="text-sm text-muted-foreground hover:text-foreground"
         >
           ← Virtual Machines
-        </Link>
-        <Card padding="md" variant="ghost" className="border border-white/[0.06] bg-white/[0.03]">
+        </button>
+        <Card padding="md" variant="ghost" className="border border-foreground/[0.06] bg-foreground/[0.03]">
           <h3 className="text-sm font-semibold">VM not found</h3>
           <p className="mt-1 text-sm text-muted-foreground">
             {error
@@ -80,12 +81,12 @@ export function VMDetailView({ hash }: VMDetailViewProps) {
     <div className="space-y-6">
       {/* Header */}
       <div className="flex items-center gap-4">
-        <Link
-          href="/vms"
+        <button
+          onClick={() => router.back()}
           className="text-sm text-muted-foreground hover:text-foreground"
         >
           ← Virtual Machines
-        </Link>
+        </button>
       </div>
       <div className="flex flex-wrap items-center gap-3">
         <CopyableText text={hash} startChars={8} endChars={8} size="md" />

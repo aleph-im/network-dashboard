@@ -23,7 +23,7 @@ export function TopNodesCard() {
 
   if (isLoading) {
     return (
-      <Card padding="lg" className="card-glow flex-1">
+      <Card padding="lg" className="flex-1">
         <CardHeader
           title="Top Nodes"
           info="Nodes ranked by number of VMs currently assigned"
@@ -44,7 +44,7 @@ export function TopNodesCard() {
 
   if (topNodes.length === 0) {
     return (
-      <Card padding="lg" className="card-glow flex-1">
+      <Card padding="lg" className="flex-1">
         <CardHeader
           title="Top Nodes"
           info="Nodes ranked by number of VMs currently assigned"
@@ -59,7 +59,7 @@ export function TopNodesCard() {
   const maxCount = topNodes[0]?.vmCount ?? 1;
 
   return (
-    <Card padding="lg" className="card-glow flex-1">
+    <Card padding="lg" className="flex-1">
       <CardHeader
         title="Top Nodes"
         info="Nodes ranked by number of VMs currently assigned"
@@ -72,7 +72,7 @@ export function TopNodesCard() {
             <li key={node.hash} className="contents">
               <Link
                 href={`/nodes?selected=${node.hash}`}
-                className="col-span-full grid min-h-12 grid-cols-subgrid items-center rounded-md border-b border-black/[0.06] px-2 py-1.5 transition-colors last:border-b-0 hover:bg-muted dark:border-white/[0.06]"
+                className="col-span-full grid min-h-12 grid-cols-subgrid items-center rounded-md border-b border-foreground/[0.06] px-2 py-1.5 transition-colors last:border-b-0 hover:bg-muted"
                 style={{
                   transitionDuration: "var(--duration-fast)",
                 }}

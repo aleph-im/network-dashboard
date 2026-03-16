@@ -1,12 +1,10 @@
 import { type ReactNode } from "react";
+import { Tabs, TabsList, TabsTrigger } from "@aleph-front/ds/tabs";
 import { Button } from "@aleph-front/ds/button";
 import { Input } from "@aleph-front/ds/input";
-import {
-  Tooltip,
-  TooltipTrigger,
-  TooltipContent,
-  TooltipProvider,
-} from "@aleph-front/ds/tooltip";
+
+
+const ALL_SENTINEL = "__all__";
 
 type StatusPill<S> = {
   value: S;
@@ -19,14 +17,18 @@ type FilterToolbarProps<S> = {
   activeStatus: S;
   onStatusChange: (status: S) => void;
   formatCount: (status: S) => string;
-  filtersOpen: boolean;
-  onFiltersToggle: () => void;
-  activeFilterCount: number;
+  filtersOpen?: boolean;
+  onFiltersToggle?: () => void;
+  activeFilterCount?: number;
   searchValue: string;
   onSearchChange: (value: string) => void;
   searchPlaceholder: string;
   leading?: ReactNode;
 };
+
+function toTabValue<S>(value: S): string {
+  return value == null ? ALL_SENTINEL : String(value);
+}
 
 export function FilterToolbar<S>({
   statuses,
@@ -41,26 +43,12 @@ export function FilterToolbar<S>({
   searchPlaceholder,
   leading,
 }: FilterToolbarProps<S>): ReactNode {
-  const pillButton = (s: StatusPill<S>, i: number) => (
-    <button
-      key={i}
-      type="button"
-      onClick={() => onStatusChange(s.value)}
-      className={`rounded-full px-3.5 py-1.5 text-sm font-bold transition-colors ${
-        activeStatus === s.value
-          ? "bg-primary-600/15 text-primary-400"
-          : "text-muted-foreground hover:text-foreground hover:bg-muted"
-      }`}
-    >
-      {s.label}{" "}
-      <span className="tabular-nums opacity-60">
-        ({formatCount(s.value)})
-      </span>
-    </button>
-  );
+  function handleTabChange(tabValue: string) {
+    const match = statuses.find((s) => toTabValue(s.value) === tabValue);
+    if (match) onStatusChange(match.value);
+  }
 
   return (
-    <TooltipProvider>
     <div className="mb-4 flex flex-wrap items-center gap-2">
       {leading && (
         <>
@@ -68,42 +56,48 @@ export function FilterToolbar<S>({
           <div className="mx-2 h-6 w-px bg-white/[0.08]" />
         </>
       )}
-      {statuses.map((s, i) =>
-        s.tooltip ? (
-          <Tooltip key={i}>
-            <TooltipTrigger asChild>
-              {pillButton(s, i)}
-            </TooltipTrigger>
-            <TooltipContent>{s.tooltip}</TooltipContent>
-          </Tooltip>
-        ) : (
-          pillButton(s, i)
-        ),
-      )}
-      <Button
-        variant="text"
-        size="sm"
-        onClick={onFiltersToggle}
-        className="relative"
-        aria-label="Toggle filters"
-      >
-        <svg
-          className="size-4"
-          fill="none"
-          viewBox="0 0 24 24"
-          stroke="currentColor"
-          strokeWidth={2}
+      <Tabs value={toTabValue(activeStatus)} onValueChange={handleTabChange} className="min-w-0 flex-1">
+        <TabsList variant="underline" size="sm" overflow="collapse">
+          {statuses.map((s, i) => (
+            <TabsTrigger
+              key={i}
+              value={toTabValue(s.value)}
+              title={s.tooltip}
+            >
+              {s.label}{" "}
+              <span className="tabular-nums opacity-60">
+                ({formatCount(s.value)})
+              </span>
+            </TabsTrigger>
+          ))}
+        </TabsList>
+      </Tabs>
+      {onFiltersToggle && (
+        <Button
+          variant="text"
+          size="xs"
+          onClick={onFiltersToggle}
+          className="relative"
+          aria-label="Toggle filters"
         >
-          <path
-            strokeLinecap="round"
-            strokeLinejoin="round"
-            d="M3 4h18M6 8h12M9 12h6M11 16h2"
-          />
-        </svg>
-        {activeFilterCount > 0 && !filtersOpen && (
-          <span className="absolute -right-1 -top-1 h-2.5 w-2.5 rounded-full bg-primary-500" />
-        )}
-      </Button>
+          <svg
+            className="size-4"
+            fill="none"
+            viewBox="0 0 24 24"
+            stroke="currentColor"
+            strokeWidth={2}
+          >
+            <path
+              strokeLinecap="round"
+              strokeLinejoin="round"
+              d="M3 4h18M6 8h12M9 12h6M11 16h2"
+            />
+          </svg>
+          {activeFilterCount != null && activeFilterCount > 0 && !filtersOpen && (
+            <span className="absolute -right-1 -top-1 h-2.5 w-2.5 rounded-full bg-primary-500" />
+          )}
+        </Button>
+      )}
       <div className="relative ml-auto w-64">
         <svg
           className="pointer-events-none absolute left-5 top-1/2 h-4 w-4 -translate-y-1/2 text-muted-foreground"
@@ -119,7 +113,7 @@ export function FilterToolbar<S>({
           <path d="m21 21-4.3-4.3" />
         </svg>
         <Input
-          size="md"
+          size="sm"
           value={searchValue}
           onChange={(e) => onSearchChange(e.target.value)}
           placeholder={searchPlaceholder}
@@ -144,6 +138,5 @@ export function FilterToolbar<S>({
         )}
       </div>
     </div>
-    </TooltipProvider>
   );
 }

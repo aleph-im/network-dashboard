@@ -90,10 +90,13 @@ const PAYMENT_OPTIONS: {
 
 const VM_BASE_SEARCH_FIELDS = (v: VM) => [v.hash, v.allocatedNode];
 
+const COMPACT_HIDDEN_HEADERS = new Set(["Type", "Node"]);
+
 function buildColumns(
   msgInfo: Map<string, AlephMessageInfo> | undefined,
+  compact?: boolean,
 ): Column<VM>[] {
-  return [
+  const all: Column<VM>[] = [
   {
     header: "Status",
     accessor: (r) => (
@@ -197,6 +200,7 @@ function buildColumns(
     align: "right",
   },
   ];
+  return compact ? all.filter((c) => !COMPACT_HIDDEN_HEADERS.has(c.header)) : all;
 }
 
 type VMTableProps = {
@@ -204,6 +208,8 @@ type VMTableProps = {
   initialStatus?: VmStatus;
   initialQuery?: string;
   selectedKey?: string;
+  compact?: boolean;
+  sidePanel?: React.ReactNode;
 };
 
 export function VMTable({
@@ -211,6 +217,8 @@ export function VMTable({
   initialStatus,
   initialQuery,
   selectedKey,
+  compact,
+  sidePanel,
 }: VMTableProps) {
   const [, startTransition] = useTransition();
 
@@ -583,24 +591,29 @@ export function VMTable({
         </div>
       </FilterPanel>
 
-      <Table
-        columns={buildColumns(messageInfo)}
-        data={pageItems}
-        keyExtractor={(r) => r.hash}
-        onRowClick={(r) => onSelectVM(r.hash)}
-        activeKey={selectedKey}
-      />
+      <div className="flex gap-6">
+        <div className="flex-1 min-w-0">
+          <Table
+            columns={buildColumns(messageInfo, compact)}
+            data={pageItems}
+            keyExtractor={(r) => r.hash}
+            onRowClick={(r) => onSelectVM(r.hash)}
+            activeKey={selectedKey}
+          />
 
-      <TablePagination
-        page={page}
-        totalPages={totalPages}
-        pageSize={pageSize}
-        startItem={startItem}
-        endItem={endItem}
-        totalItems={totalItems}
-        onPageChange={setPage}
-        onPageSizeChange={setPageSize}
-      />
+          <TablePagination
+            page={page}
+            totalPages={totalPages}
+            pageSize={pageSize}
+            startItem={startItem}
+            endItem={endItem}
+            totalItems={totalItems}
+            onPageChange={setPage}
+            onPageSizeChange={setPageSize}
+          />
+        </div>
+        {sidePanel}
+      </div>
     </TooltipProvider>
   );
 }

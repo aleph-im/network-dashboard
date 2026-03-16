@@ -18,6 +18,34 @@ Each entry includes:
 
 ---
 
+## Decision #51 - 2026-03-16
+**Context:** Glassmorphism borders and backgrounds used hardcoded `white` (`border-white/[0.06]`, `bg-white/[0.03]`), which was invisible in light mode.
+**Decision:** Replace all `white/[0.06]` and `white/[0.03]` with `foreground/[0.06]` and `foreground/[0.03]` across all glassmorphism components. Use `bg-background` for the content area and `bg-surface` (dark) / `bg-muted/40` (light) for sidebar/header chrome.
+**Rationale:** `--foreground` is dark in light mode and light in dark mode, so `foreground/[0.06]` always contrasts with its background. Eliminates the need for `dark:` variant overrides. Content area changed from `bg-surface` to `bg-background` so DS Card (`bg-surface`) is visually distinct from the page background. Filter panel switched from custom glassmorphism to DS `Card` component for consistency.
+**Alternatives considered:** `dark:` variants on each instance (more verbose, same result), semantic token like `--glass-border` (over-engineering for one pattern)
+
+## Decision #50 - 2026-03-16
+**Context:** Issues page had a filter toggle button that did nothing — `onFiltersToggle={() => {}}` was passed as a no-op.
+**Decision:** Make `onFiltersToggle`, `filtersOpen`, and `activeFilterCount` optional in `FilterToolbar`. Only render the filter button when `onFiltersToggle` is provided. Issues tables omit these props.
+**Rationale:** The Issues page has no advanced filters. Showing a clickable button that does nothing misleads users. Making the props optional is cleaner than passing no-op handlers.
+
+## Decision #49 - 2026-03-16
+**Context:** Filter toolbar status tabs used DS `Tabs` pill variant, which had a visual "tail" artifact on the sliding indicator and felt heavy for a filter bar.
+**Decision:** Switch to `variant="underline" size="sm"` for status filter tabs. Keep `variant="pill" size="sm"` for the Issues page perspective toggle (VMs/Nodes). Constrain Tabs container with `flex-1 min-w-0` so overflow kicks in at ~5 visible items. Downsize search input to `size="sm"`.
+**Rationale:** Underline variant is lighter and more appropriate for filter navigation — just text + thin underline, no container chrome. Pill variant suits the perspective toggle because it's a binary choice (2 items), not a filter bar. The `flex-1 min-w-0` lets the overflow mechanism naturally limit visible tabs based on available space rather than a brittle pixel breakpoint.
+**Alternatives considered:** Pill `size="sm"` (still had indicator tail bug), adding `xs` size to DS (not supported), count-based `maxVisible` prop (DS overflow is width-based, not count-based)
+
+## Decision #48 - 2026-03-16
+**Context:** Filter toolbar (status pills, search, filter toggle) got squeezed when the detail panel opened on list pages, especially the Issues page with its perspective toggle adding extra items.
+**Decision:** Restructure layout so FilterToolbar always renders above the flex container that holds Table + DetailPanel. Table components (NodeTable, VMTable) accept a `sidePanel` prop. Replace custom status pill buttons with DS `Tabs` pill variant (`overflow="collapse"`).
+**Rationale:** The toolbar was inside the flex column that the detail panel squeezed. Moving it above means it always gets full width. DS Tabs with `overflow="collapse"` automatically collapses excess tabs into a `⋯` dropdown when space is tight (useful for the VMs page with 7 status options). Native `title` attribute used for tooltips instead of DS `Tooltip` wrapping (Radix Tooltip event handlers can interfere with Radix Tabs activation).
+**Alternatives considered:** Flex-wrap with shrinking search input (patched symptom, didn't fix root cause), horizontal scroll on pills (hides items), truncated tab labels (destroys meaning per NNGroup), collapsing pills into a dropdown (overkill for 4-7 items)
+
+## Decision #47 - 2026-03-16
+**Context:** Status filter pills were custom-styled `<button>` elements with hand-rolled active/inactive styling, no overflow handling.
+**Decision:** Replace with DS `Tabs` component (`variant="pill"`, `overflow="collapse"`). Use a `toTabValue()` helper to map the generic status type (which includes `undefined` for "All") to string values for Radix Tabs.
+**Rationale:** Eliminates ~20 lines of custom pill styling. DS Tabs provides sliding indicator animation, keyboard navigation, and automatic overflow collapse into a dropdown. Consistent with the existing VMs/Nodes perspective toggle on the Issues page which already uses DS Tabs pill variant.
+
 ## Decision #46 - 2026-03-13
 **Context:** Status filter pills (Unscheduled vs Unschedulable, Has Orphaned vs Has Missing) use API terminology that isn't immediately clear to operators.
 **Decision:** Add hover tooltips to all status pills across all pages (VMs, Nodes, Issues VM, Issues Node) explaining what each status means. Keep the API label names unchanged.

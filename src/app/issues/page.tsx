@@ -42,7 +42,7 @@ function IssuesContent() {
 
   const toggle = (
     <Tabs value={perspective} onValueChange={handlePerspectiveChange}>
-      <TabsList variant="pill">
+      <TabsList variant="pill" size="sm">
         <TabsTrigger value="vms">VMs</TabsTrigger>
         <TabsTrigger value="nodes">Nodes</TabsTrigger>
       </TabsList>

@@ -40,6 +40,8 @@ const SEARCH_FIELDS = (n: IssueNode) => [
   n.node.owner,
 ];
 
+const COMPACT_HIDDEN_HEADERS = new Set(["Total VMs", "Last Updated"]);
+
 const columns: Column<IssueNode>[] = [
   {
     header: "Status",
@@ -146,7 +148,7 @@ function IssuesNodeDetailPanel({
     <Card
       padding="md"
       variant="ghost"
-      className="w-full rounded-xl border border-white/[0.06] bg-white/[0.03] lg:sticky lg:top-0 lg:w-96"
+      className="w-full rounded-xl border border-foreground/[0.06] bg-foreground/[0.03] lg:sticky lg:top-0 lg:w-96"
     >
       <div className="mb-4 flex items-start justify-between">
         <div className="flex items-center gap-2">
@@ -386,26 +388,23 @@ export function IssuesNodeTable({
 
   return (
     <TooltipProvider>
+      <FilterToolbar
+        leading={leading}
+        statuses={STATUS_PILLS}
+        activeStatus={statusFilter}
+        onStatusChange={(s) =>
+          startTransition(() => setStatusFilter(s))
+        }
+        formatCount={formatCount}
+        searchValue={searchInput}
+        onSearchChange={setSearchInput}
+        searchPlaceholder="Search node hash, name..."
+      />
+
       <div className="flex gap-6">
         <div className="flex-1 min-w-0">
-          <FilterToolbar
-            leading={leading}
-            statuses={STATUS_PILLS}
-            activeStatus={statusFilter}
-            onStatusChange={(s) =>
-              startTransition(() => setStatusFilter(s))
-            }
-            formatCount={formatCount}
-            filtersOpen={false}
-            onFiltersToggle={() => {}}
-            activeFilterCount={0}
-            searchValue={searchInput}
-            onSearchChange={setSearchInput}
-            searchPlaceholder="Search node hash, name..."
-          />
-
           <Table
-            columns={columns}
+            columns={selectedIssueNode ? columns.filter((c) => !COMPACT_HIDDEN_HEADERS.has(c.header)) : columns}
             data={pageItems}
             keyExtractor={(r) => r.node.hash}
             onRowClick={(r) => setSelectedNode(r.node.hash)}

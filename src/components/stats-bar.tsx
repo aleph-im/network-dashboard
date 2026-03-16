@@ -97,7 +97,7 @@ function StatCard({
 
   return (
     <div
-      className="stat-card flex h-full flex-col border border-white/[0.06] bg-white/[0.03] p-6"
+      className="stat-card flex h-full flex-col border border-foreground/[0.06] bg-foreground/[0.03] p-6"
       style={{
         "--stat-tint": tint ?? "transparent",
       } as React.CSSProperties}

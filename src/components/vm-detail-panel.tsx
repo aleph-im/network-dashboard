@@ -24,7 +24,7 @@ export function VMDetailPanel({ hash, onClose }: VMDetailPanelProps) {
 
   if (isLoading) {
     return (
-      <Card padding="md" variant="ghost" className="w-full lg:w-96 space-y-3 rounded-xl border border-white/[0.06] bg-white/[0.03]">
+      <Card padding="md" variant="ghost" className="w-full lg:w-96 space-y-3 rounded-xl border border-foreground/[0.06] bg-foreground/[0.03]">
         <Skeleton className="h-6 w-48" />
         <Skeleton className="h-4 w-full" />
         <Skeleton className="h-4 w-full" />
@@ -36,7 +36,7 @@ export function VMDetailPanel({ hash, onClose }: VMDetailPanelProps) {
   if (!vm) return null;
 
   return (
-    <Card padding="md" variant="ghost" className="w-full rounded-xl border border-white/[0.06] bg-white/[0.03] lg:sticky lg:top-0 lg:w-96">
+    <Card padding="md" variant="ghost" className="w-full rounded-xl border border-foreground/[0.06] bg-foreground/[0.03] lg:sticky lg:top-0 lg:w-96">
       <div className="mb-4 flex items-start justify-between">
         <CopyableText text={vm.hash} startChars={8} endChars={8} size="sm" />
         <button

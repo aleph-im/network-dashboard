@@ -53,7 +53,7 @@ function SummaryStats({
       ].map((stat) => (
         <div
           key={stat.label}
-          className="rounded-lg border border-white/[0.06] bg-white/[0.03] px-4 py-3"
+          className="rounded-lg border border-foreground/[0.06] bg-foreground/[0.03] px-4 py-3"
         >
           <p className="text-2xl font-bold tabular-nums">
             {stat.value}

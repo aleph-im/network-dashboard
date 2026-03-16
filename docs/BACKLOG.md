@@ -20,11 +20,6 @@ Ideas and scope creep captured for later consideration.
 **Description:** Expand the wallet view beyond ops/debugging into a richer identity hub: wallet balance, ALEPH staking, transaction history, etc. Part of a broader evolution from an ops dashboard to a User Command Center. Build on top of the Phase 1 ops-focused wallet view.
 **Priority:** Low
 
-### 2026-03-11 - Issues page filter icon review
-**Source:** User feedback
-**Description:** The filter icon (advanced filters toggle) on the Issues page is currently a no-op (`filtersOpen={false}`, `onFiltersToggle={() => {}}`). Decide whether advanced filters are useful for the Issues tables (e.g. filter by node, resource range) and either implement them or remove the icon entirely.
-**Priority:** Low
-
 ### 2026-03-06 - Remove tooltip from hash in Latest VMs card
 **Source:** User request
 **Description:** On the overview page's Latest VMs card, the hash column shows a tooltip on hover (from `CopyableText`). Remove the tooltip — the hash is already visible and the tooltip adds noise in this compact card context.
@@ -133,5 +128,6 @@ Ideas and scope creep captured for later consideration.
 - ✅ 2026-03-11 - Issues page — dedicated `/issues` page with VM/Node perspectives for scheduling discrepancies, sidebar categories with issue count badge
 - ✅ 2026-03-11 - Wallet view page — `/wallet?address=0x...` with owned nodes, VMs with scheduler status, activity timeline, granted/received permissions, clickable wallet addresses in node detail views
 - ✅ 2026-03-13 - Update pnpm/action-setup to Node.js 24 — updated to a version compatible with Node.js 24
+- ✅ 2026-03-16 - Issues page filter icon review — removed no-op filter button, made FilterToolbar filter toggle optional
 
 </details>

@@ -175,6 +175,8 @@ type SortConfig = {
   direction: "asc" | "desc";
 };
 
+const COMPACT_HIDDEN_HEADERS = new Set(["CPU", "GPU", "VMs"]);
+
 type NodeTableProps = {
   onSelectNode: (hash: string) => void;
   initialStatus?: NodeStatus;
@@ -182,6 +184,8 @@ type NodeTableProps = {
   initialSort?: SortConfig;
   initialQuery?: string;
   selectedKey?: string;
+  compact?: boolean;
+  sidePanel?: React.ReactNode;
 };
 
 export function NodeTable({
@@ -191,6 +195,8 @@ export function NodeTable({
   initialSort,
   initialQuery,
   selectedKey,
+  compact,
+  sidePanel,
 }: NodeTableProps) {
   const [, startTransition] = useTransition();
 
@@ -573,24 +579,29 @@ export function NodeTable({
         </div>
       </FilterPanel>
 
-      <Table
-        columns={columns}
-        data={pageItems}
-        keyExtractor={(r) => r.hash}
-        onRowClick={(r) => onSelectNode(r.hash)}
-        activeKey={selectedKey}
-      />
+      <div className="flex gap-6">
+        <div className="flex-1 min-w-0">
+          <Table
+            columns={compact ? columns.filter((c) => !COMPACT_HIDDEN_HEADERS.has(c.header)) : columns}
+            data={pageItems}
+            keyExtractor={(r) => r.hash}
+            onRowClick={(r) => onSelectNode(r.hash)}
+            activeKey={selectedKey}
+          />
 
-      <TablePagination
-        page={page}
-        totalPages={totalPages}
-        pageSize={pageSize}
-        startItem={startItem}
-        endItem={endItem}
-        totalItems={totalItems}
-        onPageChange={setPage}
-        onPageSizeChange={setPageSize}
-      />
+          <TablePagination
+            page={page}
+            totalPages={totalPages}
+            pageSize={pageSize}
+            startItem={startItem}
+            endItem={endItem}
+            totalItems={totalItems}
+            onPageChange={setPage}
+            onPageSizeChange={setPageSize}
+          />
+        </div>
+        {sidePanel}
+      </div>
     </TooltipProvider>
   );
 }

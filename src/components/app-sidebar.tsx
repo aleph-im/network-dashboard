@@ -155,7 +155,7 @@ export function AppSidebar({ open, onClose }: AppSidebarProps) {
       <aside
         className={`
           fixed inset-y-0 left-0 z-50 flex w-64 flex-col
-          bg-muted/40 dark:bg-background
+          bg-muted/40 dark:bg-surface
           transition-transform duration-200 ease-out
           ${open ? "translate-x-0" : "-translate-x-full"}
           md:static md:z-auto md:translate-x-0 md:transition-none
@@ -201,7 +201,7 @@ export function AppSidebar({ open, onClose }: AppSidebarProps) {
         </nav>
 
         {/* Bottom utility link */}
-        <div className="border-t border-white/[0.06] px-3 py-4">
+        <div className="border-t border-foreground/[0.06] px-3 py-4">
           <Link
             href="/status"
             className={`flex items-center gap-2.5 rounded-lg px-3 py-2 text-sm transition-colors ${

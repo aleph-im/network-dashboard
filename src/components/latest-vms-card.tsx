@@ -20,7 +20,7 @@ export function LatestVMsCard() {
 
   if (isLoading) {
     return (
-      <Card padding="lg" className="card-glow flex-1">
+      <Card padding="lg" className="flex-1">
         <CardHeader
           title="Latest VMs"
           info="Most recently created virtual machines across the network"
@@ -38,7 +38,7 @@ export function LatestVMsCard() {
 
   if (allVMs.length === 0) {
     return (
-      <Card padding="lg" className="card-glow flex-1">
+      <Card padding="lg" className="flex-1">
         <CardHeader
           title="Latest VMs"
           info="Most recently created virtual machines across the network"
@@ -63,7 +63,7 @@ export function LatestVMsCard() {
     .slice(0, MAX_ROWS);
 
   return (
-    <Card padding="lg" className="card-glow flex-1">
+    <Card padding="lg" className="flex-1">
       <CardHeader
         title="Latest VMs"
         info="Most recently created virtual machines across the network"
@@ -77,7 +77,7 @@ export function LatestVMsCard() {
             <li key={vm.hash} className="contents">
               <Link
                 href={`/vms?selected=${vm.hash}`}
-                className="col-span-full grid min-h-12 grid-cols-subgrid items-center rounded-md border-b border-black/[0.06] px-2 py-1.5 transition-colors last:border-b-0 hover:bg-muted dark:border-white/[0.06]"
+                className="col-span-full grid min-h-12 grid-cols-subgrid items-center rounded-md border-b border-foreground/[0.06] px-2 py-1.5 transition-colors last:border-b-0 hover:bg-muted"
                 style={{
                   transitionDuration: "var(--duration-fast)",
                 }}

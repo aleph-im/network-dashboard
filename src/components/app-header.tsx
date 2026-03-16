@@ -8,7 +8,7 @@ type AppHeaderProps = {
 
 export function AppHeader({ onMenuClick }: AppHeaderProps) {
   return (
-    <header className="flex h-14 items-center justify-between bg-muted/40 px-4 dark:bg-background md:px-6">
+    <header className="flex h-14 items-center justify-between px-4 md:px-6">
       <button
         type="button"
         onClick={onMenuClick}

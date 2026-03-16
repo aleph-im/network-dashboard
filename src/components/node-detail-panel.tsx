@@ -26,7 +26,7 @@ export function NodeDetailPanel({ hash, onClose }: NodeDetailPanelProps) {
 
   if (isLoading) {
     return (
-      <Card padding="md" variant="ghost" className="w-full lg:w-96 space-y-3 rounded-xl border border-white/[0.06] bg-white/[0.03]">
+      <Card padding="md" variant="ghost" className="w-full lg:w-96 space-y-3 rounded-xl border border-foreground/[0.06] bg-foreground/[0.03]">
         <Skeleton className="h-6 w-48" />
         <Skeleton className="h-4 w-full" />
         <Skeleton className="h-4 w-full" />
@@ -38,7 +38,7 @@ export function NodeDetailPanel({ hash, onClose }: NodeDetailPanelProps) {
   if (!node) return null;
 
   return (
-    <Card padding="md" variant="ghost" className="w-full rounded-xl border border-white/[0.06] bg-white/[0.03] lg:sticky lg:top-0 lg:w-96">
+    <Card padding="md" variant="ghost" className="w-full rounded-xl border border-foreground/[0.06] bg-foreground/[0.03] lg:sticky lg:top-0 lg:w-96">
       <div className="mb-4 flex items-start justify-between">
         <div className="flex items-center gap-2">
           <StatusDot status={nodeStatusToDot(node.status)} />
