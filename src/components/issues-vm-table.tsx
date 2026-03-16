@@ -33,6 +33,8 @@ const SEARCH_FIELDS = (v: IssueVM) => [
   ...v.observedNodes,
 ];
 
+const COMPACT_HIDDEN_HEADERS = new Set(["Scheduled On", "Observed On"]);
+
 const columns: Column<IssueVM>[] = [
   {
     header: "Status",
@@ -383,7 +385,7 @@ export function IssuesVMTable({
           />
 
           <Table
-            columns={columns}
+            columns={selectedIssueVM ? columns.filter((c) => !COMPACT_HIDDEN_HEADERS.has(c.header)) : columns}
             data={pageItems}
             keyExtractor={(r) => r.hash}
             onRowClick={(r) => setSelectedVM(r.hash)}

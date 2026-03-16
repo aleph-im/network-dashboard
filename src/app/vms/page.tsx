@@ -44,6 +44,7 @@ function VMsContent() {
           {...(initialStatus ? { initialStatus } : {})}
           initialQuery={queryParam}
           {...(selectedVM ? { selectedKey: selectedVM } : {})}
+          compact={!!selectedVM}
         />
       </div>
       {selectedVM && (

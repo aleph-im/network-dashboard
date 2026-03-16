@@ -40,6 +40,8 @@ const SEARCH_FIELDS = (n: IssueNode) => [
   n.node.owner,
 ];
 
+const COMPACT_HIDDEN_HEADERS = new Set(["Total VMs", "Last Updated"]);
+
 const columns: Column<IssueNode>[] = [
   {
     header: "Status",
@@ -405,7 +407,7 @@ export function IssuesNodeTable({
           />
 
           <Table
-            columns={columns}
+            columns={selectedIssueNode ? columns.filter((c) => !COMPACT_HIDDEN_HEADERS.has(c.header)) : columns}
             data={pageItems}
             keyExtractor={(r) => r.node.hash}
             onRowClick={(r) => setSelectedNode(r.node.hash)}

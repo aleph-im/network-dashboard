@@ -175,6 +175,8 @@ type SortConfig = {
   direction: "asc" | "desc";
 };
 
+const COMPACT_HIDDEN_HEADERS = new Set(["CPU", "GPU", "VMs"]);
+
 type NodeTableProps = {
   onSelectNode: (hash: string) => void;
   initialStatus?: NodeStatus;
@@ -182,6 +184,7 @@ type NodeTableProps = {
   initialSort?: SortConfig;
   initialQuery?: string;
   selectedKey?: string;
+  compact?: boolean;
 };
 
 export function NodeTable({
@@ -191,6 +194,7 @@ export function NodeTable({
   initialSort,
   initialQuery,
   selectedKey,
+  compact,
 }: NodeTableProps) {
   const [, startTransition] = useTransition();
 
@@ -574,7 +578,7 @@ export function NodeTable({
       </FilterPanel>
 
       <Table
-        columns={columns}
+        columns={compact ? columns.filter((c) => !COMPACT_HIDDEN_HEADERS.has(c.header)) : columns}
         data={pageItems}
         keyExtractor={(r) => r.hash}
         onRowClick={(r) => onSelectNode(r.hash)}

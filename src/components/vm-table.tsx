@@ -90,10 +90,13 @@ const PAYMENT_OPTIONS: {
 
 const VM_BASE_SEARCH_FIELDS = (v: VM) => [v.hash, v.allocatedNode];
 
+const COMPACT_HIDDEN_HEADERS = new Set(["Type", "Node"]);
+
 function buildColumns(
   msgInfo: Map<string, AlephMessageInfo> | undefined,
+  compact?: boolean,
 ): Column<VM>[] {
-  return [
+  const all: Column<VM>[] = [
   {
     header: "Status",
     accessor: (r) => (
@@ -197,6 +200,7 @@ function buildColumns(
     align: "right",
   },
   ];
+  return compact ? all.filter((c) => !COMPACT_HIDDEN_HEADERS.has(c.header)) : all;
 }
 
 type VMTableProps = {
@@ -204,6 +208,7 @@ type VMTableProps = {
   initialStatus?: VmStatus;
   initialQuery?: string;
   selectedKey?: string;
+  compact?: boolean;
 };
 
 export function VMTable({
@@ -211,6 +216,7 @@ export function VMTable({
   initialStatus,
   initialQuery,
   selectedKey,
+  compact,
 }: VMTableProps) {
   const [, startTransition] = useTransition();
 
@@ -584,7 +590,7 @@ export function VMTable({
       </FilterPanel>
 
       <Table
-        columns={buildColumns(messageInfo)}
+        columns={buildColumns(messageInfo, compact)}
         data={pageItems}
         keyExtractor={(r) => r.hash}
         onRowClick={(r) => onSelectVM(r.hash)}

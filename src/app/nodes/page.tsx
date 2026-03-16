@@ -56,6 +56,7 @@ function NodesContent() {
           {...(initialSort ? { initialSort } : {})}
           initialQuery={queryParam}
           {...(selectedNode ? { selectedKey: selectedNode } : {})}
+          compact={!!selectedNode}
         />
       </div>
       {selectedNode && (

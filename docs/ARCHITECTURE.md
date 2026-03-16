@@ -189,9 +189,9 @@ src/
 ### Responsive Layout
 
 **Context:** Dashboard must work on mobile, tablet, and desktop.
-**Approach:** Two breakpoints: `md` (768px) for sidebar visibility, `lg` (1024px) for detail panel layout. Mobile sidebar is a fixed overlay with backdrop. Detail panels (Nodes, VMs) render as full-width slide-in overlays below `lg`, inline side panels above. Tables use `overflow-x-auto` for horizontal scrolling on narrow screens.
-**Key files:** `src/components/app-sidebar.tsx`, `src/app/nodes/page.tsx`, `src/app/vms/page.tsx`, `src/components/node-detail-panel.tsx`, `src/components/vm-detail-panel.tsx`
-**Notes:** Uses `bg-surface` token (renamed from `bg-card` in DS). Detail panels use glass card styling (`bg-white/[0.03]`, `border-white/[0.06]`, `variant="ghost"`), `lg:sticky lg:top-0` to stay visible while scrolling, and truncate long lists (6 VMs, 5 history entries) with "+N more" indicators to keep the "View full details →" CTA reachable.
+**Approach:** Two breakpoints: `md` (768px) for sidebar visibility, `lg` (1024px) for detail panel layout. Mobile sidebar is a fixed overlay with backdrop. Detail panels (Nodes, VMs) render as full-width slide-in overlays below `lg`, inline side panels above. Tables use `overflow-x-auto` for horizontal scrolling on narrow screens. When a detail panel is open on desktop, lower-priority table columns are hidden to prevent the table from being squeezed — columns reappear when the panel closes. Each table defines a `COMPACT_HIDDEN_HEADERS` set; columns are filtered by header string when `compact` is true (or when the internal selection state is non-null for self-contained tables like Issues).
+**Key files:** `src/components/app-sidebar.tsx`, `src/app/nodes/page.tsx`, `src/app/vms/page.tsx`, `src/components/node-detail-panel.tsx`, `src/components/vm-detail-panel.tsx`, `src/components/node-table.tsx`, `src/components/vm-table.tsx`, `src/components/issues-vm-table.tsx`, `src/components/issues-node-table.tsx`
+**Notes:** Uses `bg-surface` token (renamed from `bg-card` in DS). Detail panels use glass card styling (`bg-white/[0.03]`, `border-white/[0.06]`, `variant="ghost"`), `lg:sticky lg:top-0` to stay visible while scrolling, and truncate long lists (6 VMs, 5 history entries) with "+N more" indicators to keep the "View full details →" CTA reachable. Adaptive column hiding priority tiers: Nodes hides GPU/CPU/VMs; VMs hides Type/Node; Issues VM hides Scheduled On/Observed On; Issues Node hides Total VMs/Last Updated.
 
 ---
 
