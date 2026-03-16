@@ -56,8 +56,8 @@ export function FilterToolbar<S>({
           <div className="mx-2 h-6 w-px bg-white/[0.08]" />
         </>
       )}
-      <Tabs value={toTabValue(activeStatus)} onValueChange={handleTabChange}>
-        <TabsList variant="pill" overflow="collapse">
+      <Tabs value={toTabValue(activeStatus)} onValueChange={handleTabChange} className="min-w-0 flex-1">
+        <TabsList variant="underline" size="sm" overflow="collapse">
           {statuses.map((s, i) => (
             <TabsTrigger
               key={i}
@@ -111,7 +111,7 @@ export function FilterToolbar<S>({
           <path d="m21 21-4.3-4.3" />
         </svg>
         <Input
-          size="md"
+          size="sm"
           value={searchValue}
           onChange={(e) => onSearchChange(e.target.value)}
           placeholder={searchPlaceholder}

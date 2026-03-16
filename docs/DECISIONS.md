@@ -18,6 +18,12 @@ Each entry includes:
 
 ---
 
+## Decision #49 - 2026-03-16
+**Context:** Filter toolbar status tabs used DS `Tabs` pill variant, which had a visual "tail" artifact on the sliding indicator and felt heavy for a filter bar.
+**Decision:** Switch to `variant="underline" size="sm"` for status filter tabs. Keep `variant="pill" size="sm"` for the Issues page perspective toggle (VMs/Nodes). Constrain Tabs container with `flex-1 min-w-0` so overflow kicks in at ~5 visible items. Downsize search input to `size="sm"`.
+**Rationale:** Underline variant is lighter and more appropriate for filter navigation — just text + thin underline, no container chrome. Pill variant suits the perspective toggle because it's a binary choice (2 items), not a filter bar. The `flex-1 min-w-0` lets the overflow mechanism naturally limit visible tabs based on available space rather than a brittle pixel breakpoint.
+**Alternatives considered:** Pill `size="sm"` (still had indicator tail bug), adding `xs` size to DS (not supported), count-based `maxVisible` prop (DS overflow is width-based, not count-based)
+
 ## Decision #48 - 2026-03-16
 **Context:** Filter toolbar (status pills, search, filter toggle) got squeezed when the detail panel opened on list pages, especially the Issues page with its perspective toggle adding extra items.
 **Decision:** Restructure layout so FilterToolbar always renders above the flex container that holds Table + DetailPanel. Table components (NodeTable, VMTable) accept a `sidePanel` prop. Replace custom status pill buttons with DS `Tabs` pill variant (`overflow="collapse"`).
