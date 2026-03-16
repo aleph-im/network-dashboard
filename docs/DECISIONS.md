@@ -18,6 +18,17 @@ Each entry includes:
 
 ---
 
+## Decision #48 - 2026-03-16
+**Context:** Filter toolbar (status pills, search, filter toggle) got squeezed when the detail panel opened on list pages, especially the Issues page with its perspective toggle adding extra items.
+**Decision:** Restructure layout so FilterToolbar always renders above the flex container that holds Table + DetailPanel. Table components (NodeTable, VMTable) accept a `sidePanel` prop. Replace custom status pill buttons with DS `Tabs` pill variant (`overflow="collapse"`).
+**Rationale:** The toolbar was inside the flex column that the detail panel squeezed. Moving it above means it always gets full width. DS Tabs with `overflow="collapse"` automatically collapses excess tabs into a `⋯` dropdown when space is tight (useful for the VMs page with 7 status options). Native `title` attribute used for tooltips instead of DS `Tooltip` wrapping (Radix Tooltip event handlers can interfere with Radix Tabs activation).
+**Alternatives considered:** Flex-wrap with shrinking search input (patched symptom, didn't fix root cause), horizontal scroll on pills (hides items), truncated tab labels (destroys meaning per NNGroup), collapsing pills into a dropdown (overkill for 4-7 items)
+
+## Decision #47 - 2026-03-16
+**Context:** Status filter pills were custom-styled `<button>` elements with hand-rolled active/inactive styling, no overflow handling.
+**Decision:** Replace with DS `Tabs` component (`variant="pill"`, `overflow="collapse"`). Use a `toTabValue()` helper to map the generic status type (which includes `undefined` for "All") to string values for Radix Tabs.
+**Rationale:** Eliminates ~20 lines of custom pill styling. DS Tabs provides sliding indicator animation, keyboard navigation, and automatic overflow collapse into a dropdown. Consistent with the existing VMs/Nodes perspective toggle on the Issues page which already uses DS Tabs pill variant.
+
 ## Decision #46 - 2026-03-13
 **Context:** Status filter pills (Unscheduled vs Unschedulable, Has Orphaned vs Has Missing) use API terminology that isn't immediately clear to operators.
 **Decision:** Add hover tooltips to all status pills across all pages (VMs, Nodes, Issues VM, Issues Node) explaining what each status means. Keep the API label names unchanged.

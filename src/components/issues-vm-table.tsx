@@ -366,24 +366,24 @@ export function IssuesVMTable({
 
   return (
     <TooltipProvider>
+      <FilterToolbar
+        leading={leading}
+        statuses={STATUS_PILLS}
+        activeStatus={statusFilter}
+        onStatusChange={(s) =>
+          startTransition(() => setStatusFilter(s))
+        }
+        formatCount={formatCount}
+        filtersOpen={false}
+        onFiltersToggle={() => {}}
+        activeFilterCount={0}
+        searchValue={searchInput}
+        onSearchChange={setSearchInput}
+        searchPlaceholder="Search VM hash, node..."
+      />
+
       <div className="flex gap-6">
         <div className="flex-1 min-w-0">
-          <FilterToolbar
-            leading={leading}
-            statuses={STATUS_PILLS}
-            activeStatus={statusFilter}
-            onStatusChange={(s) =>
-              startTransition(() => setStatusFilter(s))
-            }
-            formatCount={formatCount}
-            filtersOpen={false}
-            onFiltersToggle={() => {}}
-            activeFilterCount={0}
-            searchValue={searchInput}
-            onSearchChange={setSearchInput}
-            searchPlaceholder="Search VM hash, node..."
-          />
-
           <Table
             columns={selectedIssueVM ? columns.filter((c) => !COMPACT_HIDDEN_HEADERS.has(c.header)) : columns}
             data={pageItems}

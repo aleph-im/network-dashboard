@@ -209,6 +209,7 @@ type VMTableProps = {
   initialQuery?: string;
   selectedKey?: string;
   compact?: boolean;
+  sidePanel?: React.ReactNode;
 };
 
 export function VMTable({
@@ -217,6 +218,7 @@ export function VMTable({
   initialQuery,
   selectedKey,
   compact,
+  sidePanel,
 }: VMTableProps) {
   const [, startTransition] = useTransition();
 
@@ -589,24 +591,29 @@ export function VMTable({
         </div>
       </FilterPanel>
 
-      <Table
-        columns={buildColumns(messageInfo, compact)}
-        data={pageItems}
-        keyExtractor={(r) => r.hash}
-        onRowClick={(r) => onSelectVM(r.hash)}
-        activeKey={selectedKey}
-      />
+      <div className="flex gap-6">
+        <div className="flex-1 min-w-0">
+          <Table
+            columns={buildColumns(messageInfo, compact)}
+            data={pageItems}
+            keyExtractor={(r) => r.hash}
+            onRowClick={(r) => onSelectVM(r.hash)}
+            activeKey={selectedKey}
+          />
 
-      <TablePagination
-        page={page}
-        totalPages={totalPages}
-        pageSize={pageSize}
-        startItem={startItem}
-        endItem={endItem}
-        totalItems={totalItems}
-        onPageChange={setPage}
-        onPageSizeChange={setPageSize}
-      />
+          <TablePagination
+            page={page}
+            totalPages={totalPages}
+            pageSize={pageSize}
+            startItem={startItem}
+            endItem={endItem}
+            totalItems={totalItems}
+            onPageChange={setPage}
+            onPageSizeChange={setPageSize}
+          />
+        </div>
+        {sidePanel}
+      </div>
     </TooltipProvider>
   );
 }
