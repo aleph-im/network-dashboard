@@ -77,7 +77,7 @@ src/
 │   ├── vm-detail-view.tsx  # VM full-width detail view (?view= param)
 │   ├── issues-vm-table.tsx # Issues page: VM perspective table + detail panel
 │   ├── issues-node-table.tsx # Issues page: Node perspective table + detail panel
-│   ├── credit-flow-diagram.tsx  # SVG flow diagram for credit distribution
+│   ├── credit-flow-diagram.tsx  # SVG flow diagram with particle animation + gradient paths
 │   ├── credit-recipient-table.tsx # Credit recipient table (DS Table, FilterToolbar, sortable columns)
 │   ├── credit-summary-bar.tsx # Credit summary stat cards
 │   └── resource-bar.tsx    # CPU/memory/disk usage bar
@@ -189,6 +189,13 @@ src/
 **Approach:** `useCreditExpenses(start, end)` is the shared React Query hook. `useWalletRewards(address)` computes stable 24h timestamps (rounded to 5-minute intervals) so the query key stays consistent across mounts and page navigations — React Query deduplicates and caches the fetch. `computeWalletRewards()` takes an address, the raw expenses, and node state, then derives per-node CRN/CCN earnings and total staker earnings by replaying the distribution logic scoped to that address's owned nodes and stake.
 **Key files:** `src/hooks/use-wallet-rewards.ts`, `src/lib/credit-distribution.ts` (`computeWalletRewards`), `src/hooks/use-credit-expenses.ts`, `src/api/credit-types.ts` (`WalletRewards`, `WalletNodeReward`)
 **Notes:** CRN rewards are computed per credit entry (each has a `nodeId`). CCN rewards use score-weighted pool shares. Staker rewards use stake-weighted pool shares. Node state weights are precomputed once (stable across expense messages). The wallet page renders a "Credit Rewards (24h)" card with Node/Role/ALEPH columns.
+
+### Credit Flow Diagram — Particle Animation
+
+**Context:** The credit distribution Sankey-style diagram needed engaging animation to convey flow directionality.
+**Approach:** Three-layer SVG rendering per flow path: (1) invisible measurement `<path>` in `<defs>` for `getTotalLength()` and `<animateMotion>` references, (2) gradient-stroked background path with entrance draw animation (`stroke-dashoffset`), (3) `<circle>` particles with `<animateMotion>` traveling along the path. Source→destination gradients use `<linearGradient gradientUnits="userSpaceOnUse">`. Particles are randomized (size, speed, opacity, spacing) via a seeded pseudo-random function (`Math.sin` based) to avoid hydration mismatches from `Math.random()`. Particles begin after the entrance draw completes (`begin={flowDelay + stagger}`). Hover dims unrelated paths/boxes to 10% opacity and shows an ALEPH amount tooltip. Source boxes have a colored left accent bar; destination boxes have arrowhead triangles.
+**Key files:** `src/components/credit-flow-diagram.tsx`, `src/app/globals.css` (`flow-draw`, `fade-in` keyframes)
+**Notes:** `pathLength` is measured via `useRef` + `useEffect` (not `pathLength="1"` normalization) because the entrance animation needs the actual pixel length for `stroke-dasharray`/`stroke-dashoffset`. Particle count scales with flow thickness (`max(10, thickness * 2.5)`). Base animation duration is 4.5s+ (slow, organic feel).
 
 ### Sidebar Categories
 

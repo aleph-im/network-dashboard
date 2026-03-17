@@ -18,6 +18,12 @@ Each entry includes:
 
 ---
 
+## Decision #54 - 2026-03-17
+**Context:** Credit flow diagram used simple animated dashes (`stroke-dasharray` with `flow-dash` CSS keyframe). The animation felt mechanical — all paths animated at the same speed, no stagger, no interactivity, no entrance effect.
+**Decision:** Replace dashes with particle stream animation (SVG `<animateMotion>` circles) + source→destination gradient strokes. Add entrance draw animation, hover interaction (dim/highlight + tooltip), arrowheads at destinations, and accent bars on source boxes.
+**Rationale:** Compared three variants side-by-side (particle+gradient, glow-pulse+gradient, shimmer-sweep). Particles won — they feel alive and organic, clearly convey flow directionality, and the randomized sizes/speeds/opacity prevent the mechanical "marching ants" look. Gradients make the source→destination relationship instantly readable (blue→gold, green→purple, etc.). Seeded pseudo-random (`Math.sin` based) avoids `Math.random()` hydration mismatches while still producing visually random particle distributions.
+**Alternatives considered:** Animated dashes (original — too dull), glow pulse + gradient (dramatic but busy with multiple pulses), shimmer sweep (subtle but less directional than particles)
+
 ## Decision #53 - 2026-03-17
 **Context:** Credit flow page used raw HTML form elements (`<button>`, `<input>`, `<select>`) and a hand-rolled table instead of DS components and shared patterns.
 **Decision:** Refactor all credit flow components to use DS elements: `Table` component (with `Column` definitions and sortable columns) for the recipient table, `FilterToolbar` for role filter tabs with counts + search, `Tabs` (pill variant) for the date range selector, `TablePagination` for pagination, `CopyableText` for addresses/hashes, `Badge` with `fill="outline" size="sm"` for role tags. Aligned page spacing (`mb-10` header, `mt-12` sections) and stat card borders (`border-edge`, `bg-muted/30`) with the rest of the dashboard.
