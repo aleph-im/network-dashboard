@@ -15,6 +15,11 @@ Ideas and scope creep captured for later consideration.
 
 ## Open Items
 
+### 2026-03-17 - DS CopyableText: show arrow icon for internal links
+**Source:** Credit recipient table — internal hrefs (`/nodes?view=...`, `/wallet?address=...`) don't show the ArrowUpRight icon
+**Description:** The DS `CopyableText` component only renders the arrow icon for external URLs (`isExternalUrl` check). Internal links should also show the arrow (without `target="_blank"`). Patched locally in `node_modules`; needs to be applied in `@aleph-front/ds`.
+**Priority:** High
+
 ### 2026-03-11 - Wallet identity hub (User Command Center evolution)
 **Source:** Wallet view brainstorming
 **Description:** Expand the wallet view beyond ops/debugging into a richer identity hub: wallet balance, ALEPH staking, transaction history, etc. Part of a broader evolution from an ops dashboard to a User Command Center. Build on top of the Phase 1 ops-focused wallet view.
