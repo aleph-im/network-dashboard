@@ -18,6 +18,11 @@ Each entry includes:
 
 ---
 
+## Decision #53 - 2026-03-17
+**Context:** Credit flow page used raw HTML form elements (`<button>`, `<input>`, `<select>`) and a hand-rolled table instead of DS components and shared patterns.
+**Decision:** Refactor all credit flow components to use DS elements: `Table` component (with `Column` definitions and sortable columns) for the recipient table, `FilterToolbar` for role filter tabs with counts + search, `Tabs` (pill variant) for the date range selector, `TablePagination` for pagination, `CopyableText` for addresses/hashes, `Badge` with `fill="outline" size="sm"` for role tags. Aligned page spacing (`mb-10` header, `mt-12` sections) and stat card borders (`border-edge`, `bg-muted/30`) with the rest of the dashboard.
+**Rationale:** Component policy (Decision #3) requires all UI primitives from the DS. Using the DS `Table` component gives consistent header styling (`bg-muted/50`, uppercase, `font-semibold`), row striping, hover states, and built-in column sorting — matching nodes/VMs pages exactly. `FilterToolbar` provides the standard tabs-with-counts + search layout. Raw elements created visual inconsistencies (different borders, padding, font sizes) and missed accessibility features (ARIA roles, keyboard navigation).
+
 ## Decision #52 - 2026-03-17
 **Context:** Wallet page needs 24h credit reward data per node and role, and the Credits page already fetches the same data.
 **Decision:** Share the 24h credit expense query via React Query caching. `useWalletRewards()` uses stable 5-minute-rounded timestamps so the query key stays consistent across mounts and page navigations. `computeWalletRewards()` replays the distribution logic scoped to a single address, producing per-node CRN/CCN earnings and total staker earnings.

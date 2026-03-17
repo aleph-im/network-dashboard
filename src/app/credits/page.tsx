@@ -2,6 +2,7 @@
 
 import { Suspense, useMemo, useState } from "react";
 import { useSearchParams, useRouter } from "next/navigation";
+import { Tabs, TabsList, TabsTrigger } from "@aleph-front/ds/tabs";
 import { Skeleton } from "@aleph-front/ds/ui/skeleton";
 import { useCreditExpenses } from "@/hooks/use-credit-expenses";
 import { useNodeState } from "@/hooks/use-node-state";
@@ -47,55 +48,55 @@ function CreditsContent() {
   }
 
   return (
-    <div className="space-y-6">
+    <div>
       {/* Header */}
-      <div>
-        <h1 className="font-heading text-3xl font-extrabold tracking-tight">
+      <div className="mb-10">
+        <h1 className="text-4xl">
           Credit Flow
         </h1>
-        <p className="mt-1 text-sm text-muted-foreground/60">
+        <p className="mt-2 text-base text-muted-foreground">
           How ALEPH from credit usage flows to CRNs, CCNs, and stakers
         </p>
       </div>
 
       {/* Date range tabs */}
-      <div className="flex gap-1 rounded-lg bg-foreground/[0.04] p-1 w-fit">
-        {(["24h", "7d", "30d"] as const).map((r) => (
-          <button
-            key={r}
-            onClick={() => setRange(r)}
-            className={`rounded-md px-4 py-2 text-sm font-medium transition-colors ${
-              range === r
-                ? "bg-primary-600/15 text-primary-400"
-                : "text-muted-foreground hover:text-foreground"
-            }`}
-          >
-            {r}
-          </button>
-        ))}
-      </div>
+      <Tabs value={range} onValueChange={(v) => setRange(v as Range)}>
+        <TabsList variant="pill" size="sm">
+          {(["24h", "7d", "30d"] as const).map((r) => (
+            <TabsTrigger key={r} value={r}>
+              {r}
+            </TabsTrigger>
+          ))}
+        </TabsList>
+      </Tabs>
 
       {/* Summary cards */}
-      <CreditSummaryBar summary={summary} isLoading={isLoading} />
+      <div className="mt-8">
+        <CreditSummaryBar summary={summary} isLoading={isLoading} />
+      </div>
 
       {/* Flow diagram */}
-      {isLoading ? (
-        <Skeleton className="h-[420px] w-full rounded-lg" />
-      ) : summary ? (
-        <CreditFlowDiagram summary={summary} />
-      ) : null}
+      <div className="mt-12">
+        {isLoading ? (
+          <Skeleton className="h-[420px] w-full rounded-lg" />
+        ) : summary ? (
+          <CreditFlowDiagram summary={summary} />
+        ) : null}
+      </div>
 
       {/* Recipient table */}
-      {isLoading ? (
-        <Skeleton className="h-64 w-full rounded-lg" />
-      ) : summary ? (
-        <div>
-          <h2 className="mb-4 font-heading text-xl font-bold tracking-tight">
-            Recipients
-          </h2>
-          <CreditRecipientTable summary={summary} />
-        </div>
-      ) : null}
+      <div className="mt-12">
+        {isLoading ? (
+          <Skeleton className="h-64 w-full rounded-lg" />
+        ) : summary ? (
+          <>
+            <h2 className="mb-4 font-heading text-xl font-bold tracking-tight">
+              Recipients
+            </h2>
+            <CreditRecipientTable summary={summary} />
+          </>
+        ) : null}
+      </div>
     </div>
   );
 }

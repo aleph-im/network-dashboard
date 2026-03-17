@@ -14,7 +14,7 @@ type CardProps = {
 function CreditStatCard({ label, value, color, isLoading }: CardProps) {
   return (
     <div
-      className="stat-card flex flex-col border border-foreground/[0.06] bg-foreground/[0.03] p-6"
+      className="stat-card flex flex-col border border-edge bg-muted/30 p-6"
       style={
         color
           ? ({ "--stat-tint": color } as React.CSSProperties)

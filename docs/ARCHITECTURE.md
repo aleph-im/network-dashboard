@@ -78,7 +78,7 @@ src/
 │   ├── issues-vm-table.tsx # Issues page: VM perspective table + detail panel
 │   ├── issues-node-table.tsx # Issues page: Node perspective table + detail panel
 │   ├── credit-flow-diagram.tsx  # SVG flow diagram for credit distribution
-│   ├── credit-recipient-table.tsx # Credit recipient table with role badges
+│   ├── credit-recipient-table.tsx # Credit recipient table (DS Table, FilterToolbar, sortable columns)
 │   ├── credit-summary-bar.tsx # Credit summary stat cards
 │   └── resource-bar.tsx    # CPU/memory/disk usage bar
 ├── lib/
