@@ -20,7 +20,6 @@ const W = 900;
 const H = 420;
 const SRC_X = 20;
 const DEST_X = W - 20;
-const MID_X = W / 2;
 const BOX_W = 140;
 const BOX_H = 50;
 
