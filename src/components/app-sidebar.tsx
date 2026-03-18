@@ -1,6 +1,6 @@
 "use client";
 
-import { useEffect, useRef } from "react";
+import { useCallback, useEffect, useRef, useState } from "react";
 import Link from "next/link";
 import { usePathname } from "next/navigation";
 import { LogoFull } from "@aleph-front/ds/logo";
@@ -122,6 +122,145 @@ function NavIcon({ name }: { name: IconName }) {
   }
 }
 
+function UtilityMenu({
+  pathname,
+  healthStatus,
+}: {
+  pathname: string;
+  healthStatus: "healthy" | "error" | "unknown";
+}) {
+  const [menuOpen, setMenuOpen] = useState(false);
+  const menuRef = useRef<HTMLDivElement>(null);
+
+  const close = useCallback(() => setMenuOpen(false), []);
+
+  useEffect(() => {
+    if (!menuOpen) return;
+    function onClickOutside(e: MouseEvent) {
+      if (
+        menuRef.current &&
+        !menuRef.current.contains(e.target as Node)
+      ) {
+        close();
+      }
+    }
+    document.addEventListener("mousedown", onClickOutside);
+    return () =>
+      document.removeEventListener("mousedown", onClickOutside);
+  }, [menuOpen, close]);
+
+  // Close menu on navigation
+  useEffect(() => {
+    close();
+  }, [pathname, close]);
+
+  const isUtilityPage =
+    pathname === "/issues" || pathname === "/status";
+
+  const linkClass = (href: string) =>
+    `flex items-center gap-2.5 rounded-lg px-3 py-2 text-sm transition-colors ${
+      pathname === href
+        ? "bg-primary-600/10 text-primary-400 font-medium"
+        : "text-muted-foreground hover:text-foreground hover:bg-muted"
+    }`;
+
+  return (
+    <div
+      ref={menuRef}
+      className="relative border-t border-foreground/[0.06] px-3 py-4"
+    >
+      {/* Popover */}
+      {menuOpen && (
+        <div className="absolute bottom-full left-3 right-3 mb-2 space-y-1 rounded-xl border border-foreground/[0.06] bg-surface p-2 shadow-lg">
+          <Link
+            href="/issues"
+            className={linkClass("/issues")}
+            style={{
+              transitionDuration: "var(--duration-fast)",
+            }}
+          >
+            <NavIcon name="warning" />
+            Issues
+          </Link>
+          <Link
+            href="/status"
+            className={linkClass("/status")}
+            style={{
+              transitionDuration: "var(--duration-fast)",
+            }}
+          >
+            <svg
+              className="size-4"
+              fill="none"
+              viewBox="0 0 24 24"
+              stroke="currentColor"
+              strokeWidth={2}
+            >
+              <path
+                strokeLinecap="round"
+                strokeLinejoin="round"
+                d="M9.348 14.652a3.75 3.75 0 010-5.304m5.304 0a3.75 3.75 0 010 5.304m-7.425 2.121a6.75 6.75 0 010-9.546m9.546 0a6.75 6.75 0 010 9.546M5.106 18.894c-3.808-3.807-3.808-9.98 0-13.788m13.788 0c3.808 3.807 3.808 9.98 0 13.788M12 12h.008v.008H12V12zm.375 0a.375.375 0 11-.75 0 .375.375 0 01.75 0z"
+              />
+            </svg>
+            API Status
+            <span className="relative ml-auto flex size-5 items-center justify-center">
+              <StatusDot status={healthStatus} size="sm" />
+              <svg
+                className="absolute inset-0"
+                viewBox="0 0 20 20"
+                fill="none"
+              >
+                <circle
+                  cx="10"
+                  cy="10"
+                  r="7.5"
+                  stroke={
+                    healthStatus === "healthy"
+                      ? "var(--color-success-500)"
+                      : healthStatus === "error"
+                        ? "var(--color-error-500)"
+                        : "var(--color-neutral-400)"
+                  }
+                  strokeWidth="2"
+                  strokeLinecap="round"
+                  strokeDasharray="47.12"
+                  className="poll-ring opacity-80"
+                  transform="rotate(-90 10 10)"
+                />
+              </svg>
+            </span>
+          </Link>
+        </div>
+      )}
+
+      {/* Toggle button */}
+      <button
+        onClick={() => setMenuOpen((v) => !v)}
+        className={`flex w-full items-center gap-2.5 rounded-lg px-3 py-2 text-sm transition-colors ${
+          isUtilityPage
+            ? "text-primary-400"
+            : "text-muted-foreground hover:text-foreground hover:bg-muted"
+        }`}
+        style={{ transitionDuration: "var(--duration-fast)" }}
+      >
+        <svg
+          className="size-4"
+          fill="currentColor"
+          viewBox="0 0 24 24"
+        >
+          <circle cx="5" cy="12" r="2" />
+          <circle cx="12" cy="12" r="2" />
+          <circle cx="19" cy="12" r="2" />
+        </svg>
+        More
+        <span className="relative ml-auto flex size-5 items-center justify-center">
+          <StatusDot status={healthStatus} size="sm" />
+        </span>
+      </button>
+    </div>
+  );
+}
+
 type AppSidebarProps = {
   open: boolean;
   onClose: () => void;
@@ -199,68 +338,11 @@ export function AppSidebar({ open, onClose }: AppSidebarProps) {
           ))}
         </nav>
 
-        {/* Bottom utility links */}
-        <div className="space-y-1 border-t border-foreground/[0.06] px-3 py-4">
-          <Link
-            href="/issues"
-            className={`flex items-center gap-2.5 rounded-lg px-3 py-2 text-sm transition-colors ${
-              pathname === "/issues"
-                ? "bg-primary-600/10 text-primary-400 font-medium"
-                : "text-muted-foreground hover:text-foreground hover:bg-muted"
-            }`}
-            style={{ transitionDuration: "var(--duration-fast)" }}
-          >
-            <NavIcon name="warning" />
-            Issues
-          </Link>
-          <Link
-            href="/status"
-            className={`flex items-center gap-2.5 rounded-lg px-3 py-2 text-sm transition-colors ${
-              pathname === "/status"
-                ? "bg-primary-600/10 text-primary-400 font-medium"
-                : "text-muted-foreground hover:text-foreground hover:bg-muted"
-            }`}
-            style={{ transitionDuration: "var(--duration-fast)" }}
-          >
-            <svg
-              className="size-4"
-              fill="none"
-              viewBox="0 0 24 24"
-              stroke="currentColor"
-              strokeWidth={2}
-            >
-              <path
-                strokeLinecap="round"
-                strokeLinejoin="round"
-                d="M9.348 14.652a3.75 3.75 0 010-5.304m5.304 0a3.75 3.75 0 010 5.304m-7.425 2.121a6.75 6.75 0 010-9.546m9.546 0a6.75 6.75 0 010 9.546M5.106 18.894c-3.808-3.807-3.808-9.98 0-13.788m13.788 0c3.808 3.807 3.808 9.98 0 13.788M12 12h.008v.008H12V12zm.375 0a.375.375 0 11-.75 0 .375.375 0 01.75 0z"
-              />
-            </svg>
-            API Status
-            <span className="relative ml-auto flex size-5 items-center justify-center">
-              <StatusDot
-                status={healthStatus}
-                size="sm"
-              />
-              <svg
-                className="absolute inset-0"
-                viewBox="0 0 20 20"
-                fill="none"
-              >
-                <circle
-                  cx="10"
-                  cy="10"
-                  r="7.5"
-                  stroke={healthStatus === "healthy" ? "var(--color-success-500)" : healthStatus === "error" ? "var(--color-error-500)" : "var(--color-neutral-400)"}
-                  strokeWidth="2"
-                  strokeLinecap="round"
-                  strokeDasharray="47.12"
-                  className="poll-ring opacity-80"
-                  transform="rotate(-90 10 10)"
-                />
-              </svg>
-            </span>
-          </Link>
-        </div>
+        {/* Bottom utility menu */}
+        <UtilityMenu
+          pathname={pathname}
+          healthStatus={healthStatus}
+        />
 
       </aside>
     </>
