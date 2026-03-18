@@ -86,30 +86,6 @@ function seededRandom(pathIdx: number, particleIdx: number): number {
 
 // ── Sub-components ─────────────────────────────
 
-function Arrowhead({
-  x,
-  y,
-  color,
-  delay,
-}: {
-  x: number;
-  y: number;
-  color: string;
-  delay: number;
-}) {
-  return (
-    <polygon
-      points={`${x - 9},${y - 4} ${x},${y} ${x - 9},${y + 4}`}
-      fill={color}
-      fillOpacity={0.6}
-      style={{
-        opacity: 0,
-        animation: `fade-in 0.25s ease ${delay}s forwards`,
-      }}
-    />
-  );
-}
-
 function FlowBox({
   x,
   y,
@@ -119,7 +95,6 @@ function FlowBox({
   align = "left",
   isHighlighted = false,
   isDimmed = false,
-  entranceDelay = 0,
 }: {
   x: number;
   y: number;
@@ -129,16 +104,10 @@ function FlowBox({
   align?: "left" | "right";
   isHighlighted?: boolean;
   isDimmed?: boolean;
-  entranceDelay?: number;
 }) {
   const rx = align === "right" ? x - BOX_W : x;
   return (
-    <g
-      style={{
-        opacity: 0,
-        animation: `fade-in 0.4s ease ${entranceDelay}s forwards`,
-      }}
-    >
+    <g>
       <g
         style={{
           opacity: isDimmed ? 0.5 : 1,
@@ -220,9 +189,6 @@ function AnimatedFlow({
   }, [d]);
 
   const strokeW = Math.max(1.5, Math.min(thickness, 8));
-  const entranceDelay = 0.1 + 0.08 * index;
-  const entranceDuration = 0.5 + (pathLength / 1200) * 0.5;
-  const flowDelay = entranceDelay + entranceDuration + 0.1;
   const ready = pathLength > 0;
 
   const particleCount = Math.max(10, Math.round(thickness * 2.5));
@@ -252,7 +218,7 @@ function AnimatedFlow({
 
       {ready && (
         <>
-          {/* Gradient background path — entrance draw animation */}
+          {/* Gradient background path */}
           <path
             d={d}
             fill="none"
@@ -261,22 +227,17 @@ function AnimatedFlow({
             strokeLinecap="round"
             style={{
               strokeOpacity: isHighlighted ? 0.25 : 0.15,
-              strokeDasharray: pathLength,
-              strokeDashoffset: pathLength,
-              animation: `flow-draw ${entranceDuration}s ease-out ${entranceDelay}s forwards`,
               transition: "stroke-width 0.3s, stroke-opacity 0.3s",
             }}
           />
 
-          {/* Particles — appear after entrance draw completes */}
+          {/* Particles — staggered across the path from the start */}
           {Array.from({ length: particleCount }).map((_, j) => {
             const rng = seededRandom(index, j);
             const dur = baseDur + (rng - 0.5) * 1.2;
             const r = baseR * (0.5 + rng * 0.8);
-            const begin =
-              flowDelay +
-              j * (baseDur / particleCount) +
-              (rng - 0.5) * 0.4;
+            // Negative begin offsets spread particles across the path on first render
+            const begin = -(j * (baseDur / particleCount) + (rng - 0.5) * 0.4);
             const opacity = 0.5 + rng * 0.4;
             const hasGlow = seededRandom(index + 50, j) < 0.2;
 
@@ -301,12 +262,7 @@ function AnimatedFlow({
           })}
 
           {/* Percentage pill badge — expands on hover to show ALEPH amount */}
-          <g
-            style={{
-              opacity: 0,
-              animation: `fade-in 0.3s ease ${flowDelay}s forwards`,
-            }}
-          >
+          <g>
             <rect
               x={isHighlighted ? labelX - 40 : labelX - 20}
               y={isHighlighted ? labelY - 15 : labelY - 14}
@@ -422,16 +378,16 @@ export function CreditFlowDiagram({ summary }: Props) {
   }
 
   if (storageAleph > 0) {
-    paths.push(makePath("75%", storCcn, COLORS.storage, COLORS.ccn, "storage", "ccn", storY - 10, ccnY, 0.35));
-    paths.push(makePath("20%", storStaker, COLORS.storage, COLORS.staker, "storage", "staker", storY + 10, stakerY, 0.45));
-    paths.push(makePath("5%", storDev, COLORS.storage, COLORS.devFund, "storage", "dev", storY + 20, devY, 0.3));
+    paths.push(makePath("75%", storCcn, COLORS.storage, COLORS.ccn, "storage", "ccn", storY, ccnY, 0.35));
+    paths.push(makePath("20%", storStaker, COLORS.storage, COLORS.staker, "storage", "staker", storY, stakerY, 0.45));
+    paths.push(makePath("5%", storDev, COLORS.storage, COLORS.devFund, "storage", "dev", storY, devY, 0.3));
   }
 
   if (executionAleph > 0) {
-    paths.push(makePath("60%", execCrn, COLORS.execution, COLORS.crn, "execution", "crn", execY - 20, crnY, 0.65));
-    paths.push(makePath("15%", execCcn, COLORS.execution, COLORS.ccn, "execution", "ccn", execY - 5, ccnY, 0.55));
-    paths.push(makePath("20%", execStaker, COLORS.execution, COLORS.staker, "execution", "staker", execY + 5, stakerY, 0.55));
-    paths.push(makePath("5%", execDev, COLORS.execution, COLORS.devFund, "execution", "dev", execY + 20, devY, 0.7));
+    paths.push(makePath("60%", execCrn, COLORS.execution, COLORS.crn, "execution", "crn", execY, crnY, 0.65));
+    paths.push(makePath("15%", execCcn, COLORS.execution, COLORS.ccn, "execution", "ccn", execY, ccnY, 0.55));
+    paths.push(makePath("20%", execStaker, COLORS.execution, COLORS.staker, "execution", "staker", execY, stakerY, 0.55));
+    paths.push(makePath("5%", execDev, COLORS.execution, COLORS.devFund, "execution", "dev", execY, devY, 0.7));
   }
 
   // Derive highlighted box IDs from hovered path
@@ -441,22 +397,6 @@ export function CreditFlowDiagram({ summary }: Props) {
     : new Set<string>();
   const anyHovered = hoveredIdx !== null;
 
-  // Collect unique destination IDs that have at least one path
-  const activeDestIds = new Set(paths.map((p) => p.destId));
-
-  // Arrowhead positions keyed by destId
-  const destPositions: Record<string, { y: number; color: string }> = {
-    crn: { y: crnY, color: COLORS.crn },
-    ccn: { y: ccnY, color: COLORS.ccn },
-    staker: { y: stakerY, color: COLORS.staker },
-    dev: { y: devY, color: COLORS.devFund },
-  };
-
-  const maxEntranceEnd = paths.reduce((max, _, i) => {
-    const delay = 0.1 + 0.08 * i;
-    const dur = 0.5 + 0.4;
-    return Math.max(max, delay + dur);
-  }, 0);
 
   return (
     <Card className="overflow-x-auto p-4">
@@ -509,26 +449,6 @@ export function CreditFlowDiagram({ summary }: Props) {
           />
         ))}
 
-        {/* Arrowheads at destination ends */}
-        {Object.entries(destPositions)
-          .filter(([id]) => activeDestIds.has(id))
-          .map(([id, { y, color }], i) => (
-            <g
-              key={id}
-              style={{
-                opacity: anyHovered && !highlightedBoxes.has(id) ? 0.35 : 1,
-                transition: "opacity 0.3s ease",
-              }}
-            >
-              <Arrowhead
-                x={destLeft}
-                y={y}
-                color={color}
-                delay={maxEntranceEnd + 0.05 * i}
-              />
-            </g>
-          ))}
-
         {/* Source boxes (left) */}
         {storageAleph > 0 && (
           <FlowBox
@@ -539,7 +459,7 @@ export function CreditFlowDiagram({ summary }: Props) {
             color={COLORS.storage}
             isHighlighted={highlightedBoxes.has("storage")}
             isDimmed={anyHovered && !highlightedBoxes.has("storage")}
-            entranceDelay={0}
+  
           />
         )}
         <FlowBox
@@ -550,7 +470,7 @@ export function CreditFlowDiagram({ summary }: Props) {
           color={COLORS.execution}
           isHighlighted={highlightedBoxes.has("execution")}
           isDimmed={anyHovered && !highlightedBoxes.has("execution")}
-          entranceDelay={0.05}
+
         />
 
         {/* Destination boxes (right) */}
@@ -563,7 +483,7 @@ export function CreditFlowDiagram({ summary }: Props) {
           align="right"
           isHighlighted={highlightedBoxes.has("crn")}
           isDimmed={anyHovered && !highlightedBoxes.has("crn")}
-          entranceDelay={0.3}
+
         />
         <FlowBox
           x={DEST_X}
@@ -574,7 +494,7 @@ export function CreditFlowDiagram({ summary }: Props) {
           align="right"
           isHighlighted={highlightedBoxes.has("ccn")}
           isDimmed={anyHovered && !highlightedBoxes.has("ccn")}
-          entranceDelay={0.35}
+
         />
         <FlowBox
           x={DEST_X}
@@ -585,7 +505,7 @@ export function CreditFlowDiagram({ summary }: Props) {
           align="right"
           isHighlighted={highlightedBoxes.has("staker")}
           isDimmed={anyHovered && !highlightedBoxes.has("staker")}
-          entranceDelay={0.4}
+
         />
         <FlowBox
           x={DEST_X}
@@ -596,7 +516,7 @@ export function CreditFlowDiagram({ summary }: Props) {
           align="right"
           isHighlighted={highlightedBoxes.has("dev")}
           isDimmed={anyHovered && !highlightedBoxes.has("dev")}
-          entranceDelay={0.45}
+
         />
       </svg>
     </Card>

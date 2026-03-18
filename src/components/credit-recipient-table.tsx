@@ -10,9 +10,9 @@ import { FilterToolbar } from "@/components/filter-toolbar";
 import { formatAleph } from "@/lib/format";
 import type { RecipientTotal, DistributionSummary } from "@/api/credit-types";
 
-const ROLE_VARIANTS: Record<string, "success" | "info" | "warning"> = {
+const ROLE_VARIANTS: Record<string, "success" | "default" | "warning"> = {
   crn: "success",
-  ccn: "info",
+  ccn: "default",
   staker: "warning",
 };
 

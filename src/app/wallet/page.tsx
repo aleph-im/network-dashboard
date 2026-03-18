@@ -1,7 +1,7 @@
 "use client";
 
 import { Suspense } from "react";
-import { useSearchParams } from "next/navigation";
+import { useRouter, useSearchParams } from "next/navigation";
 import { Card } from "@aleph-front/ds/card";
 import { Badge } from "@aleph-front/ds/badge";
 import { Button } from "@aleph-front/ds/button";
@@ -431,7 +431,7 @@ function RewardsSection({ rewards }: { rewards: WalletRewards }) {
       <h3 className="mb-3 text-xs font-semibold uppercase tracking-wider text-muted-foreground">
         Credit Rewards (24h)
       </h3>
-      <div className="overflow-x-auto">
+      <div>
         <table className="w-full text-sm">
           <thead>
             <tr className="border-b border-edge text-left text-xs text-muted-foreground">
@@ -510,6 +510,7 @@ function RewardsSection({ rewards }: { rewards: WalletRewards }) {
 // --- Page Content ---
 
 function WalletContent() {
+  const router = useRouter();
   const searchParams = useSearchParams();
   const address = searchParams.get("address") ?? "";
 
@@ -565,6 +566,12 @@ function WalletContent() {
     <div className="space-y-8">
       {/* Header */}
       <div>
+        <button
+          onClick={() => router.back()}
+          className="mb-2 text-sm text-muted-foreground hover:text-foreground"
+        >
+          ← Back
+        </button>
         <h1 className="text-4xl">Wallet</h1>
         <div className="mt-3 flex items-center gap-3">
           <CopyableText
