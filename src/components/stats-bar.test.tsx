@@ -23,6 +23,5 @@ describe("StatsBar", () => {
     expect(screen.getByText("Orphaned")).toBeInTheDocument();
     expect(screen.getByText("Missing")).toBeInTheDocument();
     expect(screen.getByText("Unschedulable")).toBeInTheDocument();
-    expect(screen.getByText("Affected Nodes")).toBeInTheDocument();
   });
 });

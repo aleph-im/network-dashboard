@@ -201,9 +201,9 @@ src/
 ### Sidebar Categories
 
 **Context:** With 5+ nav items, flat navigation list needed structure.
-**Approach:** Two categories: Dashboard (Overview), Resources (Nodes, VMs, Credits). Small uppercase section titles as visual grouping only (not clickable, no collapse). Issues and API Status live in a border-separated bottom utility section — Issues is a dev-focused diagnostic page, not primary navigation. No badge count on Issues to avoid alarming regular users with operational noise.
+**Approach:** Two categories: Dashboard (Overview), Resources (Nodes, VMs, Credits). Small uppercase section titles as visual grouping only (not clickable, no collapse). Issues and API Status are grouped behind a "More" overflow popover button in the sidebar footer — Issues is a dev-focused diagnostic page, not primary navigation. The trigger button shows a `⋯` icon, "More" label, and the API health `StatusDot` so health status is visible at a glance without opening the menu. Popover opens upward, closes on click-outside or navigation.
 **Key files:** `src/components/app-sidebar.tsx`
-**Notes:** `NAV_SECTIONS` array drives the main nav rendering. The utility section is rendered separately below the nav.
+**Notes:** `NAV_SECTIONS` array drives the main nav rendering. The `UtilityMenu` component manages popover state with `mousedown` click-outside detection.
 
 ### Client-Side Pagination
 
