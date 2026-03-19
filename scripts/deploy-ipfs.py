@@ -135,21 +135,31 @@ async def write_website_aggregate(
         # Keep last 10 versions
         history = dict(list(history.items())[:10])
         created_at = existing.get("created_at", now)
+        metadata = existing.get("metadata", {"name": website_name})
+        payment = existing.get("payment")
+        ens = existing.get("ens")
     else:
         version = 1
         history = {}
         created_at = now
+        metadata = {"name": website_name}
+        payment = None
+        ens = None
 
-    content = {
-        website_name: {
-            "metadata": {"name": website_name},
-            "version": version,
-            "volume_id": volume_id,
-            "history": history,
-            "created_at": created_at,
-            "updated_at": now,
-        },
+    entry: dict = {
+        "metadata": metadata,
+        "version": version,
+        "volume_id": volume_id,
+        "history": history,
+        "created_at": created_at,
+        "updated_at": now,
     }
+    if payment is not None:
+        entry["payment"] = payment
+    if ens is not None:
+        entry["ens"] = ens
+
+    content = {website_name: entry}
 
     account = ETHAccount(private_key=bytes.fromhex(private_key))
     async with AuthenticatedAlephHttpClient(
