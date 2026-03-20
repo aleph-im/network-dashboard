@@ -15,6 +15,11 @@ Ideas and scope creep captured for later consideration.
 
 ## Open Items
 
+### 2026-03-20 - Top VMs by Cost card on credits page
+**Source:** Credit data audit — `perVm` map is already computed but not rendered
+**Description:** A ranked card showing which VMs cost the most ALEPH in the selected period. Component was prototyped (`top-vms-cost-card.tsx`, follows `TopNodesCard` pattern with bar chart rows) but removed before merge — needs better placement decision (competes with recipient table for space). Data is ready in `DistributionSummary.perVm`.
+**Priority:** Medium
+
 ### 2026-03-20 - Sparkline hover tooltip
 **Source:** Credit sparkline implementation
 **Description:** Add a tooltip on sparkline hover showing the exact ALEPH value and timestamp at the cursor position. Would require tracking mouse position relative to the SVG and mapping x-coordinate back to the data series.
