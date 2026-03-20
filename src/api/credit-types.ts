@@ -126,11 +126,6 @@ export type DistributionSummary = {
   // Per-VM and per-node aggregates for table integration
   perVm: Map<string, number>;
   perNode: Map<string, number>;
-  // Network activity counts
-  uniquePayers: number;
-  uniqueVms: number;
-  uniqueCrns: number;
-  creditPriceAleph: number;
 };
 
 export type WalletNodeReward = {

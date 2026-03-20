@@ -131,8 +131,6 @@ export function computeDistributionSummary(
   // Per-VM and per-node totals for table integration
   const perVm = new Map<string, number>();
   const perNode = new Map<string, number>();
-  const uniquePayerSet = new Set<string>();
-  const uniqueCrnSet = new Set<string>();
 
   for (const expense of expenses) {
     const dist = distributeExpense(expense, nodeState);
@@ -150,14 +148,12 @@ export function computeDistributionSummary(
     for (const [addr, amt] of dist.stakerRewards)
       addToMap(allStaker, addr, amt);
 
-    // Aggregate per-VM and per-node costs, track unique entities
+    // Aggregate per-VM and per-node costs
     for (const credit of expense.credits) {
-      uniquePayerSet.add(credit.address);
       if (credit.executionId) {
         addToMap(perVm, credit.executionId, credit.alephCost);
       }
       if (credit.nodeId) {
-        uniqueCrnSet.add(credit.nodeId);
         addToMap(
           perNode,
           credit.nodeId,
@@ -224,11 +220,6 @@ export function computeDistributionSummary(
   const totalAleph = storageAleph + executionAleph;
   const distributedAleph = totalAleph - devFundAleph;
 
-  // Credit price — use the latest expense's price (most recent rate)
-  const creditPriceAleph = expenses.length > 0
-    ? expenses[expenses.length - 1]!.creditPriceAleph
-    : 0;
-
   return {
     totalAleph,
     storageAleph,
@@ -240,10 +231,6 @@ export function computeDistributionSummary(
     expenses: distributions,
     perVm,
     perNode,
-    uniquePayers: uniquePayerSet.size,
-    uniqueVms: perVm.size,
-    uniqueCrns: uniqueCrnSet.size,
-    creditPriceAleph,
   };
 }
 
