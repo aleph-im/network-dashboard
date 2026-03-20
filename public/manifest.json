@@ -1,0 +1,9 @@
+{
+  "name": "Aleph Cloud Network",
+  "short_name": "Aleph Network",
+  "description": "Operations dashboard for monitoring the Aleph Cloud scheduler — node health, VM scheduling, and real-time events.",
+  "start_url": "/",
+  "display": "standalone",
+  "background_color": "#12121c",
+  "theme_color": "#5100cd"
+}

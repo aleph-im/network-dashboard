@@ -1,0 +1,17 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 80 64">
+  <defs>
+    <filter id="b1" x="-10%" y="-10%" width="120%" height="120%">
+      <feGaussianBlur stdDeviation="0.5"/>
+    </filter>
+    <filter id="b2" x="-10%" y="-10%" width="120%" height="120%">
+      <feGaussianBlur stdDeviation="1"/>
+    </filter>
+  </defs>
+  <rect width="80" height="64" rx="12" fill="#12121c"/>
+  <g transform="translate(0,0)">
+    <rect x="8" y="0" width="72" height="64" rx="44" ry="60" fill="#5100cd" opacity="0.4" filter="url(#b1)" />
+    <rect x="-4" y="4" width="84" height="68" rx="56" ry="44" fill="#5100cd" opacity="0.6" filter="url(#b1)" />
+    <rect x="0" y="0" width="80" height="64" rx="42" fill="#5100cd" opacity="0.9" />
+    <ellipse cx="40" cy="12" rx="16" ry="8" fill="white" opacity="0.2" filter="url(#b2)" />
+  </g>
+</svg>
