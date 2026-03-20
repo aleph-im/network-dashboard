@@ -1,4 +1,4 @@
-export type ChangeType = "feature" | "ui" | "infra" | "refactor";
+export type ChangeType = "feature" | "ui" | "fix" | "infra" | "refactor";
 
 export type ChangeEntry = {
   type: ChangeType;
@@ -37,6 +37,22 @@ export const CHANGELOG: VersionEntry[] = [
       {
         type: "ui",
         text: "Favicon and SEO images updated to DS Aleph Cloud logo mark",
+      },
+      {
+        type: "feature",
+        text: "Sortable Last Updated column on VMs table",
+      },
+      {
+        type: "ui",
+        text: "Overview activity cards (Top Nodes, Latest VMs) link to detail view instead of list page",
+      },
+      {
+        type: "fix",
+        text: "VM type filter: microvm → micro_vm to match API wire format",
+      },
+      {
+        type: "fix",
+        text: "Latest VMs card: limit api2 lookups to 100 candidates, show dash when no creation time",
       },
     ],
   },

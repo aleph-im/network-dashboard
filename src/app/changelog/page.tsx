@@ -8,16 +8,18 @@ import type { ChangeType } from "@/changelog";
 const TYPE_LABEL: Record<ChangeType, string> = {
   feature: "Feature",
   ui: "UI",
+  fix: "Fix",
   infra: "Infra",
   refactor: "Refactor",
 };
 
 const TYPE_VARIANT: Record<
   ChangeType,
-  "success" | "info" | "warning" | "default"
+  "success" | "info" | "warning" | "default" | "error"
 > = {
   feature: "success",
   ui: "info",
+  fix: "error",
   infra: "warning",
   refactor: "default",
 };
