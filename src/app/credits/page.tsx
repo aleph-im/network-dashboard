@@ -10,7 +10,6 @@ import { computeDistributionSummary } from "@/lib/credit-distribution";
 import { CreditSummaryBar } from "@/components/credit-summary-bar";
 import { CreditFlowDiagram } from "@/components/credit-flow-diagram";
 import { CreditRecipientTable } from "@/components/credit-recipient-table";
-import { formatAleph } from "@/lib/format";
 
 type Range = "24h" | "7d" | "30d";
 
@@ -18,12 +17,6 @@ const RANGE_SECONDS: Record<Range, number> = {
   "24h": 86400,
   "7d": 7 * 86400,
   "30d": 30 * 86400,
-};
-
-const RANGE_LABELS: Record<Range, string> = {
-  "24h": "in the last 24 hours",
-  "7d": "in the last 7 days",
-  "30d": "in the last 30 days",
 };
 
 function CreditsContent() {
@@ -82,26 +75,8 @@ function CreditsContent() {
         <CreditSummaryBar summary={summary} isLoading={isLoading} />
       </div>
 
-      {/* Total ALEPH counter */}
-      {!isLoading && summary && summary.totalAleph > 0 && (
-        <div className="mt-12 text-center">
-          <p className="text-[10px] font-semibold uppercase tracking-[0.2em] text-muted-foreground/60">
-            Total ALEPH Distributed
-          </p>
-          <p className="mt-2 font-heading text-5xl font-extrabold tracking-tight">
-            <span className="mr-1 text-3xl text-muted-foreground/50">ℵ</span>
-            <span className="font-mono tabular-nums">
-              {formatAleph(summary.totalAleph)}
-            </span>
-          </p>
-          <p className="mt-1 text-xs text-muted-foreground/50">
-            {RANGE_LABELS[range]}
-          </p>
-        </div>
-      )}
-
       {/* Flow diagram */}
-      <div className="mt-8">
+      <div className="mt-12">
         {isLoading ? (
           <Skeleton className="h-[420px] w-full rounded-lg" />
         ) : summary ? (
