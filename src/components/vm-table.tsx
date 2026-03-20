@@ -30,6 +30,7 @@ import {
   type VmAdvancedFilters,
 } from "@/lib/filters";
 import { VM_STATUS_VARIANT } from "@/lib/status-map";
+import { relativeTime } from "@/lib/format";
 import type { AlephMessageInfo, VM, VmStatus, VmType } from "@/api/types";
 
 const STATUS_PILLS: { value: VmStatus | undefined; label: string; tooltip?: string }[] = [
@@ -93,7 +94,7 @@ const PAYMENT_OPTIONS: {
 
 const VM_BASE_SEARCH_FIELDS = (v: VM) => [v.hash, v.allocatedNode];
 
-const COMPACT_HIDDEN_HEADERS = new Set(["Type", "Node"]);
+const COMPACT_HIDDEN_HEADERS = new Set(["Type", "Node", "Last Updated"]);
 
 function buildColumns(
   msgInfo: Map<string, AlephMessageInfo> | undefined,
@@ -200,6 +201,17 @@ function buildColumns(
     ),
     sortable: true,
     sortValue: (r) => r.requirements.memoryMb ?? 0,
+    align: "right",
+  },
+  {
+    header: "Last Updated",
+    accessor: (r) => (
+      <span className="whitespace-nowrap text-xs tabular-nums text-muted-foreground">
+        {relativeTime(r.updatedAt)}
+      </span>
+    ),
+    sortable: true,
+    sortValue: (r) => new Date(r.updatedAt).getTime(),
     align: "right",
   },
   ];
