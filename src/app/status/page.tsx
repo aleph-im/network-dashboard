@@ -5,7 +5,6 @@ import { Pulse } from "@phosphor-icons/react";
 import { Button } from "@aleph-front/ds/button";
 import { StatusDot } from "@aleph-front/ds/status-dot";
 import { Badge } from "@aleph-front/ds/badge";
-import { useOverviewStats } from "@/hooks/use-overview-stats";
 
 type EndpointResult = {
   path: string;
@@ -309,7 +308,6 @@ export default function StatusPage() {
   const [checking, setChecking] = useState(false);
   const [lastChecked, setLastChecked] = useState<Date | null>(null);
   const intervalRef = useRef<ReturnType<typeof setInterval>>(null);
-  const { data: stats, isLoading: statsLoading } = useOverviewStats();
 
   const runChecks = useCallback(async () => {
     setChecking(true);
@@ -466,6 +464,17 @@ export default function StatusPage() {
     allResolved && totalHealthy === totalEndpoints;
   const degradedCount = totalEndpoints - totalHealthy;
 
+  const resolvedLatencies = allResults
+    .filter((r) => r.latencyMs !== null)
+    .map((r) => r.latencyMs!);
+  const avgLatencyMs =
+    resolvedLatencies.length > 0
+      ? Math.round(
+          resolvedLatencies.reduce((a, b) => a + b, 0) /
+            resolvedLatencies.length,
+        )
+      : null;
+
   const statusBadgeVariant = !allResolved
     ? ("default" as const)
     : allHealthy
@@ -492,45 +501,37 @@ export default function StatusPage() {
         </p>
       </div>
 
-      {/* Quick stats */}
-      <div className="mb-8 flex flex-wrap gap-x-10 gap-y-4 border-y border-foreground/[0.04] py-5">
-        <div>
+      {/* Summary cards */}
+      <div className="mb-8 grid grid-cols-2 gap-4 sm:grid-cols-3">
+        <div className="stat-card border border-foreground/[0.06] bg-foreground/[0.03] p-6">
+          <p className="text-xs font-semibold uppercase tracking-widest text-muted-foreground/70">
+            Endpoints Healthy
+          </p>
           <p
-            className="font-heading font-mono text-2xl font-extrabold tabular-nums"
-            style={{ color: "var(--color-success-500)" }}
+            className="mt-3 font-heading font-mono text-4xl font-extrabold tabular-nums tracking-tight"
+            style={{ color: allHealthy ? "var(--color-success-500)" : "var(--color-error-400)" }}
           >
             {totalHealthy}/{totalEndpoints}
           </p>
-          <p className="mt-1 text-[10px] font-semibold uppercase tracking-widest text-muted-foreground/60">
-            Endpoints
+        </div>
+        <div className="stat-card border border-foreground/[0.06] bg-foreground/[0.03] p-6">
+          <p className="text-xs font-semibold uppercase tracking-widest text-muted-foreground/70">
+            Avg Latency
+          </p>
+          <p className="mt-3 font-heading font-mono text-4xl font-extrabold tabular-nums tracking-tight">
+            {avgLatencyMs !== null ? `${avgLatencyMs}` : "\u2026"}
+            <span className="ml-1 text-lg font-normal text-muted-foreground/60">ms</span>
           </p>
         </div>
-        {!statsLoading && stats?.totalNodes !== undefined && (
+        <div className="stat-card flex items-center justify-between border border-foreground/[0.06] bg-foreground/[0.03] p-6 sm:col-span-1 max-sm:col-span-2">
           <div>
-            <p className="font-heading font-mono text-2xl font-extrabold tabular-nums">
-              {stats.totalNodes.toLocaleString()}
+            <p className="text-xs font-semibold uppercase tracking-widest text-muted-foreground/70">
+              Last Checked
             </p>
-            <p className="mt-1 text-[10px] font-semibold uppercase tracking-widest text-muted-foreground/60">
-              Active Nodes
+            <p className="mt-3 font-mono text-sm tabular-nums text-muted-foreground">
+              {lastChecked ? lastChecked.toLocaleTimeString() : "\u2026"}
             </p>
           </div>
-        )}
-        {!statsLoading && stats?.totalVMs !== undefined && (
-          <div>
-            <p className="font-heading font-mono text-2xl font-extrabold tabular-nums">
-              {stats.totalVMs.toLocaleString()}
-            </p>
-            <p className="mt-1 text-[10px] font-semibold uppercase tracking-widest text-muted-foreground/60">
-              Running VMs
-            </p>
-          </div>
-        )}
-        <div className="ml-auto flex items-center gap-3">
-          {lastChecked && (
-            <span className="font-mono text-xs tabular-nums text-muted-foreground/60">
-              {lastChecked.toLocaleTimeString()}
-            </span>
-          )}
           <Button
             variant="text"
             size="xs"
