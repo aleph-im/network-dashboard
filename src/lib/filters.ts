@@ -130,7 +130,7 @@ export const VM_VCPUS_MAX = 32;
 export const VM_MEMORY_MB_MAX = 65536;
 
 const ALL_VM_TYPES: Set<VmType> = new Set([
-  "microvm",
+  "micro_vm",
   "persistent_program",
   "instance",
 ]);

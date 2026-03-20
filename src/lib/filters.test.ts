@@ -29,7 +29,7 @@ const makeNode = (overrides: Partial<Node> = {}): Node => ({
 
 const makeVm = (overrides: Partial<VM> = {}): VM => ({
   hash: "vm_hash_001",
-  type: "microvm",
+  type: "micro_vm",
   allocatedNode: null,
   observedNodes: [],
   status: "dispatched",
@@ -293,27 +293,27 @@ describe("applyNodeAdvancedFilters", () => {
 describe("applyVmAdvancedFilters", () => {
   it("filters by vmTypes", () => {
     const vms = [
-      makeVm({ type: "microvm" }),
+      makeVm({ type: "micro_vm" }),
       makeVm({ type: "persistent_program" }),
       makeVm({ type: "instance" }),
     ];
     const result = applyVmAdvancedFilters(vms, {
-      vmTypes: new Set(["microvm", "instance"]),
+      vmTypes: new Set(["micro_vm", "instance"]),
     });
     expect(result).toHaveLength(2);
   });
 
   it("does not filter when vmTypes includes all types", () => {
-    const vms = [makeVm({ type: "microvm" })];
+    const vms = [makeVm({ type: "micro_vm" })];
     const result = applyVmAdvancedFilters(vms, {
-      vmTypes: new Set(["microvm", "persistent_program", "instance"]),
+      vmTypes: new Set(["micro_vm", "persistent_program", "instance"]),
     });
     expect(result).toHaveLength(1);
   });
 
   it("shows all when vmTypes is empty set (none selected)", () => {
     const vms = [
-      makeVm({ type: "microvm" }),
+      makeVm({ type: "micro_vm" }),
       makeVm({ type: "persistent_program" }),
       makeVm({ type: "instance" }),
     ];

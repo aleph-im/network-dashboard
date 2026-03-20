@@ -66,7 +66,7 @@ export type VmStatus =
   | "unschedulable"
   | "unknown";
 
-export type VmType = "microvm" | "persistent_program" | "instance";
+export type VmType = "micro_vm" | "persistent_program" | "instance";
 
 export type VmRequirements = {
   vcpus: number | null;

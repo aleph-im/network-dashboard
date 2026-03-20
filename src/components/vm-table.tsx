@@ -47,7 +47,7 @@ const STATUS_PILLS: { value: VmStatus | undefined; label: string; tooltip?: stri
 ];
 
 const ALL_VM_TYPES: VmType[] = [
-  "microvm",
+  "micro_vm",
   "persistent_program",
   "instance",
 ];
@@ -59,7 +59,7 @@ const VM_TYPE_OPTIONS: {
   desc: string;
 }[] = [
   {
-    value: "microvm",
+    value: "micro_vm",
     label: "Micro VM",
     desc: "— short-lived functions",
   },
