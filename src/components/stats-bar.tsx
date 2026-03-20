@@ -127,7 +127,7 @@ function StatCard({
         <Skeleton className="mt-3 h-11 w-24" />
       ) : (
         <p
-          className="mt-3 font-heading font-mono text-4xl font-extrabold tabular-nums tracking-tight"
+          className="mt-3 font-heading text-4xl font-extrabold tabular-nums tracking-tight"
           {...(color ? { style: { color } } : {})}
         >
           {(value ?? 0).toLocaleString()}
