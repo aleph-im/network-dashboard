@@ -10,7 +10,6 @@ import { computeDistributionSummary } from "@/lib/credit-distribution";
 import { CreditSummaryBar } from "@/components/credit-summary-bar";
 import { CreditFlowDiagram } from "@/components/credit-flow-diagram";
 import { CreditRecipientTable } from "@/components/credit-recipient-table";
-import { CreditInsightsRow } from "@/components/credit-insights-row";
 
 type Range = "24h" | "7d" | "30d";
 
@@ -74,11 +73,6 @@ function CreditsContent() {
       {/* Summary cards */}
       <div className="mt-8">
         <CreditSummaryBar summary={summary} expenses={expenses} range={range} isLoading={isLoading} />
-      </div>
-
-      {/* Insights row */}
-      <div className="mt-4">
-        <CreditInsightsRow summary={summary} isLoading={isLoading} />
       </div>
 
       {/* Flow diagram */}

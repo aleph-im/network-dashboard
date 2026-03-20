@@ -15,6 +15,11 @@ Ideas and scope creep captured for later consideration.
 
 ## Open Items
 
+### 2026-03-20 - Credit insights row (credit price + network activity counts)
+**Source:** Credit data audit — prototyped and reviewed in dev, backlogged for now
+**Description:** A compact row below the summary cards showing Credit Price (ALEPH/credit rate), Unique Payers, Active VMs, and Active CRNs. Was implemented (`credit-insights-row.tsx`) and the data fields added to `DistributionSummary` (`uniquePayers`, `uniqueVms`, `uniqueCrns`, `creditPriceAleph`). Reverted before merge — revisit when the page has more breathing room or Jonathan wants it.
+**Priority:** Medium
+
 ### 2026-03-20 - Top VMs by Cost card on credits page
 **Source:** Credit data audit — `perVm` map is already computed but not rendered
 **Description:** A ranked card showing which VMs cost the most ALEPH in the selected period. Component was prototyped (`top-vms-cost-card.tsx`, follows `TopNodesCard` pattern with bar chart rows) but removed before merge — needs better placement decision (competes with recipient table for space). Data is ready in `DistributionSummary.perVm`.
