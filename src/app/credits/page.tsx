@@ -72,7 +72,7 @@ function CreditsContent() {
 
       {/* Summary cards */}
       <div className="mt-8">
-        <CreditSummaryBar summary={summary} isLoading={isLoading} />
+        <CreditSummaryBar summary={summary} expenses={expenses} range={range} isLoading={isLoading} />
       </div>
 
       {/* Flow diagram */}

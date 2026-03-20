@@ -220,6 +220,13 @@ src/
 **Key files:** `src/components/credit-flow-diagram.tsx`, `src/app/globals.css` (`flow-draw`, `fade-in` keyframes)
 **Notes:** `pathLength` is measured via `useRef` + `useEffect` for gradient stroke rendering. Particle count scales with flow thickness (`max(10, thickness * 2.5)`). Base animation duration is 4.5s+ (slow, organic feel). `bezierPoint()` evaluates the cubic bezier at arbitrary `t` for label placement.
 
+### Credit Revenue Sparkline
+
+**Context:** Jonathan requested a chart showing "evolution of total credits over time" inside the Total Revenue stat card on the credits page.
+**Approach:** Pure SVG sparkline (zero dependencies). `buildCumulativeSeries()` buckets the already-fetched `CreditExpense[]` into time intervals (hourly for 24h, 6-hourly for 7d, daily for 30d) and returns a cumulative `{t, value}[]` series. The `Sparkline` component renders a `<polyline>` stroke + `<polygon>` gradient fill. It bleeds to the card edges via negative margins (`-mx-6 -mb-6`). Gradient IDs use `useId()` with colon-stripping (SSR-safe, no `CSS.escape`). `preserveAspectRatio="none"` + `vectorEffect="non-scaling-stroke"` for fluid width with consistent stroke.
+**Key files:** `src/lib/sparkline-data.ts`, `src/components/sparkline.tsx`, `src/components/credit-summary-bar.tsx`
+**Notes:** Only the Total Revenue card gets the sparkline. Returns `null` for <2 data points. `aria-hidden="true"` since the chart is decorative.
+
 ### Sidebar Categories
 
 **Context:** With 5+ nav items, flat navigation list needed structure.

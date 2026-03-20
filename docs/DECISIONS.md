@@ -18,6 +18,12 @@ Each entry includes:
 
 ---
 
+## Decision #58 - 2026-03-20
+**Context:** Adding a "total credits over time" chart to the credits page. Needed to choose a charting approach.
+**Decision:** Pure SVG sparkline (`<polyline>` + `<polygon>` gradient fill) with zero dependencies. No charting library.
+**Rationale:** The chart is a tiny sparkline inside a stat card — only needs a polyline and a gradient fill. Recharts (~45KB gzipped) or @visx are overkill for this. A ~60-line SVG component gives full control over styling (bleed-to-edge layout, theme-aware CSS variables) with no bundle cost. The `Sparkline` component is reusable if we want sparklines on other cards later.
+**Alternatives considered:** Recharts (too heavy for one sparkline), @visx (modular but still more code/deps than needed), canvas (no SSR, worse accessibility)
+
 ## Decision #57 - 2026-03-20
 **Context:** Making the dashboard more appealing to prospective node operators and people evaluating Aleph Cloud vs competitors. Needed to decide between a signature brand color approach (like RunPod's purple or Cloudflare's orange) and a craft-quality approach (like Linear's precision and whitespace).
 **Decision:** "Premium through craft" — no signature hue. Three-tier typography (Rigid Square headings, Titillium Web body, Source Code Pro data), staggered card entrance animations, and a shared spring easing variable. Network Health page reframe of the API status page with glassmorphism stat cards and side-by-side endpoint sections. "Powered by Aleph Cloud" watermark on credits page. SEO images (OG, Twitter, Apple touch icon) with DS logo mark and Rigid Square font. Semantic colors (green/red/amber) stay pure for status — brand identity comes from craft quality and data visualization.

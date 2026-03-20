@@ -11,9 +11,19 @@ export type VersionEntry = {
   changes: ChangeEntry[];
 };
 
-export const CURRENT_VERSION = "0.7.0";
+export const CURRENT_VERSION = "0.8.0";
 
 export const CHANGELOG: VersionEntry[] = [
+  {
+    version: "0.8.0",
+    date: "2026-03-20",
+    changes: [
+      {
+        type: "feature",
+        text: "Cumulative revenue sparkline in the Total Revenue card on the credits page",
+      },
+    ],
+  },
   {
     version: "0.7.0",
     date: "2026-03-20",
