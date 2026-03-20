@@ -29,6 +29,7 @@ export type ActivityItem = {
   chain: string;
   sender: string;
   time: number;
+  paymentType: string | null;
   schedulerStatus: VM["status"] | null;
   explorerUrl: string;
 };
@@ -129,6 +130,7 @@ export function useWalletActivity(address: string) {
             chain: msg.chain,
             sender: msg.sender,
             time: msg.time,
+            paymentType: msg.content?.payment?.type ?? null,
             schedulerStatus: scheduled?.status ?? null,
             explorerUrl: `https://explorer.aleph.cloud/address/${msg.chain}/${msg.sender}/message/${msg.type}/${msg.item_hash}`,
           };

@@ -231,6 +231,9 @@ export type AlephMessage = {
     metadata?: {
       name?: string;
     };
+    payment?: {
+      type?: string;
+    };
   };
 };
 
