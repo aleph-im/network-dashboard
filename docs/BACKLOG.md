@@ -25,6 +25,16 @@ Ideas and scope creep captured for later consideration.
 **Description:** A ranked card showing which VMs cost the most ALEPH in the selected period. Component was prototyped (`top-vms-cost-card.tsx`, follows `TopNodesCard` pattern with bar chart rows) but removed before merge — needs better placement decision (competes with recipient table for space). Data is ready in `DistributionSummary.perVm`.
 **Priority:** Medium
 
+### 2026-03-20 - CCN→CRN topology view
+**Source:** Data audit — corechannel aggregate has `resource_nodes[]` (CCN→CRN children) and CRN `parent` field
+**Description:** Network topology showing which CRNs belong to which CCN. Data is already fetched via `getNodeState()` but parent-child relationships are dropped during parsing. Could be a tree view, network graph, or hierarchical table on the nodes page.
+**Priority:** Medium
+
+### 2026-03-20 - Per-staker breakdown per CCN
+**Source:** Data audit — `ccn.stakers` map has individual staker addresses and amounts
+**Description:** Currently staker data is aggregated into a single pool for credit distribution. Could show per-CCN staker lists with individual amounts — a staker leaderboard or drill-down on CCN detail views. Data available in `NodeState.ccns[].stakers`.
+**Priority:** Medium
+
 ### 2026-03-20 - Sparkline hover tooltip
 **Source:** Credit sparkline implementation
 **Description:** Add a tooltip on sparkline hover showing the exact ALEPH value and timestamp at the cursor position. Would require tracking mouse position relative to the SVG and mapping x-coordinate back to the data series.
