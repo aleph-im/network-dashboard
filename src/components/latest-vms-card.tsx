@@ -13,9 +13,21 @@ import { VM_STATUS_VARIANT } from "@/lib/status-map";
 
 const MAX_ROWS = 15;
 
+const CANDIDATE_POOL = 100;
+
 export function LatestVMsCard() {
   const { data: vms, isLoading } = useVMs();
-  const hashes = (vms ?? []).map((v) => v.hash);
+
+  // Pre-sort by updatedAt and take a candidate pool to avoid
+  // looking up all 6000+ VM hashes on api2
+  const candidates = [...(vms ?? [])]
+    .sort(
+      (a, b) =>
+        new Date(b.updatedAt).getTime() -
+        new Date(a.updatedAt).getTime(),
+    )
+    .slice(0, CANDIDATE_POOL);
+  const hashes = candidates.map((v) => v.hash);
   const { data: messageInfo } = useVMMessageInfo(hashes);
 
   if (isLoading) {
@@ -34,9 +46,7 @@ export function LatestVMsCard() {
     );
   }
 
-  const allVMs = vms ?? [];
-
-  if (allVMs.length === 0) {
+  if (candidates.length === 0) {
     return (
       <Card padding="lg" className="flex-1">
         <CardHeader
@@ -48,7 +58,8 @@ export function LatestVMsCard() {
     );
   }
 
-  const sorted = [...allVMs]
+  // Re-sort candidates by creation time (from api2) when available
+  const sorted = [...candidates]
     .sort((a, b) => {
       const timeA = messageInfo?.get(a.hash)?.time;
       const timeB = messageInfo?.get(b.hash)?.time;
