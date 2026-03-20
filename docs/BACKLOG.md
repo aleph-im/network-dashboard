@@ -15,10 +15,10 @@ Ideas and scope creep captured for later consideration.
 
 ## Open Items
 
-### 2026-03-20 - Sparklines on other credit stat cards
-**Source:** Credit sparkline implementation
-**Description:** Currently only the Total Revenue card has a sparkline. Could add sparklines to Storage, Execution, and Dev Fund cards showing their individual trends. The `Sparkline` component and `buildCumulativeSeries` function already support this — just need to filter expenses by type before bucketing.
-**Priority:** Low
+### 2026-03-20 - Top VMs by Cost card on credits page
+**Source:** Credit data audit — `perVm` map is already computed but not rendered
+**Description:** A ranked card showing which VMs cost the most ALEPH in the selected period. Component was prototyped (`top-vms-cost-card.tsx`, follows `TopNodesCard` pattern with bar chart rows) but removed before merge — needs better placement decision (competes with recipient table for space). Data is ready in `DistributionSummary.perVm`.
+**Priority:** Medium
 
 ### 2026-03-20 - Sparkline hover tooltip
 **Source:** Credit sparkline implementation
