@@ -42,7 +42,11 @@ export function SlotRollNumber({
   prefix,
   decimalClassName,
 }: SlotRollNumberProps) {
-  const digits = useSlotRoll(value, { decimals, formatted, duration });
+  const digits = useSlotRoll(value, {
+    decimals,
+    formatted,
+    ...(duration !== undefined ? { duration } : {}),
+  });
   const dotIndex = digits.findIndex((d) => d.char === ".");
 
   return (

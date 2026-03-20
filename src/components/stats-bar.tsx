@@ -10,6 +10,7 @@ import {
   TooltipContent,
 } from "@aleph-front/ds/tooltip";
 import { useOverviewStats } from "@/hooks/use-overview-stats";
+import { SlotRollNumber } from "@/components/slot-roll-number";
 
 type StatProps = {
   label: string;
@@ -127,10 +128,10 @@ function StatCard({
         <Skeleton className="mt-3 h-11 w-24" />
       ) : (
         <p
-          className="mt-3 font-heading text-4xl font-extrabold tabular-nums tracking-tight"
+          className="mt-3 font-heading font-mono text-4xl font-extrabold tabular-nums tracking-tight"
           {...(color ? { style: { color } } : {})}
         >
-          {value ?? 0}
+          <SlotRollNumber value={value ?? 0} formatted />
         </p>
       )}
       <p className="mt-auto pt-2 text-xs leading-relaxed text-muted-foreground/60">
@@ -140,19 +141,34 @@ function StatCard({
   );
 }
 
-function Stat(props: StatProps) {
-  const { href, className, ...cardProps } = props;
+function Stat(props: StatProps & { index?: number }) {
+  const { href, className, index = 0, ...cardProps } = props;
+
+  const entranceStyle: React.CSSProperties = {
+    animationName: "card-entrance",
+    animationDuration: "400ms",
+    animationTimingFunction: "var(--ease-spring)",
+    animationFillMode: "both",
+    animationDelay: `${index * 60}ms`,
+  };
 
   return (
     <TooltipProvider>
       <Tooltip>
         <TooltipTrigger asChild>
           {href ? (
-            <Link href={href} className={`block ${className ?? ""}`}>
+            <Link
+              href={href}
+              className={`card-entrance block ${className ?? ""}`}
+              style={entranceStyle}
+            >
               <StatCard {...cardProps} />
             </Link>
           ) : (
-            <div className={className}>
+            <div
+              className={`card-entrance ${className ?? ""}`}
+              style={entranceStyle}
+            >
               <StatCard {...cardProps} />
             </div>
           )}
@@ -219,6 +235,7 @@ export function StatsBar() {
         subtitle="Compute nodes registered with the scheduler"
         isLoading={isLoading}
         href="/nodes"
+        index={0}
       />
       <Stat
         label="Healthy"
@@ -230,6 +247,7 @@ export function StatsBar() {
         tint="var(--color-success-500)"
         icon={iconCheck}
         href="/nodes?status=healthy"
+        index={1}
       />
 
       {/* VMs (cols 3-4) — first row */}
@@ -244,6 +262,7 @@ export function StatsBar() {
         isLoading={isLoading}
         href="/vms"
         className="lg:pl-4"
+        index={2}
       />
       <Stat
         label="Dispatched"
@@ -253,6 +272,7 @@ export function StatsBar() {
         isLoading={isLoading}
         icon={iconCheck}
         href="/vms?status=dispatched"
+        index={3}
         {...(hasDispatched
           ? {
               color: "var(--color-success-500)",
@@ -270,6 +290,7 @@ export function StatsBar() {
         isLoading={isLoading}
         icon={iconWifiSlash}
         href="/nodes?status=unreachable"
+        index={4}
         {...(hasUnreachable
           ? {
               color: "var(--color-error-400)",
@@ -285,6 +306,7 @@ export function StatsBar() {
         isLoading={isLoading}
         icon={iconTrash}
         href="/nodes?status=removed"
+        index={5}
         {...(hasRemoved
           ? {
               color: "var(--color-muted-foreground)",
@@ -303,6 +325,7 @@ export function StatsBar() {
         icon={iconWarning}
         href="/vms?status=missing"
         className="lg:pl-4"
+        index={6}
         {...(hasMissing
           ? {
               color: "var(--color-error-400)",
@@ -318,6 +341,7 @@ export function StatsBar() {
         isLoading={isLoading}
         icon={iconProhibit}
         href="/vms?status=unschedulable"
+        index={7}
         {...(hasUnschedulable
           ? {
               color: "var(--color-warning-400)",
