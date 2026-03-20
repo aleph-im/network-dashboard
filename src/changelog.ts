@@ -20,23 +20,23 @@ export const CHANGELOG: VersionEntry[] = [
     changes: [
       {
         type: "ui",
-        text: "Three-tier typography: Source Code Pro for hashes, timestamps, and numbers",
-      },
-      {
-        type: "ui",
-        text: "Billboard slot-roll animation on overview stat card numbers and credits total",
-      },
-      {
-        type: "ui",
-        text: "Staggered card entrance animations on overview page",
+        text: "Three-tier typography: Source Code Pro for technical data, staggered card entrance on overview",
       },
       {
         type: "feature",
-        text: "Network Health page: hero status banner, quick stats bar, streamlined endpoint sections",
+        text: "Network Health page: status badge, glassmorphism stat cards, side-by-side endpoint sections",
       },
       {
         type: "ui",
-        text: "Credits page: total ALEPH distributed counter with ℵ prefix, powered-by watermark",
+        text: "Page titles added to Nodes, VMs, and Network Health pages",
+      },
+      {
+        type: "ui",
+        text: "Credits page: powered-by Aleph Cloud watermark below flow diagram",
+      },
+      {
+        type: "ui",
+        text: "Favicon and SEO images updated to DS Aleph Cloud logo mark",
       },
     ],
   },
