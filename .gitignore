@@ -6,6 +6,8 @@
 # env
 # os
 # playwright
+# preview
+.previews.json
 # pnpm
 # superpowers
 # template
