@@ -15,6 +15,11 @@ Ideas and scope creep captured for later consideration.
 
 ## Open Items
 
+### 2026-03-21 - CI preview deploys to IPFS per branch
+**Source:** Multi-branch preview brainstorming
+**Description:** Add a GitHub Actions workflow that builds and deploys each feature branch to IPFS on push, then posts the preview URL (`https://<cid>.ipfs.aleph.sh/`) as a PR comment or commit status. Enables comparing multiple in-flight features via sharable URLs before deciding which to merge. Reuses existing `deploy.yml` patterns (pnpm build → aleph-client upload). Each branch gets its own content-addressed CID.
+**Priority:** Medium
+
 ### 2026-03-20 - Credit insights row (credit price + network activity counts)
 **Source:** Credit data audit — prototyped and reviewed in dev, backlogged for now
 **Description:** A compact row below the summary cards showing Credit Price (ALEPH/credit rate), Unique Payers, Active VMs, and Active CRNs. Was implemented (`credit-insights-row.tsx`) and the data fields added to `DistributionSummary` (`uniquePayers`, `uniqueVms`, `uniqueCrns`, `creditPriceAleph`). Reverted before merge — revisit when the page has more breathing room or Jonathan wants it.
