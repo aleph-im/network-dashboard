@@ -48,6 +48,9 @@ jobs:
         run: |
           python3 scripts/deploy-ipfs.py out/
         env:
+          # Stream logs live in CI — Python block-buffers stdout by default,
+          # which makes mid-run hangs opaque (prints flush only on exit).
+          PYTHONUNBUFFERED: "1"
           ALEPH_PRIVATE_KEY: ${{ secrets.ALEPH_PRIVATE_KEY }}
           ALEPH_OWNER_ADDRESS: "0xB136a85c95a0ea573793AB9739c7dF8682B87fCa"
           ALEPH_WEBSITE_NAME: "scheduler-dashboard"
