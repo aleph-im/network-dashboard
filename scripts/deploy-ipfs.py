@@ -79,10 +79,14 @@ def upload_directory_to_ipfs(directory: Path) -> str:
     )
     resp.raise_for_status()
 
-    # The wrapping directory is the second-to-last entry in the streamed
-    # response (last is the wrapper's parent — same hash).
+    # We upload with flat paths (relative to `directory`), so the gateway
+    # produces one wrapper directory containing all files. That wrapper is
+    # the LAST entry in the streamed response. (aleph-cloud-app uses
+    # `lines[-2]` because they prefix paths with `out/`, putting the
+    # served root one level deeper inside an extra wrapper — different
+    # tree shape, different index.)
     lines = resp.text.strip().splitlines()
-    cid = json.loads(lines[-2]).get("Hash") if len(lines) >= 2 else None
+    cid = json.loads(lines[-1]).get("Hash") if lines else None
 
     if not cid:
         print("ERROR: No CID found in IPFS gateway response")
