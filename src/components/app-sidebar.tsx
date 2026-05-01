@@ -3,10 +3,16 @@
 import { useCallback, useEffect, useRef, useState } from "react";
 import Link from "next/link";
 import { usePathname } from "next/navigation";
+import { useQueryClient } from "@tanstack/react-query";
 import { LogoFull } from "@aleph-front/ds/logo";
 import { StatusDot } from "@aleph-front/ds/status-dot";
 import { useHealth } from "@/hooks/use-health";
 import { CURRENT_VERSION } from "@/changelog";
+import { getCreditExpenses, getNodeState } from "@/api/client";
+import {
+  RANGE_SECONDS,
+  getStableExpenseRange,
+} from "@/hooks/use-credit-expenses";
 
 type NavItem = {
   label: string;
@@ -269,9 +275,11 @@ type AppSidebarProps = {
 
 export function AppSidebar({ open, onClose }: AppSidebarProps) {
   const pathname = usePathname();
+  const queryClient = useQueryClient();
   const { data: healthy, isLoading: healthLoading } = useHealth();
   const healthStatus = healthLoading ? "unknown" as const : healthy ? "healthy" as const : "error" as const;
   const prevPathname = useRef(pathname);
+  const creditsPrefetchedRef = useRef(false);
 
   useEffect(() => {
     if (prevPathname.current !== pathname) {
@@ -284,6 +292,24 @@ export function AppSidebar({ open, onClose }: AppSidebarProps) {
     if (href === "/") return pathname === "/";
     return pathname.startsWith(href);
   }
+
+  // Warm the credits query cache when the user signals intent to navigate.
+  // Once per mount — repeated hovers don't refire.
+  const prefetchCredits = useCallback(() => {
+    if (creditsPrefetchedRef.current) return;
+    creditsPrefetchedRef.current = true;
+    const { start, end } = getStableExpenseRange(RANGE_SECONDS["7d"]);
+    void queryClient.prefetchQuery({
+      queryKey: ["credit-expenses", start, end],
+      queryFn: () => getCreditExpenses(start, end),
+      staleTime: 5 * 60_000,
+    });
+    void queryClient.prefetchQuery({
+      queryKey: ["node-state"],
+      queryFn: () => getNodeState(),
+      staleTime: 60_000,
+    });
+  }, [queryClient]);
 
   return (
     <>
@@ -316,24 +342,34 @@ export function AppSidebar({ open, onClose }: AppSidebarProps) {
                 {section.title}
               </p>
               <ul className="space-y-1">
-                {section.items.map((item) => (
-                  <li key={item.href}>
-                    <Link
-                      href={item.href}
-                      className={`flex items-center gap-2.5 rounded-lg px-3 py-2 text-sm transition-colors ${
-                        isActive(item.href)
-                          ? "bg-primary-600/10 text-primary-400 font-medium"
-                          : "text-muted-foreground hover:text-foreground hover:bg-muted"
-                      }`}
-                      style={{
-                        transitionDuration: "var(--duration-fast)",
-                      }}
-                    >
-                      <NavIcon name={item.icon} />
-                      {item.label}
-                    </Link>
-                  </li>
-                ))}
+                {section.items.map((item) => {
+                  const prefetchProps =
+                    item.href === "/credits"
+                      ? {
+                          onMouseEnter: prefetchCredits,
+                          onFocus: prefetchCredits,
+                        }
+                      : {};
+                  return (
+                    <li key={item.href}>
+                      <Link
+                        href={item.href}
+                        {...prefetchProps}
+                        className={`flex items-center gap-2.5 rounded-lg px-3 py-2 text-sm transition-colors ${
+                          isActive(item.href)
+                            ? "bg-primary-600/10 text-primary-400 font-medium"
+                            : "text-muted-foreground hover:text-foreground hover:bg-muted"
+                        }`}
+                        style={{
+                          transitionDuration: "var(--duration-fast)",
+                        }}
+                      >
+                        <NavIcon name={item.icon} />
+                        {item.label}
+                      </Link>
+                    </li>
+                  );
+                })}
               </ul>
             </div>
           ))}

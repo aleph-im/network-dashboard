@@ -303,14 +303,135 @@ function AnimatedFlow({
   );
 }
 
+// ── Placeholder ────────────────────────────────
+
+function CreditFlowPlaceholder() {
+  const storY = 100;
+  const execY = 320;
+  const crnY = 70;
+  const ccnY = 170;
+  const stakerY = 270;
+  const devY = 370;
+  const srcRight = SRC_X + BOX_W;
+  const destLeft = DEST_X - BOX_W;
+  const grey = "var(--color-muted-foreground)";
+
+  const flows: Array<{ fromY: number; toY: number }> = [
+    { fromY: storY, toY: ccnY },
+    { fromY: storY, toY: stakerY },
+    { fromY: storY, toY: devY },
+    { fromY: execY, toY: crnY },
+    { fromY: execY, toY: ccnY },
+    { fromY: execY, toY: stakerY },
+    { fromY: execY, toY: devY },
+  ];
+
+  return (
+    <Card className="overflow-x-auto p-4">
+      <svg
+        viewBox={`0 0 ${W} ${H}`}
+        className="mx-auto w-full max-w-[900px] animate-pulse"
+        style={{ minWidth: 600 }}
+        aria-hidden="true"
+      >
+        {/* Static thin connectors */}
+        {flows.map((f, i) => (
+          <path
+            key={i}
+            d={bezierPath(srcRight, f.fromY, destLeft, f.toY)}
+            fill="none"
+            stroke={grey}
+            strokeOpacity={0.15}
+            strokeWidth={1.5}
+            strokeLinecap="round"
+          />
+        ))}
+
+        {/* Source boxes */}
+        <PlaceholderBox x={SRC_X} y={storY} label="Storage" color={grey} />
+        <PlaceholderBox x={SRC_X} y={execY} label="Execution" color={grey} />
+
+        {/* Destination boxes */}
+        <PlaceholderBox x={DEST_X} y={crnY} label="CRN Nodes" color={grey} align="right" />
+        <PlaceholderBox x={DEST_X} y={ccnY} label="CCN Nodes" color={grey} align="right" />
+        <PlaceholderBox x={DEST_X} y={stakerY} label="Stakers" color={grey} align="right" />
+        <PlaceholderBox x={DEST_X} y={devY} label="Dev Fund" color={grey} align="right" />
+      </svg>
+    </Card>
+  );
+}
+
+function PlaceholderBox({
+  x,
+  y,
+  label,
+  color,
+  align = "left",
+}: {
+  x: number;
+  y: number;
+  label: string;
+  color: string;
+  align?: "left" | "right";
+}) {
+  const rx = align === "right" ? x - BOX_W : x;
+  return (
+    <g>
+      {align === "left" && (
+        <rect
+          x={rx}
+          y={y - BOX_H / 2 + 6}
+          width={3}
+          height={BOX_H - 12}
+          rx={1.5}
+          fill={color}
+          opacity={0.3}
+        />
+      )}
+      <rect
+        x={rx}
+        y={y - BOX_H / 2}
+        width={BOX_W}
+        height={BOX_H}
+        rx={8}
+        fill="var(--color-surface)"
+        stroke={color}
+        strokeWidth={1.5}
+        strokeOpacity={0.2}
+      />
+      <text
+        x={rx + BOX_W / 2}
+        y={y - 6}
+        textAnchor="middle"
+        className="fill-muted-foreground/60 text-[10px] font-semibold uppercase tracking-widest"
+      >
+        {label}
+      </text>
+      <text
+        x={rx + BOX_W / 2}
+        y={y + 14}
+        textAnchor="middle"
+        className="text-[13px] font-bold tabular-nums"
+        fill={color}
+        fillOpacity={0.4}
+      >
+        —
+      </text>
+    </g>
+  );
+}
+
 // ── Main ───────────────────────────────────────
 
 type Props = {
-  summary: DistributionSummary;
+  summary: DistributionSummary | undefined;
 };
 
 export function CreditFlowDiagram({ summary }: Props) {
-  const { storageAleph, executionAleph, totalAleph } = summary;
+  const isLoading = summary === undefined;
+  const storageAleph = summary?.storageAleph ?? 0;
+  const executionAleph = summary?.executionAleph ?? 0;
+  const totalAleph = summary?.totalAleph ?? 0;
   const [hoveredIdx, setHoveredIdx] = useState<number | null>(null);
 
   const handleHover = useCallback(
@@ -318,12 +439,16 @@ export function CreditFlowDiagram({ summary }: Props) {
     [],
   );
 
-  if (totalAleph === 0) {
+  if (!isLoading && totalAleph === 0) {
     return (
       <Card className="flex h-48 items-center justify-center text-muted-foreground/50">
         No credit expenses in this period
       </Card>
     );
+  }
+
+  if (isLoading) {
+    return <CreditFlowPlaceholder />;
   }
 
   // Source positions (left)

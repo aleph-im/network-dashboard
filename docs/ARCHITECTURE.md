@@ -230,9 +230,27 @@ Dashboard on `http://localhost:3000` lists all active previews with links. State
 ### Credit Distribution — Shared 24h Cache
 
 **Context:** The Credits page and Wallet page both need credit expense data. The Wallet page shows per-node, per-role reward breakdowns for a specific address.
-**Approach:** `useCreditExpenses(start, end)` is the shared React Query hook. `useWalletRewards(address)` computes stable 24h timestamps (rounded to 5-minute intervals) so the query key stays consistent across mounts and page navigations — React Query deduplicates and caches the fetch. `computeWalletRewards()` takes an address, the raw expenses, and node state, then derives per-node CRN/CCN earnings and total staker earnings by replaying the distribution logic scoped to that address's owned nodes and stake.
-**Key files:** `src/hooks/use-wallet-rewards.ts`, `src/lib/credit-distribution.ts` (`computeWalletRewards`), `src/hooks/use-credit-expenses.ts`, `src/api/credit-types.ts` (`WalletRewards`, `WalletNodeReward`)
+**Approach:** `useCreditExpenses(start, end)` is the shared React Query hook. Both pages compute stable timestamps via the shared `getStableExpenseRange(seconds)` helper (rounds to 5-minute intervals) so the query key stays consistent across mounts, page navigations, and the persisted cache. `RANGE_SECONDS` exports the canonical 24h/7d/30d window lengths. `computeWalletRewards()` takes an address, the raw expenses, and node state, then derives per-node CRN/CCN earnings and total staker earnings by replaying the distribution logic scoped to that address's owned nodes and stake.
+**Key files:** `src/hooks/use-credit-expenses.ts` (hook + `getStableExpenseRange` + `RANGE_SECONDS`), `src/hooks/use-wallet-rewards.ts`, `src/lib/credit-distribution.ts` (`computeWalletRewards`), `src/api/credit-types.ts` (`WalletRewards`, `WalletNodeReward`)
 **Notes:** CRN rewards are computed per credit entry (each has a `nodeId`). CCN rewards use score-weighted pool shares. Staker rewards use stake-weighted pool shares. Node state weights are precomputed once (stable across expense messages). The wallet page renders a "Credit Rewards (24h)" card with Node/Role/ALEPH columns.
+
+### Persisted Query Cache + Prefetch
+
+**Context:** The credit-expenses query against api2 takes ~20s on a throttled connection — every visit to `/credits` blocked on it. The wallet page hits the same endpoint for 24h windows.
+**Approach:** `PersistQueryClientProvider` (from `@tanstack/react-query-persist-client`) wraps the app with a localStorage-backed persister (`@tanstack/query-sync-storage-persister`). `dehydrateOptions.shouldDehydrateQuery` whitelists only the `credit-expenses` query-key prefix — fast-polling queries (nodes, vms, health) and queries containing non-JSON-serializable values stay in-memory only. `maxAge: 24h`, `buster: CURRENT_VERSION` so a version bump invalidates persisted entries. Stable 5-minute-rounded timestamps mean cache keys collide across mounts. `useCreditExpenses` uses `placeholderData: keepPreviousData` so range-tab switches keep the previous range's numbers visible while the new query fetches. The Credits sidebar link calls `queryClient.prefetchQuery` for 7d expenses + node-state on `onMouseEnter`/`onFocus` (once per mount, guarded by a ref) so the in-memory cache is warm by the time the user clicks.
+**Key files:** `src/app/providers.tsx`, `src/hooks/use-credit-expenses.ts`, `src/components/app-sidebar.tsx`
+**Notes:** Persister storage is `undefined` during SSR/static-export build (the package supports this). The localStorage key is `scheduler-dashboard-rq`. The `buster` field on `persistOptions` is the React Query mechanism for cache invalidation across deploys — pinning to `CURRENT_VERSION` from `changelog.ts` ties cache lifetime to released versions.
+
+**Two non-obvious rules for persisted queries (both enforced in `shouldDehydrateQuery`):**
+
+1. **Only persist `status === "success"` queries.** React Query's `dehydrateQuery` includes the `promise` field for pending queries; `JSON.stringify` silently turns Promise objects into `{}`, and on rehydration the `placeholderData: keepPreviousData` path can deliver that empty object as `data`. The result: `data` is a non-array, non-empty object that bypasses `if (!data || data.length === 0)` checks and crashes downstream code. Persisting only success-state queries dodges this entirely.
+2. **Never persist queries whose data contains `Map`, `Set`, `Date`, or `BigInt`.** They don't survive `JSON.stringify`/`JSON.parse` — Maps roundtrip as `{}` (losing entries and methods), Dates become strings, BigInt throws. `node-state` is the canonical example: its `ccns`/`crns` are Maps, so it's deliberately excluded from persistence.
+
+### Credit Flow Diagram — Loading Placeholder
+
+**Context:** While `useCreditExpenses` was in-flight the credits page showed a single grey skeleton block where the flow diagram would appear, leaving the page feeling empty during the slow api2 fetch.
+**Approach:** `CreditFlowDiagram` accepts `summary: DistributionSummary | undefined`. When undefined, it renders `CreditFlowPlaceholder` — the same SVG layout (source/destination box positions, bezier connector paths) but with `var(--color-muted-foreground)` colors at low opacity, em-dash values instead of ALEPH amounts, no animated particles or gradients, and a subtle `animate-pulse` on the SVG. Boxes use the same `BOX_W`/`BOX_H` constants and Y coordinates as the live diagram so there's no visual jump when data arrives.
+**Key files:** `src/components/credit-flow-diagram.tsx` (`CreditFlowPlaceholder`, `PlaceholderBox`)
 
 ### Credit Flow Diagram — Particle Animation
 

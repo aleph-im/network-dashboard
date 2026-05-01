@@ -81,7 +81,7 @@ type Props = {
 
 export function CreditSummaryBar({ summary, expenses, range, isLoading }: Props) {
   const sparklineData = useMemo(() => {
-    if (!expenses || expenses.length === 0) return undefined;
+    if (!Array.isArray(expenses) || expenses.length === 0) return undefined;
     return buildCumulativeSeries(expenses, BUCKET_SECONDS[range]);
   }, [expenses, range]);
 

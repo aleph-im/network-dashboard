@@ -15,6 +15,16 @@ Ideas and scope creep captured for later consideration.
 
 ## Open Items
 
+### 2026-05-01 - Pre-aggregated credit totals from backend
+**Source:** Credit page slow-load research (Decision #60)
+**Description:** Ask Olivier to publish a small Aleph AGGREGATE message (or expose a precomputed endpoint) with daily/hourly credit totals + per-recipient breakdowns. Page fetches a tiny doc instead of paging through ~1440 `aleph_credit_expense` messages. Would replace the current ~20s api2 fetch with a single small request. Best long-term solution; persisted cache + prefetch + placeholder are interim wins.
+**Priority:** Medium
+
+### 2026-05-01 - Default credits range to 24h instead of 7d
+**Source:** Credit page slow-load research (Decision #60)
+**Description:** 24h windows have ~7× fewer messages than 7d (≈50 vs ≈340), giving fast first paint on a cold cache. Defaulting to 24h would make the page feel snappy on cold loads while keeping 7d/30d as explicit user actions. UX tradeoff — the wider window currently shows more interesting trends. Worth A/Bing or asking Jonathan.
+**Priority:** Low
+
 ### 2026-03-21 - CI preview deploys to IPFS per branch
 **Source:** Multi-branch preview brainstorming
 **Description:** Add a GitHub Actions workflow that builds and deploys each feature branch to IPFS on push, then posts the preview URL (`https://<cid>.ipfs.aleph.sh/`) as a PR comment or commit status. Enables comparing multiple in-flight features via sharable URLs before deciding which to merge. Reuses existing `deploy.yml` patterns (pnpm build → aleph-client upload). Each branch gets its own content-addressed CID.

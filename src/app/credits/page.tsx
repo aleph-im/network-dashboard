@@ -1,36 +1,34 @@
 "use client";
 
-import { Suspense, useMemo, useState } from "react";
+import { Suspense, useMemo } from "react";
 import { useSearchParams, useRouter } from "next/navigation";
 import { Tabs, TabsList, TabsTrigger } from "@aleph-front/ds/tabs";
 import { Skeleton } from "@aleph-front/ds/ui/skeleton";
-import { useCreditExpenses } from "@/hooks/use-credit-expenses";
+import {
+  useCreditExpenses,
+  RANGE_SECONDS,
+  getStableExpenseRange,
+  type CreditRange,
+} from "@/hooks/use-credit-expenses";
 import { useNodeState } from "@/hooks/use-node-state";
 import { computeDistributionSummary } from "@/lib/credit-distribution";
 import { CreditSummaryBar } from "@/components/credit-summary-bar";
 import { CreditFlowDiagram } from "@/components/credit-flow-diagram";
 import { CreditRecipientTable } from "@/components/credit-recipient-table";
 
-type Range = "24h" | "7d" | "30d";
-
-const RANGE_SECONDS: Record<Range, number> = {
-  "24h": 86400,
-  "7d": 7 * 86400,
-  "30d": 30 * 86400,
-};
-
 function CreditsContent() {
   const searchParams = useSearchParams();
   const router = useRouter();
-  const range = (searchParams.get("range") as Range) ?? "7d";
+  const range = (searchParams.get("range") as CreditRange) ?? "7d";
 
-  // Stable timestamps — only recompute when range changes, not every render
-  const [endDate] = useState(() => Math.floor(Date.now() / 1000));
-  const startDate = endDate - (RANGE_SECONDS[range] ?? RANGE_SECONDS["7d"]);
+  const { start, end } = useMemo(
+    () => getStableExpenseRange(RANGE_SECONDS[range] ?? RANGE_SECONDS["7d"]),
+    [range],
+  );
 
   const { data: expenses, isLoading: expensesLoading } = useCreditExpenses(
-    startDate,
-    endDate,
+    start,
+    end,
   );
   const { data: nodeState, isLoading: nodeStateLoading } = useNodeState();
 
@@ -41,7 +39,7 @@ function CreditsContent() {
     return computeDistributionSummary(expenses, nodeState);
   }, [expenses, nodeState]);
 
-  function setRange(r: Range) {
+  function setRange(r: CreditRange) {
     const params = new URLSearchParams(searchParams.toString());
     params.set("range", r);
     router.replace(`/credits?${params.toString()}`);
@@ -60,7 +58,7 @@ function CreditsContent() {
       </div>
 
       {/* Date range tabs */}
-      <Tabs value={range} onValueChange={(v) => setRange(v as Range)}>
+      <Tabs value={range} onValueChange={(v) => setRange(v as CreditRange)}>
         <TabsList variant="pill" size="sm">
           {(["24h", "7d", "30d"] as const).map((r) => (
             <TabsTrigger key={r} value={r}>
@@ -75,13 +73,9 @@ function CreditsContent() {
         <CreditSummaryBar summary={summary} expenses={expenses} range={range} isLoading={isLoading} />
       </div>
 
-      {/* Flow diagram */}
+      {/* Flow diagram — renders a greyed structure while data loads */}
       <div className="mt-12">
-        {isLoading ? (
-          <Skeleton className="h-[420px] w-full rounded-lg" />
-        ) : summary ? (
-          <CreditFlowDiagram summary={summary} />
-        ) : null}
+        <CreditFlowDiagram summary={summary} />
       </div>
 
       {/* Watermark */}

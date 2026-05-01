@@ -11,9 +11,29 @@ export type VersionEntry = {
   changes: ChangeEntry[];
 };
 
-export const CURRENT_VERSION = "0.8.0";
+export const CURRENT_VERSION = "0.8.2";
 
 export const CHANGELOG: VersionEntry[] = [
+  {
+    version: "0.8.2",
+    date: "2026-05-01",
+    changes: [
+      {
+        type: "fix",
+        text: "Credits-page refresh crash: only persist queries with status='success' (skip in-flight pending queries whose dehydrated state included a serialized promise that rehydrated as an empty object), drop node-state from the persisted whitelist (Maps don't survive JSON), defensive Array.isArray guard in sparkline. Version bump also busts existing bad cache entries.",
+      },
+    ],
+  },
+  {
+    version: "0.8.1",
+    date: "2026-05-01",
+    changes: [
+      {
+        type: "fix",
+        text: "Credits page perceived load time: persisted cache (24h), prefetch on sidebar hover, keep previous range while switching, greyed flow-diagram placeholder while data loads",
+      },
+    ],
+  },
   {
     version: "0.8.0",
     date: "2026-03-20",
