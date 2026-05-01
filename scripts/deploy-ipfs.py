@@ -61,8 +61,12 @@ async def upload_directory_to_ipfs(directory: Path) -> str:
             file_handles.append(fh)
             form.add_field("file", fh, filename=relative)
 
+    # IPFS gateway can take longer than aiohttp's default 5-minute total
+    # timeout to respond, especially as the build grows. Cap at 20 minutes.
+    timeout = aiohttp.ClientTimeout(total=1200)
+
     try:
-        async with aiohttp.ClientSession() as session:
+        async with aiohttp.ClientSession(timeout=timeout) as session:
             response = await session.post(url, params=params, data=form)
             response.raise_for_status()
             text = await response.text()
