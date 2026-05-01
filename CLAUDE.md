@@ -75,10 +75,12 @@ When the conversation drifts from the stated task:
 2. CLAUDE.md features updated?
 3. DECISIONS.md has implementation decisions?
 4. BACKLOG.md item moved to Completed?
+5. Plan file status updated? (if a plan file exists for this branch)
 
 **During development:** Track intent, not metrics.
 
 - **Scope drift:** "This started as [X] but now includes [Y]. Commit [X] first?"
+- **Implementation complete:** When coding tasks are done -> "Ready to verify and refine, or still working?"
 - **Feature complete:** When user says "done" or "that's it" -> "Ready to preview? Run `preview start <branch>` to check it in dev." Only push and create a PR after the user has previewed and approved.
 - **Pre-break:** When user says "break", "later", "tomorrow" -> "Push before you go?"
 
@@ -88,16 +90,23 @@ Never interrupt based on file count or commit count.
 
 **Finishing a branch** (overrides the `finishing-a-development-branch` skill options):
 
-1. Run `pnpm check` — stop if anything fails
-2. Prompt for preview: "Ready to preview? Run `preview start <branch>` to check it in dev."
-3. **Wait for user approval** — do not push until the user has previewed and confirmed
-4. Push branch: `git push -u origin <branch>`
-5. Create PR if none exists: `gh pr create --title "..." --body "..."`
-6. Squash-merge: `gh pr merge <number> --squash --delete-branch`
-7. Sync local main: `git checkout main && git pull --ff-only origin main`
-8. Delete local branch: `git branch -D <branch>`
+**Use `/dio:ship`.** The skill runs the full sequence below end-to-end — including a doc audit against the actual `git diff main...HEAD` — without intermediate confirmation prompts. The steps below are documented for transparency and so this project can override individual steps. If the user says "ship", "ship this", "merge this", or "wrap it up", invoke `/dio:ship` rather than running the steps manually.
+
+1. **Catch up on main** — `git fetch origin main`; if branch is behind (`! git merge-base --is-ancestor origin/main HEAD`), run `git rebase origin/main`. Stop and surface conflicts if any — do NOT auto-resolve. Idempotent: no rebase happens if main hasn't moved.
+2. **Doc audit** — `git diff main...HEAD --stat`, grep `docs/` and `CLAUDE.md` for references to changed files and identifiers, output a table of likely doc updates, apply them
+3. Run `pnpm check` — stop if anything fails
+4. **Project-specific:** Prompt for preview — "Ready to preview? Run `preview start <branch>` to check it in dev." **Wait for user approval** — do not push until the user has previewed and confirmed
+5. Commit any doc/audit changes
+6. Push branch: `git push -u origin <branch> --force-with-lease`
+7. Create PR if none exists: `gh pr create --title "..." --body "..."`
+8. Squash-merge: `gh pr merge <number> --squash --delete-branch`
+9. Update plan status: if a plan file exists for this branch, update its frontmatter `note` to `merged to main as PR #N (<sha>)`
+10. Sync local main: `git checkout main && git pull --ff-only origin main`
+11. Delete local branch: `git branch -D <branch>`
 
 **Never merge locally.** Option 1 ("Merge back to main locally") from the finishing skill is not allowed — a hook blocks direct pushes to main, and local merges cause SHA divergence after squash-merge. Always go through the PR.
+
+**Project-specific overrides** to the ship sequence: the preview gate (step 4) is mandatory — the `/dio:ship` skill must wait for user approval before pushing.
 
 ---
 
@@ -106,8 +115,14 @@ Never interrupt based on file count or commit count.
 On "sync up" or "catch me up":
 
 1. Read `docs/DECISIONS.md`, `docs/BACKLOG.md`, `docs/ARCHITECTURE.md`
-2. Check git status and recent git log — use **separate parallel Bash calls** (not chained with `&&`), so each matches `Bash(git status*)` / `Bash(git log*)` allow rules and avoids permission prompts
-3. Present the summary as a structured table, not prose paragraphs:
+2. Check for pending plans — list `docs/plans/` and read the most recent file. If a plan exists that hasn't been fully implemented, surface it in the summary.
+3. Check git status and recent git log — use **separate parallel Bash calls** (not chained with `&&`), so each matches `Bash(git status*)` / `Bash(git log*)` allow rules and avoids permission prompts
+4. **Scan local branches for in-progress work** — run `git branch` and for each non-main branch, run `git log main..<branch> --oneline` to see what's on it. Cross-reference branches with plan files (branch names often match plan topics). Report each branch with a short summary of its status:
+   - How many commits ahead of main
+   - Whether it's pushed to remote (`git branch -vv` shows tracking info)
+   - Whether it corresponds to a known plan file
+   - This catches work done by parallel agents in worktrees, which is otherwise invisible from main
+5. Present the summary as a structured table, not prose paragraphs:
 
 ```
 ## Sync Up
@@ -117,7 +132,15 @@ On "sync up" or "catch me up":
 | **Branch** | `main` — clean / 2 uncommitted files |
 | **Last commit** | `abc1234` — Short commit message |
 | **Last decision** | #N — Summary of decision |
+| **Pending plan** | None / `2026-03-12-badge-redesign.md` — Brief summary |
 | **Blockers** | None / description |
+
+### Active Branches
+
+| Branch | Commits | Remote | Plan |
+|--------|---------|--------|------|
+| `feature/draft-preview` | 5 ahead | not pushed | `2026-03-31-cms-draft-preview.md` |
+| `fix/scroll-bug` | 2 ahead | pushed | — |
 
 ### Open Backlog
 
@@ -130,7 +153,7 @@ On "sync up" or "catch me up":
 Ready to go — what are we working on?
 ```
 
-4. State readiness
+6. State readiness
 
 ---
 
@@ -157,7 +180,7 @@ Skills (superpowers) are tools, not separate processes. Use them naturally:
 - **Planning:** Use `writing-plans` or `EnterPlanMode` for multi-file changes, new features, unclear requirements.
 - **Implementation:** Use `subagent-driven-development` or `executing-plans` for complex implementations.
 - **Debugging state/sync bugs:** Before writing any fix, trace the full data flow (write -> store -> fetch -> parse -> render). Identify all integration points that need coordinated changes. Don't patch one step without understanding the chain.
-- **Post-implementation:** Run build/lint verification, handle git workflow, update ARCHITECTURE.md and DECISIONS.md if new patterns or decisions emerged.
+- **Post-implementation:** Use `/dio:ship` to run the full finishing sequence (catch-up + doc audit + `pnpm check` + preview gate + commit + push + PR + squash-merge + cleanup) end-to-end. The skill audits docs against the actual diff so they don't drift across feedback iterations.
 
 ### Session Workflow
 
@@ -168,13 +191,35 @@ Brainstorming, planning, and implementation happen across separate sessions:
 
 Why: brainstorm sessions accumulate rejected ideas, design exploration, and back-and-forth that wastes context window during implementation. A clean session starts with only what matters: the plan + project docs.
 
-### Plans Must Include Doc Updates
+### Plan Status Tracking
 
-Every implementation plan must include a final step with this exact checklist. This is not optional — it's part of the definition of done, not a merge-time afterthought.
-
-The final plan task should be:
+When an agent finishes executing a plan (all tasks complete, or stopped mid-way), it must add a status line to the **top** of the plan file:
 
 ```
+---
+status: done | in-progress | blocked
+branch: feature/branch-name
+date: 2026-03-31
+note: awaiting testing / merged to main / blocked on X
+---
+```
+
+This makes plan status visible during sync-up without needing to inspect branches. The branch scan (Context Recovery step 4) cross-references these annotations to give a complete picture.
+
+### Plans Must Include Verification and Doc Updates
+
+Every implementation plan must include verification and doc update tasks at the end. This is not optional — it's part of the definition of done, not a merge-time afterthought.
+
+The final two plan tasks should be:
+
+```
+### Task N-1: Verify and refine
+
+- [ ] Run full project checks (`pnpm check`)
+- [ ] Manual testing / smoke test the feature
+- [ ] Fix any issues found
+- [ ] Re-run checks until clean
+
 ### Task N: Update docs and version
 
 - [ ] ARCHITECTURE.md — new patterns, new files, or changed structure
@@ -184,7 +229,7 @@ The final plan task should be:
 - [ ] src/changelog.ts — if user-facing behavior changed: bump CURRENT_VERSION (semver: major=breaking, minor=feature, patch=fix), add VersionEntry with changes
 ```
 
-Copy this checklist verbatim into every plan. Do not paraphrase or summarize — the explicit checklist prevents items from being forgotten.
+Copy these tasks verbatim into every plan. Do not paraphrase or summarize — the explicit checklist prevents items from being forgotten.
 
 ---
 
@@ -254,7 +299,7 @@ When adding a new component to `@aleph-front/ds`, follow the "Adding a New Compo
 - React Query hooks with automatic polling (15-30s intervals)
 - Cross-page navigation via URL search params (`?status=`, `?selected=`, `?hasVms=`, `?sort=`, `?order=`, `?view=`): overview stat cards link to filtered list pages, overview activity cards (Top Nodes, Latest VMs) link to detail views via `?view=hash`, detail panels cross-link between nodes and VMs via `?view=`, selected row highlighted with left border accent
 - Wallet view page: `/wallet?address=0x...` with back navigation (`← Back` via `router.back()`), showing owned nodes (from scheduler), created VMs with scheduler status (api2 cross-ref), credit rewards (24h) per node and role (CRN/CCN/staker breakdown with ALEPH amounts, auto-growing card height), activity timeline with manual refresh (all message types), permissions granted/received with inline scope tags, wallet-to-wallet navigation, Explorer deep links. Entry points: clickable owner addresses in node and VM detail views/panels.
-- Credits page: `/credits` with DS Tabs pill-variant range selector (24h/7d/30d), "Powered by Aleph Cloud" watermark below flow diagram, credit expense distribution flow diagram (DS Card, SVG particle animation along gradient-stroked bezier paths with glow-effect highlight particles, pre-populated particles on load via negative `begin` offsets, pill badge percentage labels at bezier parametric points with hover-expand showing ALEPH amounts, hover interaction with dim/highlight, single origin point per source box, accent bars on sources, distinct color per flow: lime/green/purple/amber/coral), summary stat cards (total with cumulative revenue SVG sparkline/storage/execution/dev fund), recipient table using DS `Table` component with sortable columns (Node/Address/Roles/CRN/CCN/Staking/Total/%), `FilterToolbar` with role tabs (All/CRN/CCN/Staker with counts) + search, `CopyableText` for addresses/hashes, `Badge fill="outline"` for role tags (CCN=purple/default, CRN=success, Staker=warning), `TablePagination` for pagination, sidebar nav entry with coins icon. Uses api2 credit expense messages + corechannel aggregate for node state. Distribution logic: 5% dev fund, CRN share (60% execution), CCN share (75% storage / 15% execution, score-weighted), staker share (20%, stake-weighted). Shared React Query cache for 24h data across credits and wallet pages via stable 5-minute-rounded timestamps.
+- Credits page: `/credits` with DS Tabs pill-variant range selector (24h/7d/30d), "Powered by Aleph Cloud" watermark below flow diagram, credit expense distribution flow diagram (DS Card, SVG particle animation along gradient-stroked bezier paths with glow-effect highlight particles, pre-populated particles on load via negative `begin` offsets, pill badge percentage labels at bezier parametric points with hover-expand showing ALEPH amounts, hover interaction with dim/highlight, single origin point per source box, accent bars on sources, distinct color per flow: lime/green/purple/amber/coral), summary stat cards (total with cumulative revenue SVG sparkline/storage/execution/dev fund), recipient table using DS `Table` component with sortable columns (Node/Address/Roles/CRN/CCN/Staking/Total/%), `FilterToolbar` with role tabs (All/CRN/CCN/Staker with counts) + search, `CopyableText` for addresses/hashes, `Badge fill="outline"` for role tags (CCN=purple/default, CRN=success, Staker=warning), `TablePagination` for pagination, sidebar nav entry with coins icon. Uses api2 credit expense messages + corechannel aggregate for node state. Distribution logic: 5% dev fund, CRN share (60% execution), CCN share (75% storage / 15% execution, score-weighted), staker share (20%, stake-weighted). Shared React Query cache for 24h data across credits and wallet pages via stable 5-minute-rounded timestamps. Persisted cache (localStorage, 24h max age, busted by app version) so repeat visits within a day are instant. Prefetch on sidebar hover/focus warms the cache before navigation. `placeholderData: keepPreviousData` keeps prior range numbers visible while a new range is fetched. Flow diagram renders a greyed-out structural placeholder (boxes, thin connectors, em-dash values) while the api2 query is in flight, so the page composition appears immediately.
 - Changelog page (`/changelog`): version history with categorized entries (Feature/UI/Infra/Refactor badges), version number link in sidebar footer (`v0.8.0`), data in `src/changelog.ts`
 - Static export for IPFS deployment
 - `@aleph-front/ds` integration via npm (pinned version) and `transpilePackages`

@@ -16,7 +16,9 @@
   "dependencies": {
     "@aleph-front/ds": "0.12.1",
     "@phosphor-icons/react": "2.1.10",
+    "@tanstack/query-sync-storage-persister": "5.75.5",
     "@tanstack/react-query": "5.75.5",
+    "@tanstack/react-query-persist-client": "5.75.5",
     "next": "16.1.6",
     "react": "19.2.4",
     "react-dom": "19.2.4"
