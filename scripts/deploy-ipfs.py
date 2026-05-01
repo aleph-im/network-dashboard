@@ -21,17 +21,14 @@ Environment variables:
 from __future__ import annotations
 
 import asyncio
-import base64
 import json
 import os
 import sys
 import time
 from datetime import datetime, timezone
 from pathlib import Path
-from urllib.parse import urlparse
 
-import aiohttp
-import base58
+import requests
 from aleph.sdk import AlephHttpClient, AuthenticatedAlephHttpClient
 from aleph.sdk.chains.ethereum import ETHAccount
 from aleph.sdk.conf import settings
@@ -41,46 +38,55 @@ CHANNEL = "ALEPH-CLOUDSOLUTIONS"
 WEBSITES_KEY = "websites"
 DOMAINS_KEY = "domains"
 
+# Explicit gateway. The SDK's `settings.IPFS_GATEWAY` resolved to a host that
+# never streamed back the upload response with aiohttp — both 5-min and 20-min
+# total timeouts hit. aleph-cloud-app uses ipfs-2.aleph.im with `requests` and
+# it works reliably; we follow the same pattern. (See PRs aleph-cloud-app#74-76.)
+IPFS_GATEWAY = "https://ipfs-2.aleph.im"
 
-async def upload_directory_to_ipfs(directory: Path) -> str:
-    """Upload directory to IPFS gateway, return CIDv0."""
-    params = {"recursive": "true", "wrap-with-directory": "true"}
 
-    url = (
-        urlparse(settings.IPFS_GATEWAY)
-        ._replace(path="/api/v0/add")
-        .geturl()
-    )
+def upload_directory_to_ipfs(directory: Path) -> str:
+    """Upload directory to IPFS gateway, return CIDv1 (base32, lowercase).
 
-    form = aiohttp.FormData()
-    file_handles = []
+    Uses synchronous `requests` instead of `aiohttp` — the latter hangs on
+    `await response.text()` against this gateway regardless of timeout.
+    Requesting `cid-version=1` returns a base32 CID directly, so the
+    subdomain gateway URL works without manual conversion.
+    """
+    files = []
     for path in sorted(directory.rglob("*")):
-        if path.is_file():
-            relative = str(path.relative_to(directory))
-            fh = open(path, "rb")  # noqa: SIM115
-            file_handles.append(fh)
-            form.add_field("file", fh, filename=relative)
+        if not path.is_file():
+            continue
+        relative = str(path.relative_to(directory))
+        files.append(("file", (relative, open(path, "rb"))))  # noqa: SIM115
 
-    # IPFS gateway can take longer than aiohttp's default 5-minute total
-    # timeout to respond, especially as the build grows. Cap at 20 minutes.
-    timeout = aiohttp.ClientTimeout(total=1200)
+    if not files:
+        print(f"ERROR: No files found in {directory}")
+        sys.exit(1)
 
-    try:
-        async with aiohttp.ClientSession(timeout=timeout) as session:
-            response = await session.post(url, params=params, data=form)
-            response.raise_for_status()
-            text = await response.text()
-    finally:
-        for fh in file_handles:
-            fh.close()
+    print(f"Uploading {len(files)} files to IPFS...")
+    resp = requests.post(
+        f"{IPFS_GATEWAY}/api/v0/add",
+        params={
+            "recursive": "true",
+            "wrap-with-directory": "true",
+            # v1 base32 is required for subdomain gateway URLs (DNS labels are
+            # case-insensitive; v0 base58 is case-sensitive).
+            "cid-version": "1",
+        },
+        files=files,
+        timeout=1200,
+    )
+    resp.raise_for_status()
 
-    cid = None
-    for line in text.strip().splitlines():
-        entry = json.loads(line)
-        cid = entry.get("Hash")
+    # The wrapping directory is the second-to-last entry in the streamed
+    # response (last is the wrapper's parent — same hash).
+    lines = resp.text.strip().splitlines()
+    cid = json.loads(lines[-2]).get("Hash") if len(lines) >= 2 else None
 
     if not cid:
         print("ERROR: No CID found in IPFS gateway response")
+        print(resp.text, file=sys.stderr)
         sys.exit(1)
 
     return cid
@@ -210,14 +216,6 @@ async def write_domain_aggregate(
     print(f"Updated domains aggregate: {domain} -> {volume_id}")
 
 
-def cidv0_to_v1(cidv0: str) -> str:
-    """Convert CIDv0 (Qm...) to CIDv1 base32 for subdomain gateway."""
-    multihash = base58.b58decode(cidv0)
-    cidv1_bytes = bytes([0x01, 0x70]) + multihash
-    b32 = base64.b32encode(cidv1_bytes).decode().lower().rstrip("=")
-    return f"b{b32}"
-
-
 async def main() -> None:
     if len(sys.argv) != 2:
         print(f"Usage: {sys.argv[0]} <directory>")
@@ -247,14 +245,13 @@ async def main() -> None:
     if private_key.startswith("0x"):
         private_key = private_key[2:]
 
-    # 1. Upload to IPFS
-    print(f"Uploading {directory} to IPFS...")
-    cid_v0 = await upload_directory_to_ipfs(directory)
-    print(f"CID (v0): {cid_v0}")
+    # 1. Upload to IPFS (sync — async aiohttp hangs on this gateway)
+    cid = upload_directory_to_ipfs(directory)
+    print(f"CID: {cid}")
 
     # 2. Pin on Aleph
     print("Pinning on Aleph network...")
-    volume_id = await pin_on_aleph(cid_v0, private_key, owner_address)
+    volume_id = await pin_on_aleph(cid, private_key, owner_address)
 
     # 3. Update websites aggregate
     print("Updating websites aggregate...")
@@ -270,20 +267,17 @@ async def main() -> None:
             private_key, owner_address, domain, volume_id,
         )
 
-    cid_v1 = cidv0_to_v1(cid_v0)
-    gateway_url = f"https://{cid_v1}.ipfs.aleph.sh/"
+    gateway_url = f"https://{cid}.ipfs.aleph.sh/"
 
-    print(f"\nCID (v1): {cid_v1}")
-    print(f"Gateway:  {gateway_url}")
+    print(f"\nGateway: {gateway_url}")
     if domain:
-        print(f"Domain:   https://{domain}/")
+        print(f"Domain:  https://{domain}/")
 
     # Write outputs for GitHub Actions
     github_output = os.environ.get("GITHUB_OUTPUT")
     if github_output:
         with open(github_output, "a") as f:
-            f.write(f"cid_v0={cid_v0}\n")
-            f.write(f"cid_v1={cid_v1}\n")
+            f.write(f"cid={cid}\n")
 
 
 if __name__ == "__main__":

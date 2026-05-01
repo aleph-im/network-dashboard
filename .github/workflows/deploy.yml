@@ -41,7 +41,7 @@ jobs:
         run: sudo apt-get update && sudo apt-get install -y libsecp256k1-dev
 
       - name: Install aleph-client
-        run: pip install aleph-client
+        run: pip install "aleph-client>=1.0.0" "requests>=2.32.0,<3.0"
 
       - name: Upload to IPFS
         id: upload
@@ -63,7 +63,6 @@ jobs:
 
           | | |
           |---|---|
-          | **CID (v0)** | \`${{ steps.upload.outputs.cid_v0 }}\` |
-          | **CID (v1)** | \`${{ steps.upload.outputs.cid_v1 }}\` |
-          | **Gateway** | https://${{ steps.upload.outputs.cid_v1 }}.ipfs.aleph.sh/ |
+          | **CID** | \`${{ steps.upload.outputs.cid }}\` |
+          | **Gateway** | https://${{ steps.upload.outputs.cid }}.ipfs.aleph.sh/ |
           EOF
