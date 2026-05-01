@@ -32,6 +32,12 @@ jobs:
         env:
           NEXT_PUBLIC_API_URL: https://rust-scheduler.aleph.im
 
+      - name: Extract version
+        id: version
+        run: |
+          VERSION=$(grep -E '^export const CURRENT_VERSION' src/changelog.ts | sed -E 's/.*"([^"]+)".*/\1/')
+          echo "version=$VERSION" >> "$GITHUB_OUTPUT"
+
       - name: Setup Python
         uses: actions/setup-python@a309ff8b426b58ec0e2a45f0f869d46889d02405 # v6.2.0
         with:
@@ -63,6 +69,7 @@ jobs:
 
           | | |
           |---|---|
+          | **Version** | \`v${{ steps.version.outputs.version }}\` |
           | **CID** | \`${{ steps.upload.outputs.cid }}\` |
           | **Gateway** | https://${{ steps.upload.outputs.cid }}.ipfs.aleph.sh/ |
           EOF
