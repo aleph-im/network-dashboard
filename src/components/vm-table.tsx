@@ -25,8 +25,7 @@ import {
   textSearch,
   countByStatus,
   applyVmAdvancedFilters,
-  VM_VCPUS_MAX,
-  VM_MEMORY_MB_MAX,
+  computeVmFilterMaxes,
   type VmAdvancedFilters,
 } from "@/lib/filters";
 import { VM_STATUS_VARIANT } from "@/lib/status-map";
@@ -250,6 +249,18 @@ export function VMTable({
   const [filtersOpen, setFiltersOpen] = useState(false);
   const [advanced, setAdvanced] = useState<VmAdvancedFilters>({});
 
+  // Data — fetch full dataset
+  const { data: allVms, isLoading } = useVMs();
+  const hashes = useMemo(() => (allVms ?? []).map((v) => v.hash), [allVms]);
+  const { data: messageInfo } = useVMMessageInfo(hashes);
+
+  // Slider extents derived from data — power-of-2 ceilings so the slider
+  // always covers the full fleet, even as VM requirements grow over time.
+  const filterMaxes = useMemo(
+    () => computeVmFilterMaxes(allVms ?? []),
+    [allVms],
+  );
+
   const activeAdvancedCount = [
     advanced.vmTypes != null &&
       advanced.vmTypes.size > 0 &&
@@ -262,16 +273,11 @@ export function VMTable({
     advanced.requiresConfidential,
     advanced.vcpusRange != null &&
       (advanced.vcpusRange[0] > 0 ||
-        advanced.vcpusRange[1] < VM_VCPUS_MAX),
+        advanced.vcpusRange[1] < filterMaxes.vcpus),
     advanced.memoryMbRange != null &&
       (advanced.memoryMbRange[0] > 0 ||
-        advanced.memoryMbRange[1] < VM_MEMORY_MB_MAX),
+        advanced.memoryMbRange[1] < filterMaxes.memoryMb),
   ].filter(Boolean).length;
-
-  // Data — fetch full dataset
-  const { data: allVms, isLoading } = useVMs();
-  const hashes = useMemo(() => (allVms ?? []).map((v) => v.hash), [allVms]);
-  const { data: messageInfo } = useVMMessageInfo(hashes);
 
   // Filter pipeline
   const { displayedRows, filteredCounts, unfilteredCounts } =
@@ -291,6 +297,7 @@ export function VMTable({
       const afterAdvanced = applyVmAdvancedFilters(
         afterSearch,
         advanced,
+        filterMaxes,
       );
       const fCounts = countByStatus(afterAdvanced, (v) => v.status);
 
@@ -303,7 +310,7 @@ export function VMTable({
         filteredCounts: fCounts,
         unfilteredCounts: uCounts,
       };
-    }, [allVms, debouncedQuery, advanced, statusFilter, messageInfo]);
+    }, [allVms, debouncedQuery, advanced, statusFilter, messageInfo, filterMaxes]);
 
   const {
     page, pageSize, totalPages, startItem, endItem,
@@ -553,16 +560,16 @@ export function VMTable({
                     <span>vCPUs</span>
                     <span className="tabular-nums text-xs">
                       {advanced.vcpusRange?.[0] ?? 0}–
-                      {advanced.vcpusRange?.[1] ?? VM_VCPUS_MAX}
+                      {advanced.vcpusRange?.[1] ?? filterMaxes.vcpus}
                     </span>
                   </div>
                   <Slider
                     size="sm"
                     min={0}
-                    max={VM_VCPUS_MAX}
+                    max={filterMaxes.vcpus}
                     step={1}
                     value={
-                      advanced.vcpusRange ?? [0, VM_VCPUS_MAX]
+                      advanced.vcpusRange ?? [0, filterMaxes.vcpus]
                     }
                     onValueChange={(val) =>
                       updateAdvanced((p) => ({
@@ -579,18 +586,18 @@ export function VMTable({
                     <span className="tabular-nums text-xs">
                       {advanced.memoryMbRange?.[0] ?? 0} MB–
                       {advanced.memoryMbRange?.[1] ??
-                        VM_MEMORY_MB_MAX}{" "}
+                        filterMaxes.memoryMb}{" "}
                       MB
                     </span>
                   </div>
                   <Slider
                     size="sm"
                     min={0}
-                    max={VM_MEMORY_MB_MAX}
+                    max={filterMaxes.memoryMb}
                     step={256}
                     value={
                       advanced.memoryMbRange ??
-                      [0, VM_MEMORY_MB_MAX]
+                      [0, filterMaxes.memoryMb]
                     }
                     onValueChange={(val) =>
                       updateAdvanced((p) => ({

@@ -34,11 +34,55 @@ export function isRangeActive(
   return range[0] > 0 || range[1] < max;
 }
 
-// --- Node advanced filters ---
+// --- Range slider extents ---
 
-export const NODE_VM_COUNT_MAX = 100;
-export const NODE_VCPUS_MAX = 128;
-export const NODE_MEMORY_GB_MAX = 512;
+/**
+ * Round up to the next power of two, with a floor.
+ * Used to derive slider extents that snap to readable numbers
+ * (e.g. 200 → 256, 257 → 512) regardless of how large the fleet grows.
+ */
+function roundUpPow2(n: number, floor: number): number {
+  const safe = Math.max(1, n);
+  const pow = 2 ** Math.ceil(Math.log2(safe));
+  return Math.max(floor, pow);
+}
+
+export type NodeFilterMaxes = {
+  vmCount: number;
+  vcpus: number;
+  memoryGb: number;
+};
+
+/** Lower bound for slider extents — used when data is empty or loading. */
+export const NODE_FILTER_MAX_FLOOR: NodeFilterMaxes = {
+  vmCount: 100,
+  vcpus: 128,
+  memoryGb: 512,
+};
+
+export function computeNodeFilterMaxes(nodes: Node[]): NodeFilterMaxes {
+  let vcpus = 0;
+  let memoryGb = 0;
+  let vmCount = 0;
+  for (const n of nodes) {
+    vcpus = Math.max(vcpus, n.resources?.vcpusTotal ?? 0);
+    memoryGb = Math.max(
+      memoryGb,
+      (n.resources?.memoryTotalMb ?? 0) / 1024,
+    );
+    vmCount = Math.max(vmCount, n.vmCount);
+  }
+  return {
+    vcpus: roundUpPow2(vcpus, NODE_FILTER_MAX_FLOOR.vcpus),
+    memoryGb: roundUpPow2(
+      memoryGb,
+      NODE_FILTER_MAX_FLOOR.memoryGb,
+    ),
+    vmCount: roundUpPow2(vmCount, NODE_FILTER_MAX_FLOOR.vmCount),
+  };
+}
+
+// --- Node advanced filters ---
 
 const ALL_CPU_VENDORS = new Set(["AuthenticAMD", "GenuineIntel"]);
 
@@ -56,6 +100,7 @@ export type NodeAdvancedFilters = {
 export function applyNodeAdvancedFilters(
   nodes: Node[],
   filters: NodeAdvancedFilters,
+  maxes: NodeFilterMaxes = NODE_FILTER_MAX_FLOOR,
 ): Node[] {
   let result = nodes;
   if (filters.staked) {
@@ -84,7 +129,7 @@ export function applyNodeAdvancedFilters(
   }
   if (
     filters.vmCountRange &&
-    isRangeActive(filters.vmCountRange, NODE_VM_COUNT_MAX)
+    isRangeActive(filters.vmCountRange, maxes.vmCount)
   ) {
     const [min, max] = filters.vmCountRange;
     result = result.filter(
@@ -93,7 +138,7 @@ export function applyNodeAdvancedFilters(
   }
   if (
     filters.vcpusTotalRange &&
-    isRangeActive(filters.vcpusTotalRange, NODE_VCPUS_MAX)
+    isRangeActive(filters.vcpusTotalRange, maxes.vcpus)
   ) {
     const [min, max] = filters.vcpusTotalRange;
     result = result.filter((n) => {
@@ -103,7 +148,7 @@ export function applyNodeAdvancedFilters(
   }
   if (
     filters.memoryTotalGbRange &&
-    isRangeActive(filters.memoryTotalGbRange, NODE_MEMORY_GB_MAX)
+    isRangeActive(filters.memoryTotalGbRange, maxes.memoryGb)
   ) {
     const [min, max] = filters.memoryTotalGbRange;
     result = result.filter((n) => {
@@ -126,8 +171,29 @@ export type VmAdvancedFilters = {
   memoryMbRange?: [number, number];
 };
 
-export const VM_VCPUS_MAX = 32;
-export const VM_MEMORY_MB_MAX = 65536;
+export type VmFilterMaxes = {
+  vcpus: number;
+  memoryMb: number;
+};
+
+/** Lower bound for slider extents — used when data is empty or loading. */
+export const VM_FILTER_MAX_FLOOR: VmFilterMaxes = {
+  vcpus: 32,
+  memoryMb: 65536,
+};
+
+export function computeVmFilterMaxes(vms: VM[]): VmFilterMaxes {
+  let vcpus = 0;
+  let memoryMb = 0;
+  for (const v of vms) {
+    vcpus = Math.max(vcpus, v.requirements.vcpus ?? 0);
+    memoryMb = Math.max(memoryMb, v.requirements.memoryMb ?? 0);
+  }
+  return {
+    vcpus: roundUpPow2(vcpus, VM_FILTER_MAX_FLOOR.vcpus),
+    memoryMb: roundUpPow2(memoryMb, VM_FILTER_MAX_FLOOR.memoryMb),
+  };
+}
 
 const ALL_VM_TYPES: Set<VmType> = new Set([
   "micro_vm",
@@ -140,6 +206,7 @@ const ALL_PAYMENT_STATUSES = new Set(["validated", "invalidated"]);
 export function applyVmAdvancedFilters(
   vms: VM[],
   filters: VmAdvancedFilters,
+  maxes: VmFilterMaxes = VM_FILTER_MAX_FLOOR,
 ): VM[] {
   let result = vms;
   if (
@@ -171,7 +238,7 @@ export function applyVmAdvancedFilters(
   }
   if (filters.vcpusRange) {
     const [min, max] = filters.vcpusRange;
-    if (min > 0 || max < VM_VCPUS_MAX) {
+    if (min > 0 || max < maxes.vcpus) {
       result = result.filter((v) => {
         const val = v.requirements.vcpus ?? 0;
         return val >= min && val <= max;
@@ -180,7 +247,7 @@ export function applyVmAdvancedFilters(
   }
   if (filters.memoryMbRange) {
     const [min, max] = filters.memoryMbRange;
-    if (min > 0 || max < VM_MEMORY_MB_MAX) {
+    if (min > 0 || max < maxes.memoryMb) {
       result = result.filter((v) => {
         const val = v.requirements.memoryMb ?? 0;
         return val >= min && val <= max;

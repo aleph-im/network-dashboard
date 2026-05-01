@@ -27,9 +27,8 @@ import {
   countByStatus,
   applyNodeAdvancedFilters,
   isRangeActive,
-  NODE_VM_COUNT_MAX,
-  NODE_VCPUS_MAX,
-  NODE_MEMORY_GB_MAX,
+  computeNodeFilterMaxes,
+  NODE_FILTER_MAX_FLOOR,
   type NodeAdvancedFilters,
 } from "@/lib/filters";
 import {
@@ -213,8 +212,18 @@ export function NodeTable({
   const [filtersOpen, setFiltersOpen] = useState(false);
   const [advanced, setAdvanced] = useState<NodeAdvancedFilters>(
     initialHasVms
-      ? { vmCountRange: [1, NODE_VM_COUNT_MAX] }
+      ? { vmCountRange: [1, NODE_FILTER_MAX_FLOOR.vmCount] }
       : {},
+  );
+
+  // Data — fetch full dataset, no status in query key
+  const { data: allNodes, isLoading } = useNodes();
+
+  // Slider extents derived from data — power-of-2 ceilings so the slider
+  // always covers the full fleet, even as nodes get larger over time.
+  const filterMaxes = useMemo(
+    () => computeNodeFilterMaxes(allNodes ?? []),
+    [allNodes],
   );
 
   const activeAdvancedCount = [
@@ -226,18 +235,15 @@ export function NodeTable({
       advanced.cpuVendors.size > 0 &&
       advanced.cpuVendors.size < 2,
     advanced.vmCountRange != null &&
-      isRangeActive(advanced.vmCountRange, NODE_VM_COUNT_MAX),
+      isRangeActive(advanced.vmCountRange, filterMaxes.vmCount),
     advanced.vcpusTotalRange != null &&
-      isRangeActive(advanced.vcpusTotalRange, NODE_VCPUS_MAX),
+      isRangeActive(advanced.vcpusTotalRange, filterMaxes.vcpus),
     advanced.memoryTotalGbRange != null &&
       isRangeActive(
         advanced.memoryTotalGbRange,
-        NODE_MEMORY_GB_MAX,
+        filterMaxes.memoryGb,
       ),
   ].filter(Boolean).length;
-
-  // Data — fetch full dataset, no status in query key
-  const { data: allNodes, isLoading } = useNodes();
 
   // Filter pipeline
   const { displayedRows, filteredCounts, unfilteredCounts } =
@@ -253,6 +259,7 @@ export function NodeTable({
       const afterAdvanced = applyNodeAdvancedFilters(
         afterSearch,
         advanced,
+        filterMaxes,
       );
       const fCounts = countByStatus(afterAdvanced, (n) => n.status);
 
@@ -265,7 +272,7 @@ export function NodeTable({
         filteredCounts: fCounts,
         unfilteredCounts: uCounts,
       };
-    }, [allNodes, debouncedQuery, advanced, statusFilter]);
+    }, [allNodes, debouncedQuery, advanced, statusFilter, filterMaxes]);
 
   // Apply initial sort if present
   const sortedRows = initialSort
@@ -487,17 +494,17 @@ export function NodeTable({
                   <span className="tabular-nums text-xs">
                     {advanced.vmCountRange?.[0] ?? 0}–
                     {advanced.vmCountRange?.[1] ??
-                      NODE_VM_COUNT_MAX}
+                      filterMaxes.vmCount}
                   </span>
                 </div>
                 <Slider
                   size="sm"
                   min={0}
-                  max={NODE_VM_COUNT_MAX}
+                  max={filterMaxes.vmCount}
                   step={1}
                   value={
                     advanced.vmCountRange ??
-                    [0, NODE_VM_COUNT_MAX]
+                    [0, filterMaxes.vmCount]
                   }
                   onValueChange={(val) =>
                     updateAdvanced((p) => ({
@@ -522,17 +529,17 @@ export function NodeTable({
                     <span className="tabular-nums text-xs">
                       {advanced.vcpusTotalRange?.[0] ?? 0}–
                       {advanced.vcpusTotalRange?.[1] ??
-                        NODE_VCPUS_MAX}
+                        filterMaxes.vcpus}
                     </span>
                   </div>
                   <Slider
                     size="sm"
                     min={0}
-                    max={NODE_VCPUS_MAX}
+                    max={filterMaxes.vcpus}
                     step={1}
                     value={
                       advanced.vcpusTotalRange ??
-                      [0, NODE_VCPUS_MAX]
+                      [0, filterMaxes.vcpus]
                     }
                     onValueChange={(val) =>
                       updateAdvanced((p) => ({
@@ -549,18 +556,18 @@ export function NodeTable({
                     <span className="tabular-nums text-xs">
                       {advanced.memoryTotalGbRange?.[0] ?? 0} GB–
                       {advanced.memoryTotalGbRange?.[1] ??
-                        NODE_MEMORY_GB_MAX}{" "}
+                        filterMaxes.memoryGb}{" "}
                       GB
                     </span>
                   </div>
                   <Slider
                     size="sm"
                     min={0}
-                    max={NODE_MEMORY_GB_MAX}
+                    max={filterMaxes.memoryGb}
                     step={1}
                     value={
                       advanced.memoryTotalGbRange ??
-                      [0, NODE_MEMORY_GB_MAX]
+                      [0, filterMaxes.memoryGb]
                     }
                     onValueChange={(val) =>
                       updateAdvanced((p) => ({
