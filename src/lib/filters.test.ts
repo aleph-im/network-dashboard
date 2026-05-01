@@ -4,8 +4,24 @@ import {
   countByStatus,
   applyNodeAdvancedFilters,
   applyVmAdvancedFilters,
+  computeNodeFilterMaxes,
+  computeVmFilterMaxes,
+  NODE_FILTER_MAX_FLOOR,
+  VM_FILTER_MAX_FLOOR,
 } from "@/lib/filters";
 import type { Node, VM } from "@/api/types";
+
+const makeResources = (vcpusTotal: number, memoryTotalMb: number) => ({
+  vcpusTotal,
+  vcpusAvailable: vcpusTotal,
+  memoryTotalMb,
+  memoryAvailableMb: memoryTotalMb,
+  diskTotalMb: 0,
+  diskAvailableMb: 0,
+  cpuUsagePct: 0,
+  memoryUsagePct: 0,
+  diskUsagePct: 0,
+});
 
 const makeNode = (overrides: Partial<Node> = {}): Node => ({
   hash: "abc123def456",
@@ -410,5 +426,73 @@ describe("applyVmAdvancedFilters", () => {
   it("returns all when no filters active", () => {
     const vms = [makeVm(), makeVm()];
     expect(applyVmAdvancedFilters(vms, {})).toHaveLength(2);
+  });
+});
+
+describe("computeNodeFilterMaxes", () => {
+  it("returns the floor for an empty fleet", () => {
+    expect(computeNodeFilterMaxes([])).toEqual(NODE_FILTER_MAX_FLOOR);
+  });
+
+  it("never drops below the floor when nodes are small", () => {
+    const nodes = [
+      makeNode({ resources: makeResources(8, 16 * 1024), vmCount: 3 }),
+    ];
+    expect(computeNodeFilterMaxes(nodes)).toEqual(NODE_FILTER_MAX_FLOOR);
+  });
+
+  it("rounds up to the next power of two when nodes exceed the floor", () => {
+    // 200 vCPUs → 256 ; 600 GB → 1024 ; 130 VMs → 256
+    const nodes = [
+      makeNode({
+        resources: makeResources(200, 600 * 1024),
+        vmCount: 130,
+      }),
+    ];
+    expect(computeNodeFilterMaxes(nodes)).toEqual({
+      vcpus: 256,
+      memoryGb: 1024,
+      vmCount: 256,
+    });
+  });
+
+  it("includes a node above the floor in the filtered result when its range is open", () => {
+    // Regression for the user-reported bug: a 256-vCPU node was hidden
+    // when the slider extent was hardcoded to 128.
+    const nodes = [
+      makeNode({
+        hash: "big",
+        resources: makeResources(256, 1024 * 1024),
+      }),
+      makeNode({
+        hash: "small",
+        resources: makeResources(64, 256 * 1024),
+      }),
+    ];
+    const maxes = computeNodeFilterMaxes(nodes);
+    const result = applyNodeAdvancedFilters(
+      nodes,
+      { vcpusTotalRange: [0, maxes.vcpus] },
+      maxes,
+    );
+    expect(result.map((n) => n.hash).sort()).toEqual(["big", "small"]);
+  });
+});
+
+describe("computeVmFilterMaxes", () => {
+  it("returns the floor for an empty fleet", () => {
+    expect(computeVmFilterMaxes([])).toEqual(VM_FILTER_MAX_FLOOR);
+  });
+
+  it("rounds up to the next power of two when VMs exceed the floor", () => {
+    const vms = [
+      makeVm({
+        requirements: { vcpus: 48, memoryMb: 128 * 1024, diskMb: 0 },
+      }),
+    ];
+    expect(computeVmFilterMaxes(vms)).toEqual({
+      vcpus: 64,
+      memoryMb: 131072,
+    });
   });
 });

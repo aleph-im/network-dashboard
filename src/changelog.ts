@@ -11,9 +11,19 @@ export type VersionEntry = {
   changes: ChangeEntry[];
 };
 
-export const CURRENT_VERSION = "0.8.2";
+export const CURRENT_VERSION = "0.8.3";
 
 export const CHANGELOG: VersionEntry[] = [
+  {
+    version: "0.8.3",
+    date: "2026-05-01",
+    changes: [
+      {
+        type: "fix",
+        text: "Range slider extents (vCPUs, memory, VM count) now derive from the loaded fleet — nodes and VMs above the previous 128 vCPU / 512 GB / 32 vCPU / 65536 MB caps are no longer hidden when the slider is used.",
+      },
+    ],
+  },
   {
     version: "0.8.2",
     date: "2026-05-01",
