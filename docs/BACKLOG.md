@@ -15,6 +15,11 @@ Ideas and scope creep captured for later consideration.
 
 ## Open Items
 
+### 2026-05-01 - Port deploy-ipfs.py to aleph-cloud-app's robust pattern
+**Source:** Cross-repo learning — aleph-cloud-app's `scripts/deploy/client.py` solved a class of CI deploy failures (PRs #74, #75, #76 there)
+**Description:** Our current script gets the timeout-fix bandage (PR #84 here), but a fuller port would make deploys reliably durable: switch IPFS upload from `aiohttp` to `requests` (simpler, well-understood timeout semantics); switch `create_store`/`create_aggregate` to `sync=False` + poll STORE/AGGREGATE message status until `processed`; add IPFS DHT propagation wait + post-resolve sleep before the STORE write to avoid `error_code: 4 — File not found` rejections; add structured rejection banners + `$GITHUB_STEP_SUMMARY` markdown table; bump GitHub job `timeout-minutes` to ~25. See `aleph-cloud-app/scripts/deploy/client.py` for the canonical pattern.
+**Priority:** Medium
+
 ### 2026-05-01 - Pre-aggregated credit totals from backend
 **Source:** Credit page slow-load research (Decision #60)
 **Description:** Ask Olivier to publish a small Aleph AGGREGATE message (or expose a precomputed endpoint) with daily/hourly credit totals + per-recipient breakdowns. Page fetches a tiny doc instead of paging through ~1440 `aleph_credit_expense` messages. Would replace the current ~20s api2 fetch with a single small request. Best long-term solution; persisted cache + prefetch + placeholder are interim wins.
