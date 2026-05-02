@@ -13,6 +13,7 @@ import { TablePagination } from "@/components/table-pagination";
 import { useDebounce } from "@/hooks/use-debounce";
 import { FilterToolbar } from "@/components/filter-toolbar";
 import { textSearch, countByStatus } from "@/lib/filters";
+import { applySort, type SortDirection } from "@/lib/sort";
 import { VM_STATUS_VARIANT } from "@/lib/status-map";
 import { relativeTime } from "@/lib/format";
 import type { IssueVM, DiscrepancyStatus } from "@/hooks/use-issues";
@@ -298,6 +299,9 @@ export function IssuesVMTable({
     initialStatus,
   );
   const [selectedVM, setSelectedVM] = useState<string | null>(null);
+  const [sortColumn, setSortColumn] = useState<string | undefined>();
+  const [sortDirection, setSortDirection] =
+    useState<SortDirection>("asc");
 
   const { displayedRows, filteredCounts, unfilteredCounts } =
     useMemo(() => {
@@ -318,6 +322,11 @@ export function IssuesVMTable({
       };
     }, [issueVMs, debouncedQuery, statusFilter]);
 
+  const sortedRows = useMemo(
+    () => applySort(displayedRows, columns, sortColumn, sortDirection),
+    [displayedRows, sortColumn, sortDirection],
+  );
+
   const {
     page,
     pageSize,
@@ -328,7 +337,7 @@ export function IssuesVMTable({
     pageItems,
     setPage,
     setPageSize,
-  } = usePagination(displayedRows);
+  } = usePagination(sortedRows);
 
   useEffect(() => {
     setPage(1);
@@ -389,6 +398,12 @@ export function IssuesVMTable({
             keyExtractor={(r) => r.hash}
             onRowClick={(r) => setSelectedVM(r.hash)}
             activeKey={selectedVM ?? undefined}
+            {...(sortColumn ? { sortColumn } : {})}
+            sortDirection={sortDirection}
+            onSortChange={(col, dir) => {
+              setSortColumn(col);
+              setSortDirection(dir);
+            }}
           />
 
           <TablePagination

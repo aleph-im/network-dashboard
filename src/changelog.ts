@@ -11,9 +11,23 @@ export type VersionEntry = {
   changes: ChangeEntry[];
 };
 
-export const CURRENT_VERSION = "0.8.3";
+export const CURRENT_VERSION = "0.8.4";
 
 export const CHANGELOG: VersionEntry[] = [
+  {
+    version: "0.8.4",
+    date: "2026-05-02",
+    changes: [
+      {
+        type: "fix",
+        text: "Sorting Nodes/VMs/Issues/Credits tables by VMs, Memory, vCPUs, etc. now applies to the full filtered dataset — clicking a column header reorders rows across all pages instead of only the visible 25.",
+      },
+      {
+        type: "ui",
+        text: "VMs filter Memory range now reads in GB instead of MB (\"0 GB–256 GB\" rather than \"0 MB–262144 MB\").",
+      },
+    ],
+  },
   {
     version: "0.8.3",
     date: "2026-05-01",

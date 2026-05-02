@@ -388,13 +388,13 @@ describe("applyVmAdvancedFilters", () => {
     expect(result[0]?.requirements.vcpus).toBe(4);
   });
 
-  it("filters by memoryMbRange", () => {
+  it("filters by memoryGbRange", () => {
     const vms = [
       makeVm({ requirements: { vcpus: 2, memoryMb: 2048, diskMb: 0 } }),
       makeVm({ requirements: { vcpus: 2, memoryMb: 512, diskMb: 0 } }),
     ];
     const result = applyVmAdvancedFilters(vms, {
-      memoryMbRange: [1024, 65536],
+      memoryGbRange: [1, 64],
     });
     expect(result).toHaveLength(1);
   });
@@ -487,12 +487,12 @@ describe("computeVmFilterMaxes", () => {
   it("rounds up to the next power of two when VMs exceed the floor", () => {
     const vms = [
       makeVm({
-        requirements: { vcpus: 48, memoryMb: 128 * 1024, diskMb: 0 },
+        requirements: { vcpus: 48, memoryMb: 96 * 1024, diskMb: 0 },
       }),
     ];
     expect(computeVmFilterMaxes(vms)).toEqual({
       vcpus: 64,
-      memoryMb: 131072,
+      memoryGb: 128,
     });
   });
 });

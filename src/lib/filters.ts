@@ -168,30 +168,33 @@ export type VmAdvancedFilters = {
   requiresGpu?: boolean;
   requiresConfidential?: boolean;
   vcpusRange?: [number, number];
-  memoryMbRange?: [number, number];
+  memoryGbRange?: [number, number];
 };
 
 export type VmFilterMaxes = {
   vcpus: number;
-  memoryMb: number;
+  memoryGb: number;
 };
 
 /** Lower bound for slider extents — used when data is empty or loading. */
 export const VM_FILTER_MAX_FLOOR: VmFilterMaxes = {
   vcpus: 32,
-  memoryMb: 65536,
+  memoryGb: 64,
 };
 
 export function computeVmFilterMaxes(vms: VM[]): VmFilterMaxes {
   let vcpus = 0;
-  let memoryMb = 0;
+  let memoryGb = 0;
   for (const v of vms) {
     vcpus = Math.max(vcpus, v.requirements.vcpus ?? 0);
-    memoryMb = Math.max(memoryMb, v.requirements.memoryMb ?? 0);
+    memoryGb = Math.max(
+      memoryGb,
+      (v.requirements.memoryMb ?? 0) / 1024,
+    );
   }
   return {
     vcpus: roundUpPow2(vcpus, VM_FILTER_MAX_FLOOR.vcpus),
-    memoryMb: roundUpPow2(memoryMb, VM_FILTER_MAX_FLOOR.memoryMb),
+    memoryGb: roundUpPow2(memoryGb, VM_FILTER_MAX_FLOOR.memoryGb),
   };
 }
 
@@ -245,11 +248,11 @@ export function applyVmAdvancedFilters(
       });
     }
   }
-  if (filters.memoryMbRange) {
-    const [min, max] = filters.memoryMbRange;
-    if (min > 0 || max < maxes.memoryMb) {
+  if (filters.memoryGbRange) {
+    const [min, max] = filters.memoryGbRange;
+    if (min > 0 || max < maxes.memoryGb) {
       result = result.filter((v) => {
-        const val = v.requirements.memoryMb ?? 0;
+        const val = (v.requirements.memoryMb ?? 0) / 1024;
         return val >= min && val <= max;
       });
     }

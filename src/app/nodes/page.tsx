@@ -29,11 +29,19 @@ function NodesContent() {
 
   const sortParam = searchParams.get("sort");
   const orderParam = searchParams.get("order");
-  const sortDirection = orderParam === "asc" ? "asc" : "desc";
-  const initialSort =
-    sortParam === "vms"
-      ? { field: "vms" as const, direction: sortDirection as "asc" | "desc" }
-      : undefined;
+  const sortDirection: "asc" | "desc" =
+    orderParam === "asc" ? "asc" : "desc";
+  const SORT_PARAM_TO_HEADER: Record<string, string> = {
+    vms: "VMs",
+    vcpus: "vCPUs",
+    memory: "Memory",
+  };
+  const initialSortColumn = sortParam
+    ? SORT_PARAM_TO_HEADER[sortParam]
+    : undefined;
+  const initialSort = initialSortColumn
+    ? { column: initialSortColumn, direction: sortDirection }
+    : undefined;
 
   const queryParam = searchParams.get("q") ?? "";
 
