@@ -167,6 +167,8 @@ Ideas and scope creep captured for later consideration.
 <details>
 <summary>Archived items</summary>
 
+- ✅ 2026-05-02 - Sort scope bug on Nodes/VMs/Issues/Credits tables — sort was scoped to the visible page; lifted into each component to sort the full filtered dataset before pagination via DS Table controlled-sort props (Decision #63)
+- ✅ 2026-05-02 - VMs filter Memory unit — switched from MB to GB (Decision #63)
 - ✅ 2026-03-02 - Align DS color tokens with Tailwind conventions — resolved by Decision #11 (dashboard uses `--color-error-*` tokens directly)
 - ✅ 2026-03-03 - IPFS page refresh: add trailingSlash — fixed by adding `trailingSlash: true` to `next.config.ts`
 - ✅ 2026-03-04 - DS npm publishing — migrated from `file:` link to npm `0.0.3`
