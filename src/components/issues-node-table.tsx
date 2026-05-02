@@ -14,6 +14,7 @@ import { TablePagination } from "@/components/table-pagination";
 import { useDebounce } from "@/hooks/use-debounce";
 import { FilterToolbar } from "@/components/filter-toolbar";
 import { textSearch } from "@/lib/filters";
+import { applySort, type SortDirection } from "@/lib/sort";
 import {
   nodeStatusToDot,
   NODE_STATUS_VARIANT,
@@ -350,6 +351,9 @@ export function IssuesNodeTable({
   const [statusFilter, setStatusFilter] =
     useState<NodeIssueFilter>(undefined);
   const [selectedNode, setSelectedNode] = useState<string | null>(null);
+  const [sortColumn, setSortColumn] = useState<string | undefined>();
+  const [sortDirection, setSortDirection] =
+    useState<SortDirection>("asc");
 
   const { displayedRows, filteredCounts, unfilteredCounts } =
     useMemo(() => {
@@ -392,6 +396,11 @@ export function IssuesNodeTable({
       };
     }, [issueNodes, debouncedQuery, statusFilter]);
 
+  const sortedRows = useMemo(
+    () => applySort(displayedRows, columns, sortColumn, sortDirection),
+    [displayedRows, sortColumn, sortDirection],
+  );
+
   const {
     page,
     pageSize,
@@ -402,7 +411,7 @@ export function IssuesNodeTable({
     pageItems,
     setPage,
     setPageSize,
-  } = usePagination(displayedRows);
+  } = usePagination(sortedRows);
 
   useEffect(() => {
     setPage(1);
@@ -457,6 +466,12 @@ export function IssuesNodeTable({
             keyExtractor={(r) => r.node.hash}
             onRowClick={(r) => setSelectedNode(r.node.hash)}
             activeKey={selectedNode ?? undefined}
+            {...(sortColumn ? { sortColumn } : {})}
+            sortDirection={sortDirection}
+            onSortChange={(col, dir) => {
+              setSortColumn(col);
+              setSortDirection(dir);
+            }}
           />
 
           <TablePagination

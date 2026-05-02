@@ -7,6 +7,7 @@ import { CopyableText } from "@aleph-front/ds/copyable-text";
 import { usePagination } from "@/hooks/use-pagination";
 import { TablePagination } from "@/components/table-pagination";
 import { FilterToolbar } from "@/components/filter-toolbar";
+import { applySort, type SortDirection } from "@/lib/sort";
 import { formatAleph } from "@/lib/format";
 import type { RecipientTotal, DistributionSummary } from "@/api/credit-types";
 
@@ -150,6 +151,9 @@ type Props = {
 export function CreditRecipientTable({ summary }: Props) {
   const [roleFilter, setRoleFilter] = useState<RoleFilter>("all");
   const [search, setSearch] = useState("");
+  const [sortColumn, setSortColumn] = useState<string | undefined>();
+  const [sortDirection, setSortDirection] =
+    useState<SortDirection>("asc");
 
   const roleCounts = useMemo(() => {
     const counts: Record<RoleFilter, number> = { all: 0, crn: 0, ccn: 0, staker: 0 };
@@ -179,6 +183,16 @@ export function CreditRecipientTable({ summary }: Props) {
     return items;
   }, [summary.recipients, roleFilter, search]);
 
+  const columns = useMemo(
+    () => buildColumns(summary.distributedAleph),
+    [summary.distributedAleph],
+  );
+
+  const sortedFiltered = useMemo(
+    () => applySort(filtered, columns, sortColumn, sortDirection),
+    [filtered, columns, sortColumn, sortDirection],
+  );
+
   const {
     page,
     pageSize,
@@ -189,12 +203,7 @@ export function CreditRecipientTable({ summary }: Props) {
     pageItems,
     setPage,
     setPageSize,
-  } = usePagination(filtered);
-
-  const columns = useMemo(
-    () => buildColumns(summary.distributedAleph),
-    [summary.distributedAleph],
-  );
+  } = usePagination(sortedFiltered);
 
   return (
     <div>
@@ -213,6 +222,12 @@ export function CreditRecipientTable({ summary }: Props) {
         data={pageItems}
         keyExtractor={(r) => r.address}
         emptyState="No recipients found"
+        {...(sortColumn ? { sortColumn } : {})}
+        sortDirection={sortDirection}
+        onSortChange={(col, dir) => {
+          setSortColumn(col);
+          setSortDirection(dir);
+        }}
       />
 
       <TablePagination

@@ -31,6 +31,7 @@ import {
   NODE_FILTER_MAX_FLOOR,
   type NodeAdvancedFilters,
 } from "@/lib/filters";
+import { applySort, type SortDirection } from "@/lib/sort";
 import {
   nodeStatusToDot,
   NODE_STATUS_VARIANT,
@@ -170,8 +171,8 @@ const columns: Column<Node>[] = [
 ];
 
 type SortConfig = {
-  field: "vms";
-  direction: "asc" | "desc";
+  column: string;
+  direction: SortDirection;
 };
 
 const COMPACT_HIDDEN_HEADERS = new Set(["CPU", "GPU", "VMs"]);
@@ -207,6 +208,14 @@ export function NodeTable({
   const [statusFilter, setStatusFilter] = useState<
     NodeStatus | undefined
   >(initialStatus ?? "healthy");
+
+  // Sort (controlled — sort runs over the full filtered dataset, then paginated)
+  const [sortColumn, setSortColumn] = useState<string | undefined>(
+    initialSort?.column,
+  );
+  const [sortDirection, setSortDirection] = useState<SortDirection>(
+    initialSort?.direction ?? "asc",
+  );
 
   // Advanced filters
   const [filtersOpen, setFiltersOpen] = useState(false);
@@ -274,13 +283,10 @@ export function NodeTable({
       };
     }, [allNodes, debouncedQuery, advanced, statusFilter, filterMaxes]);
 
-  // Apply initial sort if present
-  const sortedRows = initialSort
-    ? [...displayedRows].sort((a, b) => {
-        const dir = initialSort.direction === "asc" ? 1 : -1;
-        return (a.vmCount - b.vmCount) * dir;
-      })
-    : displayedRows;
+  const sortedRows = useMemo(
+    () => applySort(displayedRows, columns, sortColumn, sortDirection),
+    [displayedRows, sortColumn, sortDirection],
+  );
 
   const {
     page, pageSize, totalPages, startItem, endItem,
@@ -594,6 +600,12 @@ export function NodeTable({
             keyExtractor={(r) => r.hash}
             onRowClick={(r) => onSelectNode(r.hash)}
             activeKey={selectedKey}
+            {...(sortColumn ? { sortColumn } : {})}
+            sortDirection={sortDirection}
+            onSortChange={(col, dir) => {
+              setSortColumn(col);
+              setSortDirection(dir);
+            }}
           />
 
           <TablePagination

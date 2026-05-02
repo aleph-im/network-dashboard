@@ -28,6 +28,7 @@ import {
   computeVmFilterMaxes,
   type VmAdvancedFilters,
 } from "@/lib/filters";
+import { applySort, type SortDirection } from "@/lib/sort";
 import { VM_STATUS_VARIANT } from "@/lib/status-map";
 import { relativeTime } from "@/lib/format";
 import type { AlephMessageInfo, VM, VmStatus, VmType } from "@/api/types";
@@ -245,6 +246,11 @@ export function VMTable({
     VmStatus | undefined
   >(initialStatus);
 
+  // Sort (controlled — sort runs over the full filtered dataset, then paginated)
+  const [sortColumn, setSortColumn] = useState<string | undefined>();
+  const [sortDirection, setSortDirection] =
+    useState<SortDirection>("asc");
+
   // Advanced filters
   const [filtersOpen, setFiltersOpen] = useState(false);
   const [advanced, setAdvanced] = useState<VmAdvancedFilters>({});
@@ -274,9 +280,9 @@ export function VMTable({
     advanced.vcpusRange != null &&
       (advanced.vcpusRange[0] > 0 ||
         advanced.vcpusRange[1] < filterMaxes.vcpus),
-    advanced.memoryMbRange != null &&
-      (advanced.memoryMbRange[0] > 0 ||
-        advanced.memoryMbRange[1] < filterMaxes.memoryMb),
+    advanced.memoryGbRange != null &&
+      (advanced.memoryGbRange[0] > 0 ||
+        advanced.memoryGbRange[1] < filterMaxes.memoryGb),
   ].filter(Boolean).length;
 
   // Filter pipeline
@@ -312,10 +318,20 @@ export function VMTable({
       };
     }, [allVms, debouncedQuery, advanced, statusFilter, messageInfo, filterMaxes]);
 
+  const tableColumns = useMemo(
+    () => buildColumns(messageInfo, compact),
+    [messageInfo, compact],
+  );
+
+  const sortedRows = useMemo(
+    () => applySort(displayedRows, tableColumns, sortColumn, sortDirection),
+    [displayedRows, tableColumns, sortColumn, sortDirection],
+  );
+
   const {
     page, pageSize, totalPages, startItem, endItem,
     totalItems, pageItems, setPage, setPageSize,
-  } = usePagination(displayedRows);
+  } = usePagination(sortedRows);
 
   useEffect(() => {
     setPage(1);
@@ -584,25 +600,25 @@ export function VMTable({
                   <div className="flex items-center justify-between text-sm font-semibold text-muted-foreground">
                     <span>Memory</span>
                     <span className="tabular-nums text-xs">
-                      {advanced.memoryMbRange?.[0] ?? 0} MB–
-                      {advanced.memoryMbRange?.[1] ??
-                        filterMaxes.memoryMb}{" "}
-                      MB
+                      {advanced.memoryGbRange?.[0] ?? 0} GB–
+                      {advanced.memoryGbRange?.[1] ??
+                        filterMaxes.memoryGb}{" "}
+                      GB
                     </span>
                   </div>
                   <Slider
                     size="sm"
                     min={0}
-                    max={filterMaxes.memoryMb}
-                    step={256}
+                    max={filterMaxes.memoryGb}
+                    step={1}
                     value={
-                      advanced.memoryMbRange ??
-                      [0, filterMaxes.memoryMb]
+                      advanced.memoryGbRange ??
+                      [0, filterMaxes.memoryGb]
                     }
                     onValueChange={(val) =>
                       updateAdvanced((p) => ({
                         ...p,
-                        memoryMbRange: val as [number, number],
+                        memoryGbRange: val as [number, number],
                       }))
                     }
                     showTooltip
@@ -616,11 +632,17 @@ export function VMTable({
       <div className="flex gap-6">
         <div className="flex-1 min-w-0">
           <Table
-            columns={buildColumns(messageInfo, compact)}
+            columns={tableColumns}
             data={pageItems}
             keyExtractor={(r) => r.hash}
             onRowClick={(r) => onSelectVM(r.hash)}
             activeKey={selectedKey}
+            {...(sortColumn ? { sortColumn } : {})}
+            sortDirection={sortDirection}
+            onSortChange={(col, dir) => {
+              setSortColumn(col);
+              setSortDirection(dir);
+            }}
           />
 
           <TablePagination
