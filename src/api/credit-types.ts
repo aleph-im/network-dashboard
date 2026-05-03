@@ -110,8 +110,8 @@ export type RecipientTotal = {
   crnAleph: number;
   ccnAleph: number;
   stakerAleph: number;
-  nodeHash: string | null;
-  nodeName: string | null;
+  crnCount: number;
+  ccnCount: number;
 };
 
 export type DistributionSummary = {

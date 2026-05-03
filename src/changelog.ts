@@ -11,9 +11,19 @@ export type VersionEntry = {
   changes: ChangeEntry[];
 };
 
-export const CURRENT_VERSION = "0.8.4";
+export const CURRENT_VERSION = "0.8.5";
 
 export const CHANGELOG: VersionEntry[] = [
+  {
+    version: "0.8.5",
+    date: "2026-05-03",
+    changes: [
+      {
+        type: "ui",
+        text: "Credit recipient table now leads with Address and replaces the Roles column with a Sources column showing per-address chips like CRN: 2, CCN: 1, Staker — drawn from the corechannel registry per reward address. The Node column (which only ever showed one of an operator's nodes) is gone; click the address to see the full per-node breakdown on the wallet view.",
+      },
+    ],
+  },
   {
     version: "0.8.4",
     date: "2026-05-02",

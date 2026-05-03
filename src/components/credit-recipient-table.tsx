@@ -11,18 +11,6 @@ import { applySort, type SortDirection } from "@/lib/sort";
 import { formatAleph } from "@/lib/format";
 import type { RecipientTotal, DistributionSummary } from "@/api/credit-types";
 
-const ROLE_VARIANTS: Record<string, "success" | "default" | "warning"> = {
-  crn: "success",
-  ccn: "default",
-  staker: "warning",
-};
-
-const ROLE_LABELS: Record<string, string> = {
-  crn: "CRN",
-  ccn: "CCN",
-  staker: "Staker",
-};
-
 type RoleFilter = "all" | "crn" | "ccn" | "staker";
 
 const ROLE_PILLS: { value: RoleFilter; label: string }[] = [
@@ -32,27 +20,28 @@ const ROLE_PILLS: { value: RoleFilter; label: string }[] = [
   { value: "staker", label: "Staker" },
 ];
 
+type SourceBadge = {
+  key: string;
+  label: string;
+  variant: "success" | "default" | "warning";
+};
+
+function buildSourceBadges(r: RecipientTotal): SourceBadge[] {
+  const badges: SourceBadge[] = [];
+  if (r.crnCount > 0) {
+    badges.push({ key: "crn", label: `CRN: ${r.crnCount}`, variant: "success" });
+  }
+  if (r.ccnCount > 0) {
+    badges.push({ key: "ccn", label: `CCN: ${r.ccnCount}`, variant: "default" });
+  }
+  if (r.stakerAleph > 0) {
+    badges.push({ key: "staker", label: "Staker", variant: "warning" });
+  }
+  return badges;
+}
+
 function buildColumns(distributedAleph: number): Column<RecipientTotal>[] {
   return [
-    {
-      header: "Node",
-      accessor: (r) =>
-        r.nodeName ? (
-          <span className="text-muted-foreground">{r.nodeName}</span>
-        ) : r.nodeHash ? (
-          <CopyableText
-            text={r.nodeHash}
-            startChars={8}
-            endChars={8}
-            size="sm"
-            href={`/nodes?view=${r.nodeHash}`}
-          />
-        ) : (
-          <span className="text-muted-foreground">—</span>
-        ),
-      sortable: true,
-      sortValue: (r) => r.nodeName ?? r.nodeHash ?? "",
-    },
     {
       header: "Address",
       accessor: (r) => (
@@ -68,21 +57,24 @@ function buildColumns(distributedAleph: number): Column<RecipientTotal>[] {
       sortValue: (r) => r.address,
     },
     {
-      header: "Roles",
-      accessor: (r) => (
-        <div className="flex gap-1">
-          {r.roles.map((role) => (
-            <Badge
-              key={role}
-              fill="outline"
-              variant={ROLE_VARIANTS[role]}
-              size="sm"
-            >
-              {ROLE_LABELS[role]}
-            </Badge>
-          ))}
-        </div>
-      ),
+      header: "Sources",
+      accessor: (r) => {
+        const badges = buildSourceBadges(r);
+        if (badges.length === 0) {
+          return <span className="text-muted-foreground">—</span>;
+        }
+        return (
+          <div className="flex flex-wrap gap-1">
+            {badges.map((b) => (
+              <Badge key={b.key} fill="outline" variant={b.variant} size="sm">
+                {b.label}
+              </Badge>
+            ))}
+          </div>
+        );
+      },
+      sortable: true,
+      sortValue: (r) => r.crnCount * 1000 + r.ccnCount,
     },
     {
       header: "CRN",
@@ -173,12 +165,7 @@ export function CreditRecipientTable({ summary }: Props) {
     }
     if (search) {
       const q = search.toLowerCase();
-      items = items.filter(
-        (r) =>
-          r.address.toLowerCase().includes(q) ||
-          (r.nodeHash?.toLowerCase().includes(q) ?? false) ||
-          (r.nodeName?.toLowerCase().includes(q) ?? false),
-      );
+      items = items.filter((r) => r.address.toLowerCase().includes(q));
     }
     return items;
   }, [summary.recipients, roleFilter, search]);
@@ -214,7 +201,7 @@ export function CreditRecipientTable({ summary }: Props) {
         formatCount={(s) => String(roleCounts[s])}
         searchValue={search}
         onSearchChange={(v) => { setSearch(v); setPage(1); }}
-        searchPlaceholder="Search address, node..."
+        searchPlaceholder="Search address..."
       />
 
       <Table

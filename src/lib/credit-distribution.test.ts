@@ -226,4 +226,49 @@ describe("computeDistributionSummary", () => {
     expect(summary.perVm.get("vm1")).toBeCloseTo(100);
     expect(summary.perNode.get("crn1")).toBeCloseTo(60); // 60% CRN share
   });
+
+  it("counts CRNs and CCNs per reward address", () => {
+    const nodeState = makeNodeState({
+      ccns: [
+        {
+          hash: "ccn1",
+          name: "CCN-1",
+          owner: "0xOp",
+          reward: "0xOp",
+          score: 0.8,
+          status: "active",
+          stakers: { "0xStaker": 100000 },
+          totalStaked: 100000,
+        },
+      ],
+      crns: [
+        { hash: "crn1", name: "CRN-1", owner: "0xOp", reward: "0xOp", score: 0.9, status: "linked" },
+        { hash: "crn2", name: "CRN-2", owner: "0xOp", reward: "0xOp", score: 0.9, status: "linked" },
+        { hash: "crn3", name: "CRN-3", owner: "0xOther", reward: "0xOther", score: 0.9, status: "linked" },
+      ],
+    });
+    const expenses = [makeExpense("execution", 100, "crn1", "vm1")];
+    const summary = computeDistributionSummary(expenses, nodeState);
+
+    const op = summary.recipients.find((r) => r.address === "0xOp");
+    expect(op).toBeDefined();
+    expect(op!.crnCount).toBe(2);
+    expect(op!.ccnCount).toBe(1);
+
+    const other = summary.recipients.find((r) => r.address === "0xOther");
+    // 0xOther has a CRN but no rewards in this expense, so isn't a recipient
+    expect(other).toBeUndefined();
+  });
+
+  it("staker-only address has zero CRN/CCN counts", () => {
+    const nodeState = makeNodeState();
+    const expenses = [makeExpense("storage", 100)];
+    const summary = computeDistributionSummary(expenses, nodeState);
+
+    const staker = summary.recipients.find((r) => r.address === "0xStaker1");
+    expect(staker).toBeDefined();
+    expect(staker!.crnCount).toBe(0);
+    expect(staker!.ccnCount).toBe(0);
+    expect(staker!.roles).toContain("staker");
+  });
 });
