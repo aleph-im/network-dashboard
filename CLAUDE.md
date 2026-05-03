@@ -37,7 +37,7 @@ Before proposing anything, check if it contradicts a past decision. If conflict 
 
 When the conversation drifts from the stated task:
 1. Stop and say: "This is drifting from [original task]. Add to backlog and refocus, or pivot?"
-2. If backlog: log to `docs/BACKLOG.md` and return to the original task
+2. If backlog: log to `docs/BACKLOG.md` (default to **Needs planning**; use **Ready to execute** only if scope is fully clear and the work fits a single sitting) and return to the original task
 3. If pivot: continue, but note the scope change
 
 **Triggers to watch for:**
@@ -68,7 +68,7 @@ When the conversation drifts from the stated task:
 - `docs/ARCHITECTURE.md` -- add/update patterns for any new architectural decisions, new files, or changed structure
 - `CLAUDE.md` -- update the Current Features list if user-facing behavior changed
 - `docs/DECISIONS.md` -- log any key decisions made during the feature
-- `docs/BACKLOG.md` -- move completed items to Completed section, add any deferred ideas
+- `docs/BACKLOG.md` -- move completed items to Completed section, add any deferred ideas (sorted into Ready to execute / Needs planning / Roadmap ideations)
 
 **Checklist before merge:**
 1. ARCHITECTURE.md updated?
@@ -144,11 +144,11 @@ On "sync up" or "catch me up":
 
 ### Open Backlog
 
-| Priority | Items |
-|----------|-------|
-| **High** | Item 1, Item 2 |
-| **Medium** | Item 3, Item 4 |
-| **Low** | Item 5 |
+| Section | Items |
+|---------|-------|
+| **Ready to execute** | Item 1, Item 2 |
+| **Needs planning** | Item 3, Item 4 |
+| **Roadmap ideations** | Item 5 |
 
 Ready to go — what are we working on?
 ```
@@ -162,7 +162,7 @@ Ready to go — what are we working on?
 | File | Purpose |
 |------|---------|
 | `docs/DECISIONS.md` | Decision log with rationale |
-| `docs/BACKLOG.md` | Parking lot for scope creep and deferred ideas |
+| `docs/BACKLOG.md` | Parking lot for scope creep and deferred ideas, triaged into Ready to execute / Needs planning / Roadmap ideations / Completed |
 | `docs/ARCHITECTURE.md` | Technical patterns, component structure, and recipes |
 | `docs/plans/` | Design and implementation plans (read-only reference) |
 
@@ -299,7 +299,7 @@ When adding a new component to `@aleph-front/ds`, follow the "Adding a New Compo
 - React Query hooks with automatic polling (15-30s intervals)
 - Cross-page navigation via URL search params (`?status=`, `?selected=`, `?hasVms=`, `?sort=`, `?order=`, `?view=`): overview stat cards link to filtered list pages, overview activity cards (Top Nodes, Latest VMs) link to detail views via `?view=hash`, detail panels cross-link between nodes and VMs via `?view=`, selected row highlighted with left border accent
 - Wallet view page: `/wallet?address=0x...` with back navigation (`← Back` via `router.back()`), showing owned nodes (from scheduler), created VMs with scheduler status (api2 cross-ref), credit rewards (24h) per node and role (CRN/CCN/staker breakdown with ALEPH amounts, auto-growing card height), activity timeline with manual refresh (all message types), permissions granted/received with inline scope tags, wallet-to-wallet navigation, Explorer deep links. Entry points: clickable owner addresses in node and VM detail views/panels.
-- Credits page: `/credits` with DS Tabs pill-variant range selector (24h/7d/30d), "Powered by Aleph Cloud" watermark below flow diagram, credit expense distribution flow diagram (DS Card, SVG particle animation along gradient-stroked bezier paths with glow-effect highlight particles, pre-populated particles on load via negative `begin` offsets, pill badge percentage labels at bezier parametric points with hover-expand showing ALEPH amounts, hover interaction with dim/highlight, single origin point per source box, accent bars on sources, distinct color per flow: lime/green/purple/amber/coral), summary stat cards (total with cumulative revenue SVG sparkline/storage/execution/dev fund), recipient table using DS `Table` component with sortable columns (Node/Address/Roles/CRN/CCN/Staking/Total/%), `FilterToolbar` with role tabs (All/CRN/CCN/Staker with counts) + search, `CopyableText` for addresses/hashes, `Badge fill="outline"` for role tags (CCN=purple/default, CRN=success, Staker=warning), `TablePagination` for pagination, sidebar nav entry with coins icon. Uses api2 credit expense messages + corechannel aggregate for node state. Distribution logic: 5% dev fund, CRN share (60% execution), CCN share (75% storage / 15% execution, score-weighted), staker share (20%, stake-weighted). Shared React Query cache for 24h data across credits and wallet pages via stable 5-minute-rounded timestamps. Persisted cache (localStorage, 24h max age, busted by app version) so repeat visits within a day are instant. Prefetch on sidebar hover/focus warms the cache before navigation. `placeholderData: keepPreviousData` keeps prior range numbers visible while a new range is fetched. Flow diagram renders a greyed-out structural placeholder (boxes, thin connectors, em-dash values) while the api2 query is in flight, so the page composition appears immediately.
+- Credits page: `/credits` with DS Tabs pill-variant range selector (24h/7d/30d), "Powered by Aleph Cloud" watermark below flow diagram, credit expense distribution flow diagram (DS Card, SVG particle animation along gradient-stroked bezier paths with glow-effect highlight particles, pre-populated particles on load via negative `begin` offsets, pill badge percentage labels at bezier parametric points with hover-expand showing ALEPH amounts, hover interaction with dim/highlight, single origin point per source box, accent bars on sources, distinct color per flow: lime/green/purple/amber/coral), summary stat cards (total with cumulative revenue SVG sparkline/storage/execution/dev fund), recipient table using DS `Table` component with sortable columns (Address/Sources/CRN/CCN/Staking/Total/%) where Sources is a row of `Badge fill="outline"` chips (`CRN: N` / `CCN: N` / `Staker`) derived from `nodeState` per reward address, `FilterToolbar` with role tabs (All/CRN/CCN/Staker with counts) + address search, `CopyableText` for addresses, `TablePagination` for pagination, sidebar nav entry with coins icon. Uses api2 credit expense messages + corechannel aggregate for node state. Distribution logic: 5% dev fund, CRN share (60% execution), CCN share (75% storage / 15% execution, score-weighted), staker share (20%, stake-weighted). Shared React Query cache for 24h data across credits and wallet pages via stable 5-minute-rounded timestamps. Persisted cache (localStorage, 24h max age, busted by app version) so repeat visits within a day are instant. Prefetch on sidebar hover/focus warms the cache before navigation. `placeholderData: keepPreviousData` keeps prior range numbers visible while a new range is fetched. Flow diagram renders a greyed-out structural placeholder (boxes, thin connectors, em-dash values) while the api2 query is in flight, so the page composition appears immediately.
 - Changelog page (`/changelog`): version history with categorized entries (Feature/UI/Infra/Refactor badges), version number link in sidebar footer (`v0.8.0`), data in `src/changelog.ts`
 - Static export for IPFS deployment
 - `@aleph-front/ds` integration via npm (pinned version) and `transpilePackages`

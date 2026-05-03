@@ -1,6 +1,6 @@
 # Backlog
 
-Ideas and scope creep captured for later consideration.
+Ideas and scope creep captured for later consideration, triaged by readiness.
 
 ---
 
@@ -11,14 +11,51 @@ Ideas and scope creep captured for later consideration.
 - "We should also..." moments
 - Features identified but deferred
 
+New entries land in one of the three live sections below. When unsure, default
+to **Needs planning** — it's cheaper to demote a too-fuzzy item than to ship a
+half-baked one from **Ready to execute**. As entries get refined or
+deprioritized, move them between sections (Roadmap → Needs planning → Ready to
+execute → Completed).
+
 ---
 
-## Open Items
+## Ready to execute
+
+Scope is clear, no open questions, can be picked up in a single sitting. Small
+to medium size (one PR, one focused session).
 
 ### 2026-05-01 - Port deploy-ipfs.py to aleph-cloud-app's robust pattern
 **Source:** Cross-repo learning — aleph-cloud-app's `scripts/deploy/client.py` solved a class of CI deploy failures (PRs #74, #75, #76 there)
 **Description:** Our current script gets the timeout-fix bandage (PR #84 here), but a fuller port would make deploys reliably durable: switch IPFS upload from `aiohttp` to `requests` (simpler, well-understood timeout semantics); switch `create_store`/`create_aggregate` to `sync=False` + poll STORE/AGGREGATE message status until `processed`; add IPFS DHT propagation wait + post-resolve sleep before the STORE write to avoid `error_code: 4 — File not found` rejections; add structured rejection banners + `$GITHUB_STEP_SUMMARY` markdown table; bump GitHub job `timeout-minutes` to ~25. See `aleph-cloud-app/scripts/deploy/client.py` for the canonical pattern.
 **Priority:** Medium
+
+### 2026-03-20 - Sparkline hover tooltip
+**Source:** Credit sparkline implementation
+**Description:** Add a tooltip on sparkline hover showing the exact ALEPH value and timestamp at the cursor position. Would require tracking mouse position relative to the SVG and mapping x-coordinate back to the data series.
+**Priority:** Low
+
+### 2026-03-18 - Contextual Issues entry points from VM/node detail pages
+**Source:** Issues page nav reorg (Decision #55)
+**Description:** Add "View related issues" or similar links in VM and node detail views/panels when the entity has scheduling discrepancies (orphaned, missing, unschedulable). Provides a natural discovery path for the Issues page from relevant context.
+**Priority:** Medium
+
+### 2026-03-17 - DS CopyableText: show arrow icon for internal links
+**Source:** Credit recipient table — internal hrefs (`/nodes?view=...`, `/wallet?address=...`) don't show the ArrowUpRight icon
+**Description:** The DS `CopyableText` component only renders the arrow icon for external URLs (`isExternalUrl` check). Internal links should also show the arrow (without `target="_blank"`). Patched locally in `node_modules`; needs to be applied in `@aleph-front/ds`.
+**Priority:** High
+
+### 2026-03-06 - Remove tooltip from hash in Latest VMs card
+**Source:** User request
+**Description:** On the overview page's Latest VMs card, the hash column shows a tooltip on hover (from `CopyableText`). Remove the tooltip — the hash is already visible and the tooltip adds noise in this compact card context.
+**Priority:** Low
+
+---
+
+## Needs planning
+
+Intent is agreed but there are open questions, design choices, or multi-step
+coordination required. Needs a brainstorm or spec before someone can execute.
+Multi-day / multi-PR work.
 
 ### 2026-05-01 - Pre-aggregated credit totals from backend
 **Source:** Credit page slow-load research (Decision #60)
@@ -55,36 +92,10 @@ Ideas and scope creep captured for later consideration.
 **Description:** Currently staker data is aggregated into a single pool for credit distribution. Could show per-CCN staker lists with individual amounts — a staker leaderboard or drill-down on CCN detail views. Data available in `NodeState.ccns[].stakers`.
 **Priority:** Medium
 
-### 2026-03-20 - Sparkline hover tooltip
-**Source:** Credit sparkline implementation
-**Description:** Add a tooltip on sparkline hover showing the exact ALEPH value and timestamp at the cursor position. Would require tracking mouse position relative to the SVG and mapping x-coordinate back to the data series.
-**Priority:** Low
-
 ### 2026-03-19 - Expose `?scheduling_status=` API filter in UI
 **Source:** VM status expansion brainstorming
 **Description:** The scheduler API now supports a `?scheduling_status=` filter for raw scheduling intent (scheduled/unscheduled/unschedulable/unknown), independent of observation-based `?status=`. Could be exposed as a second filter dimension (e.g. two-tier tabs or an advanced filter) for power users who want to combine intent + observation queries. Not needed for v1 of the status expansion — the flat status tabs cover the primary use case.
 **Priority:** Low
-
-### 2026-03-18 - Contextual Issues entry points from VM/node detail pages
-**Source:** Issues page nav reorg (Decision #55)
-**Description:** Add "View related issues" or similar links in VM and node detail views/panels when the entity has scheduling discrepancies (orphaned, missing, unschedulable). Provides a natural discovery path for the Issues page from relevant context.
-**Priority:** Medium
-
-### 2026-03-17 - DS CopyableText: show arrow icon for internal links
-**Source:** Credit recipient table — internal hrefs (`/nodes?view=...`, `/wallet?address=...`) don't show the ArrowUpRight icon
-**Description:** The DS `CopyableText` component only renders the arrow icon for external URLs (`isExternalUrl` check). Internal links should also show the arrow (without `target="_blank"`). Patched locally in `node_modules`; needs to be applied in `@aleph-front/ds`.
-**Priority:** High
-
-### 2026-03-11 - Wallet identity hub (User Command Center evolution)
-**Source:** Wallet view brainstorming
-**Description:** Expand the wallet view beyond ops/debugging into a richer identity hub: wallet balance, ALEPH staking, transaction history, etc. Part of a broader evolution from an ops dashboard to a User Command Center. Build on top of the Phase 1 ops-focused wallet view.
-**Priority:** Low
-
-### 2026-03-06 - Remove tooltip from hash in Latest VMs card
-**Source:** User request
-**Description:** On the overview page's Latest VMs card, the hash column shows a tooltip on hover (from `CopyableText`). Remove the tooltip — the hash is already visible and the tooltip adds noise in this compact card context.
-**Priority:** Low
-
 
 ### 2026-03-05 - Mobile-responsive filter UI
 **Source:** Identified while brainstorming list page filtering overhaul
@@ -96,16 +107,6 @@ Ideas and scope creep captured for later consideration.
 **Description:** The API has no `/stats/history` endpoint. Sparklines were removed during migration. Could accumulate stats snapshots client-side in React Query cache (or a simple in-memory ring buffer) to rebuild 24h trend data. Better solution: request a `/stats/history` endpoint from the backend team.
 **Priority:** Medium
 
-### 2026-03-01 - WebSocket migration
-**Source:** Design doc
-**Description:** Replace polling with WebSocket connections for real-time event streaming. Would reduce latency and server load compared to 10-30s polling intervals.
-**Priority:** Medium
-
-### 2026-03-01 - Sidebar component in DS
-**Source:** App shell implementation
-**Description:** The AppSidebar is currently a local component. If other Aleph projects need similar navigation, consider promoting it to the DS with configurable nav items.
-**Priority:** Low
-
 ### 2026-03-01 - E2E tests
 **Source:** Implementation plan
 **Description:** Add Playwright E2E tests for critical user flows: navigate pages, filter tables, open detail panels, toggle theme.
@@ -116,24 +117,29 @@ Ideas and scope creep captured for later consideration.
 **Description:** Add time-series charts for CPU/memory/disk usage history on node detail views. Recharts was removed during API migration — would need to re-add or use a lighter charting library.
 **Priority:** Medium
 
-
 ---
 
-## Paused (waiting on backend)
+## Roadmap ideations
 
-### 2026-03-09 - Server-side search
-**Source:** API pagination migration analysis
-**Description:** Push search to API instead of client-side filtering. Would replace `textSearch()` in `filters.ts` with a `?search=` query param. Already have `useDebounce` hook ready.
-**Blocked on:** Olivier adding search query params to v1 list endpoints
+Forward-looking ideas, possibly tied to a longer-form evolution doc. Not
+actionable yet; captured so they're not lost. Might never ship in current
+form, or might mature into a **Needs planning** entry once the surrounding
+context lands.
 
-### 2026-03-09 - Expanded `/stats` endpoint
-**Source:** API pagination migration analysis
-**Description:** Request per-status breakdowns in `/stats` response (unreachable/unknown/removed nodes, scheduled/orphaned/missing/unschedulable VMs). Currently `getOverviewStats()` fetches all nodes + all VMs just to count by status — wasteful and won't scale.
-**Blocked on:** Backend change from Olivier
+### 2026-03-11 - Wallet identity hub (User Command Center evolution)
+**Source:** Wallet view brainstorming
+**Description:** Expand the wallet view beyond ops/debugging into a richer identity hub: wallet balance, ALEPH staking, transaction history, etc. Part of a broader evolution from an ops dashboard to a User Command Center. Build on top of the Phase 1 ops-focused wallet view.
+**Priority:** Low
 
----
+### 2026-03-01 - WebSocket migration
+**Source:** Design doc
+**Description:** Replace polling with WebSocket connections for real-time event streaming. Would reduce latency and server load compared to 10-30s polling intervals.
+**Priority:** Medium
 
-## Investigate
+### 2026-03-01 - Sidebar component in DS
+**Source:** App shell implementation
+**Description:** The AppSidebar is currently a local component. If other Aleph projects need similar navigation, consider promoting it to the DS with configurable nav items.
+**Priority:** Low
 
 ### 2026-03-09 - Node map / geo view
 **Description:** Visualize node locations on a map. Feasibility depends on whether IPv6 or address fields can be geolocated.
@@ -162,11 +168,28 @@ Ideas and scope creep captured for later consideration.
 
 ---
 
-## Completed / Rejected
+## Paused (waiting on backend)
+
+Items where the path forward is clear but blocked on external work.
+
+### 2026-03-09 - Server-side search
+**Source:** API pagination migration analysis
+**Description:** Push search to API instead of client-side filtering. Would replace `textSearch()` in `filters.ts` with a `?search=` query param. Already have `useDebounce` hook ready.
+**Blocked on:** Olivier adding search query params to v1 list endpoints
+
+### 2026-03-09 - Expanded `/stats` endpoint
+**Source:** API pagination migration analysis
+**Description:** Request per-status breakdowns in `/stats` response (unreachable/unknown/removed nodes, scheduled/orphaned/missing/unschedulable VMs). Currently `getOverviewStats()` fetches all nodes + all VMs just to count by status — wasteful and won't scale.
+**Blocked on:** Backend change from Olivier
+
+---
+
+## Completed
 
 <details>
 <summary>Archived items</summary>
 
+- ✅ 2026-05-03 - Credit recipient table: drop misleading Node column, lead with Address, replace Roles with Sources column reading "2 CRNs · 1 CCN · staking" (Decision #64)
 - ✅ 2026-05-02 - Sort scope bug on Nodes/VMs/Issues/Credits tables — sort was scoped to the visible page; lifted into each component to sort the full filtered dataset before pagination via DS Table controlled-sort props (Decision #63)
 - ✅ 2026-05-02 - VMs filter Memory unit — switched from MB to GB (Decision #63)
 - ✅ 2026-03-02 - Align DS color tokens with Tailwind conventions — resolved by Decision #11 (dashboard uses `--color-error-*` tokens directly)

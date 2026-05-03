@@ -163,30 +163,28 @@ export function computeDistributionSummary(
     }
   }
 
-  // Build recipient list — merge by address across roles
+  // Build per-address node counts — keyed by reward address (matches recipient grouping)
+  const crnCountByAddress = new Map<string, number>();
+  for (const crn of nodeState.crns.values()) {
+    const addr = getRewardAddress(crn);
+    crnCountByAddress.set(addr, (crnCountByAddress.get(addr) ?? 0) + 1);
+  }
+  const ccnCountByAddress = new Map<string, number>();
+  for (const ccn of nodeState.ccns.values()) {
+    const addr = getRewardAddress(ccn);
+    ccnCountByAddress.set(addr, (ccnCountByAddress.get(addr) ?? 0) + 1);
+  }
+
+  // Merge rewards by address across roles
   const merged = new Map<
     string,
-    { crnAleph: number; ccnAleph: number; stakerAleph: number; nodeHash: string | null; nodeName: string | null }
+    { crnAleph: number; ccnAleph: number; stakerAleph: number }
   >();
-
-  function findNode(address: string): { hash: string; name: string } | null {
-    for (const [hash, info] of nodeState.crns) {
-      if (info.reward === address || info.owner === address) return { hash, name: info.name };
-    }
-    for (const [hash, info] of nodeState.ccns) {
-      if (info.reward === address || info.owner === address) return { hash, name: info.name };
-    }
-    return null;
-  }
 
   function getOrCreate(address: string) {
     let entry = merged.get(address);
     if (!entry) {
-      const node = findNode(address);
-      entry = {
-        crnAleph: 0, ccnAleph: 0, stakerAleph: 0,
-        nodeHash: node?.hash ?? null, nodeName: node?.name ?? null,
-      };
+      entry = { crnAleph: 0, ccnAleph: 0, stakerAleph: 0 };
       merged.set(address, entry);
     }
     return entry;
@@ -209,8 +207,8 @@ export function computeDistributionSummary(
         crnAleph: e.crnAleph,
         ccnAleph: e.ccnAleph,
         stakerAleph: e.stakerAleph,
-        nodeHash: e.nodeHash,
-        nodeName: e.nodeName,
+        crnCount: crnCountByAddress.get(address) ?? 0,
+        ccnCount: ccnCountByAddress.get(address) ?? 0,
       };
     },
   );
