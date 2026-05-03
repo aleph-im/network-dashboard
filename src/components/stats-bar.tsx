@@ -217,138 +217,128 @@ export function StatsBar() {
   const hasUnschedulable = (stats?.unschedulableVMs ?? 0) > 0;
 
   return (
-    <div className="grid grid-cols-2 gap-4 lg:grid-cols-4">
-      {/* Section labels */}
-      <p className="col-span-2 mb-[-8px] text-xs font-semibold uppercase tracking-widest text-muted-foreground/50">
-        Nodes
-      </p>
-      <p className="col-span-2 mb-[-8px] text-xs font-semibold uppercase tracking-widest text-muted-foreground/50 max-lg:hidden lg:pl-4">
-        Virtual Machines
-      </p>
+    <div className="grid grid-cols-1 gap-8 lg:grid-cols-2 lg:gap-4">
+      <section className="grid grid-cols-2 gap-4">
+        <p className="col-span-2 mb-[-8px] text-xs font-semibold uppercase tracking-widest text-muted-foreground/50">
+          Nodes
+        </p>
+        <Stat
+          label="Total"
+          value={stats?.totalNodes}
+          total={undefined}
+          subtitle="Compute nodes registered with the scheduler"
+          isLoading={isLoading}
+          href="/nodes"
+          index={0}
+        />
+        <Stat
+          label="Healthy"
+          value={stats?.healthyNodes}
+          total={stats?.totalNodes}
+          subtitle="Nodes that passed their last health check"
+          isLoading={isLoading}
+          color="var(--color-success-500)"
+          tint="var(--color-success-500)"
+          icon={iconCheck}
+          href="/nodes?status=healthy"
+          index={1}
+        />
+        <Stat
+          label="Unreachable"
+          value={stats?.unreachableNodes}
+          total={stats?.totalNodes}
+          subtitle="Nodes that failed their last health check"
+          isLoading={isLoading}
+          icon={iconWifiSlash}
+          href="/nodes?status=unreachable"
+          index={4}
+          {...(hasUnreachable
+            ? {
+                color: "var(--color-error-400)",
+                tint: "var(--color-error-400)",
+              }
+            : {})}
+        />
+        <Stat
+          label="Removed"
+          value={stats?.removedNodes}
+          total={stats?.totalNodes}
+          subtitle="Nodes that have been deregistered from the scheduler"
+          isLoading={isLoading}
+          icon={iconTrash}
+          href="/nodes?status=removed"
+          index={5}
+          {...(hasRemoved
+            ? {
+                color: "var(--color-muted-foreground)",
+                tint: "var(--color-muted-foreground)",
+              }
+            : {})}
+        />
+      </section>
 
-      {/* Nodes (cols 1-2) */}
-      <Stat
-        label="Total"
-        value={stats?.totalNodes}
-        total={undefined}
-        subtitle="Compute nodes registered with the scheduler"
-        isLoading={isLoading}
-        href="/nodes"
-        index={0}
-      />
-      <Stat
-        label="Healthy"
-        value={stats?.healthyNodes}
-        total={stats?.totalNodes}
-        subtitle="Nodes that passed their last health check"
-        isLoading={isLoading}
-        color="var(--color-success-500)"
-        tint="var(--color-success-500)"
-        icon={iconCheck}
-        href="/nodes?status=healthy"
-        index={1}
-      />
-
-      {/* VMs (cols 3-4) — first row */}
-      <p className="col-span-2 mb-[-8px] text-xs font-semibold uppercase tracking-widest text-muted-foreground/50 lg:hidden">
-        Virtual Machines
-      </p>
-      <Stat
-        label="Total"
-        value={stats?.totalVMs}
-        total={undefined}
-        subtitle="Virtual machines currently scheduled across the network"
-        isLoading={isLoading}
-        href="/vms"
-        className="lg:pl-4"
-        index={2}
-      />
-      <Stat
-        label="Dispatched"
-        value={stats?.dispatchedVMs}
-        total={stats?.totalVMs}
-        subtitle="VMs running on their correct assigned node"
-        isLoading={isLoading}
-        icon={iconCheck}
-        href="/vms?status=dispatched"
-        index={3}
-        {...(hasDispatched
-          ? {
-              color: "var(--color-success-500)",
-              tint: "var(--color-success-500)",
-            }
-          : {})}
-      />
-
-      {/* Nodes (cols 1-2) — second row */}
-      <Stat
-        label="Unreachable"
-        value={stats?.unreachableNodes}
-        total={stats?.totalNodes}
-        subtitle="Nodes that failed their last health check"
-        isLoading={isLoading}
-        icon={iconWifiSlash}
-        href="/nodes?status=unreachable"
-        index={4}
-        {...(hasUnreachable
-          ? {
-              color: "var(--color-error-400)",
-              tint: "var(--color-error-400)",
-            }
-          : {})}
-      />
-      <Stat
-        label="Removed"
-        value={stats?.removedNodes}
-        total={stats?.totalNodes}
-        subtitle="Nodes that have been deregistered from the scheduler"
-        isLoading={isLoading}
-        icon={iconTrash}
-        href="/nodes?status=removed"
-        index={5}
-        {...(hasRemoved
-          ? {
-              color: "var(--color-muted-foreground)",
-              tint: "var(--color-muted-foreground)",
-            }
-          : {})}
-      />
-
-      {/* VMs (cols 3-4) — second row */}
-      <Stat
-        label="Missing"
-        value={stats?.missingVMs}
-        total={stats?.totalVMs}
-        subtitle="VMs expected to be running but not found on any node"
-        isLoading={isLoading}
-        icon={iconWarning}
-        href="/vms?status=missing"
-        className="lg:pl-4"
-        index={6}
-        {...(hasMissing
-          ? {
-              color: "var(--color-error-400)",
-              tint: "var(--color-error-400)",
-            }
-          : {})}
-      />
-      <Stat
-        label="Unschedulable"
-        value={stats?.unschedulableVMs}
-        total={stats?.totalVMs}
-        subtitle="VMs that cannot be placed due to resource constraints"
-        isLoading={isLoading}
-        icon={iconProhibit}
-        href="/vms?status=unschedulable"
-        index={7}
-        {...(hasUnschedulable
-          ? {
-              color: "var(--color-warning-400)",
-              tint: "var(--color-warning-400)",
-            }
-          : {})}
-      />
-
+      <section className="grid grid-cols-2 gap-4 lg:pl-4">
+        <p className="col-span-2 mb-[-8px] text-xs font-semibold uppercase tracking-widest text-muted-foreground/50">
+          Virtual Machines
+        </p>
+        <Stat
+          label="Total"
+          value={stats?.totalVMs}
+          total={undefined}
+          subtitle="Virtual machines currently scheduled across the network"
+          isLoading={isLoading}
+          href="/vms"
+          index={2}
+        />
+        <Stat
+          label="Dispatched"
+          value={stats?.dispatchedVMs}
+          total={stats?.totalVMs}
+          subtitle="VMs running on their correct assigned node"
+          isLoading={isLoading}
+          icon={iconCheck}
+          href="/vms?status=dispatched"
+          index={3}
+          {...(hasDispatched
+            ? {
+                color: "var(--color-success-500)",
+                tint: "var(--color-success-500)",
+              }
+            : {})}
+        />
+        <Stat
+          label="Missing"
+          value={stats?.missingVMs}
+          total={stats?.totalVMs}
+          subtitle="VMs expected to be running but not found on any node"
+          isLoading={isLoading}
+          icon={iconWarning}
+          href="/vms?status=missing"
+          index={6}
+          {...(hasMissing
+            ? {
+                color: "var(--color-error-400)",
+                tint: "var(--color-error-400)",
+              }
+            : {})}
+        />
+        <Stat
+          label="Unschedulable"
+          value={stats?.unschedulableVMs}
+          total={stats?.totalVMs}
+          subtitle="VMs that cannot be placed due to resource constraints"
+          isLoading={isLoading}
+          icon={iconProhibit}
+          href="/vms?status=unschedulable"
+          index={7}
+          {...(hasUnschedulable
+            ? {
+                color: "var(--color-warning-400)",
+                tint: "var(--color-warning-400)",
+              }
+            : {})}
+        />
+      </section>
     </div>
   );
 }

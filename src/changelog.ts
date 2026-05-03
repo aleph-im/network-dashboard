@@ -11,9 +11,19 @@ export type VersionEntry = {
   changes: ChangeEntry[];
 };
 
-export const CURRENT_VERSION = "0.8.5";
+export const CURRENT_VERSION = "0.8.6";
 
 export const CHANGELOG: VersionEntry[] = [
+  {
+    version: "0.8.6",
+    date: "2026-05-03",
+    changes: [
+      {
+        type: "fix",
+        text: "Overview stat cards: on narrow viewports the Unreachable and Removed node cards no longer fall under the Virtual Machines header — Nodes and VMs now render as two independent grids that stack on mobile and sit side-by-side on desktop.",
+      },
+    ],
+  },
   {
     version: "0.8.5",
     date: "2026-05-03",
