@@ -24,6 +24,11 @@ execute → Completed).
 Scope is clear, no open questions, can be picked up in a single sitting. Small
 to medium size (one PR, one focused session).
 
+### 2026-05-03 - Overview "Total VMs" semantics + subtitle
+**Source:** Reza on Telegram — the headline number on `/overview` shows ~7.8k while the visible status cards (Dispatched + Missing + Unschedulable) only sum to ~1.2k, and the subtitle "currently scheduled across the network" is the opposite of what the number measures.
+**Description:** In `getOverviewStats` (`src/api/client.ts:268`), `totalVMs` is set to `vms.length` from `/api/v1/vms`, which includes the long tail of `unscheduled` / `scheduled` / `unknown` / `orphaned` rows that aren't actively running. Redefine `totalVMs` on the overview as the count of VMs in *currently active* statuses: `dispatched + duplicated + misplaced + missing + unschedulable` (matches Decision #56's operational-status grouping). Update the subtitle accordingly. The all-time count can stay reachable from `/vms` with the All tab. One-line change in client.ts plus subtitle tweak in `stats-bar.tsx:260`.
+**Priority:** Medium
+
 ### 2026-05-01 - Port deploy-ipfs.py to aleph-cloud-app's robust pattern
 **Source:** Cross-repo learning — aleph-cloud-app's `scripts/deploy/client.py` solved a class of CI deploy failures (PRs #74, #75, #76 there)
 **Description:** Our current script gets the timeout-fix bandage (PR #84 here), but a fuller port would make deploys reliably durable: switch IPFS upload from `aiohttp` to `requests` (simpler, well-understood timeout semantics); switch `create_store`/`create_aggregate` to `sync=False` + poll STORE/AGGREGATE message status until `processed`; add IPFS DHT propagation wait + post-resolve sleep before the STORE write to avoid `error_code: 4 — File not found` rejections; add structured rejection banners + `$GITHUB_STEP_SUMMARY` markdown table; bump GitHub job `timeout-minutes` to ~25. See `aleph-cloud-app/scripts/deploy/client.py` for the canonical pattern.
@@ -56,6 +61,11 @@ to medium size (one PR, one focused session).
 Intent is agreed but there are open questions, design choices, or multi-step
 coordination required. Needs a brainstorm or spec before someone can execute.
 Multi-day / multi-PR work.
+
+### 2026-05-03 - VMs page "Show inactive VMs" filter
+**Source:** Reza on Telegram — mirroring the "Show inactive nodes" pattern from the Aleph Account app. Currently the VMs page lists VMs across all statuses with no default culling, so VMs assigned to unreachable/removed nodes (operational noise) appear alongside actively-running ones.
+**Description:** Add a default-on filter that hides VMs whose `allocatedNode` resolves to a node in unreachable/removed/unknown status, with a "Show inactive VMs" checkbox to reveal them. Data is already loaded by `useVMs()` + `useNodes()`; the cross-reference is `nodes.get(vm.allocatedNode)?.status`. Open questions for brainstorm: which node statuses count as "inactive" (definitely unreachable/removed; unclear about unknown); should this also filter VMs whose own status is `unscheduled`/`scheduled` (long-tail with no active payment); does the toggle live in the main toolbar next to status pills, or in the advanced FilterPanel; should the default count badge on the All tab reflect the filtered or unfiltered total. Worth a small brainstorm + plan before implementation.
+**Priority:** Medium
 
 ### 2026-05-01 - Pre-aggregated credit totals from backend
 **Source:** Credit page slow-load research (Decision #60)
