@@ -1,6 +1,7 @@
 "use client";
 
 import { useState, useTransition, useMemo, useEffect } from "react";
+import { useRouter, useSearchParams, usePathname } from "next/navigation";
 import { Table, type Column } from "@aleph-front/ds/table";
 import { Badge } from "@aleph-front/ds/badge";
 import {
@@ -230,6 +231,7 @@ type VMTableProps = {
   onSelectVM: (hash: string) => void;
   initialStatus?: VmStatus;
   initialQuery?: string;
+  initialShowInactive?: boolean;
   selectedKey?: string;
   compact?: boolean;
   sidePanel?: React.ReactNode;
@@ -239,11 +241,15 @@ export function VMTable({
   onSelectVM,
   initialStatus,
   initialQuery,
+  initialShowInactive,
   selectedKey,
   compact,
   sidePanel,
 }: VMTableProps) {
   const [, startTransition] = useTransition();
+  const router = useRouter();
+  const pathname = usePathname();
+  const searchParams = useSearchParams();
 
   // Search
   const [searchInput, setSearchInput] = useState(initialQuery ?? "");
@@ -261,7 +267,9 @@ export function VMTable({
 
   // Advanced filters
   const [filtersOpen, setFiltersOpen] = useState(false);
-  const [advanced, setAdvanced] = useState<VmAdvancedFilters>({});
+  const [advanced, setAdvanced] = useState<VmAdvancedFilters>(
+    initialShowInactive ? { showInactive: true } : {},
+  );
 
   // Data — fetch full dataset
   const { data: allVms, isLoading } = useVMs();
@@ -437,6 +445,10 @@ export function VMTable({
 
   function clearAdvanced() {
     startTransition(() => setAdvanced({}));
+    const params = new URLSearchParams(searchParams.toString());
+    params.delete("showInactive");
+    const qs = params.toString();
+    router.replace(qs ? `${pathname}?${qs}` : pathname);
   }
 
   if (isLoading) {
@@ -599,14 +611,22 @@ export function VMTable({
                   <Checkbox
                     size="sm"
                     checked={advanced.showInactive ?? false}
-                    onCheckedChange={(v) =>
+                    onCheckedChange={(v) => {
                       updateAdvanced((p) => {
                         const { showInactive: _, ...rest } = p;
                         return v === true
                           ? { ...rest, showInactive: true }
                           : rest;
-                      })
-                    }
+                      });
+                      const params = new URLSearchParams(searchParams.toString());
+                      if (v === true) {
+                        params.set("showInactive", "true");
+                      } else {
+                        params.delete("showInactive");
+                      }
+                      const qs = params.toString();
+                      router.replace(qs ? `${pathname}?${qs}` : pathname);
+                    }}
                   />
                   <span>
                     Show inactive VMs
