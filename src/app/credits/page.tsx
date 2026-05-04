@@ -94,7 +94,7 @@ function CreditsContent() {
             <h2 className="mb-4 font-heading text-xl font-bold tracking-tight">
               Recipients
             </h2>
-            <CreditRecipientTable summary={summary} />
+            <CreditRecipientTable summary={summary} nodeState={nodeState} />
           </>
         ) : null}
       </div>

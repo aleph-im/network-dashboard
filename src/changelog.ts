@@ -11,9 +11,19 @@ export type VersionEntry = {
   changes: ChangeEntry[];
 };
 
-export const CURRENT_VERSION = "0.8.7";
+export const CURRENT_VERSION = "0.8.8";
 
 export const CHANGELOG: VersionEntry[] = [
+  {
+    version: "0.8.8",
+    date: "2026-05-04",
+    changes: [
+      {
+        type: "feature",
+        text: "Credits recipient search now matches node names. Typing a node name finds reward addresses that own a matching node, with a Matched: <full-name> chip in the Sources cell for each match — full names, no truncation, so you can scan rows and pick the right one without clicking through. Whole row is clickable and opens the wallet view, where the full per-node reward breakdown lives. The search query persists in the URL as ?q=, so navigating back from the wallet view restores your filter.",
+      },
+    ],
+  },
   {
     version: "0.8.7",
     date: "2026-05-04",
