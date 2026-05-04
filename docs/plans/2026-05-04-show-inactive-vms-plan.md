@@ -1,9 +1,9 @@
 ---
-status: not-started
+status: partial
 date: 2026-05-04
 spec: docs/plans/2026-05-04-show-inactive-vms-design.md
 branch: feature/show-inactive-vms
-note: implementation pending — DS Tabs maxVisible prop is a prerequisite for Task 4
+note: Tasks 1–3 + 5 + 6 shipped; Task 4 (status pill cap) deferred to BACKLOG until DS Tabs `maxVisible` prop lands. Scoped docs to what shipped (Decision #67, changelog 0.9.0).
 ---
 
 # Show Inactive VMs Implementation Plan

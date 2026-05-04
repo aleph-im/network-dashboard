@@ -11,9 +11,19 @@ export type VersionEntry = {
   changes: ChangeEntry[];
 };
 
-export const CURRENT_VERSION = "0.8.8";
+export const CURRENT_VERSION = "0.9.0";
 
 export const CHANGELOG: VersionEntry[] = [
+  {
+    version: "0.9.0",
+    date: "2026-05-04",
+    changes: [
+      {
+        type: "feature",
+        text: "VMs page now hides VMs allocated to inactive nodes (unreachable, removed, or unknown) by default. Toggle via the new \"Show inactive VMs\" checkbox in the FilterPanel — Payment & Allocation column. The All-tab count drops to the active baseline so the operational signal isn't drowned out by the long tail. Shareable via the ?showInactive=true URL parameter.",
+      },
+    ],
+  },
   {
     version: "0.8.8",
     date: "2026-05-04",
