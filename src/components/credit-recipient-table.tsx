@@ -91,8 +91,6 @@ function buildColumns(
       accessor: (r) => {
         const badges = buildSourceBadges(r);
         const matchedNames = matchedNodeNamesByAddress.get(r.address) ?? [];
-        const firstName = matchedNames[0];
-        const extra = matchedNames.length - 1;
         if (badges.length === 0 && matchedNames.length === 0) {
           return <span className="text-muted-foreground">—</span>;
         }
@@ -103,19 +101,11 @@ function buildColumns(
                 {b.label}
               </Badge>
             ))}
-            {firstName ? (
-              <Badge
-                fill="outline"
-                variant="info"
-                size="sm"
-                title={matchedNames.join(", ")}
-              >
-                <span className="max-w-[12ch] truncate">
-                  Matched: {firstName}
-                </span>
-                {extra > 0 ? <>&nbsp;+{extra}</> : null}
+            {matchedNames.map((name) => (
+              <Badge key={name} fill="outline" variant="info" size="sm">
+                Matched: {name}
               </Badge>
-            ) : null}
+            ))}
           </div>
         );
       },
