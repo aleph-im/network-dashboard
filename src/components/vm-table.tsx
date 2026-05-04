@@ -45,13 +45,13 @@ import type {
 const STATUS_PILLS: { value: VmStatus | undefined; label: string; tooltip?: string }[] = [
   { value: undefined, label: "All" },
   { value: "dispatched", label: "Dispatched", tooltip: "Running on the correct node" },
-  { value: "orphaned", label: "Orphaned", tooltip: "Running without active scheduling intent" },
-  { value: "missing", label: "Missing", tooltip: "Scheduled but not found on any node" },
-  { value: "misplaced", label: "Misplaced", tooltip: "Running on wrong node(s), not on assigned node" },
-  { value: "duplicated", label: "Duplicated", tooltip: "Running on correct node plus extra copies" },
   { value: "scheduled", label: "Scheduled", tooltip: "Assigned to a node but not yet observed" },
-  { value: "unscheduled", label: "Unscheduled", tooltip: "Deliberately unscheduled" },
+  { value: "duplicated", label: "Duplicated", tooltip: "Running on correct node plus extra copies" },
+  { value: "misplaced", label: "Misplaced", tooltip: "Running on wrong node(s), not on assigned node" },
+  { value: "missing", label: "Missing", tooltip: "Scheduled but not found on any node" },
+  { value: "orphaned", label: "Orphaned", tooltip: "Running without active scheduling intent" },
   { value: "unschedulable", label: "Unschedulable", tooltip: "No node meets this VM's requirements" },
+  { value: "unscheduled", label: "Unscheduled", tooltip: "Deliberately unscheduled" },
   { value: "unknown", label: "Unknown", tooltip: "Status could not be determined" },
 ];
 
@@ -474,6 +474,7 @@ export function VMTable({
         searchValue={searchInput}
         onSearchChange={setSearchInput}
         searchPlaceholder="Search hash, name, node..."
+        maxVisibleStatuses={3}
       />
 
       <FilterPanel

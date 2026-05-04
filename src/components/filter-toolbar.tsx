@@ -24,6 +24,7 @@ type FilterToolbarProps<S> = {
   onSearchChange: (value: string) => void;
   searchPlaceholder: string;
   leading?: ReactNode;
+  maxVisibleStatuses?: number;
 };
 
 function toTabValue<S>(value: S): string {
@@ -42,6 +43,7 @@ export function FilterToolbar<S>({
   onSearchChange,
   searchPlaceholder,
   leading,
+  maxVisibleStatuses,
 }: FilterToolbarProps<S>): ReactNode {
   function handleTabChange(tabValue: string) {
     const match = statuses.find((s) => toTabValue(s.value) === tabValue);
@@ -57,7 +59,12 @@ export function FilterToolbar<S>({
         </>
       )}
       <Tabs value={toTabValue(activeStatus)} onValueChange={handleTabChange} className="min-w-0 flex-1">
-        <TabsList variant="underline" size="sm" overflow="collapse">
+        <TabsList
+          variant="underline"
+          size="sm"
+          overflow="collapse"
+          {...(maxVisibleStatuses != null ? { maxVisible: maxVisibleStatuses } : {})}
+        >
           {statuses.map((s, i) => (
             <TabsTrigger
               key={i}
