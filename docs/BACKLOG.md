@@ -24,11 +24,6 @@ execute → Completed).
 Scope is clear, no open questions, can be picked up in a single sitting. Small
 to medium size (one PR, one focused session).
 
-### 2026-05-04 - VMs status pill cap (Task 4 of show-inactive-vms plan)
-**Source:** Deferred from `docs/plans/2026-05-04-show-inactive-vms-plan.md` — DS Tabs `maxVisible` prop wasn't ready when the rest of the plan shipped (Decision #67).
-**Description:** Reorder `STATUS_PILLS` in `vm-table.tsx` so the first three are All / Dispatched / Scheduled, add a `maxVisibleStatuses?: number` prop to `FilterToolbar`, and pass `maxVisibleStatuses={3}` from VMTable. Caps the visible status pills regardless of available width — the rest live in the existing `⋯` overflow dropdown. Spec is Task 4 of the existing plan; pick up there once `@aleph-front/ds` ships the `maxVisible` prop.
-**Priority:** Medium
-
 ### 2026-05-01 - Port deploy-ipfs.py to aleph-cloud-app's robust pattern
 **Source:** Cross-repo learning — aleph-cloud-app's `scripts/deploy/client.py` solved a class of CI deploy failures (PRs #74, #75, #76 there)
 **Description:** Our current script gets the timeout-fix bandage (PR #84 here), but a fuller port would make deploys reliably durable: switch IPFS upload from `aiohttp` to `requests` (simpler, well-understood timeout semantics); switch `create_store`/`create_aggregate` to `sync=False` + poll STORE/AGGREGATE message status until `processed`; add IPFS DHT propagation wait + post-resolve sleep before the STORE write to avoid `error_code: 4 — File not found` rejections; add structured rejection banners + `$GITHUB_STEP_SUMMARY` markdown table; bump GitHub job `timeout-minutes` to ~25. See `aleph-cloud-app/scripts/deploy/client.py` for the canonical pattern.
@@ -194,7 +189,7 @@ Items where the path forward is clear but blocked on external work.
 <details>
 <summary>Archived items</summary>
 
-- ✅ 2026-05-04 - VMs page "Show inactive VMs" filter — default-on filter hiding VMs whose allocatedNode is in {unreachable, removed, unknown}, FilterPanel placement, ?showInactive=true URL persistence (Decision #67, Reza feedback). Status pill cap deferred to follow-up PR pending DS Tabs `maxVisible` prop.
+- ✅ 2026-05-04 - VMs page "Show inactive VMs" filter + status pill cap — default-on filter hiding VMs whose allocatedNode is in {unreachable, removed, unknown}, FilterPanel placement, ?showInactive=true URL persistence; status pills capped to 3 visible (All / Dispatched / Scheduled) via new DS Tabs `maxVisible` prop (`@aleph-front/ds@0.14.0`), rest in `⋯` overflow (Decision #67, Reza feedback)
 - ✅ 2026-05-04 - Credits recipient table: search by node name + whole-row click to `/wallet?address=…`, with `Matched: <name>` chip in Sources cell when row matched only via node name (Decision #66)
 - ✅ 2026-05-04 - Overview "Total VMs" semantics — count only active statuses (dispatched + duplicated + misplaced + missing + unschedulable), update subtitle (Decision #65, Reza feedback)
 - ✅ 2026-05-03 - Credit recipient table: drop misleading Node column, lead with Address, replace Roles with Sources column reading "2 CRNs · 1 CCN · staking" (Decision #64)

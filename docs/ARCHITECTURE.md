@@ -215,6 +215,8 @@ Dashboard on `http://localhost:3000` lists all active previews with links. State
 
 **Inactive-VM filter (default on).** The VMs page hides VMs whose `allocatedNode` resolves to a node in `{unreachable, removed, unknown}` status by default. State lives in `VmAdvancedFilters.showInactive` (default `undefined`/`false` = hidden); toggleable via a checkbox in the FilterPanel's Payment & Allocation column. Two-way URL persistence via `?showInactive=true` (param omitted at default). The pure filter `applyInactiveVmFilter(vms, nodeStatusByHash, showInactive)` runs early in the pipeline; the lookup map is derived from `useNodes()` data already cached app-wide. Fail-open on unloaded nodes — VMs whose allocated node isn't yet in the loaded set stay visible until the next memo run. Count-badge format suppresses the `filtered/total` slash when the only thing culling rows is the default-on inactive-hide (no search, no other advanced filters) — the All-tab reads as a plain count so the default state doesn't shout.
 
+**Tab visibility cap.** The DS `Tabs` component (`@aleph-front/ds@0.14.0+`) supports an optional `maxVisible?: number` prop that caps the visible tab count regardless of available width — used on the VMs page (via `FilterToolbar`'s `maxVisibleStatuses` prop) to lock the visible set to All/Dispatched/Scheduled, with the rest in the existing `⋯` overflow dropdown. When both width-based collapse and `maxVisible` are present, the stricter limit wins. Other list pages (Nodes, Issues) omit the prop and keep pure width-based collapse, so they remain unchanged.
+
 ### Issues Page — Derived Data Views
 
 **Context:** DevOps investigating scheduling discrepancies had no dedicated view.
