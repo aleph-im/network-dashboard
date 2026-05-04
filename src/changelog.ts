@@ -11,9 +11,19 @@ export type VersionEntry = {
   changes: ChangeEntry[];
 };
 
-export const CURRENT_VERSION = "0.8.7";
+export const CURRENT_VERSION = "0.8.8";
 
 export const CHANGELOG: VersionEntry[] = [
+  {
+    version: "0.8.8",
+    date: "2026-05-04",
+    changes: [
+      {
+        type: "feature",
+        text: "Credits recipient search now matches node names. Typing a node name finds the reward address that owns it, with a Matched: <name> chip in the Sources cell so you can see why the row appeared. Whole row is clickable and opens the wallet view, where the full per-node reward breakdown lives.",
+      },
+    ],
+  },
   {
     version: "0.8.7",
     date: "2026-05-04",

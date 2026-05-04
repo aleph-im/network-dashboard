@@ -24,15 +24,6 @@ execute → Completed).
 Scope is clear, no open questions, can be picked up in a single sitting. Small
 to medium size (one PR, one focused session).
 
-### 2026-05-04 - Credits recipient table: search by node name + clickable rows
-**Source:** User feedback — searching a node name on `/credits` returns nothing because the recipient table only matches `r.address`
-**Description:** Two scoped changes in `src/components/credit-recipient-table.tsx`:
-1. **Search by node name.** Pass `nodeState` (already on `CreditsContent`) into the table. Build a `Map<address, Array<{ name, kind: "crn" | "ccn" }>>` once with `useMemo`. Extend the search predicate to also match any node name where `node.reward === r.address`. Update placeholder to `"Search address or node name…"`. When a row matched only via node name (not address), append a small `Badge fill="outline" size="sm"` to the Sources cell: `Matched: <name>` (truncated, with `+N` if multiple). This preserves the address-centric model and shows users *why* a row appeared.
-2. **Whole-row click → wallet.** Add `onRowClick={(r) => router.push(\`/wallet?address=${r.address}\`)}` (DS Table already supports it — see `node-table.tsx:601`, `vm-table.tsx:638`). Keep the `CopyableText` link on the address cell intact for accessibility (right-click, middle-click). **Verify at implementation time:** the `CopyableText` copy button must `stopPropagation` so clicking copy doesn't also navigate. If DS doesn't already handle this, wrap the address cell or the copy button accordingly.
-**Decision recap:** Detail context stays the wallet page (Option A from the brainstorm) — the wallet view already shows credit rewards per node + role, which matches the user's intent when searching by node name ("see my rewards").
-**Out of scope:** No new detail panel on credits, no node-detail navigation, no fuzzy matching.
-**Priority:** Medium
-
 ### 2026-05-01 - Port deploy-ipfs.py to aleph-cloud-app's robust pattern
 **Source:** Cross-repo learning — aleph-cloud-app's `scripts/deploy/client.py` solved a class of CI deploy failures (PRs #74, #75, #76 there)
 **Description:** Our current script gets the timeout-fix bandage (PR #84 here), but a fuller port would make deploys reliably durable: switch IPFS upload from `aiohttp` to `requests` (simpler, well-understood timeout semantics); switch `create_store`/`create_aggregate` to `sync=False` + poll STORE/AGGREGATE message status until `processed`; add IPFS DHT propagation wait + post-resolve sleep before the STORE write to avoid `error_code: 4 — File not found` rejections; add structured rejection banners + `$GITHUB_STEP_SUMMARY` markdown table; bump GitHub job `timeout-minutes` to ~25. See `aleph-cloud-app/scripts/deploy/client.py` for the canonical pattern.
@@ -203,6 +194,7 @@ Items where the path forward is clear but blocked on external work.
 <details>
 <summary>Archived items</summary>
 
+- ✅ 2026-05-04 - Credits recipient table: search by node name + whole-row click to `/wallet?address=…`, with `Matched: <name>` chip in Sources cell when row matched only via node name (Decision #66)
 - ✅ 2026-05-04 - Overview "Total VMs" semantics — count only active statuses (dispatched + duplicated + misplaced + missing + unschedulable), update subtitle (Decision #65, Reza feedback)
 - ✅ 2026-05-03 - Credit recipient table: drop misleading Node column, lead with Address, replace Roles with Sources column reading "2 CRNs · 1 CCN · staking" (Decision #64)
 - ✅ 2026-05-02 - Sort scope bug on Nodes/VMs/Issues/Credits tables — sort was scoped to the visible page; lifted into each component to sort the full filtered dataset before pagination via DS Table controlled-sort props (Decision #63)
