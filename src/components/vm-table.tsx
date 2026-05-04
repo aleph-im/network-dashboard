@@ -16,6 +16,7 @@ import { Skeleton } from "@aleph-front/ds/ui/skeleton";
 import { usePagination } from "@/hooks/use-pagination";
 import { TablePagination } from "@/components/table-pagination";
 import { useVMs } from "@/hooks/use-vms";
+import { useNodes } from "@/hooks/use-nodes";
 import { useVMMessageInfo } from "@/hooks/use-vm-creation-times";
 import { useDebounce } from "@/hooks/use-debounce";
 import { FilterToolbar } from "@/components/filter-toolbar";
@@ -24,6 +25,7 @@ import { CopyableText } from "@aleph-front/ds/copyable-text";
 import {
   textSearch,
   countByStatus,
+  applyInactiveVmFilter,
   applyVmAdvancedFilters,
   computeVmFilterMaxes,
   type VmAdvancedFilters,
@@ -31,7 +33,13 @@ import {
 import { applySort, type SortDirection } from "@/lib/sort";
 import { VM_STATUS_VARIANT } from "@/lib/status-map";
 import { relativeTime } from "@/lib/format";
-import type { AlephMessageInfo, VM, VmStatus, VmType } from "@/api/types";
+import type {
+  AlephMessageInfo,
+  NodeStatus,
+  VM,
+  VmStatus,
+  VmType,
+} from "@/api/types";
 
 const STATUS_PILLS: { value: VmStatus | undefined; label: string; tooltip?: string }[] = [
   { value: undefined, label: "All" },
@@ -257,6 +265,12 @@ export function VMTable({
 
   // Data — fetch full dataset
   const { data: allVms, isLoading } = useVMs();
+  const { data: allNodes } = useNodes();
+  const nodeStatusByHash = useMemo(() => {
+    const m = new Map<string, NodeStatus>();
+    for (const n of allNodes ?? []) m.set(n.hash, n.status);
+    return m;
+  }, [allNodes]);
   const hashes = useMemo(() => (allVms ?? []).map((v) => v.hash), [allVms]);
   const { data: messageInfo } = useVMMessageInfo(hashes);
 
@@ -283,6 +297,7 @@ export function VMTable({
     advanced.memoryGbRange != null &&
       (advanced.memoryGbRange[0] > 0 ||
         advanced.memoryGbRange[1] < filterMaxes.memoryGb),
+    advanced.showInactive === true,
   ].filter(Boolean).length;
 
   // Filter pipeline
@@ -300,8 +315,13 @@ export function VMTable({
         debouncedQuery,
         vmSearchFields,
       );
-      const afterAdvanced = applyVmAdvancedFilters(
+      const afterInactive = applyInactiveVmFilter(
         afterSearch,
+        nodeStatusByHash,
+        advanced.showInactive ?? false,
+      );
+      const afterAdvanced = applyVmAdvancedFilters(
+        afterInactive,
         advanced,
         filterMaxes,
       );
@@ -316,7 +336,7 @@ export function VMTable({
         filteredCounts: fCounts,
         unfilteredCounts: uCounts,
       };
-    }, [allVms, debouncedQuery, advanced, statusFilter, messageInfo, filterMaxes]);
+    }, [allVms, debouncedQuery, advanced, statusFilter, messageInfo, filterMaxes, nodeStatusByHash]);
 
   const tableColumns = useMemo(
     () => buildColumns(messageInfo, compact),
@@ -350,6 +370,19 @@ export function VMTable({
       key === "all"
         ? Object.values(unfilteredCounts).reduce((a, b) => a + b, 0)
         : (unfilteredCounts[key] ?? 0);
+
+    // When the only thing culling rows is the default-on inactive-hide
+    // (no search, no other advanced filters, showInactive at default),
+    // show a plain count — the default state shouldn't shout.
+    const inactiveCulling = advanced.showInactive !== true;
+    const onlyInactiveCulling =
+      inactiveCulling &&
+      activeAdvancedCount === 0 &&
+      debouncedQuery.trim() === "";
+
+    if (onlyInactiveCulling) {
+      return `${filtered}`;
+    }
 
     if (hasNonStatusFilters && filtered !== unfiltered) {
       return `${filtered}/${unfiltered}`;
@@ -559,6 +592,26 @@ export function VMTable({
                     Requires Confidential
                     <span className="ml-1.5 text-xs font-normal text-muted-foreground/50">
                       — requires TEE
+                    </span>
+                  </span>
+                </label>
+                <label className="flex cursor-pointer items-center gap-2.5 text-sm font-semibold text-muted-foreground select-none">
+                  <Checkbox
+                    size="sm"
+                    checked={advanced.showInactive ?? false}
+                    onCheckedChange={(v) =>
+                      updateAdvanced((p) => {
+                        const { showInactive: _, ...rest } = p;
+                        return v === true
+                          ? { ...rest, showInactive: true }
+                          : rest;
+                      })
+                    }
+                  />
+                  <span>
+                    Show inactive VMs
+                    <span className="ml-1.5 text-xs font-normal text-muted-foreground/50">
+                      — include VMs on unreachable, removed, or unknown nodes
                     </span>
                   </span>
                 </label>
