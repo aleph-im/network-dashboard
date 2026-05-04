@@ -1,4 +1,4 @@
-import type { Node, NodeStatus, VM, VmType } from "@/api/types";
+import type { Node, VM, VmStatus, VmType } from "@/api/types";
 
 /** Generic text search: matches if any field contains the query. */
 export function textSearch<T>(
@@ -261,29 +261,33 @@ export function applyVmAdvancedFilters(
   return result;
 }
 
-export const INACTIVE_NODE_STATUSES: ReadonlySet<NodeStatus> = new Set<NodeStatus>([
-  "unreachable",
-  "removed",
-  "unknown",
+/**
+ * VM statuses that count as "active" — running, expected, or awaiting placement.
+ * Mirrors the Overview Total VMs definition (Decision #65).
+ *
+ * Anything outside this set is operational long-tail: scheduled-but-never-observed,
+ * deliberately unscheduled, orphaned, or unknown — the noise the "Show inactive
+ * VMs" toggle hides by default.
+ */
+export const ACTIVE_VM_STATUSES: ReadonlySet<VmStatus> = new Set<VmStatus>([
+  "dispatched",
+  "duplicated",
+  "misplaced",
+  "missing",
+  "unschedulable",
 ]);
 
 /**
- * Hide VMs whose allocated node is in an inactive status.
+ * Hide VMs that aren't in an active status (default state).
  *
- * Fail-open: VMs with no allocatedNode pass; VMs whose allocatedNode is missing
- * from the status map (e.g. nodes still loading) also pass. Once nodes load,
- * the memo re-runs and inactive VMs disappear.
+ * `showInactive=true` returns the input unchanged. Otherwise filters to VMs
+ * whose `status` is in `ACTIVE_VM_STATUSES`. This is the All-tab default — the
+ * baseline "what's actually running on the network" view.
  */
 export function applyInactiveVmFilter(
   vms: VM[],
-  nodeStatusByHash: Map<string, NodeStatus>,
   showInactive: boolean,
 ): VM[] {
   if (showInactive) return vms;
-  return vms.filter((v) => {
-    if (!v.allocatedNode) return true;
-    const status = nodeStatusByHash.get(v.allocatedNode);
-    if (!status) return true;
-    return !INACTIVE_NODE_STATUSES.has(status);
-  });
+  return vms.filter((v) => ACTIVE_VM_STATUSES.has(v.status));
 }

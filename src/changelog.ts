@@ -20,7 +20,7 @@ export const CHANGELOG: VersionEntry[] = [
     changes: [
       {
         type: "feature",
-        text: "VMs page now hides VMs allocated to inactive nodes (unreachable, removed, or unknown) by default. Toggle via the new \"Show inactive VMs\" checkbox in the FilterPanel — Payment & Allocation column. The All-tab count drops to the active baseline so the operational signal isn't drowned out by the long tail. Shareable via the ?showInactive=true URL parameter.",
+        text: "VMs page now shows only active VMs by default — dispatched, duplicated, misplaced, missing, and unschedulable. The All-tab count drops from ~7,900 to the active baseline (matching the Overview Total VMs headline) so the operational signal isn't drowned out by long-tail noise (unscheduled, orphaned, unknown VMs). Toggle via the new \"Show inactive VMs\" checkbox in the FilterPanel — Payment & Allocation column. Clicking a specific status pill (e.g. Unknown from the overflow dropdown) bypasses the filter and shows that status's full count. Shareable via the ?showInactive=true URL parameter.",
       },
       {
         type: "ui",

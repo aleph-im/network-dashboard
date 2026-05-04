@@ -17,7 +17,6 @@ import { Skeleton } from "@aleph-front/ds/ui/skeleton";
 import { usePagination } from "@/hooks/use-pagination";
 import { TablePagination } from "@/components/table-pagination";
 import { useVMs } from "@/hooks/use-vms";
-import { useNodes } from "@/hooks/use-nodes";
 import { useVMMessageInfo } from "@/hooks/use-vm-creation-times";
 import { useDebounce } from "@/hooks/use-debounce";
 import { FilterToolbar } from "@/components/filter-toolbar";
@@ -29,18 +28,13 @@ import {
   applyInactiveVmFilter,
   applyVmAdvancedFilters,
   computeVmFilterMaxes,
+  ACTIVE_VM_STATUSES,
   type VmAdvancedFilters,
 } from "@/lib/filters";
 import { applySort, type SortDirection } from "@/lib/sort";
 import { VM_STATUS_VARIANT } from "@/lib/status-map";
 import { relativeTime } from "@/lib/format";
-import type {
-  AlephMessageInfo,
-  NodeStatus,
-  VM,
-  VmStatus,
-  VmType,
-} from "@/api/types";
+import type { AlephMessageInfo, VM, VmStatus, VmType } from "@/api/types";
 
 const STATUS_PILLS: { value: VmStatus | undefined; label: string; tooltip?: string }[] = [
   { value: undefined, label: "All" },
@@ -273,12 +267,6 @@ export function VMTable({
 
   // Data — fetch full dataset
   const { data: allVms, isLoading } = useVMs();
-  const { data: allNodes } = useNodes();
-  const nodeStatusByHash = useMemo(() => {
-    const m = new Map<string, NodeStatus>();
-    for (const n of allNodes ?? []) m.set(n.hash, n.status);
-    return m;
-  }, [allNodes]);
   const hashes = useMemo(() => (allVms ?? []).map((v) => v.hash), [allVms]);
   const { data: messageInfo } = useVMMessageInfo(hashes);
 
@@ -323,28 +311,33 @@ export function VMTable({
         debouncedQuery,
         vmSearchFields,
       );
-      const afterInactive = applyInactiveVmFilter(
-        afterSearch,
-        nodeStatusByHash,
-        advanced.showInactive ?? false,
-      );
       const afterAdvanced = applyVmAdvancedFilters(
-        afterInactive,
+        afterSearch,
         advanced,
         filterMaxes,
       );
       const fCounts = countByStatus(afterAdvanced, (v) => v.status);
 
+      // Apply the inactive-VM filter only on the All tab. When the user
+      // explicitly clicks a non-active status pill (e.g. Unknown), they want
+      // to see those VMs — bypass the filter so per-status pills always
+      // resolve to their true counts.
+      const showInactive = advanced.showInactive ?? false;
+      const beforeStatusPill =
+        statusFilter || showInactive
+          ? afterAdvanced
+          : applyInactiveVmFilter(afterAdvanced, false);
+
       const afterStatus = statusFilter
-        ? afterAdvanced.filter((v) => v.status === statusFilter)
-        : afterAdvanced;
+        ? beforeStatusPill.filter((v) => v.status === statusFilter)
+        : beforeStatusPill;
 
       return {
         displayedRows: afterStatus,
         filteredCounts: fCounts,
         unfilteredCounts: uCounts,
       };
-    }, [allVms, debouncedQuery, advanced, statusFilter, messageInfo, filterMaxes, nodeStatusByHash]);
+    }, [allVms, debouncedQuery, advanced, statusFilter, messageInfo, filterMaxes]);
 
   const tableColumns = useMemo(
     () => buildColumns(messageInfo, compact),
@@ -368,34 +361,49 @@ export function VMTable({
   const hasNonStatusFilters =
     debouncedQuery.trim() !== "" || activeAdvancedCount > 0;
 
-  function formatCount(status: VmStatus | undefined): string {
-    const key = status ?? "all";
-    const filtered =
-      key === "all"
-        ? Object.values(filteredCounts).reduce((a, b) => a + b, 0)
-        : (filteredCounts[key] ?? 0);
-    const unfiltered =
-      key === "all"
-        ? Object.values(unfilteredCounts).reduce((a, b) => a + b, 0)
-        : (unfilteredCounts[key] ?? 0);
+  function sumActive(counts: Record<string, number>): number {
+    let s = 0;
+    for (const status of ACTIVE_VM_STATUSES) s += counts[status] ?? 0;
+    return s;
+  }
 
-    // When the only thing culling rows is the default-on inactive-hide
-    // (no search, no other advanced filters, showInactive at default),
-    // show a plain count — the default state shouldn't shout.
-    const inactiveCulling = advanced.showInactive !== true;
+  function formatCount(status: VmStatus | undefined): string {
+    const showInactive = advanced.showInactive === true;
+
+    if (status !== undefined) {
+      // Per-status pills are unaffected by the inactive filter — clicking
+      // Unknown should show the true count of Unknown VMs.
+      const filtered = filteredCounts[status] ?? 0;
+      const unfiltered = unfilteredCounts[status] ?? 0;
+      if (hasNonStatusFilters && filtered !== unfiltered) {
+        return `${filtered}/${unfiltered}`;
+      }
+      return `${unfiltered}`;
+    }
+
+    // All tab: when showInactive is off, count only active-status VMs.
+    const filteredAll = showInactive
+      ? Object.values(filteredCounts).reduce((a, b) => a + b, 0)
+      : sumActive(filteredCounts);
+    const unfilteredAll = showInactive
+      ? Object.values(unfilteredCounts).reduce((a, b) => a + b, 0)
+      : sumActive(unfilteredCounts);
+
+    // Plain count when only the default-on inactive-hide is culling
+    // (no search, no other advanced filters).
     const onlyInactiveCulling =
-      inactiveCulling &&
+      !showInactive &&
       activeAdvancedCount === 0 &&
       debouncedQuery.trim() === "";
 
     if (onlyInactiveCulling) {
-      return `${filtered}`;
+      return `${filteredAll}`;
     }
 
-    if (hasNonStatusFilters && filtered !== unfiltered) {
-      return `${filtered}/${unfiltered}`;
+    if (hasNonStatusFilters && filteredAll !== unfilteredAll) {
+      return `${filteredAll}/${unfilteredAll}`;
     }
-    return `${unfiltered}`;
+    return `${unfilteredAll}`;
   }
 
   function toggleVmType(type: VmType) {
@@ -632,7 +640,7 @@ export function VMTable({
                   <span>
                     Show inactive VMs
                     <span className="ml-1.5 text-xs font-normal text-muted-foreground/50">
-                      — include VMs on unreachable, removed, or unknown nodes
+                      — include scheduled, unscheduled, orphaned, and unknown VMs
                     </span>
                   </span>
                 </label>

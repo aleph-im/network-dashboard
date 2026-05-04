@@ -7,11 +7,11 @@ import {
   applyInactiveVmFilter,
   computeNodeFilterMaxes,
   computeVmFilterMaxes,
-  INACTIVE_NODE_STATUSES,
+  ACTIVE_VM_STATUSES,
   NODE_FILTER_MAX_FLOOR,
   VM_FILTER_MAX_FLOOR,
 } from "@/lib/filters";
-import type { Node, NodeStatus, VM } from "@/api/types";
+import type { Node, VM } from "@/api/types";
 
 const makeResources = (vcpusTotal: number, memoryTotalMb: number) => ({
   vcpusTotal,
@@ -500,65 +500,49 @@ describe("computeVmFilterMaxes", () => {
 });
 
 describe("applyInactiveVmFilter", () => {
-  function statusMap(entries: Array<[string, NodeStatus]>): Map<string, NodeStatus> {
-    return new Map(entries);
-  }
-
   it("returns identity when showInactive=true", () => {
     const vms = [
-      makeVm({ hash: "v1", allocatedNode: "node-down" }),
-      makeVm({ hash: "v2", allocatedNode: "node-ok" }),
+      makeVm({ hash: "v1", status: "dispatched" }),
+      makeVm({ hash: "v2", status: "unknown" }),
+      makeVm({ hash: "v3", status: "orphaned" }),
     ];
-    const map = statusMap([
-      ["node-down", "removed"],
-      ["node-ok", "healthy"],
-    ]);
-    expect(applyInactiveVmFilter(vms, map, true)).toEqual(vms);
+    expect(applyInactiveVmFilter(vms, true)).toEqual(vms);
   });
 
-  it("hides VMs whose allocatedNode is unreachable, removed, or unknown", () => {
+  it("keeps only active-status VMs when showInactive=false", () => {
     const vms = [
-      makeVm({ hash: "v-unreach", allocatedNode: "n-unreach" }),
-      makeVm({ hash: "v-removed", allocatedNode: "n-removed" }),
-      makeVm({ hash: "v-unknown", allocatedNode: "n-unknown" }),
-      makeVm({ hash: "v-ok", allocatedNode: "n-ok" }),
+      makeVm({ hash: "v-dispatched", status: "dispatched" }),
+      makeVm({ hash: "v-duplicated", status: "duplicated" }),
+      makeVm({ hash: "v-misplaced", status: "misplaced" }),
+      makeVm({ hash: "v-missing", status: "missing" }),
+      makeVm({ hash: "v-unschedulable", status: "unschedulable" }),
+      makeVm({ hash: "v-scheduled", status: "scheduled" }),
+      makeVm({ hash: "v-unscheduled", status: "unscheduled" }),
+      makeVm({ hash: "v-orphaned", status: "orphaned" }),
+      makeVm({ hash: "v-unknown", status: "unknown" }),
     ];
-    const map = statusMap([
-      ["n-unreach", "unreachable"],
-      ["n-removed", "removed"],
-      ["n-unknown", "unknown"],
-      ["n-ok", "healthy"],
-    ]);
-    const result = applyInactiveVmFilter(vms, map, false);
-    expect(result.map((v) => v.hash)).toEqual(["v-ok"]);
+    const result = applyInactiveVmFilter(vms, false);
+    expect(result.map((v) => v.hash).sort()).toEqual([
+      "v-dispatched",
+      "v-duplicated",
+      "v-misplaced",
+      "v-missing",
+      "v-unschedulable",
+    ].sort());
   });
 
-  it("keeps VMs with no allocatedNode regardless of showInactive", () => {
+  it("does not depend on allocatedNode", () => {
     const vms = [
-      makeVm({ hash: "v-orphan", allocatedNode: null }),
-      makeVm({ hash: "v-missing", allocatedNode: null }),
+      makeVm({ hash: "v-allocated", status: "dispatched", allocatedNode: "node-ok" }),
+      makeVm({ hash: "v-orphan", status: "orphaned", allocatedNode: null }),
     ];
-    const map = statusMap([]);
-    expect(applyInactiveVmFilter(vms, map, false).map((v) => v.hash))
-      .toEqual(["v-orphan", "v-missing"]);
+    const result = applyInactiveVmFilter(vms, false);
+    expect(result.map((v) => v.hash)).toEqual(["v-allocated"]);
   });
 
-  it("keeps VMs whose allocatedNode is missing from the map (fail-open)", () => {
-    const vms = [makeVm({ hash: "v1", allocatedNode: "node-not-loaded" })];
-    expect(applyInactiveVmFilter(vms, statusMap([]), false).map((v) => v.hash))
-      .toEqual(["v1"]);
-  });
-
-  it("keeps VMs on healthy nodes when showInactive=false", () => {
-    const vms = [makeVm({ hash: "v1", allocatedNode: "n-ok" })];
-    const map = statusMap([["n-ok", "healthy"]]);
-    expect(applyInactiveVmFilter(vms, map, false).map((v) => v.hash))
-      .toEqual(["v1"]);
-  });
-
-  it("INACTIVE_NODE_STATUSES contains exactly unreachable, removed, unknown", () => {
-    expect([...INACTIVE_NODE_STATUSES].sort()).toEqual(
-      ["removed", "unknown", "unreachable"],
+  it("ACTIVE_VM_STATUSES matches Decision #65 (dispatched, duplicated, misplaced, missing, unschedulable)", () => {
+    expect([...ACTIVE_VM_STATUSES].sort()).toEqual(
+      ["dispatched", "duplicated", "misplaced", "missing", "unschedulable"].sort(),
     );
   });
 });
