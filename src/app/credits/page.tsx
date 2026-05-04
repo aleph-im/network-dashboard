@@ -19,10 +19,10 @@ import { CreditRecipientTable } from "@/components/credit-recipient-table";
 function CreditsContent() {
   const searchParams = useSearchParams();
   const router = useRouter();
-  const range = (searchParams.get("range") as CreditRange) ?? "7d";
+  const range = (searchParams.get("range") as CreditRange) ?? "24h";
 
   const { start, end } = useMemo(
-    () => getStableExpenseRange(RANGE_SECONDS[range] ?? RANGE_SECONDS["7d"]),
+    () => getStableExpenseRange(RANGE_SECONDS[range] ?? RANGE_SECONDS["24h"]),
     [range],
   );
 

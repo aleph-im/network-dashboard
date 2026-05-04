@@ -298,7 +298,7 @@ export function AppSidebar({ open, onClose }: AppSidebarProps) {
   const prefetchCredits = useCallback(() => {
     if (creditsPrefetchedRef.current) return;
     creditsPrefetchedRef.current = true;
-    const { start, end } = getStableExpenseRange(RANGE_SECONDS["7d"]);
+    const { start, end } = getStableExpenseRange(RANGE_SECONDS["24h"]);
     void queryClient.prefetchQuery({
       queryKey: ["credit-expenses", start, end],
       queryFn: () => getCreditExpenses(start, end),

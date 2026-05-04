@@ -11,9 +11,19 @@ export type VersionEntry = {
   changes: ChangeEntry[];
 };
 
-export const CURRENT_VERSION = "0.9.0";
+export const CURRENT_VERSION = "0.9.1";
 
 export const CHANGELOG: VersionEntry[] = [
+  {
+    version: "0.9.1",
+    date: "2026-05-04",
+    changes: [
+      {
+        type: "fix",
+        text: "Credits page now defaults to the 24h range, matching the Wallet page's Credit Rewards (24h) section. Searching the recipient table by node name and clicking through to the wallet view used to show two unrelated numbers — one over 7 days, one over 24 hours. They now agree by default. Users who want 7d/30d still pick it from the Tabs; the URL persists the choice via ?range=. Bonus: the credits query is ~7x smaller on first load, and the sidebar prefetch now shares its cache entry with the wallet page.",
+      },
+    ],
+  },
   {
     version: "0.9.0",
     date: "2026-05-04",
