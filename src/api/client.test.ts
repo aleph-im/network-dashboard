@@ -11,7 +11,7 @@
 import { describe, expect, it } from "vitest";
 
 const API_URL =
-  process.env["API_URL"] ?? "https://rust-scheduler.aleph.im";
+  process.env["API_URL"] ?? "https://scheduler.api.aleph.cloud";
 const skip = process.env["RUN_API_TESTS"] !== "true";
 
 async function apiFetch(path: string): Promise<Response> {
