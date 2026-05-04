@@ -1,7 +1,7 @@
 "use client";
 
-import { useState, useMemo } from "react";
-import { useRouter } from "next/navigation";
+import { useState, useMemo, useCallback } from "react";
+import { useRouter, useSearchParams, usePathname } from "next/navigation";
 import { Table, type Column } from "@aleph-front/ds/table";
 import { Badge } from "@aleph-front/ds/badge";
 import { CopyableText } from "@aleph-front/ds/copyable-text";
@@ -179,8 +179,10 @@ type Props = {
 
 export function CreditRecipientTable({ summary, nodeState }: Props) {
   const router = useRouter();
+  const pathname = usePathname();
+  const searchParams = useSearchParams();
   const [roleFilter, setRoleFilter] = useState<RoleFilter>("all");
-  const [search, setSearch] = useState("");
+  const [search, setSearch] = useState(() => searchParams.get("q") ?? "");
   const [sortColumn, setSortColumn] = useState<string | undefined>();
   const [sortDirection, setSortDirection] =
     useState<SortDirection>("asc");
@@ -246,6 +248,19 @@ export function CreditRecipientTable({ summary, nodeState }: Props) {
     setPageSize,
   } = usePagination(sortedFiltered);
 
+  const updateSearch = useCallback(
+    (v: string) => {
+      setSearch(v);
+      setPage(1);
+      const params = new URLSearchParams(searchParams.toString());
+      if (v) params.set("q", v);
+      else params.delete("q");
+      const qs = params.toString();
+      router.replace(qs ? `${pathname}?${qs}` : pathname, { scroll: false });
+    },
+    [pathname, router, searchParams, setPage],
+  );
+
   return (
     <div>
       <FilterToolbar
@@ -254,7 +269,7 @@ export function CreditRecipientTable({ summary, nodeState }: Props) {
         onStatusChange={(s) => { setRoleFilter(s); setPage(1); }}
         formatCount={(s) => String(roleCounts[s])}
         searchValue={search}
-        onSearchChange={(v) => { setSearch(v); setPage(1); }}
+        onSearchChange={updateSearch}
         searchPlaceholder="Search address or node name..."
       />
 
