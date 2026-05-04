@@ -4,8 +4,10 @@ import {
   countByStatus,
   applyNodeAdvancedFilters,
   applyVmAdvancedFilters,
+  applyInactiveVmFilter,
   computeNodeFilterMaxes,
   computeVmFilterMaxes,
+  ACTIVE_VM_STATUSES,
   NODE_FILTER_MAX_FLOOR,
   VM_FILTER_MAX_FLOOR,
 } from "@/lib/filters";
@@ -494,5 +496,53 @@ describe("computeVmFilterMaxes", () => {
       vcpus: 64,
       memoryGb: 128,
     });
+  });
+});
+
+describe("applyInactiveVmFilter", () => {
+  it("returns identity when showInactive=true", () => {
+    const vms = [
+      makeVm({ hash: "v1", status: "dispatched" }),
+      makeVm({ hash: "v2", status: "unknown" }),
+      makeVm({ hash: "v3", status: "orphaned" }),
+    ];
+    expect(applyInactiveVmFilter(vms, true)).toEqual(vms);
+  });
+
+  it("keeps only active-status VMs when showInactive=false", () => {
+    const vms = [
+      makeVm({ hash: "v-dispatched", status: "dispatched" }),
+      makeVm({ hash: "v-duplicated", status: "duplicated" }),
+      makeVm({ hash: "v-misplaced", status: "misplaced" }),
+      makeVm({ hash: "v-missing", status: "missing" }),
+      makeVm({ hash: "v-unschedulable", status: "unschedulable" }),
+      makeVm({ hash: "v-scheduled", status: "scheduled" }),
+      makeVm({ hash: "v-unscheduled", status: "unscheduled" }),
+      makeVm({ hash: "v-orphaned", status: "orphaned" }),
+      makeVm({ hash: "v-unknown", status: "unknown" }),
+    ];
+    const result = applyInactiveVmFilter(vms, false);
+    expect(result.map((v) => v.hash).sort()).toEqual([
+      "v-dispatched",
+      "v-duplicated",
+      "v-misplaced",
+      "v-missing",
+      "v-unschedulable",
+    ].sort());
+  });
+
+  it("does not depend on allocatedNode", () => {
+    const vms = [
+      makeVm({ hash: "v-allocated", status: "dispatched", allocatedNode: "node-ok" }),
+      makeVm({ hash: "v-orphan", status: "orphaned", allocatedNode: null }),
+    ];
+    const result = applyInactiveVmFilter(vms, false);
+    expect(result.map((v) => v.hash)).toEqual(["v-allocated"]);
+  });
+
+  it("ACTIVE_VM_STATUSES matches Decision #65 (dispatched, duplicated, misplaced, missing, unschedulable)", () => {
+    expect([...ACTIVE_VM_STATUSES].sort()).toEqual(
+      ["dispatched", "duplicated", "misplaced", "missing", "unschedulable"].sort(),
+    );
   });
 });

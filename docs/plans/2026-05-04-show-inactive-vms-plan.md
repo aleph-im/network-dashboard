@@ -1,9 +1,9 @@
 ---
-status: not-started
+status: done
 date: 2026-05-04
 spec: docs/plans/2026-05-04-show-inactive-vms-design.md
 branch: feature/show-inactive-vms
-note: implementation pending — DS Tabs maxVisible prop is a prerequisite for Task 4
+note: All tasks shipped after DS Tabs `maxVisible` landed in @aleph-front/ds@0.14.0 (Decision #67, changelog 0.9.0).
 ---
 
 # Show Inactive VMs Implementation Plan

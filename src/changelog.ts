@@ -11,9 +11,23 @@ export type VersionEntry = {
   changes: ChangeEntry[];
 };
 
-export const CURRENT_VERSION = "0.8.8";
+export const CURRENT_VERSION = "0.9.0";
 
 export const CHANGELOG: VersionEntry[] = [
+  {
+    version: "0.9.0",
+    date: "2026-05-04",
+    changes: [
+      {
+        type: "feature",
+        text: "VMs page now shows only active VMs by default — dispatched, duplicated, misplaced, missing, and unschedulable. The All-tab count drops from ~7,900 to the active baseline (matching the Overview Total VMs headline) so the operational signal isn't drowned out by long-tail noise (unscheduled, orphaned, unknown VMs). Toggle via the new \"Show inactive VMs\" checkbox in the FilterPanel — Payment & Allocation column. Clicking a specific status pill (e.g. Unknown from the overflow dropdown) bypasses the filter and shows that status's full count. Shareable via the ?showInactive=true URL parameter.",
+      },
+      {
+        type: "ui",
+        text: "VMs page status tabs now show only All, Dispatched, and Scheduled — the remaining 7 statuses live in the `⋯` overflow dropdown, in priority order (Duplicated, Misplaced, Missing, Orphaned, Unschedulable, Unscheduled, Unknown). Reduces visual noise without hiding access to any status.",
+      },
+    ],
+  },
   {
     version: "0.8.8",
     date: "2026-05-04",

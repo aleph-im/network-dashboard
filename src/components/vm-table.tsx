@@ -1,6 +1,7 @@
 "use client";
 
 import { useState, useTransition, useMemo, useEffect } from "react";
+import { useRouter, useSearchParams, usePathname } from "next/navigation";
 import { Table, type Column } from "@aleph-front/ds/table";
 import { Badge } from "@aleph-front/ds/badge";
 import {
@@ -24,8 +25,10 @@ import { CopyableText } from "@aleph-front/ds/copyable-text";
 import {
   textSearch,
   countByStatus,
+  applyInactiveVmFilter,
   applyVmAdvancedFilters,
   computeVmFilterMaxes,
+  ACTIVE_VM_STATUSES,
   type VmAdvancedFilters,
 } from "@/lib/filters";
 import { applySort, type SortDirection } from "@/lib/sort";
@@ -36,13 +39,13 @@ import type { AlephMessageInfo, VM, VmStatus, VmType } from "@/api/types";
 const STATUS_PILLS: { value: VmStatus | undefined; label: string; tooltip?: string }[] = [
   { value: undefined, label: "All" },
   { value: "dispatched", label: "Dispatched", tooltip: "Running on the correct node" },
-  { value: "orphaned", label: "Orphaned", tooltip: "Running without active scheduling intent" },
-  { value: "missing", label: "Missing", tooltip: "Scheduled but not found on any node" },
-  { value: "misplaced", label: "Misplaced", tooltip: "Running on wrong node(s), not on assigned node" },
-  { value: "duplicated", label: "Duplicated", tooltip: "Running on correct node plus extra copies" },
   { value: "scheduled", label: "Scheduled", tooltip: "Assigned to a node but not yet observed" },
-  { value: "unscheduled", label: "Unscheduled", tooltip: "Deliberately unscheduled" },
+  { value: "duplicated", label: "Duplicated", tooltip: "Running on correct node plus extra copies" },
+  { value: "misplaced", label: "Misplaced", tooltip: "Running on wrong node(s), not on assigned node" },
+  { value: "missing", label: "Missing", tooltip: "Scheduled but not found on any node" },
+  { value: "orphaned", label: "Orphaned", tooltip: "Running without active scheduling intent" },
   { value: "unschedulable", label: "Unschedulable", tooltip: "No node meets this VM's requirements" },
+  { value: "unscheduled", label: "Unscheduled", tooltip: "Deliberately unscheduled" },
   { value: "unknown", label: "Unknown", tooltip: "Status could not be determined" },
 ];
 
@@ -222,6 +225,7 @@ type VMTableProps = {
   onSelectVM: (hash: string) => void;
   initialStatus?: VmStatus;
   initialQuery?: string;
+  initialShowInactive?: boolean;
   selectedKey?: string;
   compact?: boolean;
   sidePanel?: React.ReactNode;
@@ -231,11 +235,15 @@ export function VMTable({
   onSelectVM,
   initialStatus,
   initialQuery,
+  initialShowInactive,
   selectedKey,
   compact,
   sidePanel,
 }: VMTableProps) {
   const [, startTransition] = useTransition();
+  const router = useRouter();
+  const pathname = usePathname();
+  const searchParams = useSearchParams();
 
   // Search
   const [searchInput, setSearchInput] = useState(initialQuery ?? "");
@@ -253,7 +261,9 @@ export function VMTable({
 
   // Advanced filters
   const [filtersOpen, setFiltersOpen] = useState(false);
-  const [advanced, setAdvanced] = useState<VmAdvancedFilters>({});
+  const [advanced, setAdvanced] = useState<VmAdvancedFilters>(
+    initialShowInactive ? { showInactive: true } : {},
+  );
 
   // Data — fetch full dataset
   const { data: allVms, isLoading } = useVMs();
@@ -283,6 +293,7 @@ export function VMTable({
     advanced.memoryGbRange != null &&
       (advanced.memoryGbRange[0] > 0 ||
         advanced.memoryGbRange[1] < filterMaxes.memoryGb),
+    advanced.showInactive === true,
   ].filter(Boolean).length;
 
   // Filter pipeline
@@ -307,9 +318,19 @@ export function VMTable({
       );
       const fCounts = countByStatus(afterAdvanced, (v) => v.status);
 
+      // Apply the inactive-VM filter only on the All tab. When the user
+      // explicitly clicks a non-active status pill (e.g. Unknown), they want
+      // to see those VMs — bypass the filter so per-status pills always
+      // resolve to their true counts.
+      const showInactive = advanced.showInactive ?? false;
+      const beforeStatusPill =
+        statusFilter || showInactive
+          ? afterAdvanced
+          : applyInactiveVmFilter(afterAdvanced, false);
+
       const afterStatus = statusFilter
-        ? afterAdvanced.filter((v) => v.status === statusFilter)
-        : afterAdvanced;
+        ? beforeStatusPill.filter((v) => v.status === statusFilter)
+        : beforeStatusPill;
 
       return {
         displayedRows: afterStatus,
@@ -340,21 +361,49 @@ export function VMTable({
   const hasNonStatusFilters =
     debouncedQuery.trim() !== "" || activeAdvancedCount > 0;
 
-  function formatCount(status: VmStatus | undefined): string {
-    const key = status ?? "all";
-    const filtered =
-      key === "all"
-        ? Object.values(filteredCounts).reduce((a, b) => a + b, 0)
-        : (filteredCounts[key] ?? 0);
-    const unfiltered =
-      key === "all"
-        ? Object.values(unfilteredCounts).reduce((a, b) => a + b, 0)
-        : (unfilteredCounts[key] ?? 0);
+  function sumActive(counts: Record<string, number>): number {
+    let s = 0;
+    for (const status of ACTIVE_VM_STATUSES) s += counts[status] ?? 0;
+    return s;
+  }
 
-    if (hasNonStatusFilters && filtered !== unfiltered) {
-      return `${filtered}/${unfiltered}`;
+  function formatCount(status: VmStatus | undefined): string {
+    const showInactive = advanced.showInactive === true;
+
+    if (status !== undefined) {
+      // Per-status pills are unaffected by the inactive filter — clicking
+      // Unknown should show the true count of Unknown VMs.
+      const filtered = filteredCounts[status] ?? 0;
+      const unfiltered = unfilteredCounts[status] ?? 0;
+      if (hasNonStatusFilters && filtered !== unfiltered) {
+        return `${filtered}/${unfiltered}`;
+      }
+      return `${unfiltered}`;
     }
-    return `${unfiltered}`;
+
+    // All tab: when showInactive is off, count only active-status VMs.
+    const filteredAll = showInactive
+      ? Object.values(filteredCounts).reduce((a, b) => a + b, 0)
+      : sumActive(filteredCounts);
+    const unfilteredAll = showInactive
+      ? Object.values(unfilteredCounts).reduce((a, b) => a + b, 0)
+      : sumActive(unfilteredCounts);
+
+    // Plain count when only the default-on inactive-hide is culling
+    // (no search, no other advanced filters).
+    const onlyInactiveCulling =
+      !showInactive &&
+      activeAdvancedCount === 0 &&
+      debouncedQuery.trim() === "";
+
+    if (onlyInactiveCulling) {
+      return `${filteredAll}`;
+    }
+
+    if (hasNonStatusFilters && filteredAll !== unfilteredAll) {
+      return `${filteredAll}/${unfilteredAll}`;
+    }
+    return `${unfilteredAll}`;
   }
 
   function toggleVmType(type: VmType) {
@@ -404,6 +453,10 @@ export function VMTable({
 
   function clearAdvanced() {
     startTransition(() => setAdvanced({}));
+    const params = new URLSearchParams(searchParams.toString());
+    params.delete("showInactive");
+    const qs = params.toString();
+    router.replace(qs ? `${pathname}?${qs}` : pathname);
   }
 
   if (isLoading) {
@@ -429,6 +482,7 @@ export function VMTable({
         searchValue={searchInput}
         onSearchChange={setSearchInput}
         searchPlaceholder="Search hash, name, node..."
+        maxVisibleStatuses={3}
       />
 
       <FilterPanel
@@ -559,6 +613,34 @@ export function VMTable({
                     Requires Confidential
                     <span className="ml-1.5 text-xs font-normal text-muted-foreground/50">
                       — requires TEE
+                    </span>
+                  </span>
+                </label>
+                <label className="flex cursor-pointer items-center gap-2.5 text-sm font-semibold text-muted-foreground select-none">
+                  <Checkbox
+                    size="sm"
+                    checked={advanced.showInactive ?? false}
+                    onCheckedChange={(v) => {
+                      updateAdvanced((p) => {
+                        const { showInactive: _, ...rest } = p;
+                        return v === true
+                          ? { ...rest, showInactive: true }
+                          : rest;
+                      });
+                      const params = new URLSearchParams(searchParams.toString());
+                      if (v === true) {
+                        params.set("showInactive", "true");
+                      } else {
+                        params.delete("showInactive");
+                      }
+                      const qs = params.toString();
+                      router.replace(qs ? `${pathname}?${qs}` : pathname);
+                    }}
+                  />
+                  <span>
+                    Show inactive VMs
+                    <span className="ml-1.5 text-xs font-normal text-muted-foreground/50">
+                      — include scheduled, unscheduled, orphaned, and unknown VMs
                     </span>
                   </span>
                 </label>

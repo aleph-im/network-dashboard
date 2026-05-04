@@ -57,11 +57,6 @@ Intent is agreed but there are open questions, design choices, or multi-step
 coordination required. Needs a brainstorm or spec before someone can execute.
 Multi-day / multi-PR work.
 
-### 2026-05-03 - VMs page "Show inactive VMs" filter
-**Source:** Reza on Telegram — mirroring the "Show inactive nodes" pattern from the Aleph Account app. Currently the VMs page lists VMs across all statuses with no default culling, so VMs assigned to unreachable/removed nodes (operational noise) appear alongside actively-running ones.
-**Description:** Add a default-on filter that hides VMs whose `allocatedNode` resolves to a node in unreachable/removed/unknown status, with a "Show inactive VMs" checkbox to reveal them. Data is already loaded by `useVMs()` + `useNodes()`; the cross-reference is `nodes.get(vm.allocatedNode)?.status`. Open questions for brainstorm: which node statuses count as "inactive" (definitely unreachable/removed; unclear about unknown); should this also filter VMs whose own status is `unscheduled`/`scheduled` (long-tail with no active payment); does the toggle live in the main toolbar next to status pills, or in the advanced FilterPanel; should the default count badge on the All tab reflect the filtered or unfiltered total. Worth a small brainstorm + plan before implementation.
-**Priority:** Medium
-
 ### 2026-05-01 - Pre-aggregated credit totals from backend
 **Source:** Credit page slow-load research (Decision #60)
 **Description:** Ask Olivier to publish a small Aleph AGGREGATE message (or expose a precomputed endpoint) with daily/hourly credit totals + per-recipient breakdowns. Page fetches a tiny doc instead of paging through ~1440 `aleph_credit_expense` messages. Would replace the current ~20s api2 fetch with a single small request. Best long-term solution; persisted cache + prefetch + placeholder are interim wins.
@@ -194,6 +189,7 @@ Items where the path forward is clear but blocked on external work.
 <details>
 <summary>Archived items</summary>
 
+- ✅ 2026-05-04 - VMs page "Show inactive VMs" filter + status pill cap — default-on filter hiding VMs whose status is not in ACTIVE_VM_STATUSES (matches Overview Total VMs definition, Decision #65); FilterPanel placement, ?showInactive=true URL persistence, bypassed when a specific status pill is selected; status pills capped to 3 visible (All / Dispatched / Scheduled) via new DS Tabs `maxVisible` prop (`@aleph-front/ds@0.14.0`), rest in `⋯` overflow (Decision #67, Reza feedback)
 - ✅ 2026-05-04 - Credits recipient table: search by node name + whole-row click to `/wallet?address=…`, with `Matched: <name>` chip in Sources cell when row matched only via node name (Decision #66)
 - ✅ 2026-05-04 - Overview "Total VMs" semantics — count only active statuses (dispatched + duplicated + misplaced + missing + unschedulable), update subtitle (Decision #65, Reza feedback)
 - ✅ 2026-05-03 - Credit recipient table: drop misleading Node column, lead with Address, replace Roles with Sources column reading "2 CRNs · 1 CCN · staking" (Decision #64)

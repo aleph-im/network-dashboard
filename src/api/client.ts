@@ -19,8 +19,8 @@ import type {
   VM,
   VmDetail,
   VmFilters,
-  VmStatus,
 } from "@/api/types";
+import { ACTIVE_VM_STATUSES } from "@/lib/filters";
 
 function getBaseUrl(): string {
   if (typeof window !== "undefined") {
@@ -247,14 +247,6 @@ export async function getVM(hash: string): Promise<VmDetail> {
     history: rawHistory.map(transformHistory),
   };
 }
-
-const ACTIVE_VM_STATUSES = new Set<VmStatus>([
-  "dispatched",
-  "duplicated",
-  "misplaced",
-  "missing",
-  "unschedulable",
-]);
 
 export async function getOverviewStats(): Promise<OverviewStats> {
   const [stats, rawVms, rawNodes] = await Promise.all([

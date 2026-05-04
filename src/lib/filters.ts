@@ -1,4 +1,4 @@
-import type { Node, VM, VmType } from "@/api/types";
+import type { Node, VM, VmStatus, VmType } from "@/api/types";
 
 /** Generic text search: matches if any field contains the query. */
 export function textSearch<T>(
@@ -169,6 +169,7 @@ export type VmAdvancedFilters = {
   requiresConfidential?: boolean;
   vcpusRange?: [number, number];
   memoryGbRange?: [number, number];
+  showInactive?: boolean;
 };
 
 export type VmFilterMaxes = {
@@ -258,4 +259,35 @@ export function applyVmAdvancedFilters(
     }
   }
   return result;
+}
+
+/**
+ * VM statuses that count as "active" — running, expected, or awaiting placement.
+ * Mirrors the Overview Total VMs definition (Decision #65).
+ *
+ * Anything outside this set is operational long-tail: scheduled-but-never-observed,
+ * deliberately unscheduled, orphaned, or unknown — the noise the "Show inactive
+ * VMs" toggle hides by default.
+ */
+export const ACTIVE_VM_STATUSES: ReadonlySet<VmStatus> = new Set<VmStatus>([
+  "dispatched",
+  "duplicated",
+  "misplaced",
+  "missing",
+  "unschedulable",
+]);
+
+/**
+ * Hide VMs that aren't in an active status (default state).
+ *
+ * `showInactive=true` returns the input unchanged. Otherwise filters to VMs
+ * whose `status` is in `ACTIVE_VM_STATUSES`. This is the All-tab default — the
+ * baseline "what's actually running on the network" view.
+ */
+export function applyInactiveVmFilter(
+  vms: VM[],
+  showInactive: boolean,
+): VM[] {
+  if (showInactive) return vms;
+  return vms.filter((v) => ACTIVE_VM_STATUSES.has(v.status));
 }
