@@ -748,7 +748,7 @@ note: awaiting ship — to be merged via /dio:ship
 ---
 ```
 
-(The note will be updated to `merged to main as PR #N (<sha>)` by the `/dio:ship` skill.)
+(No post-merge note update needed — once `status: done` and the branch is squash-merged, the PR/SHA pairing is recoverable via `git log --grep` / `gh pr list`.)
 
 - [ ] **Step 7: Run pnpm check one more time**
 

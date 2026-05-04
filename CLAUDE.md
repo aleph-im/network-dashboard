@@ -100,9 +100,8 @@ Never interrupt based on file count or commit count.
 6. Push branch: `git push -u origin <branch> --force-with-lease`
 7. Create PR if none exists: `gh pr create --title "..." --body "..."`
 8. Squash-merge: `gh pr merge <number> --squash --delete-branch`
-9. Update plan status: if a plan file exists for this branch, update its frontmatter `note` to `merged to main as PR #N (<sha>)`
-10. Sync local main: `git checkout main && git pull --ff-only origin main`
-11. Delete local branch: `git branch -D <branch>`
+9. Sync local main: `git checkout main && git pull --ff-only origin main`
+10. Delete local branch: `git branch -D <branch>`
 
 **Never merge locally.** Option 1 ("Merge back to main locally") from the finishing skill is not allowed — a hook blocks direct pushes to main, and local merges cause SHA divergence after squash-merge. Always go through the PR.
 
@@ -200,11 +199,13 @@ When an agent finishes executing a plan (all tasks complete, or stopped mid-way)
 status: done | in-progress | blocked
 branch: feature/branch-name
 date: 2026-03-31
-note: awaiting testing / merged to main / blocked on X
+note: awaiting testing / blocked on X / Task 3 deferred to BACKLOG
 ---
 ```
 
 This makes plan status visible during sync-up without needing to inspect branches. The branch scan (Context Recovery step 4) cross-references these annotations to give a complete picture.
+
+The `note:` field captures execution-time context, not post-merge bookkeeping. Once `status: done` is set and the branch is squash-merged, the PR/SHA pairing is recoverable via `git log --grep` / `gh pr list` — duplicating it in the plan frontmatter creates a post-merge dirty bit that can't be pushed (main is hooked closed). For wave manifests (`docs/superpowers/waves/<wave-id>.md`), the per-row PR/SHA tracking *is* the audit artifact and lands cleanly through chore PRs.
 
 ### Plans Must Include Verification and Doc Updates
 
