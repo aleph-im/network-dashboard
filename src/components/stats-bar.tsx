@@ -285,7 +285,7 @@ export function StatsBar() {
           label="Total"
           value={stats?.totalVMs}
           total={undefined}
-          subtitle="Virtual machines currently scheduled across the network"
+          subtitle="VMs currently active across the network — running, expected, or awaiting placement"
           isLoading={isLoading}
           href="/vms"
           index={2}

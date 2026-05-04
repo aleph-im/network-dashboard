@@ -11,9 +11,19 @@ export type VersionEntry = {
   changes: ChangeEntry[];
 };
 
-export const CURRENT_VERSION = "0.8.6";
+export const CURRENT_VERSION = "0.8.7";
 
 export const CHANGELOG: VersionEntry[] = [
+  {
+    version: "0.8.7",
+    date: "2026-05-04",
+    changes: [
+      {
+        type: "fix",
+        text: "Overview Total VMs card now counts only currently-active VMs (dispatched + duplicated + misplaced + missing + unschedulable) instead of every VM the scheduler has ever seen. The headline number now matches the sum of the visible status cards, and the subtitle reflects the active-status meaning. The full all-time list remains reachable via the All tab on /vms.",
+      },
+    ],
+  },
   {
     version: "0.8.6",
     date: "2026-05-03",

@@ -19,6 +19,7 @@ import type {
   VM,
   VmDetail,
   VmFilters,
+  VmStatus,
 } from "@/api/types";
 
 function getBaseUrl(): string {
@@ -247,6 +248,14 @@ export async function getVM(hash: string): Promise<VmDetail> {
   };
 }
 
+const ACTIVE_VM_STATUSES = new Set<VmStatus>([
+  "dispatched",
+  "duplicated",
+  "misplaced",
+  "missing",
+  "unschedulable",
+]);
+
 export async function getOverviewStats(): Promise<OverviewStats> {
   const [stats, rawVms, rawNodes] = await Promise.all([
     fetchApi<ApiStats>("/api/v1/stats"),
@@ -265,7 +274,8 @@ export async function getOverviewStats(): Promise<OverviewStats> {
       .length,
     removedNodes: nodes.filter((n) => n.status === "removed")
       .length,
-    totalVMs: vms.length,
+    totalVMs: vms.filter((v) => ACTIVE_VM_STATUSES.has(v.status))
+      .length,
     dispatchedVMs: vms.filter((v) => v.status === "dispatched")
       .length,
     missingVMs: vms.filter((v) => v.status === "missing").length,
