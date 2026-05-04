@@ -1,4 +1,4 @@
-import type { Node, VM, VmType } from "@/api/types";
+import type { Node, NodeStatus, VM, VmType } from "@/api/types";
 
 /** Generic text search: matches if any field contains the query. */
 export function textSearch<T>(
@@ -169,6 +169,7 @@ export type VmAdvancedFilters = {
   requiresConfidential?: boolean;
   vcpusRange?: [number, number];
   memoryGbRange?: [number, number];
+  showInactive?: boolean;
 };
 
 export type VmFilterMaxes = {
@@ -258,4 +259,31 @@ export function applyVmAdvancedFilters(
     }
   }
   return result;
+}
+
+export const INACTIVE_NODE_STATUSES: ReadonlySet<NodeStatus> = new Set<NodeStatus>([
+  "unreachable",
+  "removed",
+  "unknown",
+]);
+
+/**
+ * Hide VMs whose allocated node is in an inactive status.
+ *
+ * Fail-open: VMs with no allocatedNode pass; VMs whose allocatedNode is missing
+ * from the status map (e.g. nodes still loading) also pass. Once nodes load,
+ * the memo re-runs and inactive VMs disappear.
+ */
+export function applyInactiveVmFilter(
+  vms: VM[],
+  nodeStatusByHash: Map<string, NodeStatus>,
+  showInactive: boolean,
+): VM[] {
+  if (showInactive) return vms;
+  return vms.filter((v) => {
+    if (!v.allocatedNode) return true;
+    const status = nodeStatusByHash.get(v.allocatedNode);
+    if (!status) return true;
+    return !INACTIVE_NODE_STATUSES.has(status);
+  });
 }

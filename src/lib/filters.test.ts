@@ -4,12 +4,14 @@ import {
   countByStatus,
   applyNodeAdvancedFilters,
   applyVmAdvancedFilters,
+  applyInactiveVmFilter,
   computeNodeFilterMaxes,
   computeVmFilterMaxes,
+  INACTIVE_NODE_STATUSES,
   NODE_FILTER_MAX_FLOOR,
   VM_FILTER_MAX_FLOOR,
 } from "@/lib/filters";
-import type { Node, VM } from "@/api/types";
+import type { Node, NodeStatus, VM } from "@/api/types";
 
 const makeResources = (vcpusTotal: number, memoryTotalMb: number) => ({
   vcpusTotal,
@@ -494,5 +496,69 @@ describe("computeVmFilterMaxes", () => {
       vcpus: 64,
       memoryGb: 128,
     });
+  });
+});
+
+describe("applyInactiveVmFilter", () => {
+  function statusMap(entries: Array<[string, NodeStatus]>): Map<string, NodeStatus> {
+    return new Map(entries);
+  }
+
+  it("returns identity when showInactive=true", () => {
+    const vms = [
+      makeVm({ hash: "v1", allocatedNode: "node-down" }),
+      makeVm({ hash: "v2", allocatedNode: "node-ok" }),
+    ];
+    const map = statusMap([
+      ["node-down", "removed"],
+      ["node-ok", "healthy"],
+    ]);
+    expect(applyInactiveVmFilter(vms, map, true)).toEqual(vms);
+  });
+
+  it("hides VMs whose allocatedNode is unreachable, removed, or unknown", () => {
+    const vms = [
+      makeVm({ hash: "v-unreach", allocatedNode: "n-unreach" }),
+      makeVm({ hash: "v-removed", allocatedNode: "n-removed" }),
+      makeVm({ hash: "v-unknown", allocatedNode: "n-unknown" }),
+      makeVm({ hash: "v-ok", allocatedNode: "n-ok" }),
+    ];
+    const map = statusMap([
+      ["n-unreach", "unreachable"],
+      ["n-removed", "removed"],
+      ["n-unknown", "unknown"],
+      ["n-ok", "healthy"],
+    ]);
+    const result = applyInactiveVmFilter(vms, map, false);
+    expect(result.map((v) => v.hash)).toEqual(["v-ok"]);
+  });
+
+  it("keeps VMs with no allocatedNode regardless of showInactive", () => {
+    const vms = [
+      makeVm({ hash: "v-orphan", allocatedNode: null }),
+      makeVm({ hash: "v-missing", allocatedNode: null }),
+    ];
+    const map = statusMap([]);
+    expect(applyInactiveVmFilter(vms, map, false).map((v) => v.hash))
+      .toEqual(["v-orphan", "v-missing"]);
+  });
+
+  it("keeps VMs whose allocatedNode is missing from the map (fail-open)", () => {
+    const vms = [makeVm({ hash: "v1", allocatedNode: "node-not-loaded" })];
+    expect(applyInactiveVmFilter(vms, statusMap([]), false).map((v) => v.hash))
+      .toEqual(["v1"]);
+  });
+
+  it("keeps VMs on healthy nodes when showInactive=false", () => {
+    const vms = [makeVm({ hash: "v1", allocatedNode: "n-ok" })];
+    const map = statusMap([["n-ok", "healthy"]]);
+    expect(applyInactiveVmFilter(vms, map, false).map((v) => v.hash))
+      .toEqual(["v1"]);
+  });
+
+  it("INACTIVE_NODE_STATUSES contains exactly unreachable, removed, unknown", () => {
+    expect([...INACTIVE_NODE_STATUSES].sort()).toEqual(
+      ["removed", "unknown", "unreachable"],
+    );
   });
 });
