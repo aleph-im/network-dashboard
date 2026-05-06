@@ -32,6 +32,7 @@ export type ApiCorechannelNode = {
   stakers: Record<string, number>;
   total_staked: number;
   resource_nodes: string[];
+  inactive_since?: number | null;
 };
 
 export type ApiResourceNode = {
@@ -42,6 +43,7 @@ export type ApiResourceNode = {
   reward: string;
   status: string;
   parent: string | null;
+  inactive_since?: number | null;
 };
 
 // --- App types ---
@@ -77,6 +79,7 @@ export type CCNInfo = {
   status: string;
   stakers: Record<string, number>;
   totalStaked: number;
+  inactiveSince: number | null;
 };
 
 export type CRNInfo = {
@@ -86,6 +89,7 @@ export type CRNInfo = {
   reward: string;
   score: number;
   status: string;
+  inactiveSince: number | null;
 };
 
 export type NodeState = {
