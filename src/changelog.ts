@@ -20,11 +20,11 @@ export const CHANGELOG: VersionEntry[] = [
     changes: [
       {
         type: "feature",
-        text: "Overview hero now shows a world map of every active Aleph Cloud node alongside the headline stats. Each green dot is a node, placed near its country with a small per-node scatter so dense regions read as clusters; the same hash always lands in the same spot. Geolocation runs at build time — CCN multiaddrs and CRN hostnames resolve to a country code via ip3country and get baked into a JSON snapshot, so the page stays a fast static export with no per-visitor lookups. The build refuses to overwrite the snapshot if api2 is unreachable or returns less than half of the previous dataset, so production never ships an empty map.",
+        text: "Overview hero now shows a world map of every Aleph Cloud node, sampled and clustered by country so the geographic story reads at a glance. Each green dot represents real nodes from the network — small countries (Russia, Italy, Canada, Sweden) always get at least one dot; heavy clusters like France and the US get proportionally more. Geolocation runs at build time: the build resolves CCN multiaddrs and CRN hostnames to country codes via ip3country and bakes them into a JSON snapshot, so the page stays a fast static export with no per-visitor lookups. If the upstream is unreachable or shrinks unexpectedly, the build keeps the previous snapshot — production never ships an empty map.",
       },
       {
         type: "ui",
-        text: "Overview hero restructured into a 2-column layout (stacks below lg): a 2×2 stat grid (Nodes Total/Healthy + VMs Total/Dispatched) on the left, the world map on the right. Dropped Unreachable, Removed, Missing, and Unschedulable from the hero — the operational long-tail is one click away on /nodes and /vms via the per-status pills, and dropping it gave the geographic story room to breathe.",
+        text: "Overview hero restructured into a 2-column layout (stacks below lg): a 2×2 stat grid (Nodes Total/Healthy + VMs Total/Dispatched) on the left, the world map on the right. Dropped Unreachable, Removed, Missing, and Unschedulable from the hero — the operational long-tail is one click away on /nodes and /vms via the per-status pills, and dropping it gave the geographic story room to breathe. Card chrome (dot-pattern background + soft inner vignette) is theme-aware, so the worldmap reads naturally in both light and dark mode.",
       },
     ],
   },
