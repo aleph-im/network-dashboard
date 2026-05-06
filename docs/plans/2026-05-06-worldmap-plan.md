@@ -1,3 +1,10 @@
+---
+status: done
+branch: feature/worldmap
+date: 2026-05-06
+note: SVG source switched from Vemaps (404) to Wikimedia BlankMap-Equirectangular (public domain, 360×180 viewBox); WorldMapCard overlay uses 1080×540 (same 2:1 ratio). Snapshot resolved 513 nodes on first run. Awaiting user preview before push.
+---
+
 # Worldmap Card Implementation Plan
 
 > **For agentic workers:** REQUIRED SUB-SKILL: Use superpowers:subagent-driven-development (recommended) or superpowers:executing-plans to implement this plan task-by-task. Steps use checkbox (`- [ ]`) syntax for tracking.
