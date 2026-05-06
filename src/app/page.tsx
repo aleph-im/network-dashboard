@@ -3,6 +3,7 @@
 import { StatsBar } from "@/components/stats-bar";
 import { TopNodesCard } from "@/components/top-nodes-card";
 import { LatestVMsCard } from "@/components/latest-vms-card";
+import { WorldMapCard } from "@/components/world-map-card";
 
 export default function OverviewPage() {
   return (
@@ -14,7 +15,10 @@ export default function OverviewPage() {
         </p>
       </div>
 
-      <StatsBar />
+      <div className="grid grid-cols-1 gap-8 lg:grid-cols-2 lg:gap-4">
+        <StatsBar />
+        <WorldMapCard />
+      </div>
 
       <div className="mt-12 grid grid-cols-1 gap-8 lg:grid-cols-2">
         <TopNodesCard />
