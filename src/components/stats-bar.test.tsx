@@ -13,15 +13,16 @@ function renderWithQuery(ui: React.ReactElement) {
 }
 
 describe("StatsBar", () => {
-  it("renders all stat card labels", () => {
+  it("renders the slimmed 4-card overview labels", () => {
     renderWithQuery(<StatsBar />);
     expect(screen.getByText("Nodes")).toBeInTheDocument();
-    expect(screen.getAllByText("Virtual Machines").length).toBeGreaterThan(0);
+    expect(screen.getByText("Virtual Machines")).toBeInTheDocument();
     expect(screen.getByText("Healthy")).toBeInTheDocument();
-    expect(screen.getByText("Unreachable")).toBeInTheDocument();
-    expect(screen.getByText("Removed")).toBeInTheDocument();
     expect(screen.getByText("Dispatched")).toBeInTheDocument();
-    expect(screen.getByText("Missing")).toBeInTheDocument();
-    expect(screen.getByText("Unschedulable")).toBeInTheDocument();
+    expect(screen.getAllByText("Total")).toHaveLength(2);
+    expect(screen.queryByText("Unreachable")).not.toBeInTheDocument();
+    expect(screen.queryByText("Removed")).not.toBeInTheDocument();
+    expect(screen.queryByText("Missing")).not.toBeInTheDocument();
+    expect(screen.queryByText("Unschedulable")).not.toBeInTheDocument();
   });
 });
