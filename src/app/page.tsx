@@ -1,6 +1,6 @@
 "use client";
 
-import { StatsBar } from "@/components/stats-bar";
+import { SectionLabel, StatsBar } from "@/components/stats-bar";
 import { TopNodesCard } from "@/components/top-nodes-card";
 import { LatestVMsCard } from "@/components/latest-vms-card";
 import { WorldMapCard } from "@/components/world-map-card";
@@ -15,12 +15,15 @@ export default function OverviewPage() {
         </p>
       </div>
 
-      <div className="grid grid-cols-1 gap-8 lg:grid-cols-2 lg:gap-4">
+      <div className="grid grid-cols-1 gap-8 lg:grid-cols-2 lg:gap-12">
         <StatsBar />
-        <WorldMapCard />
+        <div className="flex h-full flex-col gap-2">
+          <SectionLabel>Network Map</SectionLabel>
+          <WorldMapCard />
+        </div>
       </div>
 
-      <div className="mt-12 grid grid-cols-1 gap-8 lg:grid-cols-2">
+      <div className="mt-12 grid grid-cols-1 gap-8 lg:grid-cols-2 lg:gap-12">
         <TopNodesCard />
         <LatestVMsCard />
       </div>

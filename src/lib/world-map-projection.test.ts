@@ -1,6 +1,8 @@
 import { describe, expect, it } from "vitest";
 import {
+  equirectangular,
   hashToSeed,
+  mercator,
   mulberry32,
   project,
   scatter,
@@ -70,6 +72,64 @@ describe("mulberry32", () => {
   });
 });
 
+describe("equirectangular", () => {
+  it("returns a projection that matches project()", () => {
+    const proj = equirectangular(600, 300);
+    const p1 = proj(40.7, -74);
+    const p2 = project(40.7, -74, 600, 300);
+    expect(p1).toEqual(p2);
+  });
+});
+
+describe("mercator", () => {
+  // Empirically calibrated to the Vemaps wrld-15.svg (Europe/Africa-centered)
+  const VEMAPS = {
+    centerX: 400.8,
+    equatorY: 395.7,
+    R: 117.27,
+    lngOffset: 11,
+  };
+
+  it("places the equator at equatorY for any longitude", () => {
+    const proj = mercator(VEMAPS);
+    expect(proj(0, 11).y).toBeCloseTo(395.7, 1);
+    expect(proj(0, 100).y).toBeCloseTo(395.7, 1);
+  });
+
+  it("places lng=lngOffset at centerX for any latitude", () => {
+    const proj = mercator(VEMAPS);
+    expect(proj(0, 11).x).toBeCloseTo(400.8, 1);
+    expect(proj(50, 11).x).toBeCloseTo(400.8, 1);
+  });
+
+  it("places Greenland tip (lat 83.7, lng -33) near SVG (310, 56)", () => {
+    const proj = mercator(VEMAPS);
+    const { x, y } = proj(83.7, -33);
+    expect(Math.abs(x - 310)).toBeLessThan(10);
+    expect(Math.abs(y - 56)).toBeLessThan(10);
+  });
+
+  it("places Cape York Australia (lat -10.7, lng 142.5) near SVG (669, 417)", () => {
+    const proj = mercator(VEMAPS);
+    const { x, y } = proj(-10.7, 142.5);
+    expect(Math.abs(x - 669)).toBeLessThan(10);
+    expect(Math.abs(y - 417)).toBeLessThan(10);
+  });
+
+  it("clamps extreme latitudes to avoid Infinity at the poles", () => {
+    const proj = mercator(VEMAPS);
+    expect(Number.isFinite(proj(90, 0).y)).toBe(true);
+    expect(Number.isFinite(proj(-90, 0).y)).toBe(true);
+  });
+
+  it("is monotonically increasing in y as lat decreases", () => {
+    const proj = mercator(VEMAPS);
+    expect(proj(60, 0).y).toBeLessThan(proj(50, 0).y);
+    expect(proj(50, 0).y).toBeLessThan(proj(0, 0).y);
+    expect(proj(0, 0).y).toBeLessThan(proj(-50, 0).y);
+  });
+});
+
 describe("scatter", () => {
   it("returns the same offset for the same hash", () => {
     const a = scatter("hash-A");
@@ -83,11 +143,11 @@ describe("scatter", () => {
     expect(a).not.toEqual(b);
   });
 
-  it("stays within the configured radius (~1.5 degrees)", () => {
+  it("stays within the configured ellipse (~2° lat, ~3.2° lng)", () => {
     for (const h of ["a", "b", "cdef123", "long-hash-xyz"]) {
       const { dLat, dLng } = scatter(h);
-      const r = Math.hypot(dLat, dLng);
-      expect(r).toBeLessThanOrEqual(1.5 + 1e-9);
+      const ellipseR = (dLat / 2) ** 2 + (dLng / (2 * 1.6)) ** 2;
+      expect(ellipseR).toBeLessThanOrEqual(1 + 1e-9);
     }
   });
 });

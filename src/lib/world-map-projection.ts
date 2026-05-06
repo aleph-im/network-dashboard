@@ -1,7 +1,17 @@
-const SCATTER_RADIUS_DEG = 1.5;
+const SCATTER_RADIUS_DEG = 2;
+const SCATTER_LNG_STRETCH = 1.6;
+const MERCATOR_LAT_LIMIT = 85;
 
 export type Point = { x: number; y: number };
 export type Offset = { dLat: number; dLng: number };
+export type Projection = (lat: number, lng: number) => Point;
+
+export type MercatorParams = {
+  centerX: number;
+  equatorY: number;
+  R: number;
+  lngOffset: number;
+};
 
 export function project(
   lat: number,
@@ -12,6 +22,26 @@ export function project(
   const x = ((lng + 180) / 360) * width;
   const y = ((90 - lat) / 180) * height;
   return { x, y };
+}
+
+export function equirectangular(width: number, height: number): Projection {
+  return (lat, lng) => project(lat, lng, width, height);
+}
+
+export function mercator(params: MercatorParams): Projection {
+  return (lat, lng) => {
+    const clampedLat = Math.max(
+      -MERCATOR_LAT_LIMIT,
+      Math.min(MERCATOR_LAT_LIMIT, lat),
+    );
+    const latRad = (clampedLat * Math.PI) / 180;
+    const lngRad = ((lng - params.lngOffset) * Math.PI) / 180;
+    const mercY = Math.log(Math.tan(Math.PI / 4 + latRad / 2));
+    return {
+      x: params.centerX + params.R * lngRad,
+      y: params.equatorY - params.R * mercY,
+    };
+  };
 }
 
 export function hashToSeed(hash: string): number {
@@ -40,6 +70,6 @@ export function scatter(hash: string): Offset {
   const radius = Math.sqrt(rand()) * SCATTER_RADIUS_DEG;
   return {
     dLat: Math.sin(angle) * radius,
-    dLng: Math.cos(angle) * radius,
+    dLng: Math.cos(angle) * radius * SCATTER_LNG_STRETCH,
   };
 }

@@ -192,59 +192,77 @@ export function StatsBar() {
   const hasDispatched = (stats?.dispatchedVMs ?? 0) > 0;
 
   return (
-    <div className="grid grid-cols-2 gap-4">
-      <p className="col-span-2 mb-[-8px] text-xs font-semibold uppercase tracking-widest text-muted-foreground/50">
-        Nodes
-      </p>
-      <Stat
-        label="Total"
-        value={stats?.totalNodes}
-        total={undefined}
-        subtitle="Compute nodes registered with the scheduler"
-        isLoading={isLoading}
-        href="/nodes"
-        index={0}
-      />
-      <Stat
-        label="Healthy"
-        value={stats?.healthyNodes}
-        total={stats?.totalNodes}
-        subtitle="Nodes that passed their last health check"
-        isLoading={isLoading}
-        color="var(--color-success-500)"
-        tint="var(--color-success-500)"
-        icon={iconCheck}
-        href="/nodes?status=healthy"
-        index={1}
-      />
-      <p className="col-span-2 mb-[-8px] mt-2 text-xs font-semibold uppercase tracking-widest text-muted-foreground/50">
-        Virtual Machines
-      </p>
-      <Stat
-        label="Total"
-        value={stats?.totalVMs}
-        total={undefined}
-        subtitle="VMs currently active across the network — running, expected, or awaiting placement"
-        isLoading={isLoading}
-        href="/vms"
-        index={2}
-      />
-      <Stat
-        label="Dispatched"
-        value={stats?.dispatchedVMs}
-        total={stats?.totalVMs}
-        subtitle="VMs running on their correct assigned node"
-        isLoading={isLoading}
-        icon={iconCheck}
-        href="/vms?status=dispatched"
-        index={3}
-        {...(hasDispatched
-          ? {
-              color: "var(--color-success-500)",
-              tint: "var(--color-success-500)",
-            }
-          : {})}
-      />
+    <div className="flex h-full flex-col gap-2">
+      <SectionLabel>Nodes</SectionLabel>
+      <div className="grid flex-1 grid-cols-2 gap-4">
+        <Stat
+          label="Total"
+          value={stats?.totalNodes}
+          total={undefined}
+          subtitle="Compute nodes registered with the scheduler"
+          isLoading={isLoading}
+          href="/nodes"
+          index={0}
+        />
+        <Stat
+          label="Healthy"
+          value={stats?.healthyNodes}
+          total={stats?.totalNodes}
+          subtitle="Nodes that passed their last health check"
+          isLoading={isLoading}
+          color="var(--color-success-500)"
+          tint="var(--color-success-500)"
+          icon={iconCheck}
+          href="/nodes?status=healthy"
+          index={1}
+        />
+      </div>
+      <SectionLabel className="mt-2">Virtual Machines</SectionLabel>
+      <div className="grid flex-1 grid-cols-2 gap-4">
+        <Stat
+          label="Total"
+          value={stats?.totalVMs}
+          total={undefined}
+          subtitle="VMs currently active across the network"
+          isLoading={isLoading}
+          href="/vms"
+          index={2}
+        />
+        <Stat
+          label="Dispatched"
+          value={stats?.dispatchedVMs}
+          total={stats?.totalVMs}
+          subtitle="VMs running on their correct assigned node"
+          isLoading={isLoading}
+          icon={iconCheck}
+          href="/vms?status=dispatched"
+          index={3}
+          {...(hasDispatched
+            ? {
+                color: "var(--color-success-500)",
+                tint: "var(--color-success-500)",
+              }
+            : {})}
+        />
+      </div>
     </div>
+  );
+}
+
+export function SectionLabel({
+  children,
+  className,
+}: {
+  children: React.ReactNode;
+  className?: string;
+}) {
+  return (
+    <p
+      className={`text-xs font-semibold uppercase tracking-widest text-muted-foreground/50 ${
+        className ?? ""
+      }`}
+    >
+      {children}
+    </p>
   );
 }

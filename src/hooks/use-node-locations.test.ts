@@ -1,5 +1,6 @@
 import { describe, expect, it } from "vitest";
 import { computeNodeDots } from "@/hooks/use-node-locations";
+import { equirectangular } from "@/lib/world-map-projection";
 
 const centroids = {
   US: { lat: 38, lng: -97, name: "United States" },
@@ -13,6 +14,8 @@ const locations = {
   hash_inactive_in_snapshot: { country: "US" },
 };
 
+const project = equirectangular(600, 300);
+
 describe("computeNodeDots", () => {
   it("returns one dot per hash that exists in both live data and snapshot", () => {
     const dots = computeNodeDots({
@@ -23,8 +26,7 @@ describe("computeNodeDots", () => {
       crns: [],
       locations,
       centroids,
-      width: 600,
-      height: 300,
+      project,
     });
     expect(dots).toHaveLength(2);
     expect(dots.map((d) => d.country).sort()).toEqual(["DE", "US"]);
@@ -36,8 +38,7 @@ describe("computeNodeDots", () => {
       crns: [{ hash: "hash_us_a", inactiveSince: null }],
       locations,
       centroids,
-      width: 600,
-      height: 300,
+      project,
     });
     expect(dots).toHaveLength(1);
     expect(dots[0]?.hash).toBe("hash_us_a");
@@ -49,8 +50,7 @@ describe("computeNodeDots", () => {
       crns: [{ hash: "hash_de_a", inactiveSince: null }],
       locations,
       centroids,
-      width: 600,
-      height: 300,
+      project,
     });
     expect(dots).toHaveLength(1);
     expect(dots[0]?.hash).toBe("hash_de_a");
@@ -62,8 +62,7 @@ describe("computeNodeDots", () => {
       crns: [],
       locations,
       centroids,
-      width: 600,
-      height: 300,
+      project,
     });
     expect(dots).toHaveLength(0);
   });
@@ -74,8 +73,7 @@ describe("computeNodeDots", () => {
       crns: [],
       locations,
       centroids,
-      width: 600,
-      height: 300,
+      project,
     });
     const dot = dots[0];
     expect(dot).toBeDefined();
@@ -95,8 +93,7 @@ describe("computeNodeDots", () => {
       crns: [],
       locations,
       centroids,
-      width: 600,
-      height: 300,
+      project,
     };
     const a = computeNodeDots(args);
     const b = computeNodeDots(args);

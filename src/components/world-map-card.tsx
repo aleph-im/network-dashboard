@@ -1,6 +1,7 @@
 "use client";
 
 import Image from "next/image";
+import { useMemo } from "react";
 import {
   Tooltip,
   TooltipContent,
@@ -8,10 +9,23 @@ import {
   TooltipTrigger,
 } from "@aleph-front/ds/tooltip";
 import { useNodeLocations } from "@/hooks/use-node-locations";
-import { hashToSeed, mulberry32 } from "@/lib/world-map-projection";
+import {
+  hashToSeed,
+  mercator,
+  mulberry32,
+} from "@/lib/world-map-projection";
 
-const VIEW_W = 1080;
-const VIEW_H = 540;
+const VIEW_X = 100;
+const VIEW_Y = 140;
+const VIEW_W = 600;
+const VIEW_H = 333;
+
+const VEMAPS_MERCATOR = {
+  centerX: 400.8,
+  equatorY: 395.7,
+  R: 117.27,
+  lngOffset: 11,
+};
 
 function ExpandIcon() {
   return (
@@ -34,17 +48,25 @@ function ExpandIcon() {
 }
 
 export function WorldMapCard() {
-  const dots = useNodeLocations(VIEW_W, VIEW_H);
+  const project = useMemo(() => mercator(VEMAPS_MERCATOR), []);
+  const dots = useNodeLocations(project);
 
   return (
-    <div className="relative flex h-full flex-col overflow-hidden rounded-2xl border border-foreground/[0.06] bg-foreground/[0.03]">
+    <div
+      className="relative flex aspect-[9/5] h-full flex-col overflow-hidden rounded-2xl border border-foreground/[0.06] bg-foreground/[0.03]"
+      style={{
+        backgroundImage:
+          "radial-gradient(circle, var(--map-dot-color) 1px, transparent 1px)",
+        backgroundSize: "16px 16px",
+      }}
+    >
       <div className="absolute inset-x-0 top-0 z-10 flex items-center justify-between p-5">
         <div className="flex items-center gap-2">
           <span
             className="inline-block size-2.5 rounded-full"
             style={{ backgroundColor: "var(--color-success-500)" }}
           />
-          <p className="text-xs font-semibold uppercase tracking-widest text-muted-foreground/80">
+          <p className="text-xs font-semibold uppercase tracking-widest text-muted-foreground/70">
             Aleph Cloud Nodes
           </p>
         </div>
@@ -73,12 +95,12 @@ export function WorldMapCard() {
           alt=""
           fill
           unoptimized
-          className="select-none object-contain opacity-70"
+          className="select-none object-cover opacity-20 dark:opacity-100"
           priority
         />
         <svg
-          viewBox={`0 0 ${VIEW_W} ${VIEW_H}`}
-          preserveAspectRatio="xMidYMid meet"
+          viewBox={`${VIEW_X} ${VIEW_Y} ${VIEW_W} ${VIEW_H}`}
+          preserveAspectRatio="xMidYMid slice"
           className="absolute inset-0 size-full"
           aria-hidden="true"
         >
@@ -91,8 +113,9 @@ export function WorldMapCard() {
                 key={dot.hash}
                 cx={dot.x}
                 cy={dot.y}
-                r={3}
+                r={2}
                 fill="var(--color-success-500)"
+                fillOpacity={0.7}
                 className="node-dot"
                 style={{
                   animation: `node-dot-flicker ${duration.toFixed(
@@ -105,13 +128,19 @@ export function WorldMapCard() {
         </svg>
       </div>
 
+      <div
+        aria-hidden
+        className="pointer-events-none absolute inset-0 rounded-2xl"
+        style={{ boxShadow: "inset 0 0 120px 0 var(--map-vignette)" }}
+      />
+
       <a
-        href="https://commons.wikimedia.org/wiki/File:BlankMap-Equirectangular.svg"
+        href="https://www.vemaps.com/"
         target="_blank"
-        rel="noopener noreferrer"
-        className="absolute bottom-3 left-5 text-[10px] uppercase tracking-wider text-muted-foreground/40 hover:text-muted-foreground/60"
+        rel="noopener"
+        className="absolute bottom-3 left-5 z-10 text-[6px] uppercase tracking-wider text-muted-foreground/20 hover:text-muted-foreground/40"
       >
-        World Map · Wikimedia Commons
+        Map by Vemaps.com
       </a>
     </div>
   );
