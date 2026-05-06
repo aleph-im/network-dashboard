@@ -141,8 +141,13 @@ context lands.
 **Description:** The AppSidebar is currently a local component. If other Aleph projects need similar navigation, consider promoting it to the DS with configurable nav items.
 **Priority:** Low
 
-### 2026-03-09 - Node map / geo view
-**Description:** Visualize node locations on a map. Feasibility depends on whether IPv6 or address fields can be geolocated.
+### 2026-05-06 - Worldmap v2: interactive node map
+**Source:** Worldmap v1 implementation (Decision #69) explicitly punted interaction
+**Description:** Add hover state per dot (node hash + country tooltip), click-to-detail (link to `/nodes?view=<hash>`), zoom/pan, and layer toggles for CRN vs CCN. Likely the moment to bring in `react-simple-maps` or D3 — pure SVG `<circle>` works for v1 but a real picker / hit-testing logic gets uncomfortable. Could also reuse the expand button (currently disabled with "Coming soon" tooltip) as the entry point to a full-screen modal map.
+
+### 2026-05-06 - Worldmap city-level granularity
+**Source:** Worldmap v1 implementation (Decision #69)
+**Description:** Plot dots at city centroids instead of country centroids. Would need a larger geo DB (e.g. MaxMind GeoLite2-City, ~70MB) bundled at build time, or a smaller curated set of likely datacenter cities. v1 uses country centroids + hash-seeded scatter (~1.5°), which reads as continent-scale density without committing to specific cities.
 
 ### 2026-03-09 - Allocation timeline
 **Description:** Visual timeline of VM migrations using history data. Show scheduled/migrated events per VM as a timeline component.
@@ -189,6 +194,7 @@ Items where the path forward is clear but blocked on external work.
 <details>
 <summary>Archived items</summary>
 
+- ✅ 2026-05-06 - Worldmap card on Overview hero — equirectangular world map with one green SVG dot per active node (CRN+CCN combined), build-time JSON snapshot of node hash → country (`scripts/build-node-locations.ts` resolving CCN multiaddrs + CRN hostnames via DNS + `ip3country`), country centroids from `world-countries`, deterministic per-hash scatter (~1.5°), hash-seeded subtle flicker animation respecting `prefers-reduced-motion`, slimmed Overview hero to 2×2 stat grid (Nodes Total/Healthy + VMs Total/Dispatched, dropped Unreachable/Removed/Missing/Unschedulable cards) — closes the long-standing "Node map / geo view" roadmap item (Decision #69)
 - ✅ 2026-05-04 - VMs page "Show inactive VMs" filter + status pill cap — default-on filter hiding VMs whose status is not in ACTIVE_VM_STATUSES (matches Overview Total VMs definition, Decision #65); FilterPanel placement, ?showInactive=true URL persistence, bypassed when a specific status pill is selected; status pills capped to 3 visible (All / Dispatched / Scheduled) via new DS Tabs `maxVisible` prop (`@aleph-front/ds@0.14.0`), rest in `⋯` overflow (Decision #67, Reza feedback)
 - ✅ 2026-05-04 - Credits recipient table: search by node name + whole-row click to `/wallet?address=…`, with `Matched: <name>` chip in Sources cell when row matched only via node name (Decision #66)
 - ✅ 2026-05-04 - Overview "Total VMs" semantics — count only active statuses (dispatched + duplicated + misplaced + missing + unschedulable), update subtitle (Decision #65, Reza feedback)

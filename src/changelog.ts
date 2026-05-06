@@ -11,9 +11,23 @@ export type VersionEntry = {
   changes: ChangeEntry[];
 };
 
-export const CURRENT_VERSION = "0.9.1";
+export const CURRENT_VERSION = "0.10.0";
 
 export const CHANGELOG: VersionEntry[] = [
+  {
+    version: "0.10.0",
+    date: "2026-05-06",
+    changes: [
+      {
+        type: "feature",
+        text: "Overview hero now shows a world map of every active Aleph Cloud node alongside the headline stats. Each green dot is a node, placed near its country with a small per-node scatter so dense regions read as clusters; the same hash always lands in the same spot. Geolocation runs at build time — CCN multiaddrs and CRN hostnames resolve to a country code via ip3country and get baked into a JSON snapshot, so the page stays a fast static export with no per-visitor lookups. The build refuses to overwrite the snapshot if api2 is unreachable or returns less than half of the previous dataset, so production never ships an empty map.",
+      },
+      {
+        type: "ui",
+        text: "Overview hero restructured into a 2-column layout (stacks below lg): a 2×2 stat grid (Nodes Total/Healthy + VMs Total/Dispatched) on the left, the world map on the right. Dropped Unreachable, Removed, Missing, and Unschedulable from the hero — the operational long-tail is one click away on /nodes and /vms via the per-status pills, and dropping it gave the geographic story room to breathe.",
+      },
+    ],
+  },
   {
     version: "0.9.1",
     date: "2026-05-04",

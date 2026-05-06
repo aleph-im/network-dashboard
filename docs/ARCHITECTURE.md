@@ -55,6 +55,7 @@ src/
 │   ├── use-wallet-rewards.ts # useWalletRewards — 24h credit rewards per node/role for a wallet
 │   ├── use-credit-expenses.ts # useCreditExpenses — credit expense messages from api2
 │   ├── use-node-state.ts   # useNodeState — corechannel CCN/CRN aggregate
+│   ├── use-node-locations.ts  # useNodeLocations — joins live node state with build-time location snapshot
 │   ├── use-debounce.ts     # useDebounce hook (generic, configurable delay)
 │   └── use-pagination.ts   # usePagination hook (client-side page/pageSize state + slice)
 ├── components/
@@ -83,6 +84,7 @@ src/
 │   ├── credit-flow-diagram.tsx  # SVG flow diagram with particle animation + gradient paths
 │   ├── credit-recipient-table.tsx # Credit recipient table (DS Table, FilterToolbar, sortable columns)
 │   ├── credit-summary-bar.tsx # Credit summary stat cards
+│   ├── world-map-card.tsx  # Equirectangular world map with per-node SVG dots
 │   └── resource-bar.tsx    # CPU/memory/disk usage bar
 ├── lib/
 │   ├── filters.ts          # Filter pipeline: textSearch, countByStatus, applyNodeAdvancedFilters, applyVmAdvancedFilters
@@ -90,11 +92,18 @@ src/
 │   ├── credit-distribution.ts  # Credit expense distribution logic (computeDistributionSummary, computeWalletRewards)
 │   ├── credit-distribution.test.ts # Distribution unit tests
 │   ├── format.ts           # relativeTime, relativeTimeFromUnix, truncateHash, formatPercent, formatDateTime, formatCpuLabel, formatGpuLabel, formatAleph, explorerWalletUrl
-│   └── status-map.ts       # Status-to-visual maps: nodeStatusToDot(), NODE_STATUS_VARIANT, VM_STATUS_VARIANT, MESSAGE_TYPE_VARIANT
+│   ├── status-map.ts       # Status-to-visual maps: nodeStatusToDot(), NODE_STATUS_VARIANT, VM_STATUS_VARIANT, MESSAGE_TYPE_VARIANT
+│   ├── world-map-projection.ts  # Equirectangular projection + deterministic per-hash scatter (mulberry32 + FNV-1a)
+│   └── world-map-resolution.ts  # Multiaddr/hostname parsing helpers (used by build-time snapshot)
+└── data/                   # Build-time JSON snapshots (committed)
+    ├── country-centroids.json   # ISO-2 → {lat, lng, name}, generated from world-countries
+    └── node-locations.json      # node hash → { country }, generated from corechannel + ip3country
 ```
 
 ```
 scripts/
+├── build-country-centroids.ts  # One-shot: world-countries → src/data/country-centroids.json
+├── build-node-locations.ts     # Pre-build: resolves CCN multiaddr IPs + CRN hostnames to country codes
 ├── deploy-ipfs.py              # IPFS deployment via aleph-client
 ├── preview.sh                  # CLI for multi-branch preview (start/stop/list)
 └── preview-dashboard.mjs       # Preview dashboard server (port 3000)
@@ -188,9 +197,23 @@ Dashboard on `http://localhost:3000` lists all active previews with links. State
 ### Overview Page Redesign
 
 **Context:** The overview page needed more visual impact, spacing, and contextual help for users unfamiliar with Aleph Cloud terminology.
-**Approach:** Hero stat cards with `text-4xl` numbers in rigid-square italic font, each in its own glassmorphism card (`bg-foreground/[0.03]`, `border-foreground/[0.06]`) with colored status indicators (green/amber/red), status-tinted backgrounds via CSS custom property `--stat-tint` at 7% opacity, SVG noise texture (`feTurbulence`) at 3% opacity for depth, and explanatory subtitles. Two sections: Nodes (Total/Healthy/Unreachable/Removed) and VMs (Total/Dispatched/Missing/Unschedulable) in a 4-column grid. The VMs "Total" counts only currently-active statuses (`dispatched + duplicated + misplaced + missing + unschedulable`) so the headline matches the sum of the visible status cards and the donut ring proportions read correctly; the long-tail of `scheduled`/`unscheduled`/`orphaned`/`unknown` rows remains accessible via the All tab on `/vms`. Content cards have larger `text-2xl` titles with `?` info tooltips (DS Tooltip component) and `padding="lg"`. Page has a `text-4xl` title with subtitle, and `mt-12` / `gap-8` spacing between sections. A shared `CardHeader` component provides the title + tooltip pattern for all 4 content cards.
-**Key files:** `src/app/page.tsx`, `src/components/stats-bar.tsx`, `src/components/card-header.tsx`, `src/app/globals.css`
-**Notes:** Stats grid uses 4 columns at `lg` breakpoint. The `.stat-card::before` pseudo-element reads `--stat-tint` from inline styles for dynamic color tinting. The `.stat-card::after` pseudo-element adds an SVG noise grain texture. The `.card-glow` utility adds `shadow-brand` on hover. Status-specific stat cards show a `DonutRing` SVG in the top-right corner (absolutely positioned) displaying the value/total ratio with an animated arc (1.2s CSS transition on `stroke-dashoffset`, triggered by `requestAnimationFrame` after mount). Each ring contains a centered Phosphor-style inline SVG icon matching the status semantics (check, wifi-slash, trash, question, warning, prohibit).
+**Approach:** Hero stat cards with `text-4xl` numbers in rigid-square italic font, each in its own glassmorphism card (`bg-foreground/[0.03]`, `border-foreground/[0.06]`) with colored status indicators (green/amber/red), status-tinted backgrounds via CSS custom property `--stat-tint` at 7% opacity, SVG noise texture (`feTurbulence`) at 3% opacity for depth, and explanatory subtitles. Hero is a 2-column grid at `lg`: a 2×2 stat grid (Nodes Total/Healthy + VMs Total/Dispatched) on the left, the `WorldMapCard` on the right; below `lg` the grid stacks. The VMs "Total" counts only currently-active statuses (`dispatched + duplicated + misplaced + missing + unschedulable`) so the headline matches the sum of all active status cards on `/vms` and the donut ring proportions read correctly; long-tail statuses (Unreachable, Removed, Missing, Unschedulable, etc.) are reachable from the per-status pills on `/nodes` and `/vms` rather than dedicated hero cards. Content cards have larger `text-2xl` titles with `?` info tooltips (DS Tooltip component) and `padding="lg"`. Page has a `text-4xl` title with subtitle, and `mt-12` / `gap-8` spacing between sections. A shared `CardHeader` component provides the title + tooltip pattern for all 4 content cards.
+**Key files:** `src/app/page.tsx`, `src/components/stats-bar.tsx`, `src/components/world-map-card.tsx`, `src/components/card-header.tsx`, `src/app/globals.css`
+**Notes:** Stats grid uses 2 columns. The `.stat-card::before` pseudo-element reads `--stat-tint` from inline styles for dynamic color tinting. The `.stat-card::after` pseudo-element adds an SVG noise grain texture. The `.card-glow` utility adds `shadow-brand` on hover. Status-specific stat cards show a `DonutRing` SVG in the top-right corner (absolutely positioned) displaying the value/total ratio with an animated arc (1.2s CSS transition on `stroke-dashoffset`, triggered by `requestAnimationFrame` after mount). Each ring contains a centered Phosphor-style inline SVG icon matching the status semantics (check).
+
+### Worldmap Card
+
+**Context:** The Overview hero needed a visual signal of geographic spread to convey scale and decentralization at a glance.
+**Approach:** `WorldMapCard` renders an equirectangular world map (Wikimedia BlankMap-Equirectangular, public domain, served from `public/world-map.svg`) with one green SVG `<circle>` per active node. Live node state comes from `useNodeState()` (corechannel aggregate); per-node country comes from a build-time JSON snapshot `src/data/node-locations.json` keyed by node hash. The `useNodeLocations(width, height)` hook joins the two: it filters live nodes where `inactiveSince == null`, drops nodes missing from the snapshot, looks up the country centroid in `src/data/country-centroids.json`, applies a deterministic per-hash scatter (~1.5°), and projects to overlay coordinates via `project()`. The overlay SVG sits absolutely on top of the map `<Image>` with matching aspect ratio (2:1, viewBox 1080×540) and `preserveAspectRatio="xMidYMid meet"` so dots stay anchored as the card resizes. Each dot has a hash-seeded flicker animation (4–6s, 0–5s delay) via the `node-dot-flicker` keyframe; reduced-motion clients see no animation.
+**Key files:** `src/components/world-map-card.tsx`, `src/hooks/use-node-locations.ts`, `src/lib/world-map-projection.ts`, `src/data/node-locations.json`, `src/data/country-centroids.json`, `public/world-map.svg`, `src/app/globals.css` (`node-dot-flicker` keyframe)
+**Notes:** No interaction in v1 — the expand button is disabled with a "Coming soon" tooltip. CCNs and CRNs render the same color (the design intent is fleet visibility, not breakdown). Snapshot misses (no resolved IP, foreign country code outside `world-countries`) are silently dropped — typical render is several hundred dots out of ~640 total nodes.
+
+### Build-Time Data Preparation
+
+**Context:** Per-node geolocation requires DNS resolution and an IP-to-country lookup. Doing both at runtime would add latency, network noise, and per-client cost; doing it once per build collapses that to a static JSON read.
+**Approach:** `scripts/build-node-locations.ts` runs as a `prebuild` step (chained into `pnpm build` via `package.json`'s `build` script: `tsx scripts/build-node-locations.ts && next build`). It fetches the corechannel aggregate from `api2.aleph.im`, parses CCN `/ip4/.../tcp/...` multiaddrs and resolves CRN HTTPS hostnames via `dns.resolve4()`, runs each IP through the bundled `ip3country` DB, and writes `src/data/node-locations.json` (`hash → { country }`). The script is **never** the source of truth for failure: if api2 is unreachable, the response is non-OK, or the new dataset is < 50% of the previous (`ABORT_FRACTION`), it warns and keeps the existing committed JSON — production builds never silently regress to an empty map. `pnpm build:locations` runs the script standalone for ad-hoc refreshes. `scripts/build-country-centroids.ts` is a one-shot that materializes `src/data/country-centroids.json` from the `world-countries` package — re-run only when the upstream package adds new ISO codes.
+**Key files:** `scripts/build-node-locations.ts`, `scripts/build-country-centroids.ts`, `src/lib/world-map-resolution.ts` (pure helpers, unit-tested), `package.json` (`build`, `build:locations`)
+**Notes:** Both JSON outputs live under `src/data/` (not `public/`) so they're imported as ES modules — type-aware, bundled with the route, no runtime fetch. Pure parsing helpers (`parseIpv4FromMultiaddr`, `parseHostname`) live in `src/lib/world-map-resolution.ts` and are shared with any future runtime consumer. The `tsx` import of a sibling TS file uses an explicit `.ts` extension, which is how `tsx`'s ESM loader resolves it.
 
 ### Cross-Page Navigation via URL Search Params
 
