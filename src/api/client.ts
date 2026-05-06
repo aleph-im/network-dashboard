@@ -512,6 +512,7 @@ export async function getNodeState(): Promise<NodeState> {
       status: n.status,
       stakers: n.stakers,
       totalStaked: n.total_staked,
+      inactiveSince: n.inactive_since ?? null,
     });
   }
 
@@ -523,6 +524,7 @@ export async function getNodeState(): Promise<NodeState> {
       reward: r.reward,
       score: r.score,
       status: r.status,
+      inactiveSince: r.inactive_since ?? null,
     });
   }
 
