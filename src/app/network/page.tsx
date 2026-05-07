@@ -10,6 +10,7 @@ import { NetworkLayerToggles } from "@/components/network/network-layer-toggles"
 import { NetworkSearch } from "@/components/network/network-search";
 import { NetworkDetailPanel } from "@/components/network/network-detail-panel";
 import { NetworkFocusBanner } from "@/components/network/network-focus-banner";
+import { NetworkLegend } from "@/components/network/network-legend";
 
 export default function NetworkPage() {
   const router = useRouter();
@@ -128,6 +129,7 @@ export default function NetworkPage() {
               </div>
             </div>
           )}
+          <NetworkLegend />
         </div>
 
         {selectedNode && (
