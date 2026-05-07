@@ -7,6 +7,7 @@ import type { GraphNode } from "@/lib/network-graph-model";
 import { useNetworkGraph } from "@/hooks/use-network-graph";
 import { NetworkGraph } from "@/components/network/network-graph";
 import { NetworkLayerToggles } from "@/components/network/network-layer-toggles";
+import { NetworkSearch } from "@/components/network/network-search";
 
 export default function NetworkPage() {
   const router = useRouter();
@@ -52,6 +53,7 @@ export default function NetworkPage() {
 
       <div className="hidden md:block">
         <NetworkLayerToggles />
+        <NetworkSearch />
       </div>
 
       {/* Mobile fallback */}
