@@ -29,9 +29,14 @@ export function NetworkFocusBanner({ focusNode, connectionCount }: Props) {
           {connectionCount} connection{connectionCount === 1 ? "" : "s"}
         </span>
       </span>
-      <Button size="xs" variant="text" onClick={onShowAll}>
-        Show all
-      </Button>
+      <div className="flex items-center gap-1">
+        <Button size="xs" variant="text" onClick={() => router.back()}>
+          ← Back
+        </Button>
+        <Button size="xs" variant="text" onClick={onShowAll}>
+          Show all
+        </Button>
+      </div>
     </div>
   );
 }

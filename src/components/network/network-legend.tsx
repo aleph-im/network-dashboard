@@ -7,17 +7,25 @@ export function NetworkLegend() {
       <ul className="space-y-1.5 text-muted-foreground">
         <li className="flex items-center gap-2">
           <svg width="22" height="14" viewBox="0 0 22 14">
-            <circle cx="11" cy="7" r="6" fill="var(--color-success-500)" />
             <circle
-              cx="11" cy="7" r="8" fill="none"
-              stroke="var(--color-success-500)" strokeOpacity={0.4}
+              cx="11" cy="7" r="6"
+              fill="var(--color-primary-500)" fillOpacity={0.18}
+              stroke="var(--color-primary-500)" strokeWidth={2}
+            />
+            <circle
+              cx="11" cy="7" r="9" fill="none"
+              stroke="var(--color-primary-500)" strokeOpacity={0.3}
             />
           </svg>
           CCN (active)
         </li>
         <li className="flex items-center gap-2">
           <svg width="22" height="14" viewBox="0 0 22 14">
-            <circle cx="11" cy="7" r="4" fill="var(--color-success-500)" />
+            <circle
+              cx="11" cy="7" r="4"
+              fill="var(--color-success-500)" fillOpacity={0.18}
+              stroke="var(--color-success-500)" strokeWidth={2}
+            />
           </svg>
           CRN (active)
         </li>

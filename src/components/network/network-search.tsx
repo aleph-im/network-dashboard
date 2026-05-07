@@ -36,13 +36,34 @@ export function NetworkSearch() {
   }, [q, fullGraph, router, searchParams]);
 
   return (
-    <form onSubmit={onSubmit} className="px-6 pb-3">
+    <form onSubmit={onSubmit} className="relative ml-auto w-full max-w-sm">
       <Input
         size="sm"
         placeholder="Search hash, name, or 0x address…"
         value={q}
         onChange={(e) => setQ(e.target.value)}
+        className="pr-10"
       />
+      {q && (
+        <button
+          type="button"
+          onClick={() => setQ("")}
+          aria-label="Clear search"
+          className="absolute right-3 top-1/2 -translate-y-1/2 text-muted-foreground hover:text-foreground"
+        >
+          <svg
+            className="size-4"
+            viewBox="0 0 24 24"
+            fill="none"
+            stroke="currentColor"
+            strokeWidth="2"
+            strokeLinecap="round"
+            strokeLinejoin="round"
+          >
+            <path d="M18 6 6 18M6 6l12 12" />
+          </svg>
+        </button>
+      )}
     </form>
   );
 }

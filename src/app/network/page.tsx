@@ -1,9 +1,13 @@
 "use client";
 
-import { Suspense, useCallback, useMemo, useState } from "react";
+import { Suspense, useCallback, useEffect, useMemo, useState } from "react";
 import Link from "next/link";
 import { useRouter, useSearchParams } from "next/navigation";
+import { ArrowsClockwise } from "@phosphor-icons/react";
+import { Button } from "@aleph-front/ds/button";
+import { Spinner } from "@aleph-front/ds/ui/spinner";
 import type { GraphNode } from "@/lib/network-graph-model";
+import type { HoverPos } from "@/components/network/network-graph";
 import { useNetworkGraph } from "@/hooks/use-network-graph";
 import { NetworkGraph } from "@/components/network/network-graph";
 import { NetworkLayerToggles } from "@/components/network/network-layer-toggles";
@@ -12,11 +16,37 @@ import { NetworkDetailPanel } from "@/components/network/network-detail-panel";
 import { NetworkFocusBanner } from "@/components/network/network-focus-banner";
 import { NetworkLegend } from "@/components/network/network-legend";
 
+const SETTLE_MS = 2200;
+
 function NetworkContent() {
   const router = useRouter();
   const searchParams = useSearchParams();
-  const { fullGraph, visibleGraph, focusId, isLoading } = useNetworkGraph();
+  const {
+    fullGraph,
+    visibleGraph,
+    focusId,
+    isLoading,
+    isFetching,
+  } = useNetworkGraph();
   const [hovered, setHovered] = useState<GraphNode | null>(null);
+  const [hoverPos, setHoverPos] = useState<HoverPos | null>(null);
+  const [resetKey, setResetKey] = useState(0);
+  const [isSettling, setIsSettling] = useState(false);
+
+  useEffect(() => {
+    setIsSettling(true);
+    const t = setTimeout(() => setIsSettling(false), SETTLE_MS);
+    return () => clearTimeout(t);
+  }, [visibleGraph, resetKey]);
+
+  const onHover = useCallback((node: GraphNode | null, pos: HoverPos | null) => {
+    setHovered(node);
+    setHoverPos(pos);
+  }, []);
+
+  const onResetView = useCallback(() => {
+    setResetKey((k) => k + 1);
+  }, []);
 
   const selectedId = searchParams.get("selected");
   const address = searchParams.get("address")?.toLowerCase() ?? null;
@@ -46,7 +76,7 @@ function NetworkContent() {
     const params = new URLSearchParams(searchParams.toString());
     params.set("focus", id);
     params.delete("selected");
-    router.replace(`/network?${params.toString()}`, { scroll: false });
+    router.push(`/network?${params.toString()}`, { scroll: false });
   }, [router, searchParams]);
 
   const selectedNode = useMemo(
@@ -72,8 +102,28 @@ function NetworkContent() {
       </header>
 
       <div className="hidden md:block">
-        <NetworkLayerToggles />
-        <NetworkSearch />
+        <div className="flex flex-wrap items-center gap-4 px-6 pb-3">
+          <NetworkLayerToggles />
+          <Button
+            size="xs"
+            variant="outline"
+            onClick={onResetView}
+            title="Reset view to fit all nodes"
+            iconLeft={<ArrowsClockwise weight="bold" />}
+          >
+            Reset view
+          </Button>
+          {(isFetching || isSettling) && (
+            <span
+              className="flex items-center gap-1.5 text-xs text-muted-foreground"
+              aria-live="polite"
+            >
+              <Spinner className="size-3.5" />
+              {isFetching ? "Fetching" : "Updating"}…
+            </span>
+          )}
+          <NetworkSearch />
+        </div>
         <NetworkFocusBanner
           focusNode={focusNode}
           connectionCount={focusConnections}
@@ -111,29 +161,68 @@ function NetworkContent() {
             </div>
           ) : (
             <NetworkGraph
+              key={resetKey}
               graph={visibleGraph}
               selectedId={selectedId}
               highlightedIds={highlightedIds}
-              onNodeHover={setHovered}
+              onNodeHover={onHover}
               onNodeClick={onNodeClick}
             />
           )}
-          {hovered && (
-            <div className="pointer-events-none absolute left-4 top-4 rounded-md border border-foreground/[0.08] bg-surface/90 px-3 py-2 text-xs shadow-md backdrop-blur-sm">
-              <div className="font-medium">{hovered.label}</div>
-              <div className="text-muted-foreground">
-                {hovered.kind.toUpperCase()} · {hovered.status}
+          {hovered && hoverPos && (
+            <div
+              className="pointer-events-none fixed z-50 max-w-xs -translate-x-1/2 -translate-y-full rounded-lg border border-foreground/[0.08] bg-surface/95 p-3 text-xs shadow-lg backdrop-blur-sm"
+              style={{
+                left: `${hoverPos.clientX}px`,
+                top: `${hoverPos.clientY - 16}px`,
+              }}
+            >
+              <div className="mb-1.5 text-sm font-semibold text-foreground">
+                {hovered.label}
               </div>
-              <div className="font-mono text-[11px] text-muted-foreground">
-                {hovered.id.slice(0, 12)}…
-              </div>
+              <dl className="grid grid-cols-[auto_1fr] gap-x-3 gap-y-1">
+                <dt className="text-[10px] uppercase tracking-wide text-muted-foreground">
+                  Role
+                </dt>
+                <dd className="text-foreground">
+                  {hovered.kind.toUpperCase()}
+                  {" · "}
+                  <span className="text-muted-foreground">{hovered.status}</span>
+                </dd>
+                <dt className="text-[10px] uppercase tracking-wide text-muted-foreground">
+                  Address
+                </dt>
+                <dd className="break-all font-mono text-[11px] text-primary-300">
+                  {hovered.id}
+                </dd>
+                {hovered.owner && (
+                  <>
+                    <dt className="text-[10px] uppercase tracking-wide text-muted-foreground">
+                      Owner
+                    </dt>
+                    <dd className="break-all font-mono text-[11px] text-muted-foreground">
+                      {hovered.owner}
+                    </dd>
+                  </>
+                )}
+                {hovered.reward && hovered.reward !== hovered.owner && (
+                  <>
+                    <dt className="text-[10px] uppercase tracking-wide text-muted-foreground">
+                      Reward
+                    </dt>
+                    <dd className="break-all font-mono text-[11px] text-muted-foreground">
+                      {hovered.reward}
+                    </dd>
+                  </>
+                )}
+              </dl>
             </div>
           )}
           <NetworkLegend />
         </div>
 
         {selectedNode && (
-          <aside className="w-[400px] shrink-0 overflow-y-auto border-l border-foreground/[0.06]">
+          <aside className="w-[400px] shrink-0 overflow-y-auto">
             <NetworkDetailPanel
               node={selectedNode}
               onClose={onClosePanel}

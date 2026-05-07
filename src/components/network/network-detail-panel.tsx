@@ -19,7 +19,7 @@ export function NetworkDetailPanel({ node, onClose, onFocus }: Props) {
   if (node.kind === "ccn" || node.kind === "crn") {
     return (
       <div className="flex h-full flex-col">
-        <div className="flex items-center justify-between gap-2 px-4 pt-4">
+        <div className="mb-3 flex items-center justify-end gap-2 px-4 pt-4">
           <Button size="xs" variant="text" onClick={() => onFocus(node.id)}>
             Focus on this node
           </Button>

@@ -2,6 +2,7 @@
 
 import { useCallback } from "react";
 import { useRouter, useSearchParams } from "next/navigation";
+import { Checkbox } from "@aleph-front/ds/checkbox";
 import type { GraphLayer } from "@/lib/network-graph-model";
 import { parseLayers } from "@/hooks/use-network-graph";
 
@@ -31,26 +32,20 @@ export function NetworkLayerToggles() {
   }, [active, router, searchParams]);
 
   return (
-    <div className="flex flex-wrap items-center gap-2 px-6 pb-3">
-      {ALL.map((l) => {
-        const on = active.has(l.id);
-        return (
-          <button
-            key={l.id}
-            type="button"
-            onClick={() => toggle(l.id)}
-            className={`rounded-full border px-3 py-1 text-xs transition-colors ${
-              on
-                ? "border-primary-500 bg-primary-600/10 text-primary-400"
-                : "border-foreground/[0.08] text-muted-foreground hover:text-foreground"
-            }`}
-            style={{ transitionDuration: "var(--duration-fast)" }}
-            aria-pressed={on}
-          >
-            {l.label}
-          </button>
-        );
-      })}
+    <div className="flex flex-wrap items-center gap-x-4 gap-y-2">
+      {ALL.map((l) => (
+        <label
+          key={l.id}
+          className="flex cursor-pointer items-center gap-2 text-sm font-medium text-muted-foreground select-none hover:text-foreground"
+        >
+          <Checkbox
+            size="sm"
+            checked={active.has(l.id)}
+            onCheckedChange={() => toggle(l.id)}
+          />
+          {l.label}
+        </label>
+      ))}
     </div>
   );
 }

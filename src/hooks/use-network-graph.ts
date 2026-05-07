@@ -27,16 +27,15 @@ export type UseNetworkGraphResult = {
   layers: Set<GraphLayer>;
   focusId: string | null;
   isLoading: boolean;
+  isFetching: boolean;
 };
 
 export function useNetworkGraph(): UseNetworkGraphResult {
   const searchParams = useSearchParams();
-  const { data: state, isLoading } = useNodeState();
+  const { data: state, isLoading, isFetching } = useNodeState();
 
-  const layers = useMemo(
-    () => parseLayers(searchParams.get("layers")),
-    [searchParams],
-  );
+  const layersParam = searchParams.get("layers");
+  const layers = useMemo(() => parseLayers(layersParam), [layersParam]);
   const focusId = searchParams.get("focus");
 
   const fullGraph = useMemo<Graph>(() => {
@@ -49,5 +48,5 @@ export function useNetworkGraph(): UseNetworkGraphResult {
     return egoSubgraph(fullGraph, focusId);
   }, [fullGraph, focusId]);
 
-  return { fullGraph, visibleGraph, layers, focusId, isLoading };
+  return { fullGraph, visibleGraph, layers, focusId, isLoading, isFetching };
 }
