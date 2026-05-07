@@ -6,6 +6,7 @@ import { useRouter, useSearchParams } from "next/navigation";
 import type { GraphNode } from "@/lib/network-graph-model";
 import { useNetworkGraph } from "@/hooks/use-network-graph";
 import { NetworkGraph } from "@/components/network/network-graph";
+import { NetworkLayerToggles } from "@/components/network/network-layer-toggles";
 
 export default function NetworkPage() {
   const router = useRouter();
@@ -48,6 +49,10 @@ export default function NetworkPage() {
           Aleph node topology — CCNs, CRNs, and their links.
         </p>
       </header>
+
+      <div className="hidden md:block">
+        <NetworkLayerToggles />
+      </div>
 
       {/* Mobile fallback */}
       <div className="flex-1 overflow-auto p-6 md:hidden">
