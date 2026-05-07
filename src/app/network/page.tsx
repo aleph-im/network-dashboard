@@ -1,6 +1,6 @@
 "use client";
 
-import { useCallback, useMemo, useState } from "react";
+import { Suspense, useCallback, useMemo, useState } from "react";
 import Link from "next/link";
 import { useRouter, useSearchParams } from "next/navigation";
 import type { GraphNode } from "@/lib/network-graph-model";
@@ -12,7 +12,7 @@ import { NetworkDetailPanel } from "@/components/network/network-detail-panel";
 import { NetworkFocusBanner } from "@/components/network/network-focus-banner";
 import { NetworkLegend } from "@/components/network/network-legend";
 
-export default function NetworkPage() {
+function NetworkContent() {
   const router = useRouter();
   const searchParams = useSearchParams();
   const { fullGraph, visibleGraph, focusId, isLoading } = useNetworkGraph();
@@ -143,5 +143,13 @@ export default function NetworkPage() {
         )}
       </div>
     </div>
+  );
+}
+
+export default function NetworkPage() {
+  return (
+    <Suspense>
+      <NetworkContent />
+    </Suspense>
   );
 }
