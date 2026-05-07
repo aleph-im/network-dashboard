@@ -44,11 +44,6 @@ to medium size (one PR, one focused session).
 **Description:** The DS `CopyableText` component only renders the arrow icon for external URLs (`isExternalUrl` check). Internal links should also show the arrow (without `target="_blank"`). Patched locally in `node_modules`; needs to be applied in `@aleph-front/ds`.
 **Priority:** High
 
-### 2026-03-06 - Remove tooltip from hash in Latest VMs card
-**Source:** User request
-**Description:** On the overview page's Latest VMs card, the hash column shows a tooltip on hover (from `CopyableText`). Remove the tooltip — the hash is already visible and the tooltip adds noise in this compact card context.
-**Priority:** Low
-
 ---
 
 ## Needs planning
@@ -61,11 +56,6 @@ Multi-day / multi-PR work.
 **Source:** Credit page slow-load research (Decision #60)
 **Description:** Ask Olivier to publish a small Aleph AGGREGATE message (or expose a precomputed endpoint) with daily/hourly credit totals + per-recipient breakdowns. Page fetches a tiny doc instead of paging through ~1440 `aleph_credit_expense` messages. Would replace the current ~20s api2 fetch with a single small request. Best long-term solution; persisted cache + prefetch + placeholder are interim wins.
 **Priority:** Medium
-
-### 2026-05-01 - Default credits range to 24h instead of 7d
-**Source:** Credit page slow-load research (Decision #60)
-**Description:** 24h windows have ~7× fewer messages than 7d (≈50 vs ≈340), giving fast first paint on a cold cache. Defaulting to 24h would make the page feel snappy on cold loads while keeping 7d/30d as explicit user actions. UX tradeoff — the wider window currently shows more interesting trends. Worth A/Bing or asking Jonathan.
-**Priority:** Low
 
 ### 2026-03-21 - CI preview deploys to IPFS per branch
 **Source:** Multi-branch preview brainstorming
@@ -194,6 +184,8 @@ Items where the path forward is clear but blocked on external work.
 <details>
 <summary>Archived items</summary>
 
+- ✅ 2026-05-04 - Default credits range switched from 7d to 24h to align with wallet rewards (24h hardcoded there); sidebar prefetch now warms the same cache key — first credits/wallet visit in a 5-minute rounding window is instant. Resolves a row-vs-detail confusion users hit when drilling from a credits row into `/wallet?address=…` and seeing different ALEPH totals (Decision #68, PR #98)
+- ✅ 2026-03-06 - Latest VMs card hash tooltip removed — current card renders the full hash as a plain `<span>` (no `CopyableText`, no `Tooltip`); the original `truncateHash` + Tooltip wrapper was dropped during a later refactor of the card
 - ✅ 2026-05-06 - Worldmap card on Overview hero — Vemaps Web Mercator world map with one green SVG dot per sampled active node (CRN+CCN combined, per-country 1-in-10 sampling so RU/IT/CA always render), build-time JSON snapshot of node hash → country (`scripts/build-node-locations.ts` resolving CCN multiaddrs + CRN hostnames via DNS + `ip3country`), country centroids from `world-countries`, calibrated Mercator projection (centerX/equatorY/R/lngOffset fit against four landmarks), deterministic per-hash elliptical scatter (~2° lat × ~3.2° lng), hash-seeded subtle flicker animation respecting `prefers-reduced-motion`, theme-aware dot-pattern bg + inner vignette, map fills card via object-cover + SVG slice; slimmed Overview hero to 2×2 stat grid (Nodes Total/Healthy + VMs Total/Dispatched, dropped Unreachable/Removed/Missing/Unschedulable cards) — closes the long-standing "Node map / geo view" roadmap item (Decision #69)
 - ✅ 2026-05-04 - VMs page "Show inactive VMs" filter + status pill cap — default-on filter hiding VMs whose status is not in ACTIVE_VM_STATUSES (matches Overview Total VMs definition, Decision #65); FilterPanel placement, ?showInactive=true URL persistence, bypassed when a specific status pill is selected; status pills capped to 3 visible (All / Dispatched / Scheduled) via new DS Tabs `maxVisible` prop (`@aleph-front/ds@0.14.0`), rest in `⋯` overflow (Decision #67, Reza feedback)
 - ✅ 2026-05-04 - Credits recipient table: search by node name + whole-row click to `/wallet?address=…`, with `Matched: <name>` chip in Sources cell when row matched only via node name (Decision #66)
