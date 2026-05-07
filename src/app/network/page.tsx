@@ -9,11 +9,12 @@ import { NetworkGraph } from "@/components/network/network-graph";
 import { NetworkLayerToggles } from "@/components/network/network-layer-toggles";
 import { NetworkSearch } from "@/components/network/network-search";
 import { NetworkDetailPanel } from "@/components/network/network-detail-panel";
+import { NetworkFocusBanner } from "@/components/network/network-focus-banner";
 
 export default function NetworkPage() {
   const router = useRouter();
   const searchParams = useSearchParams();
-  const { fullGraph, visibleGraph, isLoading } = useNetworkGraph();
+  const { fullGraph, visibleGraph, focusId, isLoading } = useNetworkGraph();
   const [hovered, setHovered] = useState<GraphNode | null>(null);
 
   const selectedId = searchParams.get("selected");
@@ -52,6 +53,14 @@ export default function NetworkPage() {
     [visibleGraph, selectedId],
   );
 
+  const focusNode = useMemo(
+    () => fullGraph.nodes.find((n) => n.id === focusId) ?? null,
+    [fullGraph, focusId],
+  );
+  const focusConnections = focusNode
+    ? Math.max(0, visibleGraph.nodes.length - 1)
+    : 0;
+
   return (
     <div className="flex h-full flex-col">
       <header className="px-6 py-4">
@@ -64,6 +73,10 @@ export default function NetworkPage() {
       <div className="hidden md:block">
         <NetworkLayerToggles />
         <NetworkSearch />
+        <NetworkFocusBanner
+          focusNode={focusNode}
+          connectionCount={focusConnections}
+        />
       </div>
 
       {/* Mobile fallback */}
