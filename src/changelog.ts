@@ -30,6 +30,10 @@ export const CHANGELOG: VersionEntry[] = [
         type: "fix",
         text: "Background data refetches no longer reset the viewport — the auto-fit only fires when you change layers, focus, or address (the URL-driven things), not when polling lands new data. Drag now works on first map load, every time: drag attachment is delegated to the parent group via d3-drag's container + subject pattern, so it doesn't depend on whether individual node elements were in the DOM at the moment the effect ran. Post-drag settling cools down to rest in ~0.4s instead of 2–3s of wobble.",
       },
+      {
+        type: "ui",
+        text: "Network graph polish pass: selected nodes show a translucent halo in their own color (no more pulsing purple ring on green CRNs); CCN/CRN names render as DS Badge chips with kind-mapped variants (CCN purple, CRN green, unreachable red, inactive grey) so kind reads at a glance. Same-owner / staker / reward overlay cliques no longer crush together (force-link strength reverted to d3's degree-aware default). Initial fit and reset-view show the full network with breathing room instead of zooming in tight.",
+      },
     ],
   },
   {

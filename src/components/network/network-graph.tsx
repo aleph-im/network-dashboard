@@ -23,6 +23,7 @@ import { zoom as d3zoom, zoomIdentity, type ZoomBehavior } from "d3-zoom";
 import { drag as d3drag } from "d3-drag";
 import { select } from "d3-selection";
 import "d3-transition";
+import { Badge } from "@aleph-front/ds/badge";
 import type {
   Graph,
   GraphLayer,
@@ -30,6 +31,17 @@ import type {
 } from "@/lib/network-graph-model";
 import { NetworkNode, RADIUS } from "./network-node";
 import { NetworkEdge } from "./network-edge";
+
+function labelVariant(
+  kind: GraphNode["kind"],
+  status: string,
+  inactive: boolean,
+): "default" | "success" | "error" | "info" {
+  if (inactive) return "info";
+  if (status === "unreachable") return "error";
+  if (kind === "ccn") return "default";
+  return "success";
+}
 
 type SimNode = SimulationNodeDatum & GraphNode;
 type SimLink = SimulationLinkDatum<SimNode> & { type: GraphLayer };
@@ -44,7 +56,7 @@ type Props = {
 
 const SIM_DECAY = 0.05;
 const HIT_RADIUS = 12;
-const MIN_FIT_ZOOM = 0.6;
+const MIN_FIT_ZOOM = 0.3;
 const LABEL_ZOOM_THRESHOLD = 1.5;
 
 function fitTransform(
@@ -66,7 +78,7 @@ function fitTransform(
   if (!Number.isFinite(minX)) return { x: 0, y: 0, k: 1 };
   const dx = maxX - minX || 1;
   const dy = maxY - minY || 1;
-  const fit = Math.min(size.w / (dx * 1.4), size.h / (dy * 1.4), 4);
+  const fit = Math.min(size.w / (dx * 2), size.h / (dy * 2), 2);
   const k = Math.max(fit, MIN_FIT_ZOOM);
   const cx = (minX + maxX) / 2;
   const cy = (minY + maxY) / 2;
@@ -153,8 +165,7 @@ export function NetworkGraph({
     const sim = forceSimulation<SimNode>(simNodes)
       .force("link", forceLink<SimNode, SimLink>(simLinks)
         .id((d) => d.id)
-        .distance(60)
-        .strength(0.5))
+        .distance(60))
       .force("charge", forceManyBody().strength(-180))
       .force("center", forceCenter(size.w / 2, size.h / 2))
       .alphaDecay(SIM_DECAY)
@@ -440,13 +451,16 @@ export function NetworkGraph({
             const sy = p.y * transform.k + transform.y;
             const gap = RADIUS[n.kind] * transform.k + 8;
             return (
-              <span
+              <Badge
                 key={`label-${n.id}`}
-                className="absolute -translate-x-1/2 whitespace-nowrap text-xs leading-none text-muted-foreground/80"
+                variant={labelVariant(n.kind, n.status, n.inactive)}
+                fill="outline"
+                size="sm"
+                className="absolute -translate-x-1/2"
                 style={{ left: `${sx}px`, top: `${sy + gap}px` }}
               >
                 {n.label}
-              </span>
+              </Badge>
             );
           })}
         </div>
