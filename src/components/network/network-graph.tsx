@@ -34,13 +34,11 @@ import { NetworkEdge } from "./network-edge";
 type SimNode = SimulationNodeDatum & GraphNode;
 type SimLink = SimulationLinkDatum<SimNode> & { type: GraphLayer };
 
-export type HoverPos = { clientX: number; clientY: number };
-
 type Props = {
   graph: Graph;
   selectedId: string | null;
   highlightedIds: Set<string>;
-  onNodeHover: (node: GraphNode | null, pos: HoverPos | null) => void;
+  refitKey: string;
   onNodeClick: (node: GraphNode) => void;
 };
 
@@ -76,7 +74,7 @@ function fitTransform(
 }
 
 export function NetworkGraph({
-  graph, selectedId, highlightedIds, onNodeHover, onNodeClick,
+  graph, selectedId, highlightedIds, refitKey, onNodeClick,
 }: Props) {
   const svgRef = useRef<SVGSVGElement>(null);
   const gRef = useRef<SVGGElement>(null);
@@ -88,6 +86,9 @@ export function NetworkGraph({
   const zoomRef = useRef<ZoomBehavior<SVGSVGElement, unknown> | null>(null);
   const rafRef = useRef<number>(0);
   const dragInProgressRef = useRef(false);
+  const longPressTimerRef = useRef<number | null>(null);
+  const dragOffsetRef = useRef<{ x: number; y: number } | null>(null);
+  const lastDragPointRef = useRef<{ x: number; y: number } | null>(null);
   const userMovedRef = useRef(false);
   const [, setTickKey] = useState(0);
   const [size, setSize] = useState({ w: 800, h: 600 });
@@ -106,12 +107,16 @@ export function NetworkGraph({
   }, []);
 
   const simNodes = useMemo<SimNode[]>(() => {
-    return graph.nodes.map((n) => {
-      const prev = positionsRef.current.get(n.id);
-      return {
-        ...n,
-        ...(prev ? { x: prev.x, y: prev.y } : {}),
-      };
+    const initialAngle = Math.PI * (3 - Math.sqrt(5));
+    return graph.nodes.map((n, i) => {
+      let p = positionsRef.current.get(n.id);
+      if (!p) {
+        const radius = 10 * Math.sqrt(0.5 + i);
+        const angle = i * initialAngle;
+        p = { x: radius * Math.cos(angle), y: radius * Math.sin(angle) };
+        positionsRef.current.set(n.id, p);
+      }
+      return { ...n, x: p.x, y: p.y };
     });
   }, [graph]);
 
@@ -126,7 +131,7 @@ export function NetworkGraph({
 
   useEffect(() => {
     userMovedRef.current = false;
-  }, [graph, highlightedIds]);
+  }, [refitKey]);
 
   const refitRef = useRef<() => void>(() => {});
   refitRef.current = () => {
@@ -233,33 +238,61 @@ export function NetworkGraph({
     for (const n of simNodes) lookup.set(n.id, n);
 
     const dragBehavior = d3drag<SVGGElement, unknown>()
+      .container(() => gRef.current as SVGGElement)
+      .subject((event) => {
+        const target = event.sourceEvent.target as Element | null;
+        const elem = target?.closest("g[data-id]") as SVGGElement | null;
+        const id = elem?.dataset["id"];
+        return id ? lookup.get(id) ?? null : null;
+      })
       .on("start", function (event) {
-        const id = this.dataset["id"];
-        if (!id) return;
-        const d = lookup.get(id);
+        const d = event.subject as SimNode | null;
         if (!d) return;
-        dragInProgressRef.current = true;
-        userMovedRef.current = true;
-        if (!event.active) sim.alphaTarget(0.3).restart();
-        d.fx = d.x ?? 0;
-        d.fy = d.y ?? 0;
+        lastDragPointRef.current = { x: event.x, y: event.y };
+        longPressTimerRef.current = window.setTimeout(() => {
+          longPressTimerRef.current = null;
+          dragInProgressRef.current = true;
+          userMovedRef.current = true;
+          if (!event.active) sim.alphaTarget(0.05).restart();
+          const last = lastDragPointRef.current;
+          dragOffsetRef.current = last
+            ? { x: (d.x ?? 0) - last.x, y: (d.y ?? 0) - last.y }
+            : { x: 0, y: 0 };
+          d.fx = d.x ?? 0;
+          d.fy = d.y ?? 0;
+        }, 200);
       })
       .on("drag", function (event) {
-        const id = this.dataset["id"];
-        if (!id) return;
-        const d = lookup.get(id);
+        lastDragPointRef.current = { x: event.x, y: event.y };
+        if (!dragInProgressRef.current) return;
+        const d = event.subject as SimNode | null;
         if (!d) return;
-        d.fx = event.x;
-        d.fy = event.y;
+        const offset = dragOffsetRef.current ?? { x: 0, y: 0 };
+        d.fx = event.x + offset.x;
+        d.fy = event.y + offset.y;
       })
       .on("end", function (event) {
-        dragInProgressRef.current = false;
-        if (!event.active) sim.alphaTarget(0);
+        if (longPressTimerRef.current !== null) {
+          window.clearTimeout(longPressTimerRef.current);
+          longPressTimerRef.current = null;
+        }
+        if (dragInProgressRef.current) {
+          if (!event.active) {
+            sim.alphaTarget(0).alphaDecay(0.15);
+            sim.on("end.dragCooldown", () => {
+              sim.alphaDecay(SIM_DECAY);
+              sim.on("end.dragCooldown", null);
+            });
+          }
+          dragOffsetRef.current = null;
+          window.setTimeout(() => {
+            dragInProgressRef.current = false;
+          }, 0);
+        }
+        lastDragPointRef.current = null;
       });
 
-    select(gRef.current)
-      .selectAll<SVGGElement, unknown>("g[data-id]")
-      .call(dragBehavior);
+    select(gRef.current).call(dragBehavior);
   }, [simNodes]);
 
   const localPoint = useCallback(
@@ -274,17 +307,6 @@ export function NetworkGraph({
     },
     [],
   );
-
-  const onMove = useCallback((e: MouseEvent<SVGSVGElement>) => {
-    if (dragInProgressRef.current) return;
-    const local = localPoint(e);
-    if (!local || !quadtreeRef.current) return;
-    const found = quadtreeRef.current.find(local.x, local.y, HIT_RADIUS);
-    onNodeHover(
-      found ?? null,
-      found ? { clientX: e.clientX, clientY: e.clientY } : null,
-    );
-  }, [localPoint, onNodeHover]);
 
   const onClickSvg = useCallback((e: MouseEvent<SVGSVGElement>) => {
     if (dragInProgressRef.current) return;
@@ -309,10 +331,8 @@ export function NetworkGraph({
       e.preventDefault();
       const next = sorted[(currentIdx - 1 + sorted.length) % sorted.length]!;
       onNodeClick(next);
-    } else if (e.key === "Escape") {
-      onNodeHover(null, null);
     }
-  }, [graph, selectedId, onNodeClick, onNodeHover]);
+  }, [graph, selectedId, onNodeClick]);
 
   useEffect(() => {
     const id = requestAnimationFrame(() => refitRef.current());
@@ -353,6 +373,15 @@ export function NetworkGraph({
 
   const showLabels = transform.k >= LABEL_ZOOM_THRESHOLD;
 
+  const selectedKind = selectedId
+    ? graph.nodes.find((n) => n.id === selectedId)?.kind
+    : null;
+  const incidentColor = selectedKind === "ccn"
+    ? "var(--color-primary-500)"
+    : selectedKind === "crn"
+      ? "var(--color-success-500)"
+      : null;
+
   return (
     <div className="relative size-full">
       <svg
@@ -360,8 +389,6 @@ export function NetworkGraph({
         className="size-full text-muted-foreground outline-none"
         tabIndex={0}
         aria-label="Network graph"
-        onMouseMove={onMove}
-        onMouseLeave={() => onNodeHover(null, null)}
         onClick={onClickSvg}
         onKeyDown={onKeyDown}
       >
@@ -370,12 +397,17 @@ export function NetworkGraph({
             const a = positionsRef.current.get(e.source);
             const b = positionsRef.current.get(e.target);
             if (!a || !b) return null;
+            const isIncident = selectedId != null
+              && (e.source === selectedId || e.target === selectedId);
             return (
               <NetworkEdge
                 key={`${e.source}-${e.target}-${e.type}`}
                 x1={a.x} y1={a.y} x2={b.x} y2={b.y}
                 type={e.type}
                 faded={false}
+                {...(isIncident && incidentColor
+                  ? { highlightColor: incidentColor }
+                  : {})}
               />
             );
           })}
@@ -406,11 +438,11 @@ export function NetworkGraph({
             if (!p) return null;
             const sx = p.x * transform.k + transform.x;
             const sy = p.y * transform.k + transform.y;
-            const gap = RADIUS[n.kind] * transform.k + 4;
+            const gap = RADIUS[n.kind] * transform.k + 8;
             return (
               <span
                 key={`label-${n.id}`}
-                className="absolute -translate-x-1/2 whitespace-nowrap text-[10px] leading-none text-muted-foreground/80"
+                className="absolute -translate-x-1/2 whitespace-nowrap text-xs leading-none text-muted-foreground/80"
                 style={{ left: `${sx}px`, top: `${sy + gap}px` }}
               >
                 {n.label}

@@ -56,6 +56,13 @@ export const NetworkNode = memo(function NetworkNode({
           y={y - r}
           width={r * 2}
           height={r * 2}
+          fill="var(--color-background)"
+        />
+        <rect
+          x={x - r}
+          y={y - r}
+          width={r * 2}
+          height={r * 2}
           fill={color}
           fillOpacity={0.18}
           stroke={color}
@@ -82,7 +89,7 @@ export const NetworkNode = memo(function NetworkNode({
       opacity={opacity}
       role="img"
       aria-label={`${kind.toUpperCase()} ${status}`}
-      style={{ cursor: "grab" }}
+      style={{ cursor: "default" }}
     >
       {highlighted && (
         <circle
@@ -96,6 +103,7 @@ export const NetworkNode = memo(function NetworkNode({
           className="network-node-pulse"
         />
       )}
+      <circle cx={x} cy={y} r={r} fill="var(--color-background)" />
       <circle
         cx={x}
         cy={y}
@@ -103,17 +111,17 @@ export const NetworkNode = memo(function NetworkNode({
         fill={color}
         fillOpacity={0.18}
         stroke={color}
-        strokeWidth={1.25}
+        strokeWidth={0.75}
       />
       {kind === "ccn" && (
         <circle
           cx={x}
           cy={y}
-          r={r + 4}
+          r={r + 2}
           fill="none"
           stroke={color}
           strokeOpacity={0.3}
-          strokeWidth={1}
+          strokeWidth={0.75}
         />
       )}
       {selected && (

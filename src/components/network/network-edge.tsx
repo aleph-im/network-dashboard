@@ -10,6 +10,7 @@ type Props = {
   y2: number;
   type: GraphLayer;
   faded: boolean;
+  highlightColor?: string;
 };
 
 const STROKE: Record<GraphLayer, string> = {
@@ -27,21 +28,25 @@ const OPACITY: Record<GraphLayer, number> = {
 };
 
 const DASH: Partial<Record<GraphLayer, string>> = {
-  owner: "3 3",
-  reward: "1 4",
+  owner: "1.5 1",
+  reward: "0 0.4",
 };
 
 export const NetworkEdge = memo(function NetworkEdge({
-  x1, y1, x2, y2, type, faded,
+  x1, y1, x2, y2, type, faded, highlightColor,
 }: Props) {
-  const opacity = faded ? OPACITY[type] * 0.2 : OPACITY[type];
+  const dash = DASH[type];
+  const stroke = highlightColor ?? STROKE[type];
+  const opacity = highlightColor
+    ? 0.9
+    : faded ? OPACITY[type] * 0.2 : OPACITY[type];
   return (
     <line
       x1={x1} y1={y1} x2={x2} y2={y2}
-      stroke={STROKE[type]}
+      stroke={stroke}
       strokeOpacity={opacity}
-      strokeWidth={1}
-      {...(DASH[type] ? { strokeDasharray: DASH[type] } : {})}
+      strokeWidth={dash ? 0.5 : 1}
+      {...(dash ? { strokeDasharray: dash, strokeLinecap: "round" } : {})}
     />
   );
 });

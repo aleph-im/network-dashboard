@@ -43,7 +43,8 @@ export function NetworkLegend() {
             <line
               x1="2" y1="7" x2="20" y2="7"
               stroke="var(--network-edge-owner)" strokeOpacity={0.5}
-              strokeDasharray="3 3"
+              strokeWidth={0.5}
+              strokeDasharray="1.5 1" strokeLinecap="round"
             />
           </svg>
           Same owner
@@ -62,7 +63,8 @@ export function NetworkLegend() {
             <line
               x1="2" y1="7" x2="20" y2="7"
               stroke="var(--network-edge-reward)" strokeOpacity={0.4}
-              strokeDasharray="1 4"
+              strokeWidth={0.5}
+              strokeDasharray="0 0.4" strokeLinecap="round"
             />
           </svg>
           Reward cluster

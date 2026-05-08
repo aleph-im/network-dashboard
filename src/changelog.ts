@@ -11,9 +11,27 @@ export type VersionEntry = {
   changes: ChangeEntry[];
 };
 
-export const CURRENT_VERSION = "0.10.0";
+export const CURRENT_VERSION = "0.11.0";
 
 export const CHANGELOG: VersionEntry[] = [
+  {
+    version: "0.11.0",
+    date: "2026-05-08",
+    changes: [
+      {
+        type: "feature",
+        text: "New /network page renders the Aleph network as a force-directed graph — CCNs and their child CRNs, with optional same-owner, stake, and reward-cluster overlays. Long-press a node to drag it (the node stays in your hand instead of teleporting to the cursor); short-click to open its detail panel. Selected node's connecting edges are recolored to its kind color (CCNs purple, CRNs green) so neighbors are easy to spot. Address deep-link via ?address=0x… highlights every node owned by that wallet. Focus on a node to see its ego subgraph; layer toggles, focus, search, and selection all persist via URL params so any view is shareable.",
+      },
+      {
+        type: "ui",
+        text: "Network map fills the entire content area edge-to-edge — the page header, layer toggles, search, and focus banner overlay on top of the graph instead of stacking above it. Edges no longer bleed through nodes (each node renders an opaque background underlay before its translucent fill). Dotted/dashed edges are thinner with rounded caps so reward-cluster links read as round dots rather than tiny rectangles. CCN outer ring tightened so it sits closer to the node circle. Cursor stays as the default arrow everywhere — no hand variants on hover or drag.",
+      },
+      {
+        type: "fix",
+        text: "Background data refetches no longer reset the viewport — the auto-fit only fires when you change layers, focus, or address (the URL-driven things), not when polling lands new data. Drag now works on first map load, every time: drag attachment is delegated to the parent group via d3-drag's container + subject pattern, so it doesn't depend on whether individual node elements were in the DOM at the moment the effect ran. Post-drag settling cools down to rest in ~0.4s instead of 2–3s of wobble.",
+      },
+    ],
+  },
   {
     version: "0.10.0",
     date: "2026-05-06",
