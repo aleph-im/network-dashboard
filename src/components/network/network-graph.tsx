@@ -433,6 +433,21 @@ export function NetworkGraph({
     () => nodeScaleForZoom(transform.k),
     [transform.k],
   );
+  const nodeKindMap = useMemo(() => {
+    const m = new Map<string, GraphNode["kind"]>();
+    for (const n of graph.nodes) m.set(n.id, n.kind);
+    return m;
+  }, [graph]);
+  const relevantIds = useMemo<Set<string> | null>(() => {
+    if (!selectedId) return null;
+    const set = new Set<string>([selectedId]);
+    for (const e of graph.edges) {
+      if (e.source === selectedId) set.add(e.target);
+      else if (e.target === selectedId) set.add(e.source);
+    }
+    return set;
+  }, [selectedId, graph]);
+  const arrowSize = 10 * nodeScale;
 
   const selectedKind = selectedId
     ? graph.nodes.find((n) => n.id === selectedId)?.kind
@@ -453,6 +468,24 @@ export function NetworkGraph({
         onClick={onClickSvg}
         onKeyDown={onKeyDown}
       >
+        <defs>
+          <marker
+            id="arrow-end"
+            viewBox="0 0 10 10"
+            refX="10"
+            refY="5"
+            markerUnits="userSpaceOnUse"
+            markerWidth={arrowSize}
+            markerHeight={arrowSize}
+            orient="auto"
+          >
+            <path
+              d="M 0 0 L 10 5 L 0 10 z"
+              fill="context-stroke"
+              fillOpacity="0.7"
+            />
+          </marker>
+        </defs>
         <g ref={gRef}>
           {graph.edges.map((e) => {
             const a = positionsRef.current.get(e.source);
@@ -460,12 +493,28 @@ export function NetworkGraph({
             if (!a || !b) return null;
             const isIncident = selectedId != null
               && (e.source === selectedId || e.target === selectedId);
+            const targetIsCrn = nodeKindMap.get(e.target) === "crn";
+            const withArrow = e.type === "structural" && targetIsCrn;
+            let x2 = b.x;
+            let y2 = b.y;
+            if (withArrow) {
+              const dx = b.x - a.x;
+              const dy = b.y - a.y;
+              const L = Math.sqrt(dx * dx + dy * dy);
+              if (L > 0) {
+                const backoff = RADIUS.crn * nodeScale + 1.5;
+                const t = Math.min(1, backoff / L);
+                x2 = b.x - dx * t;
+                y2 = b.y - dy * t;
+              }
+            }
             return (
               <NetworkEdge
                 key={`${e.source}-${e.target}-${e.type}`}
-                x1={a.x} y1={a.y} x2={b.x} y2={b.y}
+                x1={a.x} y1={a.y} x2={x2} y2={y2}
                 type={e.type}
-                faded={false}
+                faded={selectedId != null && !isIncident}
+                withArrow={withArrow}
                 {...(isIncident && incidentColor
                   ? { highlightColor: incidentColor }
                   : {})}
@@ -485,6 +534,7 @@ export function NetworkGraph({
                 selected={n.id === selectedId}
                 highlighted={highlightedIds.has(n.id)}
                 inactive={n.inactive}
+                dimmed={relevantIds != null && !relevantIds.has(n.id)}
                 sizeScale={nodeScale}
               />
             );
@@ -501,6 +551,8 @@ export function NetworkGraph({
             const sx = p.x * transform.k + transform.x;
             const sy = p.y * transform.k + transform.y;
             const gap = RADIUS[n.kind] * nodeScale * transform.k + 8;
+            const labelDimmed =
+              relevantIds != null && !relevantIds.has(n.id);
             return (
               <Badge
                 key={`label-${n.id}`}
@@ -508,7 +560,11 @@ export function NetworkGraph({
                 fill="outline"
                 size="sm"
                 className="absolute -translate-x-1/2"
-                style={{ left: `${sx}px`, top: `${sy + gap}px` }}
+                style={{
+                  left: `${sx}px`,
+                  top: `${sy + gap}px`,
+                  opacity: labelDimmed ? 0.18 : 1,
+                }}
               >
                 {n.label}
               </Badge>

@@ -33,7 +33,7 @@ export function NetworkLegend() {
           <svg width="22" height="14" viewBox="0 0 22 14">
             <line
               x1="2" y1="7" x2="20" y2="7"
-              stroke="currentColor" strokeOpacity={0.4}
+              stroke="currentColor" strokeOpacity={0.6}
             />
           </svg>
           Structural link
@@ -42,7 +42,7 @@ export function NetworkLegend() {
           <svg width="22" height="14" viewBox="0 0 22 14">
             <line
               x1="2" y1="7" x2="20" y2="7"
-              stroke="var(--network-edge-owner)" strokeOpacity={0.5}
+              stroke="currentColor" strokeOpacity={0.2}
               strokeWidth={0.5}
               strokeDasharray="1.5 1" strokeLinecap="round"
             />

@@ -11,9 +11,31 @@ export type VersionEntry = {
   changes: ChangeEntry[];
 };
 
-export const CURRENT_VERSION = "0.11.0";
+export const CURRENT_VERSION = "0.11.1";
 
 export const CHANGELOG: VersionEntry[] = [
+  {
+    version: "0.11.1",
+    date: "2026-05-09",
+    changes: [
+      {
+        type: "ui",
+        text: "Network graph visibility pass: nodes are bigger and zoom-adaptive — they boost up to ~1.9× when you're zoomed out so dots stay readable on the dark background, and ease back down when you zoom into dense clusters. Structural edges are brighter (60% opacity) and the same-owner overlay now matches their neutral gray instead of fighting them with a saturated blue, so the dashed pattern reads as annotation rather than competing topology.",
+      },
+      {
+        type: "ui",
+        text: "Structural CCN→CRN edges now end in an arrowhead so direction reads at a glance. The arrow inherits whatever color the line has — neutral by default, the kind color when an incident edge is selected — and lands just outside the CRN border instead of being hidden under the node body.",
+      },
+      {
+        type: "feature",
+        text: "Selecting a node now spotlights its 1-hop neighborhood: the selected node and its direct neighbors stay at full strength, and everything else (nodes, edges, and labels) dims to 18% opacity so the focused subgraph reads as a clean spotlight while peripheral context stays visible.",
+      },
+      {
+        type: "fix",
+        text: "Reset-view (and the first map load) no longer expands outward from a tight spiral over several seconds before re-centering. The simulation now pre-converges synchronously before the first paint, so the camera fits the spread layout in one transition. The settle indicator is correspondingly tighter (500ms instead of 2.2s).",
+      },
+    ],
+  },
   {
     version: "0.11.0",
     date: "2026-05-08",

@@ -12,6 +12,7 @@ type Props = {
   selected: boolean;
   highlighted: boolean;
   inactive: boolean;
+  dimmed: boolean;
   sizeScale: number;
 };
 
@@ -38,11 +39,11 @@ function nodeColor(kind: GraphNodeKind, status: string, inactive: boolean): stri
 }
 
 export const NetworkNode = memo(function NetworkNode({
-  id, x, y, kind, status, selected, highlighted, inactive, sizeScale,
+  id, x, y, kind, status, selected, highlighted, inactive, dimmed, sizeScale,
 }: Props) {
   const r = RADIUS[kind] * sizeScale;
   const color = nodeColor(kind, status, inactive);
-  const opacity = inactive ? 0.6 : 1;
+  const opacity = dimmed ? 0.18 : inactive ? 0.6 : 1;
 
   if (kind === "reward") {
     return (
