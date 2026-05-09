@@ -25,8 +25,7 @@ export function NetworkLayerToggles() {
     if (next.size === 0) next.add("structural");
 
     const params = new URLSearchParams(searchParams.toString());
-    if (next.size === 1 && next.has("structural")) params.delete("layers");
-    else params.set("layers", [...next].join(","));
+    params.set("layers", [...next].join(","));
 
     router.replace(`/network?${params.toString()}`, { scroll: false });
   }, [active, router, searchParams]);

@@ -117,6 +117,7 @@ export function NetworkGraph({
   const [, setTickKey] = useState(0);
   const [size, setSize] = useState({ w: 800, h: 600 });
   const [transform, setTransform] = useState({ x: 0, y: 0, k: 1 });
+  const [ready, setReady] = useState(false);
 
   useEffect(() => {
     if (!svgRef.current) return;
@@ -199,11 +200,15 @@ export function NetworkGraph({
       .matches;
     const sel = select(svgRef.current);
     const transform = zoomIdentity.translate(t.x, t.y).scale(t.k);
-    if (reduced) {
+    // First fit on a fresh mount: skip the 450ms zoom-out transition. The
+    // graph is still hidden (ready=false) so animating from identity to
+    // the fit would just delay the reveal — apply instantly, then fade in.
+    if (reduced || !ready) {
       sel.call(zoomRef.current.transform, transform);
     } else {
       sel.transition().duration(450).call(zoomRef.current.transform, transform);
     }
+    if (!ready) setReady(true);
   };
 
   useEffect(() => {
@@ -456,7 +461,9 @@ export function NetworkGraph({
     ? "var(--color-primary-500)"
     : selectedKind === "crn"
       ? "var(--color-success-500)"
-      : null;
+      : selectedKind === "staker"
+        ? "var(--color-warning-500)"
+        : null;
 
   return (
     <div className="relative size-full">
@@ -486,7 +493,13 @@ export function NetworkGraph({
             />
           </marker>
         </defs>
-        <g ref={gRef}>
+        <g
+          ref={gRef}
+          style={{
+            opacity: ready ? 1 : 0,
+            transition: "opacity 200ms ease-out",
+          }}
+        >
           {graph.edges.map((e) => {
             const a = positionsRef.current.get(e.source);
             const b = positionsRef.current.get(e.target);
@@ -543,7 +556,13 @@ export function NetworkGraph({
       </svg>
 
       {showLabels && (
-        <div className="pointer-events-none absolute inset-0 overflow-hidden">
+        <div
+          className="pointer-events-none absolute inset-0 overflow-hidden"
+          style={{
+            opacity: ready ? 1 : 0,
+            transition: "opacity 200ms ease-out",
+          }}
+        >
           {graph.nodes.map((n) => {
             if (n.kind === "staker" || n.kind === "reward") return null;
             const p = positionsRef.current.get(n.id);
