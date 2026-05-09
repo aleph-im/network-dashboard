@@ -3,7 +3,7 @@
 import { Suspense, useCallback, useEffect, useMemo, useState } from "react";
 import Link from "next/link";
 import { useRouter, useSearchParams } from "next/navigation";
-import { ArrowsClockwise, X } from "@phosphor-icons/react";
+import { ArrowsClockwise, CaretLeft, X } from "@phosphor-icons/react";
 import { Button } from "@aleph-front/ds/button";
 import { Spinner } from "@aleph-front/ds/ui/spinner";
 import type { GraphNode } from "@/lib/network-graph-model";
@@ -160,14 +160,24 @@ function NetworkContent() {
             Reset view
           </Button>
           {focusNode && (
-            <span className="inline-flex items-center gap-1.5 rounded-full border border-primary-500/30 bg-primary-600/10 px-3 py-1 text-xs">
+            <span className="inline-flex items-center gap-1 rounded-full border border-primary-500/30 bg-primary-600/10 py-1 pl-1.5 pr-2 text-xs">
+              <button
+                type="button"
+                onClick={() => router.back()}
+                aria-label="Step back one focus level"
+                title="Step back one focus level"
+                className="inline-flex size-4 items-center justify-center rounded-full text-muted-foreground hover:text-foreground"
+              >
+                <CaretLeft weight="bold" className="size-3" />
+              </button>
               <span className="text-muted-foreground">Focused:</span>
               <span className="font-medium">{focusNode.label}</span>
               <button
                 type="button"
                 onClick={onClearFocus}
                 aria-label="Clear focus"
-                className="-mr-1 ml-0.5 inline-flex size-4 items-center justify-center rounded-full text-muted-foreground hover:text-foreground"
+                title="Show all nodes"
+                className="ml-0.5 inline-flex size-4 items-center justify-center rounded-full text-muted-foreground hover:text-foreground"
               >
                 <X weight="bold" className="size-3" />
               </button>
