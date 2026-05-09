@@ -3,6 +3,7 @@
 import {
   useCallback,
   useEffect,
+  useLayoutEffect,
   useMemo,
   useRef,
   useState,
@@ -187,6 +188,28 @@ export function NetworkGraph({
     [graph],
   );
 
+  // Synchronous initial fit on a fresh mount — runs before paint so the
+  // first frame already has the correct SVG transform applied. Avoids the
+  // visible "load top-left → shift to center" flash when the live sim's
+  // forceCenter would otherwise run on the first tick after paint.
+  useLayoutEffect(() => {
+    if (!justWarmedUpRef.current) return;
+    if (!gRef.current || !svgRef.current || simNodes.length === 0) return;
+    const r = svgRef.current.getBoundingClientRect();
+    const measured = r.width > 0 && r.height > 0
+      ? { w: r.width, h: r.height }
+      : size;
+    const t = fitTransform(simNodes, highlightedIds, measured);
+    gRef.current.setAttribute(
+      "transform",
+      `translate(${t.x},${t.y}) scale(${t.k})`,
+    );
+    setTransform({ x: t.x, y: t.y, k: t.k });
+    setReady(true);
+    // size measured imperatively; deps intentionally limited
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [simNodes]);
+
   useEffect(() => {
     userMovedRef.current = false;
   }, [refitKey]);
@@ -217,9 +240,16 @@ export function NetworkGraph({
         .id((d) => d.id)
         .distance(60))
       .force("charge", forceManyBody().strength(-180))
-      .force("center", forceCenter(size.w / 2, size.h / 2))
       .alpha(justWarmedUpRef.current ? 0 : 1)
-      .alphaDecay(SIM_DECAY)
+      .alphaDecay(SIM_DECAY);
+    // Skip the center force on the warmed-up first run — forceCenter is
+    // alpha-independent so it would shift world positions on the first tick
+    // away from the warmup centroid (around origin), invalidating the fit
+    // transform that was just applied imperatively.
+    if (!justWarmedUpRef.current) {
+      sim.force("center", forceCenter(size.w / 2, size.h / 2));
+    }
+    sim
       .on("tick", () => {
         for (const n of simNodes) {
           if (n.x != null && n.y != null) {
@@ -253,7 +283,11 @@ export function NetworkGraph({
 
   useEffect(() => {
     if (!simRef.current) return;
-    simRef.current.force("center", forceCenter(size.w / 2, size.h / 2));
+    // Only update the center force if it was set when the sim was created.
+    // The warmed-up sim deliberately omits it (see live-sim useEffect).
+    if (simRef.current.force("center")) {
+      simRef.current.force("center", forceCenter(size.w / 2, size.h / 2));
+    }
   }, [size.w, size.h]);
 
   useEffect(() => {
@@ -286,11 +320,25 @@ export function NetworkGraph({
         });
       });
     zoomRef.current = z;
-    select(svgRef.current).call(z);
+    const sel = select(svgRef.current);
+    sel.call(z);
+    // Sync d3-zoom's internal state with any transform that was already
+    // applied imperatively (the synchronous initial-fit useLayoutEffect runs
+    // before this useEffect). Without this sync, the next pan/zoom event
+    // would compute deltas relative to identity and visually jump.
+    if (transform.k !== 1 || transform.x !== 0 || transform.y !== 0) {
+      sel.call(
+        z.transform,
+        zoomIdentity.translate(transform.x, transform.y).scale(transform.k),
+      );
+    }
     const svg = svgRef.current;
     return () => {
       select(svg).on(".zoom", null);
     };
+    // We intentionally only run this once on mount; transform is captured as
+    // it stands at that moment (post-useLayoutEffect).
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
 
   useEffect(() => {
@@ -498,6 +546,7 @@ export function NetworkGraph({
           style={{
             opacity: ready ? 1 : 0,
             transition: "opacity 200ms ease-out",
+            visibility: ready ? "visible" : "hidden",
           }}
         >
           {graph.edges.map((e) => {
