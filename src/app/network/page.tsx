@@ -15,7 +15,7 @@ import { NetworkDetailPanel } from "@/components/network/network-detail-panel";
 import { NetworkFocusBanner } from "@/components/network/network-focus-banner";
 import { NetworkLegend } from "@/components/network/network-legend";
 
-const SETTLE_MS = 2200;
+const SETTLE_MS = 500;
 
 function NetworkContent() {
   const router = useRouter();

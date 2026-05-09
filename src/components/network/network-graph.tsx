@@ -59,6 +59,17 @@ const HIT_RADIUS = 12;
 const MIN_FIT_ZOOM = 0.3;
 const LABEL_ZOOM_THRESHOLD = 1.5;
 
+// Adaptive node sizing: at low zoom, scale nodes up so they read on screen;
+// at high zoom, ease them down so dense clusters don't get crowded. Quantized
+// to 0.1 steps so micro-zoom doesn't thrash 500+ memoized node renders.
+function nodeScaleForZoom(k: number): number {
+  let raw: number;
+  if (k < 0.6) raw = 1 + (0.6 - k) * 1.5;
+  else if (k > 1.5) raw = Math.max(0.7, 1 - (k - 1.5) * 0.3);
+  else raw = 1;
+  return Math.round(raw * 10) / 10;
+}
+
 function fitTransform(
   nodes: SimNode[],
   ids: Set<string> | null,
@@ -102,6 +113,7 @@ export function NetworkGraph({
   const dragOffsetRef = useRef<{ x: number; y: number } | null>(null);
   const lastDragPointRef = useRef<{ x: number; y: number } | null>(null);
   const userMovedRef = useRef(false);
+  const justWarmedUpRef = useRef(false);
   const [, setTickKey] = useState(0);
   const [size, setSize] = useState({ w: 800, h: 600 });
   const [transform, setTransform] = useState({ x: 0, y: 0, k: 1 });
@@ -120,7 +132,8 @@ export function NetworkGraph({
 
   const simNodes = useMemo<SimNode[]>(() => {
     const initialAngle = Math.PI * (3 - Math.sqrt(5));
-    return graph.nodes.map((n, i) => {
+    const wasEmpty = positionsRef.current.size === 0;
+    const seeded: SimNode[] = graph.nodes.map((n, i) => {
       let p = positionsRef.current.get(n.id);
       if (!p) {
         const radius = 10 * Math.sqrt(0.5 + i);
@@ -130,6 +143,38 @@ export function NetworkGraph({
       }
       return { ...n, x: p.x, y: p.y };
     });
+
+    // Pre-warm: on a fresh mount (first load or reset-view) the spiral seed
+    // is tight, so the live simulation would visibly expand it over many
+    // ticks before the camera re-fits — felt like a multi-second swoop.
+    // Run a throwaway simulation synchronously here so positions are already
+    // converged on the first paint; the camera then fits the final layout in
+    // one transition, instead of fitting the spiral and re-fitting on end.
+    if (wasEmpty && seeded.length > 0) {
+      const warmupLinks: SimLink[] = graph.edges.map((e) => ({
+        source: e.source,
+        target: e.target,
+        type: e.type,
+      }));
+      const warmup = forceSimulation<SimNode>(seeded)
+        .force("link", forceLink<SimNode, SimLink>(warmupLinks)
+          .id((d) => d.id)
+          .distance(60))
+        .force("charge", forceManyBody().strength(-180))
+        .alphaDecay(SIM_DECAY)
+        .stop();
+      warmup.tick(300);
+      for (const n of seeded) {
+        if (n.x != null && n.y != null) {
+          positionsRef.current.set(n.id, { x: n.x, y: n.y });
+        }
+      }
+      justWarmedUpRef.current = true;
+    } else {
+      justWarmedUpRef.current = false;
+    }
+
+    return seeded;
   }, [graph]);
 
   const simLinks = useMemo<SimLink[]>(
@@ -168,6 +213,7 @@ export function NetworkGraph({
         .distance(60))
       .force("charge", forceManyBody().strength(-180))
       .force("center", forceCenter(size.w / 2, size.h / 2))
+      .alpha(justWarmedUpRef.current ? 0 : 1)
       .alphaDecay(SIM_DECAY)
       .on("tick", () => {
         for (const n of simNodes) {
@@ -383,6 +429,10 @@ export function NetworkGraph({
   }, [selectedId]);
 
   const showLabels = transform.k >= LABEL_ZOOM_THRESHOLD;
+  const nodeScale = useMemo(
+    () => nodeScaleForZoom(transform.k),
+    [transform.k],
+  );
 
   const selectedKind = selectedId
     ? graph.nodes.find((n) => n.id === selectedId)?.kind
@@ -435,6 +485,7 @@ export function NetworkGraph({
                 selected={n.id === selectedId}
                 highlighted={highlightedIds.has(n.id)}
                 inactive={n.inactive}
+                sizeScale={nodeScale}
               />
             );
           })}
@@ -449,7 +500,7 @@ export function NetworkGraph({
             if (!p) return null;
             const sx = p.x * transform.k + transform.x;
             const sy = p.y * transform.k + transform.y;
-            const gap = RADIUS[n.kind] * transform.k + 8;
+            const gap = RADIUS[n.kind] * nodeScale * transform.k + 8;
             return (
               <Badge
                 key={`label-${n.id}`}

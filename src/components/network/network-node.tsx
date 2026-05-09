@@ -12,13 +12,14 @@ type Props = {
   selected: boolean;
   highlighted: boolean;
   inactive: boolean;
+  sizeScale: number;
 };
 
 export const RADIUS: Record<GraphNodeKind, number> = {
-  ccn: 13,
-  crn: 8,
-  staker: 3,
-  reward: 4,
+  ccn: 16,
+  crn: 11,
+  staker: 5,
+  reward: 6,
 };
 
 const DEAD_STATUSES = new Set(["removed", "unlinked", "decommissioned"]);
@@ -37,9 +38,9 @@ function nodeColor(kind: GraphNodeKind, status: string, inactive: boolean): stri
 }
 
 export const NetworkNode = memo(function NetworkNode({
-  id, x, y, kind, status, selected, highlighted, inactive,
+  id, x, y, kind, status, selected, highlighted, inactive, sizeScale,
 }: Props) {
-  const r = RADIUS[kind];
+  const r = RADIUS[kind] * sizeScale;
   const color = nodeColor(kind, status, inactive);
   const opacity = inactive ? 0.6 : 1;
 
