@@ -39,7 +39,7 @@ export const NetworkEdge = memo(function NetworkEdge({
   const dash = DASH[type];
   const stroke = highlightColor ?? STROKE[type];
   const opacity = highlightColor
-    ? 0.9
+    ? type === "staker" ? 1 : 0.9
     : faded ? OPACITY[type] * 0.2 : OPACITY[type];
   return (
     <line
