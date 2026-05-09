@@ -24,7 +24,19 @@ export const CHANGELOG: VersionEntry[] = [
       },
       {
         type: "ui",
-        text: "Focus on a node from inside the panel now keeps the panel open instead of closing it — clicking a CRN's parent-CCN link rebinds the panel to the parent in one motion.",
+        text: "Focus on a node from inside the panel now keeps the panel open instead of closing it — clicking a CRN's parent-CCN link rebinds the panel to the parent in one motion. A compact 'Focused: <name> ×' pill inside the panel (or in the toolbar when the panel is closed) shows where you are; the leading caret steps back one focus layer, the × clears focus entirely.",
+      },
+      {
+        type: "ui",
+        text: "Stakers layer is now on by default so the stake graph reads on first paint without hunting for the toggle.",
+      },
+      {
+        type: "fix",
+        text: "Initial map load and reset-view no longer flash anchored to the left before sliding to the center — the SVG viewBox now centers the world origin natively, and the simulation no longer relies on an alpha-independent center force that shoved nodes on the first tick.",
+      },
+      {
+        type: "infra",
+        text: "Network entry temporarily hidden from the sidebar pending review; the page is still reachable directly at /network.",
       },
     ],
   },
