@@ -182,7 +182,7 @@ function NetworkContent() {
 
       {/* Detail panel — floating card */}
       {selectedNode && (
-        <aside className="pointer-events-auto absolute right-4 top-32 z-20 hidden w-[280px] max-h-[calc(100%-9rem)] overflow-hidden rounded-xl border border-foreground/[0.06] bg-muted/40 dark:bg-surface shadow-md md:block">
+        <aside className="pointer-events-auto absolute right-6 top-32 z-20 hidden w-[280px] max-h-[calc(100%-9rem)] overflow-hidden rounded-xl border border-foreground/[0.06] bg-muted/40 dark:bg-surface shadow-md md:block">
           <NetworkDetailPanel
             node={selectedNode}
             nodeState={nodeState}
