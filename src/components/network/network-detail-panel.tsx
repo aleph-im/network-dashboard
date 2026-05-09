@@ -60,7 +60,7 @@ export function NetworkDetailPanel({
     : null;
 
   return (
-    <section className="flex h-full flex-col">
+    <section className="flex max-h-full flex-col">
       <header className="flex items-center justify-between gap-2 border-b border-foreground/[0.06] px-4 py-3">
         <div className="flex min-w-0 items-center gap-2">
           <StatusDot status={dotStatusFor(node)} />

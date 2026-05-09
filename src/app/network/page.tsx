@@ -3,7 +3,7 @@
 import { Suspense, useCallback, useEffect, useMemo, useState } from "react";
 import Link from "next/link";
 import { useRouter, useSearchParams } from "next/navigation";
-import { ArrowsClockwise } from "@phosphor-icons/react";
+import { ArrowsClockwise, X } from "@phosphor-icons/react";
 import { Button } from "@aleph-front/ds/button";
 import { Spinner } from "@aleph-front/ds/ui/spinner";
 import type { GraphNode } from "@/lib/network-graph-model";
@@ -12,7 +12,6 @@ import { NetworkGraph } from "@/components/network/network-graph";
 import { NetworkLayerToggles } from "@/components/network/network-layer-toggles";
 import { NetworkSearch } from "@/components/network/network-search";
 import { NetworkDetailPanel } from "@/components/network/network-detail-panel";
-import { NetworkFocusBanner } from "@/components/network/network-focus-banner";
 import { NetworkLegend } from "@/components/network/network-legend";
 
 const SETTLE_MS = 500;
@@ -83,9 +82,12 @@ function NetworkContent() {
     () => fullGraph.nodes.find((n) => n.id === focusId) ?? null,
     [fullGraph, focusId],
   );
-  const focusConnections = focusNode
-    ? Math.max(0, visibleGraph.nodes.length - 1)
-    : 0;
+
+  const onClearFocus = useCallback(() => {
+    const params = new URLSearchParams(searchParams.toString());
+    params.delete("focus");
+    router.replace(`/network?${params.toString()}`, { scroll: false });
+  }, [router, searchParams]);
 
   return (
     <div className="relative h-full md:-m-6 md:h-[calc(100%+3rem)] md:overflow-hidden">
@@ -157,6 +159,20 @@ function NetworkContent() {
           >
             Reset view
           </Button>
+          {focusNode && (
+            <span className="inline-flex items-center gap-1.5 rounded-full border border-primary-500/30 bg-primary-600/10 px-3 py-1 text-xs">
+              <span className="text-muted-foreground">Focused:</span>
+              <span className="font-medium">{focusNode.label}</span>
+              <button
+                type="button"
+                onClick={onClearFocus}
+                aria-label="Clear focus"
+                className="-mr-1 ml-0.5 inline-flex size-4 items-center justify-center rounded-full text-muted-foreground hover:text-foreground"
+              >
+                <X weight="bold" className="size-3" />
+              </button>
+            </span>
+          )}
           {(isFetching || isSettling) && (
             <span
               className="flex items-center gap-1.5 text-xs text-muted-foreground"
@@ -168,17 +184,11 @@ function NetworkContent() {
           )}
           <NetworkSearch />
         </div>
-        <div className="pointer-events-auto">
-          <NetworkFocusBanner
-            focusNode={focusNode}
-            connectionCount={focusConnections}
-          />
-        </div>
       </div>
 
       {/* Detail panel — floating card */}
       {selectedNode && (
-        <aside className="pointer-events-auto absolute right-4 top-20 bottom-4 z-20 hidden w-[280px] overflow-hidden rounded-xl border border-foreground/[0.06] bg-background shadow-md md:block">
+        <aside className="pointer-events-auto absolute right-4 top-32 z-20 hidden w-[280px] max-h-[calc(100%-9rem)] overflow-hidden rounded-xl border border-foreground/[0.06] bg-muted/40 dark:bg-surface shadow-md md:block">
           <NetworkDetailPanel
             node={selectedNode}
             nodeState={nodeState}
