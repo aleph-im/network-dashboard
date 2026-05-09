@@ -26,6 +26,7 @@ function NetworkContent() {
     focusId,
     isLoading,
     isFetching,
+    nodeState,
   } = useNetworkGraph();
   const [resetKey, setResetKey] = useState(0);
   const [isSettling, setIsSettling] = useState(false);
@@ -69,7 +70,7 @@ function NetworkContent() {
   const onFocus = useCallback((id: string) => {
     const params = new URLSearchParams(searchParams.toString());
     params.set("focus", id);
-    params.delete("selected");
+    params.set("selected", id);
     router.push(`/network?${params.toString()}`, { scroll: false });
   }, [router, searchParams]);
 
@@ -175,11 +176,13 @@ function NetworkContent() {
         </div>
       </div>
 
-      {/* Detail panel overlay */}
+      {/* Detail panel — floating card */}
       {selectedNode && (
-        <aside className="absolute right-0 top-0 bottom-0 z-20 hidden w-[400px] overflow-y-auto bg-background md:block">
+        <aside className="pointer-events-auto absolute right-4 top-20 bottom-4 z-20 hidden w-[280px] overflow-hidden rounded-xl border border-foreground/[0.06] bg-background shadow-md md:block">
           <NetworkDetailPanel
             node={selectedNode}
+            nodeState={nodeState}
+            visibleGraph={visibleGraph}
             onClose={onClosePanel}
             onFocus={onFocus}
           />
