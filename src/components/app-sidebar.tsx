@@ -37,7 +37,6 @@ const NAV_SECTIONS: NavSection[] = [
     items: [
       { label: "Nodes", href: "/nodes", icon: "server" },
       { label: "VMs", href: "/vms", icon: "cpu" },
-      { label: "Network", href: "/network", icon: "network" },
       { label: "Credits", href: "/credits", icon: "coins" },
     ],
   },
