@@ -11,10 +11,11 @@ import {
   type MouseEvent,
 } from "react";
 import {
-  forceCenter,
   forceLink,
   forceManyBody,
   forceSimulation,
+  forceX,
+  forceY,
   type Simulation,
   type SimulationLinkDatum,
   type SimulationNodeDatum,
@@ -92,9 +93,13 @@ function fitTransform(
   const dy = maxY - minY || 1;
   const fit = Math.min(size.w / (dx * 2), size.h / (dy * 2), 2);
   const k = Math.max(fit, MIN_FIT_ZOOM);
+  // World coords are centered around (0, 0) and the SVG viewBox is symmetric
+  // ([-w/2, -h/2, w, h]) so screen-center is user-coord (0, 0). The transform
+  // just needs to put the bbox center at user-coord origin: translate by
+  // -bboxCenter * k. preserveAspectRatio handles the rest.
   const cx = (minX + maxX) / 2;
   const cy = (minY + maxY) / 2;
-  return { x: size.w / 2 - cx * k, y: size.h / 2 - cy * k, k };
+  return { x: -cx * k, y: -cy * k, k };
 }
 
 export function NetworkGraph({
@@ -118,7 +123,17 @@ export function NetworkGraph({
   const [, setTickKey] = useState(0);
   const [size, setSize] = useState({ w: 800, h: 600 });
   const [transform, setTransform] = useState({ x: 0, y: 0, k: 1 });
-  const [ready, setReady] = useState(false);
+
+  // Synchronous initial measurement before paint, so the first render uses
+  // real container dimensions and not the placeholder useState default.
+  // ResizeObserver below handles subsequent size changes.
+  useLayoutEffect(() => {
+    if (!svgRef.current) return;
+    const r = svgRef.current.getBoundingClientRect();
+    if (r.width > 0 && r.height > 0) {
+      setSize({ w: r.width, h: r.height });
+    }
+  }, []);
 
   useEffect(() => {
     if (!svgRef.current) return;
@@ -188,28 +203,6 @@ export function NetworkGraph({
     [graph],
   );
 
-  // Synchronous initial fit on a fresh mount — runs before paint so the
-  // first frame already has the correct SVG transform applied. Avoids the
-  // visible "load top-left → shift to center" flash when the live sim's
-  // forceCenter would otherwise run on the first tick after paint.
-  useLayoutEffect(() => {
-    if (!justWarmedUpRef.current) return;
-    if (!gRef.current || !svgRef.current || simNodes.length === 0) return;
-    const r = svgRef.current.getBoundingClientRect();
-    const measured = r.width > 0 && r.height > 0
-      ? { w: r.width, h: r.height }
-      : size;
-    const t = fitTransform(simNodes, highlightedIds, measured);
-    gRef.current.setAttribute(
-      "transform",
-      `translate(${t.x},${t.y}) scale(${t.k})`,
-    );
-    setTransform({ x: t.x, y: t.y, k: t.k });
-    setReady(true);
-    // size measured imperatively; deps intentionally limited
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [simNodes]);
-
   useEffect(() => {
     userMovedRef.current = false;
   }, [refitKey]);
@@ -223,15 +216,11 @@ export function NetworkGraph({
       .matches;
     const sel = select(svgRef.current);
     const transform = zoomIdentity.translate(t.x, t.y).scale(t.k);
-    // First fit on a fresh mount: skip the 450ms zoom-out transition. The
-    // graph is still hidden (ready=false) so animating from identity to
-    // the fit would just delay the reveal — apply instantly, then fade in.
-    if (reduced || !ready) {
+    if (reduced) {
       sel.call(zoomRef.current.transform, transform);
     } else {
       sel.transition().duration(450).call(zoomRef.current.transform, transform);
     }
-    if (!ready) setReady(true);
   };
 
   useEffect(() => {
@@ -240,16 +229,15 @@ export function NetworkGraph({
         .id((d) => d.id)
         .distance(60))
       .force("charge", forceManyBody().strength(-180))
+      // Weak anchor toward world origin (= screen center via symmetric
+      // viewBox). forceCenter is alpha-independent and would visibly shove
+      // nodes by (w/2, h/2) on the first tick after warmup; forceX/forceY
+      // scale with alpha so they're a no-op when the warmed-up sim starts
+      // at alpha(0), and a gentle pull at alpha(1) for fresh layouts.
+      .force("x", forceX<SimNode>(0).strength(0.02))
+      .force("y", forceY<SimNode>(0).strength(0.02))
       .alpha(justWarmedUpRef.current ? 0 : 1)
-      .alphaDecay(SIM_DECAY);
-    // Skip the center force on the warmed-up first run — forceCenter is
-    // alpha-independent so it would shift world positions on the first tick
-    // away from the warmup centroid (around origin), invalidating the fit
-    // transform that was just applied imperatively.
-    if (!justWarmedUpRef.current) {
-      sim.force("center", forceCenter(size.w / 2, size.h / 2));
-    }
-    sim
+      .alphaDecay(SIM_DECAY)
       .on("tick", () => {
         for (const n of simNodes) {
           if (n.x != null && n.y != null) {
@@ -275,20 +263,7 @@ export function NetworkGraph({
       if (rafRef.current) cancelAnimationFrame(rafRef.current);
       rafRef.current = 0;
     };
-    // Center force is updated separately on size change without restarting
-    // the simulation, so that clicking a node (which resizes the viewport
-    // when the detail panel opens) doesn't shift the layout.
-    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [simNodes, simLinks]);
-
-  useEffect(() => {
-    if (!simRef.current) return;
-    // Only update the center force if it was set when the sim was created.
-    // The warmed-up sim deliberately omits it (see live-sim useEffect).
-    if (simRef.current.force("center")) {
-      simRef.current.force("center", forceCenter(size.w / 2, size.h / 2));
-    }
-  }, [size.w, size.h]);
 
   useEffect(() => {
     if (!svgRef.current || !gRef.current) return;
@@ -320,25 +295,11 @@ export function NetworkGraph({
         });
       });
     zoomRef.current = z;
-    const sel = select(svgRef.current);
-    sel.call(z);
-    // Sync d3-zoom's internal state with any transform that was already
-    // applied imperatively (the synchronous initial-fit useLayoutEffect runs
-    // before this useEffect). Without this sync, the next pan/zoom event
-    // would compute deltas relative to identity and visually jump.
-    if (transform.k !== 1 || transform.x !== 0 || transform.y !== 0) {
-      sel.call(
-        z.transform,
-        zoomIdentity.translate(transform.x, transform.y).scale(transform.k),
-      );
-    }
+    select(svgRef.current).call(z);
     const svg = svgRef.current;
     return () => {
       select(svg).on(".zoom", null);
     };
-    // We intentionally only run this once on mount; transform is captured as
-    // it stands at that moment (post-useLayoutEffect).
-    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
 
   useEffect(() => {
@@ -460,8 +421,11 @@ export function NetworkGraph({
     const w = svg.clientWidth;
     const h = svg.clientHeight;
     const t = transformRef.current;
-    const sx = pos.x * t.k + t.x;
-    const sy = pos.y * t.k + t.y;
+    // Symmetric viewBox: user-coord origin is at the screen center, so screen
+    // pixel = w/2 + (worldX * k + tx). The translate that puts a node at
+    // screen center is therefore (-worldX * k, -worldY * k).
+    const sx = w / 2 + pos.x * t.k + t.x;
+    const sy = h / 2 + pos.y * t.k + t.y;
     const margin = 80;
     const onScreen =
       sx > margin && sx < w - margin && sy > margin && sy < h - margin;
@@ -469,7 +433,7 @@ export function NetworkGraph({
 
     const targetK = Math.max(t.k, 1.2);
     const next = zoomIdentity
-      .translate(w / 2 - pos.x * targetK, h / 2 - pos.y * targetK)
+      .translate(-pos.x * targetK, -pos.y * targetK)
       .scale(targetK);
     const reduced = window.matchMedia?.("(prefers-reduced-motion: reduce)")
       .matches;
@@ -518,6 +482,8 @@ export function NetworkGraph({
       <svg
         ref={svgRef}
         className="size-full text-muted-foreground outline-none"
+        viewBox={`${-size.w / 2} ${-size.h / 2} ${size.w} ${size.h}`}
+        preserveAspectRatio="xMidYMid meet"
         tabIndex={0}
         aria-label="Network graph"
         onClick={onClickSvg}
@@ -541,14 +507,7 @@ export function NetworkGraph({
             />
           </marker>
         </defs>
-        <g
-          ref={gRef}
-          style={{
-            opacity: ready ? 1 : 0,
-            transition: "opacity 200ms ease-out",
-            visibility: ready ? "visible" : "hidden",
-          }}
-        >
+        <g ref={gRef}>
           {graph.edges.map((e) => {
             const a = positionsRef.current.get(e.source);
             const b = positionsRef.current.get(e.target);
@@ -605,19 +564,15 @@ export function NetworkGraph({
       </svg>
 
       {showLabels && (
-        <div
-          className="pointer-events-none absolute inset-0 overflow-hidden"
-          style={{
-            opacity: ready ? 1 : 0,
-            transition: "opacity 200ms ease-out",
-          }}
-        >
+        <div className="pointer-events-none absolute inset-0 overflow-hidden">
           {graph.nodes.map((n) => {
             if (n.kind === "staker" || n.kind === "reward") return null;
             const p = positionsRef.current.get(n.id);
             if (!p) return null;
-            const sx = p.x * transform.k + transform.x;
-            const sy = p.y * transform.k + transform.y;
+            // Symmetric viewBox: world (0,0) maps to screen center, so we add
+            // size/2 to convert from world to absolute container coords.
+            const sx = size.w / 2 + p.x * transform.k + transform.x;
+            const sy = size.h / 2 + p.y * transform.k + transform.y;
             const gap = RADIUS[n.kind] * nodeScale * transform.k + 8;
             const labelDimmed =
               relevantIds != null && !relevantIds.has(n.id);
