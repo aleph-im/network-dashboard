@@ -60,8 +60,11 @@ describe("NetworkDetailPanel", () => {
         node={CCN_NODE}
         nodeState={NODE_STATE}
         visibleGraph={EMPTY_GRAPH}
+        focusNode={null}
         onClose={() => {}}
         onFocus={() => {}}
+        onStepBackFocus={() => {}}
+        onClearFocus={() => {}}
       />,
     );
     expect(screen.getByText("aleph-prod-01")).toBeInTheDocument();
@@ -79,8 +82,11 @@ describe("NetworkDetailPanel", () => {
         node={CCN_NODE}
         nodeState={NODE_STATE}
         visibleGraph={EMPTY_GRAPH}
+        focusNode={null}
         onClose={() => {}}
         onFocus={onFocus}
+        onStepBackFocus={() => {}}
+        onClearFocus={() => {}}
       />,
     );
     await user.click(screen.getByRole("button", { name: /^Focus$/i }));
@@ -95,8 +101,11 @@ describe("NetworkDetailPanel", () => {
         node={CCN_NODE}
         nodeState={NODE_STATE}
         visibleGraph={EMPTY_GRAPH}
+        focusNode={null}
         onClose={onClose}
         onFocus={() => {}}
+        onStepBackFocus={() => {}}
+        onClearFocus={() => {}}
       />,
     );
     await user.click(screen.getByRole("button", { name: /Close panel/i }));
@@ -125,8 +134,11 @@ describe("NetworkDetailPanel", () => {
         node={stakerNode}
         nodeState={NODE_STATE}
         visibleGraph={graphWithEdges}
+        focusNode={null}
         onClose={() => {}}
         onFocus={() => {}}
+        onStepBackFocus={() => {}}
+        onClearFocus={() => {}}
       />,
     );
     expect(screen.getByText("Staker")).toBeInTheDocument();
@@ -142,8 +154,11 @@ describe("NetworkDetailPanel", () => {
         node={null}
         nodeState={NODE_STATE}
         visibleGraph={EMPTY_GRAPH}
+        focusNode={null}
         onClose={() => {}}
         onFocus={() => {}}
+        onStepBackFocus={() => {}}
+        onClearFocus={() => {}}
       />,
     );
     expect(container.firstChild).toBeNull();

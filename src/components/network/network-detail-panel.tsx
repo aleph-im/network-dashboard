@@ -9,13 +9,17 @@ import type { Graph, GraphNode } from "@/lib/network-graph-model";
 import { NetworkDetailPanelAddress } from "@/components/network/network-detail-panel-address";
 import { NetworkDetailPanelCCN } from "@/components/network/network-detail-panel-ccn";
 import { NetworkDetailPanelCRN } from "@/components/network/network-detail-panel-crn";
+import { NetworkFocusPill } from "@/components/network/network-focus-pill";
 
 type Props = {
   node: GraphNode | null;
   nodeState: NodeState | undefined;
   visibleGraph: Graph;
+  focusNode: GraphNode | null;
   onClose: () => void;
   onFocus: (id: string) => void;
+  onStepBackFocus: () => void;
+  onClearFocus: () => void;
 };
 
 type DotStatus = "healthy" | "degraded" | "error" | "offline" | "unknown";
@@ -47,8 +51,11 @@ export function NetworkDetailPanel({
   node,
   nodeState,
   visibleGraph,
+  focusNode,
   onClose,
   onFocus,
+  onStepBackFocus,
+  onClearFocus,
 }: Props) {
   if (!node) return null;
 
@@ -80,6 +87,16 @@ export function NetworkDetailPanel({
           </Button>
         </div>
       </header>
+
+      {focusNode && (
+        <div className="border-b border-foreground/[0.06] px-4 py-2">
+          <NetworkFocusPill
+            focusNode={focusNode}
+            onStepBack={onStepBackFocus}
+            onClearFocus={onClearFocus}
+          />
+        </div>
+      )}
 
       <div className="min-h-0 flex-1 overflow-y-auto">
         {ccnInfo && <NetworkDetailPanelCCN info={ccnInfo} />}

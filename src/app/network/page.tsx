@@ -3,7 +3,7 @@
 import { Suspense, useCallback, useEffect, useMemo, useState } from "react";
 import Link from "next/link";
 import { useRouter, useSearchParams } from "next/navigation";
-import { ArrowsClockwise, CaretLeft, X } from "@phosphor-icons/react";
+import { ArrowsClockwise } from "@phosphor-icons/react";
 import { Button } from "@aleph-front/ds/button";
 import { Spinner } from "@aleph-front/ds/ui/spinner";
 import type { GraphNode } from "@/lib/network-graph-model";
@@ -12,6 +12,7 @@ import { NetworkGraph } from "@/components/network/network-graph";
 import { NetworkLayerToggles } from "@/components/network/network-layer-toggles";
 import { NetworkSearch } from "@/components/network/network-search";
 import { NetworkDetailPanel } from "@/components/network/network-detail-panel";
+import { NetworkFocusPill } from "@/components/network/network-focus-pill";
 import { NetworkLegend } from "@/components/network/network-legend";
 
 const SETTLE_MS = 500;
@@ -159,29 +160,12 @@ function NetworkContent() {
           >
             Reset view
           </Button>
-          {focusNode && (
-            <span className="inline-flex items-center gap-1 rounded-full border border-primary-500/30 bg-primary-600/10 py-1 pl-1.5 pr-2 text-xs">
-              <button
-                type="button"
-                onClick={() => router.back()}
-                aria-label="Step back one focus level"
-                title="Step back one focus level"
-                className="inline-flex size-4 items-center justify-center rounded-full text-muted-foreground hover:text-foreground"
-              >
-                <CaretLeft weight="bold" className="size-3" />
-              </button>
-              <span className="text-muted-foreground">Focused:</span>
-              <span className="font-medium">{focusNode.label}</span>
-              <button
-                type="button"
-                onClick={onClearFocus}
-                aria-label="Clear focus"
-                title="Show all nodes"
-                className="ml-0.5 inline-flex size-4 items-center justify-center rounded-full text-muted-foreground hover:text-foreground"
-              >
-                <X weight="bold" className="size-3" />
-              </button>
-            </span>
+          {focusNode && !selectedNode && (
+            <NetworkFocusPill
+              focusNode={focusNode}
+              onStepBack={() => router.back()}
+              onClearFocus={onClearFocus}
+            />
           )}
           {(isFetching || isSettling) && (
             <span
@@ -203,8 +187,11 @@ function NetworkContent() {
             node={selectedNode}
             nodeState={nodeState}
             visibleGraph={visibleGraph}
+            focusNode={focusNode}
             onClose={onClosePanel}
             onFocus={onFocus}
+            onStepBackFocus={() => router.back()}
+            onClearFocus={onClearFocus}
           />
         </aside>
       )}
