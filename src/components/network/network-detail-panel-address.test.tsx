@@ -14,9 +14,8 @@ const STAKER: GraphNode = {
 };
 
 describe("NetworkDetailPanelAddress", () => {
-  it("renders the kind label and degree summary when degree > 0", () => {
+  it("renders the address, degree summary, and wallet link when degree > 0", () => {
     render(<NetworkDetailPanelAddress node={STAKER} degree={4} />);
-    expect(screen.getByText("Staker")).toBeInTheDocument();
     expect(screen.getByText(/Connected to 4 CCNs/i)).toBeInTheDocument();
     expect(
       screen.getByRole("link", { name: /Open wallet view/i }),
@@ -28,14 +27,13 @@ describe("NetworkDetailPanelAddress", () => {
     expect(screen.queryByText(/Connected to/i)).not.toBeInTheDocument();
   });
 
-  it("renders 'Reward address' for kind=reward", () => {
+  it("uses 'nodes' for kind=reward in the degree summary", () => {
     render(
       <NetworkDetailPanelAddress
         node={{ ...STAKER, kind: "reward" }}
         degree={2}
       />,
     );
-    expect(screen.getByText("Reward address")).toBeInTheDocument();
     expect(screen.getByText(/Connected to 2 nodes/i)).toBeInTheDocument();
   });
 });

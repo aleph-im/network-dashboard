@@ -10,23 +10,17 @@ type Props = {
 };
 
 export function NetworkDetailPanelAddress({ node, degree }: Props) {
-  const kindLabel = node.kind === "staker" ? "Staker" : "Reward address";
   const noun = node.kind === "staker" ? "CCNs" : "nodes";
 
   return (
     <div className="space-y-3 px-4 py-3 text-sm">
-      <div>
-        <div className="mb-1 text-xs uppercase tracking-wider text-muted-foreground">
-          {kindLabel}
-        </div>
-        <CopyableText
-          text={node.id}
-          startChars={8}
-          endChars={8}
-          size="sm"
-          href={`/wallet?address=${node.id}`}
-        />
-      </div>
+      <CopyableText
+        text={node.id}
+        startChars={8}
+        endChars={8}
+        size="sm"
+        href={`/wallet?address=${node.id}`}
+      />
 
       {degree > 0 && (
         <p className="text-xs text-muted-foreground">
