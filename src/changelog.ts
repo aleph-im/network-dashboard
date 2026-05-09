@@ -11,9 +11,23 @@ export type VersionEntry = {
   changes: ChangeEntry[];
 };
 
-export const CURRENT_VERSION = "0.11.1";
+export const CURRENT_VERSION = "0.11.2";
 
 export const CHANGELOG: VersionEntry[] = [
+  {
+    version: "0.11.2",
+    date: "2026-05-09",
+    changes: [
+      {
+        type: "ui",
+        text: "Network graph: redesigned the node detail panel — smaller floating card on the right (280px) that doesn't block the map or overlap the toolbar. CCN nodes now show meaningful content (score, attached CRNs, stakers, total staked, owner, reward) instead of an empty card. CRN cards are trimmed to the graph-relevant facts (parent CCN, VM count, CPU/Memory bars, owner) with a 'View full details →' link to the full /nodes report. Stakers and reward addresses get a neat address card with a 'Connected to N CCNs' summary.",
+      },
+      {
+        type: "ui",
+        text: "Focus on a node from inside the panel now keeps the panel open instead of closing it — clicking a CRN's parent-CCN link rebinds the panel to the parent in one motion.",
+      },
+    ],
+  },
   {
     version: "0.11.1",
     date: "2026-05-09",
