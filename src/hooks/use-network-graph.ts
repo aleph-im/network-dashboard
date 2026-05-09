@@ -9,6 +9,7 @@ import {
   type GraphLayer,
 } from "@/lib/network-graph-model";
 import { egoSubgraph } from "@/lib/network-focus";
+import type { NodeState } from "@/api/credit-types";
 
 const DEFAULT_LAYERS: Set<GraphLayer> = new Set(["structural"]);
 const ALL_LAYERS: GraphLayer[] = ["structural", "owner", "staker", "reward"];
@@ -28,6 +29,7 @@ export type UseNetworkGraphResult = {
   focusId: string | null;
   isLoading: boolean;
   isFetching: boolean;
+  nodeState: NodeState | undefined;
 };
 
 export function useNetworkGraph(): UseNetworkGraphResult {
@@ -48,5 +50,13 @@ export function useNetworkGraph(): UseNetworkGraphResult {
     return egoSubgraph(fullGraph, focusId);
   }, [fullGraph, focusId]);
 
-  return { fullGraph, visibleGraph, layers, focusId, isLoading, isFetching };
+  return {
+    fullGraph,
+    visibleGraph,
+    layers,
+    focusId,
+    isLoading,
+    isFetching,
+    nodeState: state,
+  };
 }
