@@ -11,9 +11,79 @@ export type VersionEntry = {
   changes: ChangeEntry[];
 };
 
-export const CURRENT_VERSION = "0.10.0";
+export const CURRENT_VERSION = "0.11.2";
 
 export const CHANGELOG: VersionEntry[] = [
+  {
+    version: "0.11.2",
+    date: "2026-05-09",
+    changes: [
+      {
+        type: "ui",
+        text: "Network graph: redesigned the node detail panel — smaller floating card on the right (280px) that doesn't block the map or overlap the toolbar. CCN nodes now show meaningful content (score, attached CRNs, stakers, total staked, owner, reward) instead of an empty card. CRN cards are trimmed to the graph-relevant facts (parent CCN, VM count, CPU/Memory bars, owner) with a 'View full details →' link to the full /nodes report. Stakers and reward addresses get a neat address card with a 'Connected to N CCNs' summary.",
+      },
+      {
+        type: "ui",
+        text: "Focus on a node from inside the panel now keeps the panel open instead of closing it — clicking a CRN's parent-CCN link rebinds the panel to the parent in one motion. A compact 'Focused: <name> ×' pill inside the panel (or in the toolbar when the panel is closed) shows where you are; the leading caret steps back one focus layer, the × clears focus entirely.",
+      },
+      {
+        type: "ui",
+        text: "Stakers layer is now on by default so the stake graph reads on first paint without hunting for the toggle.",
+      },
+      {
+        type: "fix",
+        text: "Initial map load and reset-view no longer flash anchored to the left before sliding to the center — the SVG viewBox now centers the world origin natively, and the simulation no longer relies on an alpha-independent center force that shoved nodes on the first tick.",
+      },
+      {
+        type: "infra",
+        text: "Network entry temporarily hidden from the sidebar pending review; the page is still reachable directly at /network.",
+      },
+    ],
+  },
+  {
+    version: "0.11.1",
+    date: "2026-05-09",
+    changes: [
+      {
+        type: "ui",
+        text: "Network graph visibility pass: nodes are bigger and zoom-adaptive — they boost up to ~1.9× when you're zoomed out so dots stay readable on the dark background, and ease back down when you zoom into dense clusters. Structural edges are brighter (60% opacity) and the same-owner overlay now matches their neutral gray instead of fighting them with a saturated blue, so the dashed pattern reads as annotation rather than competing topology.",
+      },
+      {
+        type: "ui",
+        text: "Structural CCN→CRN edges now end in an arrowhead so direction reads at a glance. The arrow inherits whatever color the line has — neutral by default, the kind color when an incident edge is selected — and lands just outside the CRN border instead of being hidden under the node body.",
+      },
+      {
+        type: "feature",
+        text: "Selecting a node now spotlights its 1-hop neighborhood: the selected node and its direct neighbors stay at full strength, and everything else (nodes, edges, and labels) dims to 18% opacity so the focused subgraph reads as a clean spotlight while peripheral context stays visible.",
+      },
+      {
+        type: "fix",
+        text: "Reset-view (and the first map load) no longer expands outward from a tight spiral over several seconds before re-centering. The simulation now pre-converges synchronously before the first paint, so the camera fits the spread layout in one transition. The settle indicator is correspondingly tighter (500ms instead of 2.2s).",
+      },
+    ],
+  },
+  {
+    version: "0.11.0",
+    date: "2026-05-08",
+    changes: [
+      {
+        type: "feature",
+        text: "New /network page renders the Aleph network as a force-directed graph — CCNs and their child CRNs, with optional same-owner, stake, and reward-cluster overlays. Long-press a node to drag it (the node stays in your hand instead of teleporting to the cursor); short-click to open its detail panel. Selected node's connecting edges are recolored to its kind color (CCNs purple, CRNs green) so neighbors are easy to spot. Address deep-link via ?address=0x… highlights every node owned by that wallet. Focus on a node to see its ego subgraph; layer toggles, focus, search, and selection all persist via URL params so any view is shareable.",
+      },
+      {
+        type: "ui",
+        text: "Network map fills the entire content area edge-to-edge — the page header, layer toggles, search, and focus banner overlay on top of the graph instead of stacking above it. Edges no longer bleed through nodes (each node renders an opaque background underlay before its translucent fill). Dotted/dashed edges are thinner with rounded caps so reward-cluster links read as round dots rather than tiny rectangles. CCN outer ring tightened so it sits closer to the node circle. Cursor stays as the default arrow everywhere — no hand variants on hover or drag.",
+      },
+      {
+        type: "fix",
+        text: "Background data refetches no longer reset the viewport — the auto-fit only fires when you change layers, focus, or address (the URL-driven things), not when polling lands new data. Drag now works on first map load, every time: drag attachment is delegated to the parent group via d3-drag's container + subject pattern, so it doesn't depend on whether individual node elements were in the DOM at the moment the effect ran. Post-drag settling cools down to rest in ~0.4s instead of 2–3s of wobble.",
+      },
+      {
+        type: "ui",
+        text: "Network graph polish pass: selected nodes show a translucent halo in their own color (no more pulsing purple ring on green CRNs); CCN/CRN names render as DS Badge chips with kind-mapped variants (CCN purple, CRN green, unreachable red, inactive grey) so kind reads at a glance. Same-owner / staker / reward overlay cliques no longer crush together (force-link strength reverted to d3's degree-aware default). Initial fit and reset-view show the full network with breathing room instead of zooming in tight.",
+      },
+    ],
+  },
   {
     version: "0.10.0",
     date: "2026-05-06",

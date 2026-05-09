@@ -28,6 +28,7 @@ function makeNodeState(
       stakers: { "0xStaker1": 100000, "0xStaker2": 50000 },
       totalStaked: 150000,
       inactiveSince: null,
+      resourceNodes: [],
     },
   ]) {
     ccns.set(ccn.hash, ccn);
@@ -42,6 +43,7 @@ function makeNodeState(
       score: 0.9,
       status: "linked",
       inactiveSince: null,
+      parent: null,
     },
   ]) {
     crns.set(crn.hash, crn);
@@ -172,6 +174,7 @@ describe("distributeExpense", () => {
           stakers: { "0xS1": 100000 },
           totalStaked: 100000,
           inactiveSince: null,
+          resourceNodes: [],
         },
       ],
     });
@@ -243,12 +246,13 @@ describe("computeDistributionSummary", () => {
           stakers: { "0xStaker": 100000 },
           totalStaked: 100000,
           inactiveSince: null,
+          resourceNodes: [],
         },
       ],
       crns: [
-        { hash: "crn1", name: "CRN-1", owner: "0xOp", reward: "0xOp", score: 0.9, status: "linked", inactiveSince: null },
-        { hash: "crn2", name: "CRN-2", owner: "0xOp", reward: "0xOp", score: 0.9, status: "linked", inactiveSince: null },
-        { hash: "crn3", name: "CRN-3", owner: "0xOther", reward: "0xOther", score: 0.9, status: "linked", inactiveSince: null },
+        { hash: "crn1", name: "CRN-1", owner: "0xOp", reward: "0xOp", score: 0.9, status: "linked", inactiveSince: null, parent: null },
+        { hash: "crn2", name: "CRN-2", owner: "0xOp", reward: "0xOp", score: 0.9, status: "linked", inactiveSince: null, parent: null },
+        { hash: "crn3", name: "CRN-3", owner: "0xOther", reward: "0xOther", score: 0.9, status: "linked", inactiveSince: null, parent: null },
       ],
     });
     const expenses = [makeExpense("execution", 100, "crn1", "vm1")];

@@ -80,6 +80,7 @@ export type CCNInfo = {
   stakers: Record<string, number>;
   totalStaked: number;
   inactiveSince: number | null;
+  resourceNodes: string[];
 };
 
 export type CRNInfo = {
@@ -90,6 +91,7 @@ export type CRNInfo = {
   score: number;
   status: string;
   inactiveSince: number | null;
+  parent: string | null;
 };
 
 export type NodeState = {

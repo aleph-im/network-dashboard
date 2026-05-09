@@ -42,7 +42,7 @@ const NAV_SECTIONS: NavSection[] = [
   },
 ];
 
-type IconName = "grid" | "server" | "cpu" | "warning" | "coins";
+type IconName = "grid" | "server" | "cpu" | "warning" | "coins" | "network";
 
 function NavIcon({ name }: { name: IconName }) {
   switch (name) {
@@ -123,6 +123,27 @@ function NavIcon({ name }: { name: IconName }) {
             strokeLinecap="round"
             strokeLinejoin="round"
             d="M20 6c0 1.657-3.582 3-8 3S4 7.657 4 6m16 0c0-1.657-3.582-3-8-3S4 4.343 4 6m16 0v4c0 1.657-3.582 3-8 3S4 11.657 4 10V6m16 8c0 1.657-3.582 3-8 3s-8-1.343-8-3m16-4v8c0 1.657-3.582 3-8 3s-8-1.343-8-3v-8"
+          />
+        </svg>
+      );
+    case "network":
+      return (
+        <svg
+          className="size-4"
+          fill="none"
+          viewBox="0 0 24 24"
+          stroke="currentColor"
+          strokeWidth={2}
+        >
+          <circle cx="12" cy="12" r="3" />
+          <circle cx="5" cy="5" r="2" />
+          <circle cx="19" cy="5" r="2" />
+          <circle cx="5" cy="19" r="2" />
+          <circle cx="19" cy="19" r="2" />
+          <path
+            strokeLinecap="round"
+            strokeLinejoin="round"
+            d="M9.5 9.5L6.5 6.5M14.5 9.5L17.5 6.5M9.5 14.5L6.5 17.5M14.5 14.5L17.5 17.5"
           />
         </svg>
       );
