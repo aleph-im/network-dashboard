@@ -11,9 +11,39 @@ export type VersionEntry = {
   changes: ChangeEntry[];
 };
 
-export const CURRENT_VERSION = "0.12.0";
+export const CURRENT_VERSION = "0.13.0";
 
 export const CHANGELOG: VersionEntry[] = [
+  {
+    version: "0.13.0",
+    date: "2026-05-11",
+    changes: [
+      {
+        type: "feature",
+        text: "Network graph search: pressing Enter on a node hash or name now zooms in on the matching node and its 1-hop neighborhood — no more squinting at the dot that just got selected. Country searches still focus the country's subgraph; address searches use their own fit path.",
+      },
+      {
+        type: "feature",
+        text: "Network graph address search: a 0x address now opens a dedicated panel (right side) listing the copyable wallet, link count, and a Staking section showing every CCN the address stakes on with per-position and total ALEPH. The spotlight dims everything outside the wallet's footprint — nodes where the address is the staker, owner, or reward target stay full opacity, the rest fade. Pulse rings still mark the matches.",
+      },
+      {
+        type: "feature",
+        text: "Network graph CCN/CRN cards: new Location row with flag emoji and country name (e.g. 🇫🇷 France) — visible regardless of whether the Geo layer is on, since country attribution is now independent of the layer toggle.",
+      },
+      {
+        type: "ui",
+        text: "Network graph search field: same width (280px) as the detail cards so the column reads as one stack, and the info-icon button shrunk to a 28×28 target tight against the input (was a chunky pill-shaped lozenge with extra padding).",
+      },
+      {
+        type: "ui",
+        text: "Network graph panels: closing the node detail panel (× button) now also clears the search input — previously you had to clear the field separately.",
+      },
+      {
+        type: "fix",
+        text: "Network graph country nodes rendered as flat black circles because the cyan CSS token's OKLCH chroma was out of sRGB gamut at hue 200° and got silently dropped by Lightning CSS. Lowered chroma to a safe value; country nodes now render in their intended cyan-teal.",
+      },
+    ],
+  },
   {
     version: "0.12.0",
     date: "2026-05-11",

@@ -1,8 +1,9 @@
 "use client";
 
-import { useCallback, useState, type FormEvent } from "react";
+import { useCallback, type FormEvent } from "react";
 import { useRouter, useSearchParams } from "next/navigation";
 import { Info } from "@phosphor-icons/react";
+import { Button } from "@aleph-front/ds/button";
 import { Input } from "@aleph-front/ds/input";
 import {
   Tooltip,
@@ -12,11 +13,16 @@ import {
 } from "@aleph-front/ds/tooltip";
 import { useNetworkGraph } from "@/hooks/use-network-graph";
 
-export function NetworkSearch() {
+type Props = {
+  q: string;
+  onChange: (value: string) => void;
+  onSearchFit: (id: string) => void;
+};
+
+export function NetworkSearch({ q, onChange, onSearchFit }: Props) {
   const router = useRouter();
   const searchParams = useSearchParams();
   const { fullGraph } = useNetworkGraph();
-  const [q, setQ] = useState("");
 
   const onSubmit = useCallback((e: FormEvent) => {
     e.preventDefault();
@@ -42,26 +48,31 @@ export function NetworkSearch() {
         params.set("selected", match.id);
       } else {
         params.set("selected", match.id);
+        // Country uses focus, which already refits the camera on the ego
+        // subgraph. For other kinds, ask the page to zoom on the match.
+        onSearchFit(match.id);
       }
       router.replace(`/network?${params.toString()}`, { scroll: false });
     }
-  }, [q, fullGraph, router, searchParams]);
+  }, [q, fullGraph, router, searchParams, onSearchFit]);
 
   return (
     <form
       onSubmit={onSubmit}
-      className="ml-auto flex w-full max-w-sm items-center gap-2"
+      className="ml-auto flex w-full max-w-[280px] items-center gap-0.5"
     >
       <TooltipProvider>
         <Tooltip>
           <TooltipTrigger asChild>
-            <button
+            <Button
               type="button"
+              variant="text"
+              size="xs"
               aria-label="Search help"
-              className="flex size-7 shrink-0 items-center justify-center rounded-full text-muted-foreground hover:bg-foreground/[0.06] hover:text-foreground focus:outline-none focus-visible:ring-2 focus-visible:ring-primary-500"
+              className="!size-7 !p-0"
             >
               <Info weight="regular" className="size-4" />
-            </button>
+            </Button>
           </TooltipTrigger>
           <TooltipContent side="bottom" align="start" className="max-w-[320px]">
             <div className="space-y-2 text-xs">
@@ -110,13 +121,13 @@ export function NetworkSearch() {
           size="sm"
           placeholder="Search hash, name, country, or 0x address…"
           value={q}
-          onChange={(e) => setQ(e.target.value)}
+          onChange={(e) => onChange(e.target.value)}
           className="pr-10"
         />
         {q && (
           <button
             type="button"
-            onClick={() => setQ("")}
+            onClick={() => onChange("")}
             aria-label="Clear search"
             className="absolute right-3 top-1/2 -translate-y-1/2 text-muted-foreground hover:text-foreground"
           >

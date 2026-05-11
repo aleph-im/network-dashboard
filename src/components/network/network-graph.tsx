@@ -54,6 +54,8 @@ type Props = {
   selectedId: string | null;
   highlightedIds: Set<string>;
   refitKey: string;
+  fitTargetId: string | null;
+  fitNonce: number;
   onNodeClick: (node: GraphNode) => void;
 };
 
@@ -104,7 +106,7 @@ function fitTransform(
 }
 
 export function NetworkGraph({
-  graph, selectedId, highlightedIds, refitKey, onNodeClick,
+  graph, selectedId, highlightedIds, refitKey, fitTargetId, fitNonce, onNodeClick,
 }: Props) {
   const svgRef = useRef<SVGSVGElement>(null);
   const gRef = useRef<SVGGElement>(null);
@@ -437,6 +439,35 @@ export function NetworkGraph({
   transformRef.current = transform;
 
   useEffect(() => {
+    if (!fitTargetId || !zoomRef.current || !svgRef.current) return;
+    const pos = positionsRef.current.get(fitTargetId);
+    if (!pos) return;
+    const svg = svgRef.current;
+    const ids = new Set<string>([fitTargetId]);
+    for (const e of graph.edges) {
+      if (e.source === fitTargetId) ids.add(e.target);
+      else if (e.target === fitTargetId) ids.add(e.source);
+    }
+    const t = fitTransform(simNodes, ids, {
+      w: svg.clientWidth,
+      h: svg.clientHeight,
+    });
+    const next = zoomIdentity.translate(t.x, t.y).scale(t.k);
+    const reduced = window.matchMedia?.("(prefers-reduced-motion: reduce)")
+      .matches;
+    const sel = select(svg);
+    userMovedRef.current = false;
+    if (reduced) {
+      sel.call(zoomRef.current.transform, next);
+    } else {
+      sel.transition().duration(450).call(zoomRef.current.transform, next);
+    }
+    // graph and simNodes intentionally omitted: the same fitNonce shouldn't
+    // re-fit on background data refetches that mutate them.
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [fitNonce, fitTargetId]);
+
+  useEffect(() => {
     if (!selectedId || !zoomRef.current || !svgRef.current) return;
     const pos = positionsRef.current.get(selectedId);
     if (!pos) return;
@@ -479,14 +510,22 @@ export function NetworkGraph({
     return m;
   }, [graph]);
   const relevantIds = useMemo<Set<string> | null>(() => {
-    if (!selectedId) return null;
-    const set = new Set<string>([selectedId]);
+    if (selectedId) {
+      const set = new Set<string>([selectedId]);
+      for (const e of graph.edges) {
+        if (e.source === selectedId) set.add(e.target);
+        else if (e.target === selectedId) set.add(e.source);
+      }
+      return set;
+    }
+    if (highlightedIds.size === 0) return null;
+    const set = new Set<string>(highlightedIds);
     for (const e of graph.edges) {
-      if (e.source === selectedId) set.add(e.target);
-      else if (e.target === selectedId) set.add(e.source);
+      if (highlightedIds.has(e.source)) set.add(e.target);
+      else if (highlightedIds.has(e.target)) set.add(e.source);
     }
     return set;
-  }, [selectedId, graph]);
+  }, [selectedId, highlightedIds, graph]);
   const arrowSize = 10 * nodeScale;
 
   const selectedKind = selectedId
@@ -538,7 +577,11 @@ export function NetworkGraph({
             const b = positionsRef.current.get(e.target);
             if (!a || !b) return null;
             const isIncident = selectedId != null
-              && (e.source === selectedId || e.target === selectedId);
+              ? e.source === selectedId || e.target === selectedId
+              : highlightedIds.size > 0
+                ? highlightedIds.has(e.source) || highlightedIds.has(e.target)
+                : false;
+            const hasSpotlight = selectedId != null || highlightedIds.size > 0;
             const targetIsCrn = nodeKindMap.get(e.target) === "crn";
             const withArrow = e.type === "structural" && targetIsCrn;
             let x2 = b.x;
@@ -559,7 +602,7 @@ export function NetworkGraph({
                 key={`${e.source}-${e.target}-${e.type}`}
                 x1={a.x} y1={a.y} x2={x2} y2={y2}
                 type={e.type}
-                faded={selectedId != null && !isIncident}
+                faded={hasSpotlight && !isIncident}
                 withArrow={withArrow}
                 {...(isIncident && incidentColor
                   ? { highlightColor: incidentColor }

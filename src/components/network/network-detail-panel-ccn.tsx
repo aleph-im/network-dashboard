@@ -3,9 +3,12 @@
 import { Badge } from "@aleph-front/ds/badge";
 import { CopyableText } from "@aleph-front/ds/copyable-text";
 import type { CCNInfo } from "@/api/credit-types";
+import { countryFlag } from "@/lib/country-flag";
+import { countryName } from "@/lib/network-address-info";
 
 type Props = {
   info: CCNInfo;
+  country?: string | undefined;
 };
 
 const ALEPH_FMT = new Intl.NumberFormat("en-US", { maximumFractionDigits: 0 });
@@ -16,9 +19,11 @@ function ccnChipVariant(info: CCNInfo): "success" | "warning" | "default" {
   return "warning";
 }
 
-export function NetworkDetailPanelCCN({ info }: Props) {
+export function NetworkDetailPanelCCN({ info, country }: Props) {
   const crnCount = info.resourceNodes.length;
   const stakerCount = Object.keys(info.stakers).length;
+  const flag = country ? countryFlag(country) : null;
+  const land = country ? countryName(country) : null;
 
   return (
     <div className="space-y-4 px-4 py-3 text-sm">
@@ -39,6 +44,15 @@ export function NetworkDetailPanelCCN({ info }: Props) {
           <dt className="text-muted-foreground">Score</dt>
           <dd className="font-mono text-xs">{info.score.toFixed(2)}</dd>
         </div>
+        {land && (
+          <div className="flex justify-between">
+            <dt className="text-muted-foreground">Location</dt>
+            <dd className="flex items-center gap-1.5">
+              {flag && <span aria-hidden>{flag}</span>}
+              <span>{land}</span>
+            </dd>
+          </div>
+        )}
       </dl>
 
       <div className="grid grid-cols-2 gap-2">

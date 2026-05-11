@@ -6,10 +6,13 @@ import { Skeleton } from "@aleph-front/ds/ui/skeleton";
 import { ResourceBar } from "@/components/resource-bar";
 import { useNode } from "@/hooks/use-nodes";
 import type { CCNInfo, CRNInfo } from "@/api/credit-types";
+import { countryFlag } from "@/lib/country-flag";
+import { countryName } from "@/lib/network-address-info";
 
 type Props = {
   info: CRNInfo;
   parent: CCNInfo | null;
+  country?: string | undefined;
   onFocusParent: (parentId: string) => void;
 };
 
@@ -19,10 +22,12 @@ function crnChipVariant(info: CRNInfo): "success" | "warning" | "default" {
   return "warning";
 }
 
-export function NetworkDetailPanelCRN({ info, parent, onFocusParent }: Props) {
+export function NetworkDetailPanelCRN({ info, parent, country, onFocusParent }: Props) {
   const { data: node, isLoading } = useNode(info.hash);
   const showResources =
     isLoading || (node?.resources != null && node.resources.vcpusTotal > 0);
+  const flag = country ? countryFlag(country) : null;
+  const land = country ? countryName(country) : null;
 
   return (
     <div className="space-y-4 px-4 py-3 text-sm">
@@ -51,6 +56,15 @@ export function NetworkDetailPanelCRN({ info, parent, onFocusParent }: Props) {
             )}
           </dd>
         </div>
+        {land && (
+          <div className="flex justify-between">
+            <dt className="text-muted-foreground">Location</dt>
+            <dd className="flex items-center gap-1.5">
+              {flag && <span aria-hidden>{flag}</span>}
+              <span>{land}</span>
+            </dd>
+          </div>
+        )}
       </dl>
 
       <div className="space-y-1 border-t border-edge pt-3">
