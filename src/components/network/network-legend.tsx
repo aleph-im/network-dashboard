@@ -74,20 +74,33 @@ export function NetworkLegend() {
           Reward cluster
         </li>
         {layers.has("geo") && (
-          <li className="flex items-center gap-2">
-            <svg width="22" height="14" viewBox="0 0 22 14">
-              <circle
-                cx="11" cy="7" r="6"
-                fill="var(--network-country)" fillOpacity={0.18}
-                stroke="var(--network-country)" strokeWidth={2}
-              />
-              <circle
-                cx="11" cy="7" r="9" fill="none"
-                stroke="var(--network-country)" strokeOpacity={0.3}
-              />
-            </svg>
-            Country
-          </li>
+          <>
+            <li className="flex items-center gap-2">
+              <svg width="22" height="14" viewBox="0 0 22 14">
+                <circle
+                  cx="11" cy="7" r="6"
+                  fill="var(--network-country)" fillOpacity={0.18}
+                  stroke="var(--network-country)" strokeWidth={2}
+                />
+                <circle
+                  cx="11" cy="7" r="9" fill="none"
+                  stroke="var(--network-country)" strokeOpacity={0.3}
+                />
+              </svg>
+              Country
+            </li>
+            <li className="flex items-center gap-2">
+              <svg width="22" height="14" viewBox="0 0 22 14">
+                <line
+                  x1="2" y1="7" x2="20" y2="7"
+                  stroke="var(--network-country)" strokeOpacity={0.35}
+                  strokeWidth={0.5}
+                  strokeDasharray="1 2" strokeLinecap="round"
+                />
+              </svg>
+              Country tether
+            </li>
+          </>
         )}
       </ul>
     </div>

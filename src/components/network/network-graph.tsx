@@ -498,7 +498,9 @@ export function NetworkGraph({
       ? "var(--color-success-500)"
       : selectedKind === "staker"
         ? "var(--color-warning-500)"
-        : null;
+        : selectedKind === "country"
+          ? "var(--network-country)"
+          : null;
 
   return (
     <div className="relative size-full">
@@ -532,7 +534,6 @@ export function NetworkGraph({
         </defs>
         <g ref={gRef}>
           {graph.edges.map((e) => {
-            if (e.type === "geo") return null;
             const a = positionsRef.current.get(e.source);
             const b = positionsRef.current.get(e.target);
             if (!a || !b) return null;
