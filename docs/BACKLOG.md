@@ -52,6 +52,16 @@ Intent is agreed but there are open questions, design choices, or multi-step
 coordination required. Needs a brainstorm or spec before someone can execute.
 Multi-day / multi-PR work.
 
+### 2026-05-11 - Group nodes by geographical location on the network map
+**Source:** Network graph follow-up
+**Description:** The `/network` force-directed graph currently lays nodes out purely by force simulation (CCN↔CRN structural ties, owner/staker/reward overlays). Explore a geographical grouping mode — cluster nodes by country/region/city using the same `node-locations.json` snapshot the worldmap uses, so operators can see network topology overlaid on geography. Open questions: optional layer toggle vs. dedicated mode, how to handle nodes with no resolved location, force simulation vs. fixed geo positions, interaction with existing focus/spotlight features. Needs brainstorm.
+**Priority:** Medium
+
+### 2026-05-11 - Port the old console page to this app
+**Source:** Cross-repo consolidation
+**Description:** Start analysing how to port `./aleph-cloud-console` into the scheduler dashboard. Inventory the console's pages/features, map them to existing dashboard sections (Overview, Nodes, VMs, Wallet, Credits, etc.), identify what's redundant vs. genuinely new, and surface architectural deltas (auth flows, write actions, state model). Output a porting plan with phased milestones — not an implementation yet.
+**Priority:** Medium
+
 ### 2026-05-01 - Pre-aggregated credit totals from backend
 **Source:** Credit page slow-load research (Decision #60)
 **Description:** Ask Olivier to publish a small Aleph AGGREGATE message (or expose a precomputed endpoint) with daily/hourly credit totals + per-recipient breakdowns. Page fetches a tiny doc instead of paging through ~1440 `aleph_credit_expense` messages. Would replace the current ~20s api2 fetch with a single small request. Best long-term solution; persisted cache + prefetch + placeholder are interim wins.
