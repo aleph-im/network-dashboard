@@ -20,7 +20,15 @@ export const CHANGELOG: VersionEntry[] = [
     changes: [
       {
         type: "feature",
-        text: "Network graph: new optional 'Geo' layer (off by default) that adds a country node per represented country and pulls located CCN/CRN toward their country's projected centroid. Country dots are clickable and searchable — type a country name or ISO code and Enter to focus on that country's subgraph, or click a dot to see CCN/CRN/owner counts in the detail panel. Country labels stay visible at every zoom level, so the geography is always legible.",
+        text: "Network graph: new optional 'Geo' layer (off by default) groups located CCN/CRN around a per-country hub node. Country becomes a top-tier node — click for a flag + CCN/CRN/owner counts in the detail panel, focus to drill into the country's subgraph, or search by name (\"France\") or ISO code (\"FR\"). Country labels stay visible at every zoom level. Layout is force-driven — countries are placed by cluster mass, not real-world coordinates, so heavy clusters spread out and small ones nestle between.",
+      },
+      {
+        type: "ui",
+        text: "Network graph search: new info icon left of the search input that lists the four supported query types (node hash, node name, 0x address, country) and notes country search requires the Geo layer.",
+      },
+      {
+        type: "fix",
+        text: "Network graph focus chain: the pill back-button (‹) no longer rewinds out of /network when you arrived from a parent route. The focus chain is now encoded in the URL (?focus=A,B,C) instead of relying on browser history, so back always stays on the page.",
       },
     ],
   },
