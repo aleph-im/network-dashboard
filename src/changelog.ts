@@ -24,6 +24,10 @@ export const CHANGELOG: VersionEntry[] = [
       },
       {
         type: "ui",
+        text: "Geo layer: country↔node connections render as thin country-tinted dashed tethers so each country reads as an explicit hub-and-spoke hub. Selecting a country brightens its tethers; selecting one of its located nodes recolors that one tether to the node's kind color.",
+      },
+      {
+        type: "ui",
         text: "Network graph search: new info icon left of the search input that lists the four supported query types (node hash, node name, 0x address, country) and notes country search requires the Geo layer.",
       },
       {
