@@ -11,6 +11,7 @@ const ALL: { id: GraphLayer; label: string }[] = [
   { id: "owner", label: "Owner" },
   { id: "staker", label: "Stakers" },
   { id: "reward", label: "Reward addr" },
+  { id: "geo", label: "Geo" },
 ];
 
 export function NetworkLayerToggles() {

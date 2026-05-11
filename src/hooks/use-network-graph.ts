@@ -12,7 +12,9 @@ import { egoSubgraph } from "@/lib/network-focus";
 import type { NodeState } from "@/api/credit-types";
 
 const DEFAULT_LAYERS: Set<GraphLayer> = new Set(["structural", "staker"]);
-const ALL_LAYERS: GraphLayer[] = ["structural", "owner", "staker", "reward"];
+const ALL_LAYERS: GraphLayer[] = [
+  "structural", "owner", "staker", "reward", "geo",
+];
 
 export function parseLayers(raw: string | null): Set<GraphLayer> {
   if (!raw) return new Set(DEFAULT_LAYERS);
