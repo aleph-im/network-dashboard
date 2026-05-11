@@ -189,8 +189,8 @@ export function NetworkGraph({
           .distance(60))
         .force("geo", forceLink<SimNode, SimLink>(warmupGeo)
           .id((d) => d.id)
-          .distance(40)
-          .strength(0.6))
+          .distance(25)
+          .strength(1))
         .force("charge", forceManyBody().strength(-180))
         .alphaDecay(SIM_DECAY)
         .stop();
@@ -246,8 +246,8 @@ export function NetworkGraph({
         .distance(60))
       .force("geo", forceLink<SimNode, SimLink>(geoLinks)
         .id((d) => d.id)
-        .distance(40)
-        .strength(0.6))
+        .distance(25)
+        .strength(1))
       .force("charge", forceManyBody().strength(-180))
       // Weak anchor toward world origin (= screen center via symmetric
       // viewBox). forceCenter is alpha-independent and would visibly shove

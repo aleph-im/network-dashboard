@@ -77,8 +77,13 @@ export function NetworkLegend() {
           <li className="flex items-center gap-2">
             <svg width="22" height="14" viewBox="0 0 22 14">
               <circle
-                cx="11" cy="7" r="3"
-                fill="var(--color-muted-foreground)" fillOpacity={0.6}
+                cx="11" cy="7" r="6"
+                fill="var(--network-country)" fillOpacity={0.18}
+                stroke="var(--network-country)" strokeWidth={2}
+              />
+              <circle
+                cx="11" cy="7" r="9" fill="none"
+                stroke="var(--network-country)" strokeOpacity={0.3}
               />
             </svg>
             Country

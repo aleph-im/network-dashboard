@@ -47,7 +47,7 @@ export function mercator(params: MercatorParams): Projection {
 const NETWORK_MERCATOR: MercatorParams = {
   centerX: 0,
   equatorY: 0,
-  R: 320,
+  R: 1400,
   lngOffset: 0,
 };
 

@@ -13,6 +13,7 @@
   --map-vignette: rgba(0, 0, 0, 0.05);
   --network-edge-owner: oklch(0.65 0.18 230);
   --network-edge-reward: var(--color-primary-400);
+  --network-country: oklch(0.70 0.16 200);
 }
 
 .theme-dark {
@@ -20,6 +21,7 @@
   --map-vignette: rgba(0, 0, 0, 0.3);
   --network-edge-owner: oklch(0.72 0.16 230);
   --network-edge-reward: var(--color-primary-300);
+  --network-country: oklch(0.78 0.14 200);
 }
 
 html {
