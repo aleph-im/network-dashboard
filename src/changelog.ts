@@ -11,9 +11,19 @@ export type VersionEntry = {
   changes: ChangeEntry[];
 };
 
-export const CURRENT_VERSION = "0.11.2";
+export const CURRENT_VERSION = "0.12.0";
 
 export const CHANGELOG: VersionEntry[] = [
+  {
+    version: "0.12.0",
+    date: "2026-05-11",
+    changes: [
+      {
+        type: "feature",
+        text: "Network graph: new optional 'Geo' layer (off by default) that adds a country node per represented country and pulls located CCN/CRN toward their country's projected centroid. Country dots are clickable and searchable — type a country name or ISO code and Enter to focus on that country's subgraph, or click a dot to see CCN/CRN/owner counts in the detail panel. Country labels stay visible at every zoom level, so the geography is always legible.",
+      },
+    ],
+  },
   {
     version: "0.11.2",
     date: "2026-05-09",
