@@ -180,10 +180,16 @@ export function NetworkGraph({
         target: e.target,
         type: e.type,
       }));
+      const warmupGeo = warmupLinks.filter((l) => l.type === "geo");
+      const warmupOther = warmupLinks.filter((l) => l.type !== "geo");
       const warmup = forceSimulation<SimNode>(seeded)
-        .force("link", forceLink<SimNode, SimLink>(warmupLinks)
+        .force("link", forceLink<SimNode, SimLink>(warmupOther)
           .id((d) => d.id)
           .distance(60))
+        .force("geo", forceLink<SimNode, SimLink>(warmupGeo)
+          .id((d) => d.id)
+          .distance(40)
+          .strength(0.6))
         .force("charge", forceManyBody().strength(-180))
         .alphaDecay(SIM_DECAY)
         .stop();
@@ -231,10 +237,16 @@ export function NetworkGraph({
   };
 
   useEffect(() => {
+    const geoLinks = simLinks.filter((l) => l.type === "geo");
+    const otherLinks = simLinks.filter((l) => l.type !== "geo");
     const sim = forceSimulation<SimNode>(simNodes)
-      .force("link", forceLink<SimNode, SimLink>(simLinks)
+      .force("link", forceLink<SimNode, SimLink>(otherLinks)
         .id((d) => d.id)
         .distance(60))
+      .force("geo", forceLink<SimNode, SimLink>(geoLinks)
+        .id((d) => d.id)
+        .distance(40)
+        .strength(0.6))
       .force("charge", forceManyBody().strength(-180))
       // Weak anchor toward world origin (= screen center via symmetric
       // viewBox). forceCenter is alpha-independent and would visibly shove
