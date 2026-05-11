@@ -29,7 +29,7 @@ function dotStatusFor(node: GraphNode): DotStatus {
   if (node.kind === "country") return "unknown";
   if (node.inactive) return "offline";
   if (node.kind === "staker" || node.kind === "reward") return "unknown";
-  if (node.status === "active") return "healthy";
+  if (node.status === "active" || node.status === "linked") return "healthy";
   if (node.status === "unreachable") return "error";
   if (node.status === "unknown") return "unknown";
   return "degraded";

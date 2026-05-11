@@ -12,6 +12,8 @@ type Props = {
   selected: boolean;
   highlighted: boolean;
   inactive: boolean;
+  pending: boolean;
+  understaked: boolean;
   dimmed: boolean;
   sizeScale: number;
 };
@@ -26,26 +28,41 @@ export const RADIUS: Record<GraphNodeKind, number> = {
 
 const DEAD_STATUSES = new Set(["removed", "unlinked", "decommissioned"]);
 
-function nodeColor(kind: GraphNodeKind, status: string, inactive: boolean): string {
+function nodeColor(
+  kind: GraphNodeKind,
+  status: string,
+  inactive: boolean,
+  pending: boolean,
+): string {
   if (kind === "country") return "var(--network-country)";
   if (inactive || DEAD_STATUSES.has(status)) {
     return "var(--color-neutral-500)";
   }
-  if (status === "unreachable") {
-    return "var(--color-error-500)";
-  }
+  if (status === "unreachable") return "var(--color-error-500)";
+  // Pending — registered but not yet operational. Same grey as inactive; the
+  // dotted outer ring (rendered below) is what distinguishes them visually.
+  if (pending) return "var(--color-neutral-500)";
   if (kind === "ccn") return "var(--color-primary-500)";
-  if (kind === "crn") return "var(--color-success-500)";
+  if (kind === "crn") return "var(--network-crn)";
   if (kind === "staker") return "var(--color-warning-500)";
   return "var(--network-edge-reward)";
 }
 
 export const NetworkNode = memo(function NetworkNode({
-  id, x, y, kind, status, selected, highlighted, inactive, dimmed, sizeScale,
+  id, x, y, kind, status, selected, highlighted, inactive, pending, understaked, dimmed, sizeScale,
 }: Props) {
   const r = RADIUS[kind] * sizeScale;
-  const color = nodeColor(kind, status, inactive);
-  const opacity = dimmed ? 0.18 : inactive ? 0.6 : 1;
+  const color = nodeColor(kind, status, inactive, pending);
+  const dottedRing = pending || understaked;
+  const opacity = dimmed
+    ? 0.18
+    : inactive
+      ? 0.6
+      : pending
+        ? 0.6
+        : understaked
+          ? 0.6
+          : 1;
 
   if (kind === "reward") {
     return (
@@ -160,7 +177,7 @@ export const NetworkNode = memo(function NetworkNode({
         stroke={color}
         strokeWidth={0.75}
       />
-      {kind === "ccn" && (
+      {kind === "ccn" && !dottedRing && (
         <circle
           cx={x}
           cy={y}
@@ -169,6 +186,19 @@ export const NetworkNode = memo(function NetworkNode({
           stroke={color}
           strokeOpacity={0.3}
           strokeWidth={0.75}
+        />
+      )}
+      {dottedRing && (
+        <circle
+          cx={x}
+          cy={y}
+          r={r + 3}
+          fill="none"
+          stroke={color}
+          strokeOpacity={0.6}
+          strokeWidth={0.75}
+          strokeDasharray="2 2"
+          strokeLinecap="round"
         />
       )}
     </g>

@@ -26,10 +26,12 @@ import { drag as d3drag } from "d3-drag";
 import { select } from "d3-selection";
 import "d3-transition";
 import { Badge } from "@aleph-front/ds/badge";
-import type {
-  Graph,
-  GraphLayer,
-  GraphNode,
+import {
+  isPending,
+  isUnderstaked,
+  type Graph,
+  type GraphLayer,
+  type GraphNode,
 } from "@/lib/network-graph-model";
 import { NetworkNode, RADIUS } from "./network-node";
 import { NetworkEdge } from "./network-edge";
@@ -38,9 +40,11 @@ function labelVariant(
   kind: GraphNode["kind"],
   status: string,
   inactive: boolean,
+  pending: boolean,
 ): "default" | "success" | "error" | "info" {
   if (kind === "country") return "info";
   if (inactive) return "info";
+  if (pending) return "default";
   if (status === "unreachable") return "error";
   if (kind === "ccn") return "default";
   return "success";
@@ -63,6 +67,15 @@ const SIM_DECAY = 0.05;
 const HIT_RADIUS = 12;
 const MIN_FIT_ZOOM = 0.3;
 const LABEL_ZOOM_THRESHOLD = 1.5;
+// CRNs are far more numerous and densely packed than CCNs (one CCN can have
+// dozens of CRN children), so their labels need a higher zoom threshold to
+// avoid the overlapping wall-of-text seen when focusing a country.
+const LABEL_ZOOM_THRESHOLD_CRN = 3;
+// Pending CCN/CRN ("waiting" status, no parent / no attached CRNs) cluster
+// off to the side so they don't compete with the operational topology.
+const PENDING_ANCHOR_X = 500;
+const PENDING_ANCHOR_Y = 300;
+const PENDING_PULL = 0.15;
 
 // Adaptive node sizing: at low zoom, scale nodes up so they read on screen;
 // at high zoom, ease them down so dense clusters don't get crowded. Quantized
@@ -192,6 +205,18 @@ export function NetworkGraph({
             d.kind === "country" ? -800 : -180,
           ),
         )
+        .force(
+          "pendingX",
+          forceX<SimNode>(PENDING_ANCHOR_X).strength((d) =>
+            isPending(d) ? PENDING_PULL : 0,
+          ),
+        )
+        .force(
+          "pendingY",
+          forceY<SimNode>(PENDING_ANCHOR_Y).strength((d) =>
+            isPending(d) ? PENDING_PULL : 0,
+          ),
+        )
         .alphaDecay(SIM_DECAY)
         .stop();
       warmup.tick(300);
@@ -261,6 +286,18 @@ export function NetworkGraph({
       // at alpha(0), and a gentle pull at alpha(1) for fresh layouts.
       .force("x", forceX<SimNode>(0).strength(0.02))
       .force("y", forceY<SimNode>(0).strength(0.02))
+      .force(
+        "pendingX",
+        forceX<SimNode>(PENDING_ANCHOR_X).strength((d) =>
+          isPending(d) ? PENDING_PULL : 0,
+        ),
+      )
+      .force(
+        "pendingY",
+        forceY<SimNode>(PENDING_ANCHOR_Y).strength((d) =>
+          isPending(d) ? PENDING_PULL : 0,
+        ),
+      )
       .alpha(justWarmedUpRef.current ? 0 : 1)
       .alphaDecay(SIM_DECAY)
       .on("tick", () => {
@@ -534,7 +571,7 @@ export function NetworkGraph({
   const incidentColor = selectedKind === "ccn"
     ? "var(--color-primary-500)"
     : selectedKind === "crn"
-      ? "var(--color-success-500)"
+      ? "var(--network-crn)"
       : selectedKind === "staker"
         ? "var(--color-warning-500)"
         : selectedKind === "country"
@@ -623,6 +660,8 @@ export function NetworkGraph({
                 selected={n.id === selectedId}
                 highlighted={highlightedIds.has(n.id)}
                 inactive={n.inactive}
+                pending={isPending(n)}
+                understaked={isUnderstaked(n)}
                 dimmed={relevantIds != null && !relevantIds.has(n.id)}
                 sizeScale={nodeScale}
               />
@@ -635,7 +674,10 @@ export function NetworkGraph({
         <div className="pointer-events-none absolute inset-0 overflow-hidden">
           {graph.nodes.map((n) => {
             if (n.kind === "staker" || n.kind === "reward") return null;
-            if (n.kind !== "country" && !showLabels) return null;
+            if (n.kind === "ccn" && !showLabels) return null;
+            if (n.kind === "crn" && transform.k < LABEL_ZOOM_THRESHOLD_CRN) {
+              return null;
+            }
             const p = positionsRef.current.get(n.id);
             if (!p) return null;
             // Symmetric viewBox: world (0,0) maps to screen center, so we add
@@ -648,7 +690,7 @@ export function NetworkGraph({
             return (
               <Badge
                 key={`label-${n.id}`}
-                variant={labelVariant(n.kind, n.status, n.inactive)}
+                variant={labelVariant(n.kind, n.status, n.inactive, isPending(n))}
                 fill="outline"
                 size="sm"
                 className="absolute -translate-x-1/2"

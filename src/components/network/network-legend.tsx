@@ -27,8 +27,8 @@ export function NetworkLegend() {
           <svg width="22" height="14" viewBox="0 0 22 14">
             <circle
               cx="11" cy="7" r="4"
-              fill="var(--color-success-500)" fillOpacity={0.18}
-              stroke="var(--color-success-500)" strokeWidth={2}
+              fill="var(--network-crn)" fillOpacity={0.18}
+              stroke="var(--network-crn)" strokeWidth={2}
             />
           </svg>
           CRN (active)

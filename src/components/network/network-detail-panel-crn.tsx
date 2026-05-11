@@ -18,7 +18,7 @@ type Props = {
 
 function crnChipVariant(info: CRNInfo): "success" | "warning" | "default" {
   if (info.inactiveSince != null) return "default";
-  if (info.status === "active") return "success";
+  if (info.status === "active" || info.status === "linked") return "success";
   return "warning";
 }
 
@@ -28,6 +28,7 @@ export function NetworkDetailPanelCRN({ info, parent, country, onFocusParent }: 
     isLoading || (node?.resources != null && node.resources.vcpusTotal > 0);
   const flag = country ? countryFlag(country) : null;
   const land = country ? countryName(country) : null;
+  const pending = info.status === "waiting" && info.inactiveSince == null;
 
   return (
     <div className="space-y-4 px-4 py-3 text-sm">
@@ -56,6 +57,12 @@ export function NetworkDetailPanelCRN({ info, parent, country, onFocusParent }: 
             )}
           </dd>
         </div>
+        <div className="flex justify-between">
+          <dt className="text-muted-foreground">Score</dt>
+          <dd className="font-mono text-xs">
+            {(info.score * 100).toFixed(1)}%
+          </dd>
+        </div>
         {land && (
           <div className="flex justify-between">
             <dt className="text-muted-foreground">Location</dt>
@@ -79,6 +86,10 @@ export function NetworkDetailPanelCRN({ info, parent, country, onFocusParent }: 
           >
             {parent.name} →
           </button>
+        ) : pending ? (
+          <p className="text-xs italic text-muted-foreground">
+            Registered but not yet adopted by a CCN.
+          </p>
         ) : (
           <span className="text-sm text-muted-foreground">—</span>
         )}
