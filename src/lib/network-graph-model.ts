@@ -1,4 +1,19 @@
 import type { NodeState } from "@/api/credit-types";
+import locationsJson from "@/data/node-locations.json";
+import centroidsJson from "@/data/country-centroids.json";
+
+type LocationEntry = { country: string };
+type Centroid = { lat: number; lng: number; name: string };
+
+export type GeoData = {
+  locations: Record<string, LocationEntry>;
+  centroids: Record<string, Centroid>;
+};
+
+const DEFAULT_GEO: GeoData = {
+  locations: locationsJson as Record<string, LocationEntry>,
+  centroids: centroidsJson as Record<string, Centroid>,
+};
 
 export type GraphLayer =
   | "structural" | "owner" | "staker" | "reward" | "geo";
@@ -32,6 +47,7 @@ export type Graph = {
 export function buildGraph(
   state: NodeState,
   layers: Set<GraphLayer>,
+  geo: GeoData = DEFAULT_GEO,
 ): Graph {
   const nodes: GraphNode[] = [];
   const edges: GraphEdge[] = [];
@@ -93,6 +109,37 @@ export function buildGraph(
         }
         edges.push({ source: stakerAddr, target: c.hash, type: "staker" });
       }
+    }
+  }
+
+  if (layers.has("geo")) {
+    const represented = new Set<string>();
+    for (const n of nodes) {
+      if (n.kind !== "ccn" && n.kind !== "crn") continue;
+      const loc = geo.locations[n.id];
+      if (!loc) continue;
+      const centroid = geo.centroids[loc.country];
+      if (!centroid) continue;
+      n.country = loc.country;
+      represented.add(loc.country);
+      edges.push({
+        source: n.id,
+        target: `country:${loc.country}`,
+        type: "geo",
+      });
+    }
+    for (const code of represented) {
+      const c = geo.centroids[code]!;
+      nodes.push({
+        id: `country:${code}`,
+        kind: "country",
+        label: c.name,
+        status: "",
+        owner: null,
+        reward: null,
+        inactive: false,
+        geo: { lat: c.lat, lng: c.lng },
+      });
     }
   }
 

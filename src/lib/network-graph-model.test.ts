@@ -118,3 +118,98 @@ describe("buildGraph layers", () => {
     expect(buildGraph(state, new Set()).edges).toHaveLength(0);
   });
 });
+
+describe("buildGraph — geo layer", () => {
+  const FR_CENTROID = { lat: 46, lng: 2, name: "France" };
+  const US_CENTROID = { lat: 38, lng: -97, name: "United States" };
+
+  it("does not add country nodes or geo edges when geo layer is off", () => {
+    const state = makeState({
+      ccns: [ccn("c1")],
+      crns: [crn("r1", { parent: "c1" })],
+    });
+    const graph = buildGraph(state, new Set(["structural"]), {
+      locations: { c1: { country: "FR" }, r1: { country: "FR" } },
+      centroids: { FR: FR_CENTROID },
+    });
+    expect(graph.nodes.find((n) => n.kind === "country")).toBeUndefined();
+    expect(graph.edges.find((e) => e.type === "geo")).toBeUndefined();
+  });
+
+  it("adds one country node per represented country when geo is on", () => {
+    const state = makeState({
+      ccns: [ccn("c1")],
+      crns: [
+        crn("r1", { parent: "c1" }),
+        crn("r2", { parent: "c1" }),
+      ],
+    });
+    const graph = buildGraph(state, new Set(["geo"]), {
+      locations: {
+        c1: { country: "FR" },
+        r1: { country: "FR" },
+        r2: { country: "US" },
+      },
+      centroids: { FR: FR_CENTROID, US: US_CENTROID },
+    });
+    const countries = graph.nodes.filter((n) => n.kind === "country");
+    expect(countries.map((c) => c.id).sort()).toEqual([
+      "country:FR",
+      "country:US",
+    ]);
+    const fr = countries.find((c) => c.id === "country:FR")!;
+    expect(fr.label).toBe("France");
+    expect(fr.geo).toEqual({ lat: 46, lng: 2 });
+  });
+
+  it("emits one geo edge per located CCN/CRN", () => {
+    const state = makeState({
+      ccns: [ccn("c1")],
+      crns: [crn("r1", { parent: "c1" })],
+    });
+    const graph = buildGraph(state, new Set(["geo"]), {
+      locations: { c1: { country: "FR" }, r1: { country: "FR" } },
+      centroids: { FR: FR_CENTROID },
+    });
+    const geoEdges = graph.edges.filter((e) => e.type === "geo");
+    expect(geoEdges).toHaveLength(2);
+    expect(geoEdges.every((e) => e.target === "country:FR")).toBe(true);
+  });
+
+  it("does not emit a geo edge for nodes with no resolved country", () => {
+    const state = makeState({
+      ccns: [ccn("c1")],
+      crns: [crn("r_no_loc", { parent: "c1" })],
+    });
+    const graph = buildGraph(state, new Set(["geo"]), {
+      locations: { c1: { country: "FR" } },
+      centroids: { FR: FR_CENTROID },
+    });
+    const geoEdges = graph.edges.filter((e) => e.type === "geo");
+    expect(geoEdges.map((e) => e.source)).toEqual(["c1"]);
+  });
+
+  it("skips a country whose centroid is missing", () => {
+    const state = makeState({
+      ccns: [ccn("c1")],
+    });
+    const graph = buildGraph(state, new Set(["geo"]), {
+      locations: { c1: { country: "ZZ" } },
+      centroids: {},
+    });
+    expect(graph.nodes.find((n) => n.kind === "country")).toBeUndefined();
+    expect(graph.edges.find((e) => e.type === "geo")).toBeUndefined();
+  });
+
+  it("sets node.country on located CCN/CRN", () => {
+    const state = makeState({
+      ccns: [ccn("c1")],
+    });
+    const graph = buildGraph(state, new Set(["geo"]), {
+      locations: { c1: { country: "FR" } },
+      centroids: { FR: FR_CENTROID },
+    });
+    const c = graph.nodes.find((n) => n.id === "c1")!;
+    expect(c.country).toBe("FR");
+  });
+});
