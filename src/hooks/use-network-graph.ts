@@ -24,11 +24,17 @@ export function parseLayers(raw: string | null): Set<GraphLayer> {
   return parts.length > 0 ? new Set(parts) : new Set(DEFAULT_LAYERS);
 }
 
+export function parseFocusStack(raw: string | null): string[] {
+  if (!raw) return [];
+  return raw.split(",").filter(Boolean);
+}
+
 export type UseNetworkGraphResult = {
   fullGraph: Graph;
   visibleGraph: Graph;
   layers: Set<GraphLayer>;
   focusId: string | null;
+  focusStack: string[];
   isLoading: boolean;
   isFetching: boolean;
   nodeState: NodeState | undefined;
@@ -40,7 +46,9 @@ export function useNetworkGraph(): UseNetworkGraphResult {
 
   const layersParam = searchParams.get("layers");
   const layers = useMemo(() => parseLayers(layersParam), [layersParam]);
-  const focusId = searchParams.get("focus");
+  const focusParam = searchParams.get("focus");
+  const focusStack = useMemo(() => parseFocusStack(focusParam), [focusParam]);
+  const focusId = focusStack[focusStack.length - 1] ?? null;
 
   const fullGraph = useMemo<Graph>(() => {
     if (!state) return { nodes: [], edges: [] };
@@ -57,6 +65,7 @@ export function useNetworkGraph(): UseNetworkGraphResult {
     visibleGraph,
     layers,
     focusId,
+    focusStack,
     isLoading,
     isFetching,
     nodeState: state,

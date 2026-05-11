@@ -69,7 +69,10 @@ function NetworkContent() {
 
   const onFocus = useCallback((id: string) => {
     const params = new URLSearchParams(searchParams.toString());
-    params.set("focus", id);
+    const current = params.get("focus");
+    const stack = current ? current.split(",").filter(Boolean) : [];
+    if (stack[stack.length - 1] !== id) stack.push(id);
+    params.set("focus", stack.join(","));
     params.set("selected", id);
     router.push(`/network?${params.toString()}`, { scroll: false });
   }, [router, searchParams]);
@@ -87,6 +90,22 @@ function NetworkContent() {
   const onClearFocus = useCallback(() => {
     const params = new URLSearchParams(searchParams.toString());
     params.delete("focus");
+    router.replace(`/network?${params.toString()}`, { scroll: false });
+  }, [router, searchParams]);
+
+  const onStepBackFocus = useCallback(() => {
+    const params = new URLSearchParams(searchParams.toString());
+    const current = params.get("focus");
+    const stack = current ? current.split(",").filter(Boolean) : [];
+    stack.pop();
+    if (stack.length === 0) {
+      params.delete("focus");
+      params.delete("selected");
+    } else {
+      const top = stack[stack.length - 1]!;
+      params.set("focus", stack.join(","));
+      params.set("selected", top);
+    }
     router.replace(`/network?${params.toString()}`, { scroll: false });
   }, [router, searchParams]);
 
@@ -163,7 +182,7 @@ function NetworkContent() {
           {focusNode && !selectedNode && (
             <NetworkFocusPill
               focusNode={focusNode}
-              onStepBack={() => router.back()}
+              onStepBack={onStepBackFocus}
               onClearFocus={onClearFocus}
             />
           )}
@@ -190,7 +209,7 @@ function NetworkContent() {
             focusNode={focusNode}
             onClose={onClosePanel}
             onFocus={onFocus}
-            onStepBackFocus={() => router.back()}
+            onStepBackFocus={onStepBackFocus}
             onClearFocus={onClearFocus}
           />
         </aside>
