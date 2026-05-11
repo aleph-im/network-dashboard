@@ -31,7 +31,6 @@ import type {
   GraphLayer,
   GraphNode,
 } from "@/lib/network-graph-model";
-import { networkMercator } from "@/lib/world-map-projection";
 import { NetworkNode, RADIUS } from "./network-node";
 import { NetworkEdge } from "./network-edge";
 
@@ -154,12 +153,6 @@ export function NetworkGraph({
     const wasEmpty = positionsRef.current.size === 0;
     const seeded: SimNode[] = graph.nodes.map((n, i) => {
       let p = positionsRef.current.get(n.id);
-      if (n.kind === "country" && n.geo) {
-        const projected = networkMercator(n.geo.lat, n.geo.lng);
-        p = projected;
-        positionsRef.current.set(n.id, p);
-        return { ...n, x: p.x, y: p.y, fx: p.x, fy: p.y };
-      }
       if (!p) {
         const radius = 10 * Math.sqrt(0.5 + i);
         const angle = i * initialAngle;
@@ -191,7 +184,12 @@ export function NetworkGraph({
           .id((d) => d.id)
           .distance(25)
           .strength(1))
-        .force("charge", forceManyBody().strength(-180))
+        .force(
+          "charge",
+          forceManyBody<SimNode>().strength((d) =>
+            d.kind === "country" ? -800 : -180,
+          ),
+        )
         .alphaDecay(SIM_DECAY)
         .stop();
       warmup.tick(300);
@@ -248,7 +246,12 @@ export function NetworkGraph({
         .id((d) => d.id)
         .distance(25)
         .strength(1))
-      .force("charge", forceManyBody().strength(-180))
+      .force(
+        "charge",
+        forceManyBody<SimNode>().strength((d) =>
+          d.kind === "country" ? -800 : -180,
+        ),
+      )
       // Weak anchor toward world origin (= screen center via symmetric
       // viewBox). forceCenter is alpha-independent and would visibly shove
       // nodes by (w/2, h/2) on the first tick after warmup; forceX/forceY
