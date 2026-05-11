@@ -30,7 +30,12 @@ export function NetworkSearch() {
     );
     if (match) {
       const params = new URLSearchParams(searchParams.toString());
-      params.set("selected", match.id);
+      if (match.kind === "country") {
+        params.set("focus", match.id);
+        params.set("selected", match.id);
+      } else {
+        params.set("selected", match.id);
+      }
       router.replace(`/network?${params.toString()}`, { scroll: false });
     }
   }, [q, fullGraph, router, searchParams]);
@@ -39,7 +44,7 @@ export function NetworkSearch() {
     <form onSubmit={onSubmit} className="relative ml-auto w-full max-w-sm">
       <Input
         size="sm"
-        placeholder="Search hash, name, or 0x address…"
+        placeholder="Search hash, name, country, or 0x address…"
         value={q}
         onChange={(e) => setQ(e.target.value)}
         className="pr-10"
