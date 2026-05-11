@@ -1,8 +1,10 @@
 import type { NodeState } from "@/api/credit-types";
 
-export type GraphLayer = "structural" | "owner" | "staker" | "reward";
+export type GraphLayer =
+  | "structural" | "owner" | "staker" | "reward" | "geo";
 
-export type GraphNodeKind = "ccn" | "crn" | "staker" | "reward";
+export type GraphNodeKind =
+  | "ccn" | "crn" | "staker" | "reward" | "country";
 
 export type GraphNode = {
   id: string;
@@ -12,6 +14,8 @@ export type GraphNode = {
   owner: string | null;
   reward: string | null;
   inactive: boolean;
+  country?: string;
+  geo?: { lat: number; lng: number };
 };
 
 export type GraphEdge = {

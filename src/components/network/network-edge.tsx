@@ -19,6 +19,7 @@ const STROKE: Record<GraphLayer, string> = {
   owner: "currentColor",
   staker: "var(--color-warning-500)",
   reward: "var(--network-edge-reward)",
+  geo: "currentColor",
 };
 
 const OPACITY: Record<GraphLayer, number> = {
@@ -26,6 +27,7 @@ const OPACITY: Record<GraphLayer, number> = {
   owner: 0.2,
   staker: 0.2,
   reward: 0.2,
+  geo: 0,
 };
 
 const DASH: Partial<Record<GraphLayer, string>> = {

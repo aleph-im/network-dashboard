@@ -21,6 +21,7 @@ export const RADIUS: Record<GraphNodeKind, number> = {
   crn: 11,
   staker: 5,
   reward: 6,
+  country: 4,
 };
 
 const DEAD_STATUSES = new Set(["removed", "unlinked", "decommissioned"]);
