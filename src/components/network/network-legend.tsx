@@ -1,6 +1,10 @@
 "use client";
 
+import { useSearchParams } from "next/navigation";
+import { parseLayers } from "@/hooks/use-network-graph";
+
 export function NetworkLegend() {
+  const layers = parseLayers(useSearchParams().get("layers"));
   return (
     <div className="absolute bottom-4 left-4 rounded-md border border-foreground/[0.06] bg-surface/80 p-3 text-[11px] shadow-sm backdrop-blur-sm">
       <div className="mb-2 font-medium text-foreground">Legend</div>
@@ -69,6 +73,17 @@ export function NetworkLegend() {
           </svg>
           Reward cluster
         </li>
+        {layers.has("geo") && (
+          <li className="flex items-center gap-2">
+            <svg width="22" height="14" viewBox="0 0 22 14">
+              <circle
+                cx="11" cy="7" r="3"
+                fill="var(--color-muted-foreground)" fillOpacity={0.6}
+              />
+            </svg>
+            Country
+          </li>
+        )}
       </ul>
     </div>
   );
