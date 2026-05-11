@@ -40,6 +40,7 @@ function labelVariant(
   status: string,
   inactive: boolean,
 ): "default" | "success" | "error" | "info" {
+  if (kind === "country") return "info";
   if (inactive) return "info";
   if (status === "unreachable") return "error";
   if (kind === "ccn") return "default";
@@ -528,6 +529,7 @@ export function NetworkGraph({
         </defs>
         <g ref={gRef}>
           {graph.edges.map((e) => {
+            if (e.type === "geo") return null;
             const a = positionsRef.current.get(e.source);
             const b = positionsRef.current.get(e.target);
             if (!a || !b) return null;
@@ -582,10 +584,11 @@ export function NetworkGraph({
         </g>
       </svg>
 
-      {showLabels && (
+      {(showLabels || graph.nodes.some((n) => n.kind === "country")) && (
         <div className="pointer-events-none absolute inset-0 overflow-hidden">
           {graph.nodes.map((n) => {
             if (n.kind === "staker" || n.kind === "reward") return null;
+            if (n.kind !== "country" && !showLabels) return null;
             const p = positionsRef.current.get(n.id);
             if (!p) return null;
             // Symmetric viewBox: world (0,0) maps to screen center, so we add
