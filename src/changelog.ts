@@ -11,9 +11,31 @@ export type VersionEntry = {
   changes: ChangeEntry[];
 };
 
-export const CURRENT_VERSION = "0.11.2";
+export const CURRENT_VERSION = "0.12.0";
 
 export const CHANGELOG: VersionEntry[] = [
+  {
+    version: "0.12.0",
+    date: "2026-05-11",
+    changes: [
+      {
+        type: "feature",
+        text: "Network graph: new optional 'Geo' layer (off by default) groups located CCN/CRN around a per-country hub node. Country becomes a top-tier node — click for a flag + CCN/CRN/owner counts in the detail panel, focus to drill into the country's subgraph, or search by name (\"France\") or ISO code (\"FR\"). Country labels stay visible at every zoom level. Layout is force-driven — countries are placed by cluster mass, not real-world coordinates, so heavy clusters spread out and small ones nestle between.",
+      },
+      {
+        type: "ui",
+        text: "Geo layer: country↔node connections render as thin country-tinted dashed tethers so each country reads as an explicit hub-and-spoke hub. Selecting a country brightens its tethers; selecting one of its located nodes recolors that one tether to the node's kind color.",
+      },
+      {
+        type: "ui",
+        text: "Network graph search: new info icon left of the search input that lists the four supported query types (node hash, node name, 0x address, country) and notes country search requires the Geo layer.",
+      },
+      {
+        type: "fix",
+        text: "Network graph focus chain: the pill back-button (‹) no longer rewinds out of /network when you arrived from a parent route. The focus chain is now encoded in the URL (?focus=A,B,C) instead of relying on browser history, so back always stays on the page.",
+      },
+    ],
+  },
   {
     version: "0.11.2",
     date: "2026-05-09",

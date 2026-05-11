@@ -4,6 +4,7 @@ import {
   hashToSeed,
   mercator,
   mulberry32,
+  networkMercator,
   project,
   scatter,
 } from "@/lib/world-map-projection";
@@ -127,6 +128,31 @@ describe("mercator", () => {
     expect(proj(60, 0).y).toBeLessThan(proj(50, 0).y);
     expect(proj(50, 0).y).toBeLessThan(proj(0, 0).y);
     expect(proj(0, 0).y).toBeLessThan(proj(-50, 0).y);
+  });
+});
+
+describe("networkMercator", () => {
+  it("projects (0, 0) to origin", () => {
+    const { x, y } = networkMercator(0, 0);
+    expect(x).toBeCloseTo(0, 5);
+    expect(y).toBeCloseTo(0, 5);
+  });
+
+  it("projects positive latitudes to negative y (north is up)", () => {
+    const { y } = networkMercator(45, 0);
+    expect(y).toBeLessThan(0);
+  });
+
+  it("projects positive longitudes to positive x (east is right)", () => {
+    const { x } = networkMercator(0, 90);
+    expect(x).toBeGreaterThan(0);
+  });
+
+  it("is symmetric around the equator/prime meridian", () => {
+    const a = networkMercator(30, 60);
+    const b = networkMercator(-30, -60);
+    expect(a.x).toBeCloseTo(-b.x, 5);
+    expect(a.y).toBeCloseTo(-b.y, 5);
   });
 });
 

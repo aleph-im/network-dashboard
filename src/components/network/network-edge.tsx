@@ -19,6 +19,7 @@ const STROKE: Record<GraphLayer, string> = {
   owner: "currentColor",
   staker: "var(--color-warning-500)",
   reward: "var(--network-edge-reward)",
+  geo: "var(--network-country)",
 };
 
 const OPACITY: Record<GraphLayer, number> = {
@@ -26,11 +27,13 @@ const OPACITY: Record<GraphLayer, number> = {
   owner: 0.2,
   staker: 0.2,
   reward: 0.2,
+  geo: 0.35,
 };
 
 const DASH: Partial<Record<GraphLayer, string>> = {
   owner: "1.5 1",
   reward: "0 0.4",
+  geo: "1 2",
 };
 
 export const NetworkEdge = memo(function NetworkEdge({

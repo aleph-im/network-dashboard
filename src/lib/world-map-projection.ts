@@ -44,6 +44,15 @@ export function mercator(params: MercatorParams): Projection {
   };
 }
 
+const NETWORK_MERCATOR: MercatorParams = {
+  centerX: 0,
+  equatorY: 0,
+  R: 1400,
+  lngOffset: 0,
+};
+
+export const networkMercator: Projection = mercator(NETWORK_MERCATOR);
+
 export function hashToSeed(hash: string): number {
   let h = 2166136261;
   for (let i = 0; i < hash.length; i++) {

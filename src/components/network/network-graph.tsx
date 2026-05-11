@@ -39,6 +39,7 @@ function labelVariant(
   status: string,
   inactive: boolean,
 ): "default" | "success" | "error" | "info" {
+  if (kind === "country") return "info";
   if (inactive) return "info";
   if (status === "unreachable") return "error";
   if (kind === "ccn") return "default";
@@ -173,11 +174,22 @@ export function NetworkGraph({
         target: e.target,
         type: e.type,
       }));
+      const warmupGeo = warmupLinks.filter((l) => l.type === "geo");
+      const warmupOther = warmupLinks.filter((l) => l.type !== "geo");
       const warmup = forceSimulation<SimNode>(seeded)
-        .force("link", forceLink<SimNode, SimLink>(warmupLinks)
+        .force("link", forceLink<SimNode, SimLink>(warmupOther)
           .id((d) => d.id)
           .distance(60))
-        .force("charge", forceManyBody().strength(-180))
+        .force("geo", forceLink<SimNode, SimLink>(warmupGeo)
+          .id((d) => d.id)
+          .distance(25)
+          .strength(1))
+        .force(
+          "charge",
+          forceManyBody<SimNode>().strength((d) =>
+            d.kind === "country" ? -800 : -180,
+          ),
+        )
         .alphaDecay(SIM_DECAY)
         .stop();
       warmup.tick(300);
@@ -224,11 +236,22 @@ export function NetworkGraph({
   };
 
   useEffect(() => {
+    const geoLinks = simLinks.filter((l) => l.type === "geo");
+    const otherLinks = simLinks.filter((l) => l.type !== "geo");
     const sim = forceSimulation<SimNode>(simNodes)
-      .force("link", forceLink<SimNode, SimLink>(simLinks)
+      .force("link", forceLink<SimNode, SimLink>(otherLinks)
         .id((d) => d.id)
         .distance(60))
-      .force("charge", forceManyBody().strength(-180))
+      .force("geo", forceLink<SimNode, SimLink>(geoLinks)
+        .id((d) => d.id)
+        .distance(25)
+        .strength(1))
+      .force(
+        "charge",
+        forceManyBody<SimNode>().strength((d) =>
+          d.kind === "country" ? -800 : -180,
+        ),
+      )
       // Weak anchor toward world origin (= screen center via symmetric
       // viewBox). forceCenter is alpha-independent and would visibly shove
       // nodes by (w/2, h/2) on the first tick after warmup; forceX/forceY
@@ -475,7 +498,9 @@ export function NetworkGraph({
       ? "var(--color-success-500)"
       : selectedKind === "staker"
         ? "var(--color-warning-500)"
-        : null;
+        : selectedKind === "country"
+          ? "var(--network-country)"
+          : null;
 
   return (
     <div className="relative size-full">
@@ -563,10 +588,11 @@ export function NetworkGraph({
         </g>
       </svg>
 
-      {showLabels && (
+      {(showLabels || graph.nodes.some((n) => n.kind === "country")) && (
         <div className="pointer-events-none absolute inset-0 overflow-hidden">
           {graph.nodes.map((n) => {
             if (n.kind === "staker" || n.kind === "reward") return null;
+            if (n.kind !== "country" && !showLabels) return null;
             const p = positionsRef.current.get(n.id);
             if (!p) return null;
             // Symmetric viewBox: world (0,0) maps to screen center, so we add
