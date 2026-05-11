@@ -27,6 +27,7 @@ export const RADIUS: Record<GraphNodeKind, number> = {
 const DEAD_STATUSES = new Set(["removed", "unlinked", "decommissioned"]);
 
 function nodeColor(kind: GraphNodeKind, status: string, inactive: boolean): string {
+  if (kind === "country") return "var(--color-muted-foreground)";
   if (inactive || DEAD_STATUSES.has(status)) {
     return "var(--color-neutral-500)";
   }
@@ -81,6 +82,23 @@ export const NetworkNode = memo(function NetworkNode({
           stroke={color}
           strokeWidth={1}
         />
+      </g>
+    );
+  }
+
+  if (kind === "country") {
+    return (
+      <g
+        data-id={id}
+        opacity={dimmed ? 0.18 : 0.6}
+        role="img"
+        aria-label={`Country ${id.replace("country:", "")}`}
+        style={{ cursor: "default" }}
+      >
+        {selected && (
+          <circle cx={x} cy={y} r={r + 8} fill={color} fillOpacity={0.25} />
+        )}
+        <circle cx={x} cy={y} r={r} fill={color} fillOpacity={0.6} />
       </g>
     );
   }
