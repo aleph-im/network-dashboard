@@ -29,6 +29,15 @@ export type GraphNode = {
   owner: string | null;
   reward: string | null;
   inactive: boolean;
+  // True for CCN/CRN that are registered ("waiting") but have no operational
+  // connectivity — CRN with no parent CCN, or CCN with no attached CRNs.
+  // Set once in `buildGraph` from the source data.
+  pending?: boolean;
+  // True for CCNs that have attached CRNs but haven't reached the 700k ALEPH
+  // staking threshold required for activation (`status === "waiting"` while
+  // already operationally connected). Distinct from `pending` (which has no
+  // edges at all) — these still render in their kind color, just dimmed.
+  understaked?: boolean;
   country?: string;
   geo?: { lat: number; lng: number };
 };
@@ -38,6 +47,19 @@ export type GraphEdge = {
   target: string;
   type: GraphLayer;
 };
+
+// "waiting" CCN/CRN that are registered on-chain but not yet adopted into the
+// operational topology — CRN with no parent, or CCN with no attached CRNs.
+// Precomputed in `buildGraph` since the check needs the source data, not just
+// the GraphNode. We surface this as a distinct visual + panel state so users
+// don't read these isolated nodes as "broken".
+export function isPending(node: GraphNode): boolean {
+  return node.pending === true;
+}
+
+export function isUnderstaked(node: GraphNode): boolean {
+  return node.understaked === true;
+}
 
 export type Graph = {
   nodes: GraphNode[];
@@ -53,6 +75,9 @@ export function buildGraph(
   const edges: GraphEdge[] = [];
 
   for (const c of state.ccns.values()) {
+    const ccnInactive = c.inactiveSince != null;
+    const ccnWaiting = c.status === "waiting" && !ccnInactive;
+    const hasCrns = c.resourceNodes.length > 0;
     nodes.push({
       id: c.hash,
       kind: "ccn",
@@ -60,10 +85,13 @@ export function buildGraph(
       status: c.status,
       owner: c.owner,
       reward: c.reward,
-      inactive: c.inactiveSince != null,
+      inactive: ccnInactive,
+      pending: ccnWaiting && !hasCrns,
+      understaked: ccnWaiting && hasCrns,
     });
   }
   for (const r of state.crns.values()) {
+    const crnInactive = r.inactiveSince != null;
     nodes.push({
       id: r.hash,
       kind: "crn",
@@ -71,7 +99,8 @@ export function buildGraph(
       status: r.status,
       owner: r.owner,
       reward: r.reward,
-      inactive: r.inactiveSince != null,
+      inactive: crnInactive,
+      pending: r.status === "waiting" && !crnInactive && r.parent == null,
     });
   }
 

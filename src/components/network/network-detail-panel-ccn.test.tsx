@@ -21,7 +21,7 @@ describe("NetworkDetailPanelCCN", () => {
     render(<NetworkDetailPanelCCN info={ACTIVE_CCN} />);
     expect(screen.getByText("CCN")).toBeInTheDocument();
     expect(screen.getByText("active")).toBeInTheDocument();
-    expect(screen.getByText("0.94")).toBeInTheDocument();
+    expect(screen.getByText("94.0%")).toBeInTheDocument();
     expect(screen.getByText("4")).toBeInTheDocument();
     expect(screen.getByText("CRNs attached")).toBeInTheDocument();
     expect(screen.getByText("3")).toBeInTheDocument();

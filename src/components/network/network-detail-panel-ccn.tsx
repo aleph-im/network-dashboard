@@ -24,6 +24,9 @@ export function NetworkDetailPanelCCN({ info, country }: Props) {
   const stakerCount = Object.keys(info.stakers).length;
   const flag = country ? countryFlag(country) : null;
   const land = country ? countryName(country) : null;
+  const waiting = info.status === "waiting" && info.inactiveSince == null;
+  const pending = waiting && info.resourceNodes.length === 0;
+  const understaked = waiting && info.resourceNodes.length > 0;
 
   return (
     <div className="space-y-4 px-4 py-3 text-sm">
@@ -42,7 +45,9 @@ export function NetworkDetailPanelCCN({ info, country }: Props) {
         </div>
         <div className="flex justify-between">
           <dt className="text-muted-foreground">Score</dt>
-          <dd className="font-mono text-xs">{info.score.toFixed(2)}</dd>
+          <dd className="font-mono text-xs">
+            {(info.score * 100).toFixed(1)}%
+          </dd>
         </div>
         {land && (
           <div className="flex justify-between">
@@ -54,6 +59,17 @@ export function NetworkDetailPanelCCN({ info, country }: Props) {
           </div>
         )}
       </dl>
+
+      {pending && (
+        <p className="text-xs italic text-muted-foreground">
+          Registered but has no attached CRNs yet.
+        </p>
+      )}
+      {understaked && (
+        <p className="text-xs italic text-muted-foreground">
+          Not yet active — activation needs 700,000 ALEPH staked.
+        </p>
+      )}
 
       <div className="grid grid-cols-2 gap-2">
         <div className="rounded-lg border border-foreground/[0.06] bg-foreground/[0.03] p-2.5">

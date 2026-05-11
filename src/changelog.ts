@@ -11,9 +11,39 @@ export type VersionEntry = {
   changes: ChangeEntry[];
 };
 
-export const CURRENT_VERSION = "0.13.0";
+export const CURRENT_VERSION = "0.14.0";
 
 export const CHANGELOG: VersionEntry[] = [
+  {
+    version: "0.14.0",
+    date: "2026-05-11",
+    changes: [
+      {
+        type: "feature",
+        text: "Network graph: CCN/CRN nodes now show three distinct states. **Operational** (default) — full color. **Pending** (registered but no attached CRNs / no parent CCN) — grey with a dotted outer ring, force-clustered into a satellite group off to the side so they don't compete with the operational topology. **Understaked** (CCN with attached CRNs but under the 700,000 ALEPH activation threshold) — kind color (purple) with a dotted outer ring, stays in place to preserve its structural connections. Detail panels surface the state inline: \"Registered but not yet adopted by a CCN\" / \"Registered but has no attached CRNs yet\" / \"Not yet active — activation needs 700,000 ALEPH staked\".",
+      },
+      {
+        type: "feature",
+        text: "CRN detail panel now shows a Score row (formatted as percentage), matching the existing CCN score row.",
+      },
+      {
+        type: "fix",
+        text: "Linked CRNs now show a green StatusDot in the detail panel header and a green-outlined Status badge — they used to fall through to a yellow \"degraded\" / amber \"warning\" state because the status mapping only knew about CCN's \"active\" status.",
+      },
+      {
+        type: "ui",
+        text: "CCN score in the detail panel is now formatted as a percentage (e.g. \"92.5%\"), matching the new CRN score row.",
+      },
+      {
+        type: "ui",
+        text: "Network graph defaults: only the structural (CCN↔CRN) layer is on by default now. The staker layer used to be on too, but its cliques created too much first-paint noise — one toggle away when you want it.",
+      },
+      {
+        type: "ui",
+        text: "Network graph CRN labels now require a higher zoom level to appear (3× instead of 1.5×) so focusing a country with the geo layer on no longer drowns the cluster in overlapping CRN names. CCN and country labels keep their lower thresholds.",
+      },
+    ],
+  },
   {
     version: "0.13.0",
     date: "2026-05-11",
