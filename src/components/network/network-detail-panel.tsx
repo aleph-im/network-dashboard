@@ -135,11 +135,14 @@ export function NetworkDetailPanel({
       )}
 
       <div className="min-h-0 flex-1 overflow-y-auto">
-        {ccnInfo && <NetworkDetailPanelCCN info={ccnInfo} />}
+        {ccnInfo && (
+          <NetworkDetailPanelCCN info={ccnInfo} country={node.country} />
+        )}
         {crnInfo && (
           <NetworkDetailPanelCRN
             info={crnInfo}
             parent={parentInfo}
+            country={node.country}
             onFocusParent={onFocus}
           />
         )}
@@ -147,6 +150,7 @@ export function NetworkDetailPanel({
           <NetworkDetailPanelAddress
             node={node}
             degree={countDegree(visibleGraph, node.id)}
+            nodeState={nodeState}
           />
         )}
         {node.kind === "country" && (() => {

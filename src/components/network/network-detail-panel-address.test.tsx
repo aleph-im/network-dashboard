@@ -15,7 +15,7 @@ const STAKER: GraphNode = {
 
 describe("NetworkDetailPanelAddress", () => {
   it("renders the address, degree summary, and wallet link when degree > 0", () => {
-    render(<NetworkDetailPanelAddress node={STAKER} degree={4} />);
+    render(<NetworkDetailPanelAddress node={STAKER} degree={4} nodeState={undefined} />);
     expect(screen.getByText(/Connected to 4 CCNs/i)).toBeInTheDocument();
     expect(
       screen.getByRole("link", { name: /Open wallet view/i }),
@@ -23,7 +23,13 @@ describe("NetworkDetailPanelAddress", () => {
   });
 
   it("hides the degree line when degree is 0", () => {
-    render(<NetworkDetailPanelAddress node={STAKER} degree={0} />);
+    render(
+      <NetworkDetailPanelAddress
+        node={STAKER}
+        degree={0}
+        nodeState={undefined}
+      />,
+    );
     expect(screen.queryByText(/Connected to/i)).not.toBeInTheDocument();
   });
 
@@ -32,6 +38,7 @@ describe("NetworkDetailPanelAddress", () => {
       <NetworkDetailPanelAddress
         node={{ ...STAKER, kind: "reward" }}
         degree={2}
+        nodeState={undefined}
       />,
     );
     expect(screen.getByText(/Connected to 2 nodes/i)).toBeInTheDocument();

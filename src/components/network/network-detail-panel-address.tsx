@@ -2,14 +2,17 @@
 
 import Link from "next/link";
 import { CopyableText } from "@aleph-front/ds/copyable-text";
+import type { NodeState } from "@/api/credit-types";
 import type { GraphNode } from "@/lib/network-graph-model";
+import { NetworkStakingSection } from "./network-staking-section";
 
 type Props = {
   node: GraphNode;
   degree: number;
+  nodeState: NodeState | undefined;
 };
 
-export function NetworkDetailPanelAddress({ node, degree }: Props) {
+export function NetworkDetailPanelAddress({ node, degree, nodeState }: Props) {
   const noun = node.kind === "staker" ? "CCNs" : "nodes";
 
   return (
@@ -27,6 +30,8 @@ export function NetworkDetailPanelAddress({ node, degree }: Props) {
           Connected to {degree} {noun} in the visible graph.
         </p>
       )}
+
+      <NetworkStakingSection address={node.id} nodeState={nodeState} />
 
       <Link
         href={`/wallet?address=${node.id}`}

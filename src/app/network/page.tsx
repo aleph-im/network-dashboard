@@ -14,6 +14,7 @@ import { NetworkSearch } from "@/components/network/network-search";
 import { NetworkDetailPanel } from "@/components/network/network-detail-panel";
 import { NetworkFocusPill } from "@/components/network/network-focus-pill";
 import { NetworkLegend } from "@/components/network/network-legend";
+import { NetworkSearchAddressPanel } from "@/components/network/network-search-address-panel";
 
 const SETTLE_MS = 500;
 
@@ -30,6 +31,9 @@ function NetworkContent() {
   } = useNetworkGraph();
   const [resetKey, setResetKey] = useState(0);
   const [isSettling, setIsSettling] = useState(false);
+  const [searchQuery, setSearchQuery] = useState("");
+  const [fitTargetId, setFitTargetId] = useState<string | null>(null);
+  const [fitNonce, setFitNonce] = useState(0);
 
   useEffect(() => {
     setIsSettling(true);
@@ -39,6 +43,12 @@ function NetworkContent() {
 
   const onResetView = useCallback(() => {
     setResetKey((k) => k + 1);
+    setFitTargetId(null);
+  }, []);
+
+  const onSearchFit = useCallback((id: string) => {
+    setFitTargetId(id);
+    setFitNonce((n) => n + 1);
   }, []);
 
   const selectedId = searchParams.get("selected");
@@ -50,7 +60,11 @@ function NetworkContent() {
     if (!address) return new Set<string>();
     return new Set(
       visibleGraph.nodes
-        .filter((n) => n.owner?.toLowerCase() === address)
+        .filter((n) =>
+          n.id.toLowerCase() === address ||
+          n.owner?.toLowerCase() === address ||
+          n.reward?.toLowerCase() === address,
+        )
         .map((n) => n.id),
     );
   }, [visibleGraph, address]);
@@ -65,6 +79,15 @@ function NetworkContent() {
     const params = new URLSearchParams(searchParams.toString());
     params.delete("selected");
     router.replace(`/network?${params.toString()}`, { scroll: false });
+    setSearchQuery("");
+    setFitTargetId(null);
+  }, [router, searchParams]);
+
+  const onCloseAddress = useCallback(() => {
+    const params = new URLSearchParams(searchParams.toString());
+    params.delete("address");
+    router.replace(`/network?${params.toString()}`, { scroll: false });
+    setSearchQuery("");
   }, [router, searchParams]);
 
   const onFocus = useCallback((id: string) => {
@@ -154,6 +177,8 @@ function NetworkContent() {
             selectedId={selectedId}
             highlightedIds={highlightedIds}
             refitKey={refitKey}
+            fitTargetId={fitTargetId}
+            fitNonce={fitNonce}
             onNodeClick={onNodeClick}
           />
         )}
@@ -195,7 +220,11 @@ function NetworkContent() {
               {isFetching ? "Fetching" : "Updating"}…
             </span>
           )}
-          <NetworkSearch />
+          <NetworkSearch
+            q={searchQuery}
+            onChange={setSearchQuery}
+            onSearchFit={onSearchFit}
+          />
         </div>
       </div>
 
@@ -211,6 +240,17 @@ function NetworkContent() {
             onFocus={onFocus}
             onStepBackFocus={onStepBackFocus}
             onClearFocus={onClearFocus}
+          />
+        </aside>
+      )}
+
+      {address && !selectedNode && (
+        <aside className="pointer-events-auto absolute right-6 top-40 z-20 hidden w-[280px] max-h-[calc(100%-11rem)] overflow-hidden rounded-xl border border-foreground/[0.06] bg-muted/40 dark:bg-surface shadow-md md:block">
+          <NetworkSearchAddressPanel
+            address={address}
+            matchCount={highlightedIds.size}
+            nodeState={nodeState}
+            onClose={onCloseAddress}
           />
         </aside>
       )}

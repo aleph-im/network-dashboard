@@ -112,19 +112,25 @@ export function buildGraph(
     }
   }
 
+  // Country attribution always runs so detail panels can show location even
+  // when the geo layer (which adds the country hub nodes + tethers) is off.
+  const represented = new Set<string>();
+  for (const n of nodes) {
+    if (n.kind !== "ccn" && n.kind !== "crn") continue;
+    const loc = geo.locations[n.id];
+    if (!loc) continue;
+    const centroid = geo.centroids[loc.country];
+    if (!centroid) continue;
+    n.country = loc.country;
+    represented.add(loc.country);
+  }
+
   if (layers.has("geo")) {
-    const represented = new Set<string>();
     for (const n of nodes) {
-      if (n.kind !== "ccn" && n.kind !== "crn") continue;
-      const loc = geo.locations[n.id];
-      if (!loc) continue;
-      const centroid = geo.centroids[loc.country];
-      if (!centroid) continue;
-      n.country = loc.country;
-      represented.add(loc.country);
+      if ((n.kind !== "ccn" && n.kind !== "crn") || !n.country) continue;
       edges.push({
         source: n.id,
-        target: `country:${loc.country}`,
+        target: `country:${n.country}`,
         type: "geo",
       });
     }
