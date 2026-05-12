@@ -1,3 +1,12 @@
+---
+status: in-progress
+branch: feature/scheduler-websocket
+date: 2026-05-12
+wave: 2026-05-12-scheduler-v1
+reservedDecision: 87
+note: fanned out as part of wave 2026-05-12-scheduler-v1
+---
+
 # Scheduler WebSocket Cache Invalidation Implementation Plan
 
 > **For agentic workers:** REQUIRED SUB-SKILL: Use superpowers:subagent-driven-development (recommended) or superpowers:executing-plans to implement this plan task-by-task. Steps use checkbox (`- [ ]`) syntax for tracking.
