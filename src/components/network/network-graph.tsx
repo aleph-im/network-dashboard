@@ -607,6 +607,22 @@ export function NetworkGraph({
               fillOpacity="0.7"
             />
           </marker>
+          <marker
+            id="arrow-end-warning"
+            viewBox="0 0 10 10"
+            refX="10"
+            refY="5"
+            markerUnits="userSpaceOnUse"
+            markerWidth={arrowSize}
+            markerHeight={arrowSize}
+            orient="auto"
+          >
+            <path
+              d="M 0 0 L 10 5 L 0 10 z"
+              fill="context-stroke"
+              fillOpacity="0.9"
+            />
+          </marker>
         </defs>
         <g ref={gRef}>
           {graph.edges.map((e) => {
@@ -620,7 +636,9 @@ export function NetworkGraph({
                 : false;
             const hasSpotlight = selectedId != null || highlightedIds.size > 0;
             const targetIsCrn = nodeKindMap.get(e.target) === "crn";
-            const withArrow = e.type === "structural" && targetIsCrn;
+            const withArrow =
+              (e.type === "structural" && targetIsCrn) ||
+              e.type === "migration";
             let x2 = b.x;
             let y2 = b.y;
             if (withArrow) {

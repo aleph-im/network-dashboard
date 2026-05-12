@@ -46,6 +46,8 @@ export const NetworkEdge = memo(function NetworkEdge({
   const opacity = highlightColor
     ? type === "staker" ? 1 : 0.9
     : faded ? OPACITY[type] * 0.2 : OPACITY[type];
+  const markerId =
+    type === "migration" ? "arrow-end-warning" : "arrow-end";
   return (
     <line
       x1={x1} y1={y1} x2={x2} y2={y2}
@@ -53,7 +55,7 @@ export const NetworkEdge = memo(function NetworkEdge({
       strokeOpacity={opacity}
       strokeWidth={dash ? 0.5 : 1}
       {...(dash ? { strokeDasharray: dash, strokeLinecap: "round" } : {})}
-      {...(withArrow ? { markerEnd: "url(#arrow-end)" } : {})}
+      {...(withArrow ? { markerEnd: `url(#${markerId})` } : {})}
     />
   );
 });
