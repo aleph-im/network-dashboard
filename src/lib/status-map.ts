@@ -30,6 +30,7 @@ export const NODE_STATUS_VARIANT: Record<NodeStatus, BadgeVariant> = {
 export const VM_STATUS_VARIANT: Record<VmStatus, BadgeVariant> = {
   dispatched: "success",
   scheduled: "default",
+  migrating: "warning",
   duplicated: "warning",
   misplaced: "warning",
   missing: "error",

@@ -59,6 +59,10 @@ const makeVm = (overrides: Partial<VM> = {}): VM => ({
   paymentType: null,
   gpuRequirements: [],
   requiresConfidential: false,
+  schedulingStatus: null,
+  migrationTarget: null,
+  migrationStartedAt: null,
+  owner: null,
   ...overrides,
 });
 
@@ -540,9 +544,16 @@ describe("applyInactiveVmFilter", () => {
     expect(result.map((v) => v.hash)).toEqual(["v-allocated"]);
   });
 
-  it("ACTIVE_VM_STATUSES matches Decision #65 (dispatched, duplicated, misplaced, missing, unschedulable)", () => {
+  it("ACTIVE_VM_STATUSES includes dispatched, migrating, duplicated, misplaced, missing, unschedulable", () => {
     expect([...ACTIVE_VM_STATUSES].sort()).toEqual(
-      ["dispatched", "duplicated", "misplaced", "missing", "unschedulable"].sort(),
+      [
+        "dispatched",
+        "migrating",
+        "duplicated",
+        "misplaced",
+        "missing",
+        "unschedulable",
+      ].sort(),
     );
   });
 });
