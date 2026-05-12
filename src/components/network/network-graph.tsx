@@ -662,6 +662,7 @@ export function NetworkGraph({
                 inactive={n.inactive}
                 pending={isPending(n)}
                 understaked={isUnderstaked(n)}
+                flagged={n.flagged === true}
                 dimmed={relevantIds != null && !relevantIds.has(n.id)}
                 sizeScale={nodeScale}
               />
