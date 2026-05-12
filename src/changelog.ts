@@ -11,9 +11,19 @@ export type VersionEntry = {
   changes: ChangeEntry[];
 };
 
-export const CURRENT_VERSION = "0.15.0";
+export const CURRENT_VERSION = "0.16.0";
 
 export const CHANGELOG: VersionEntry[] = [
+  {
+    version: "0.16.0",
+    date: "2026-05-12",
+    changes: [
+      {
+        type: "feature",
+        text: "Network graph CRN highlights: CRNs with score below 0.8 or that the scheduler reports as **unreachable** now wear the same amber warning ring used for understaked CCNs. The detail panel surfaces the cause — \"Unreachable — scheduler health check is failing.\" or \"Low score (X.XX) — below the 0.8 threshold.\" — with the StatusDot and Status Badge flipping to amber to match. One visual vocabulary across CCN and CRN alert states.",
+      },
+    ],
+  },
   {
     version: "0.15.0",
     date: "2026-05-12",

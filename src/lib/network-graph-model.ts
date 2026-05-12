@@ -32,6 +32,11 @@ export const CCN_OWNER_BALANCE_THRESHOLD = 200_000;
 // self-corrects.
 export const CCN_ACTIVATION_THRESHOLD = 500_000;
 
+// Below this score (0–1 scale), a CRN is treated as underperforming and
+// gets the warning ring on the graph. Threshold chosen for visibility:
+// most CRNs score well above 0.8, so the flag stays meaningful.
+export const CRN_SCORE_THRESHOLD = 0.8;
+
 // Look up an owner's ALEPH balance from the balances map (keys are
 // case-insensitive). Returns `null` when the balance hasn't been fetched yet
 // or the request failed — distinct from `0`, which means the owner truly
@@ -77,6 +82,11 @@ export type GraphNode = {
   // has no edges at all) — these still render in their kind color, just
   // dimmed, so their structural connections stay legible.
   understaked?: boolean;
+  // CRN-only flag. True when the CRN is operationally connected (linked,
+  // not inactive, has a parent) but has an issue worth surfacing — score
+  // below CRN_SCORE_THRESHOLD or scheduler reports it as unreachable.
+  // Triggers the warning ring (same treatment as understaked CCNs).
+  flagged?: boolean;
   country?: string;
   geo?: { lat: number; lng: number };
 };
@@ -109,6 +119,7 @@ export function buildGraph(
   state: NodeState,
   layers: Set<GraphLayer>,
   ownerBalances?: Map<string, number>,
+  crnStatuses?: Map<string, string>,
   geo: GeoData = DEFAULT_GEO,
 ): Graph {
   const nodes: GraphNode[] = [];
@@ -134,6 +145,16 @@ export function buildGraph(
   }
   for (const r of state.crns.values()) {
     const crnInactive = r.inactiveSince != null;
+    const crnPending =
+      r.status === "waiting" && !crnInactive && r.parent == null;
+    const schedulerStatus = crnStatuses?.get(r.hash) ?? null;
+    const flagged =
+      !crnInactive &&
+      !crnPending &&
+      (
+        r.score < CRN_SCORE_THRESHOLD ||
+        schedulerStatus === "unreachable"
+      );
     nodes.push({
       id: r.hash,
       kind: "crn",
@@ -142,7 +163,8 @@ export function buildGraph(
       owner: r.owner,
       reward: r.reward,
       inactive: crnInactive,
-      pending: r.status === "waiting" && !crnInactive && r.parent == null,
+      pending: crnPending,
+      flagged,
     });
   }
 

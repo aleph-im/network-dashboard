@@ -14,6 +14,7 @@ type Props = {
   inactive: boolean;
   pending: boolean;
   understaked: boolean;
+  flagged: boolean;
   dimmed: boolean;
   sizeScale: number;
 };
@@ -49,14 +50,15 @@ function nodeColor(
 }
 
 export const NetworkNode = memo(function NetworkNode({
-  id, x, y, kind, status, selected, highlighted, inactive, pending, understaked, dimmed, sizeScale,
+  id, x, y, kind, status, selected, highlighted, inactive, pending, understaked, flagged, dimmed, sizeScale,
 }: Props) {
   const r = RADIUS[kind] * sizeScale;
   const color = nodeColor(kind, status, inactive, pending);
-  const dottedRing = pending || understaked;
-  // Understaked nodes get the warning ring (amber) at full body opacity —
-  // the previous 0.6 dim hid the cue. Pending and inactive still dim because
-  // their separate visual (grey body + grey pending ring) carries the signal.
+  const dottedRing = pending || understaked || flagged;
+  // Understaked CCNs and flagged CRNs get the warning ring (amber) at full
+  // body opacity — the previous 0.6 dim hid the cue. Pending and inactive
+  // still dim because their separate visual (grey body + grey pending ring)
+  // carries the signal.
   const opacity = dimmed
     ? 0.18
     : inactive
@@ -195,7 +197,7 @@ export const NetworkNode = memo(function NetworkNode({
           cy={y}
           r={r + 3}
           fill="none"
-          stroke={understaked ? "var(--color-warning-500)" : color}
+          stroke={understaked || flagged ? "var(--color-warning-500)" : color}
           strokeOpacity={0.6}
           strokeWidth={0.75}
           strokeDasharray="2 2"

@@ -16,6 +16,7 @@ type Props = {
   node: GraphNode | null;
   nodeState: NodeState | undefined;
   ownerBalances: Map<string, number> | undefined;
+  crnStatuses: Map<string, string> | undefined;
   visibleGraph: Graph;
   focusNode: GraphNode | null;
   onClose: () => void;
@@ -30,6 +31,7 @@ function dotStatusFor(node: GraphNode): DotStatus {
   if (node.kind === "country") return "unknown";
   if (node.inactive) return "offline";
   if (node.kind === "staker" || node.kind === "reward") return "unknown";
+  if (node.kind === "crn" && node.flagged) return "degraded";
   if (node.status === "active" || node.status === "linked") return "healthy";
   if (node.status === "unreachable") return "error";
   if (node.status === "unknown") return "unknown";
@@ -88,6 +90,7 @@ export function NetworkDetailPanel({
   node,
   nodeState,
   ownerBalances,
+  crnStatuses,
   visibleGraph,
   focusNode,
   onClose,
@@ -106,6 +109,10 @@ export function NetworkDetailPanel({
   const ccnOwnerBal = ccnInfo
     ? ownerBalances?.get(ccnInfo.owner.toLowerCase()) ?? null
     : null;
+  const crnSchedulerStatus = crnInfo
+    ? crnStatuses?.get(crnInfo.hash) ?? null
+    : null;
+  const crnUnreachable = crnSchedulerStatus === "unreachable";
 
   return (
     <section className="flex max-h-full flex-col">
@@ -152,6 +159,7 @@ export function NetworkDetailPanel({
             info={crnInfo}
             parent={parentInfo}
             country={node.country}
+            unreachable={crnUnreachable}
             onFocusParent={onFocus}
           />
         )}

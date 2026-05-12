@@ -8,21 +8,28 @@ import { useNode } from "@/hooks/use-nodes";
 import type { CCNInfo, CRNInfo } from "@/api/credit-types";
 import { countryFlag } from "@/lib/country-flag";
 import { countryName } from "@/lib/network-address-info";
+import { CRN_SCORE_THRESHOLD } from "@/lib/network-graph-model";
 
 type Props = {
   info: CRNInfo;
   parent: CCNInfo | null;
   country?: string | undefined;
+  unreachable: boolean;
   onFocusParent: (parentId: string) => void;
 };
 
-function crnChipVariant(info: CRNInfo): "success" | "warning" | "default" {
+function crnChipVariant(
+  info: CRNInfo,
+  unreachable: boolean,
+): "success" | "warning" | "default" {
   if (info.inactiveSince != null) return "default";
+  if (unreachable) return "warning";
+  if (info.score < CRN_SCORE_THRESHOLD) return "warning";
   if (info.status === "active" || info.status === "linked") return "success";
   return "warning";
 }
 
-export function NetworkDetailPanelCRN({ info, parent, country, onFocusParent }: Props) {
+export function NetworkDetailPanelCRN({ info, parent, country, unreachable, onFocusParent }: Props) {
   const { data: node, isLoading } = useNode(info.hash);
   const showResources =
     isLoading || (node?.resources != null && node.resources.vcpusTotal > 0);
@@ -40,7 +47,7 @@ export function NetworkDetailPanelCRN({ info, parent, country, onFocusParent }: 
         <div className="flex items-center justify-between">
           <dt className="text-muted-foreground">Status</dt>
           <dd>
-            <Badge fill="outline" variant={crnChipVariant(info)} size="sm">
+            <Badge fill="outline" variant={crnChipVariant(info, unreachable)} size="sm">
               {info.status}
             </Badge>
           </dd>
@@ -73,6 +80,17 @@ export function NetworkDetailPanelCRN({ info, parent, country, onFocusParent }: 
           </div>
         )}
       </dl>
+
+      {info.parent != null && info.inactiveSince == null && unreachable && (
+        <p className="text-xs italic text-muted-foreground">
+          Unreachable — scheduler health check is failing.
+        </p>
+      )}
+      {info.parent != null && info.inactiveSince == null && !unreachable && info.score < CRN_SCORE_THRESHOLD && (
+        <p className="text-xs italic text-muted-foreground">
+          Low score ({info.score.toFixed(2)}) — below the 0.8 threshold.
+        </p>
+      )}
 
       <div className="space-y-1 border-t border-edge pt-3">
         <h4 className="text-xs font-semibold uppercase tracking-wider text-muted-foreground">

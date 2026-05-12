@@ -57,6 +57,7 @@ describe("NetworkDetailPanelCRN", () => {
       <NetworkDetailPanelCRN
         info={CRN}
         parent={PARENT}
+        unreachable={false}
         onFocusParent={() => {}}
       />,
     );
@@ -87,6 +88,7 @@ describe("NetworkDetailPanelCRN", () => {
       <NetworkDetailPanelCRN
         info={CRN}
         parent={PARENT}
+        unreachable={false}
         onFocusParent={() => {}}
       />,
     );
@@ -105,6 +107,7 @@ describe("NetworkDetailPanelCRN", () => {
       <NetworkDetailPanelCRN
         info={CRN}
         parent={PARENT}
+        unreachable={false}
         onFocusParent={() => {}}
       />,
     );
@@ -121,10 +124,71 @@ describe("NetworkDetailPanelCRN", () => {
       <NetworkDetailPanelCRN
         info={{ ...CRN, parent: null }}
         parent={null}
+        unreachable={false}
         onFocusParent={() => {}}
       />,
     );
     expect(screen.getAllByText("—").length).toBeGreaterThanOrEqual(1);
     expect(screen.queryByText(/aleph-prod-01/)).not.toBeInTheDocument();
+  });
+
+  it("renders the unreachable message when scheduler health is failing", () => {
+    useNodeMock.mockReturnValue({
+      data: null,
+      isLoading: false,
+    } as unknown as ReturnType<typeof useNode>);
+
+    renderWithQuery(
+      <NetworkDetailPanelCRN
+        info={{ ...CRN, status: "linked", score: 0.95 }}
+        parent={PARENT}
+        unreachable={true}
+        onFocusParent={() => {}}
+      />,
+    );
+    expect(
+      screen.getByText(/Unreachable — scheduler health check is failing/i),
+    ).toBeInTheDocument();
+  });
+
+  it("renders the low-score message when score is below 0.8 and reachable", () => {
+    useNodeMock.mockReturnValue({
+      data: null,
+      isLoading: false,
+    } as unknown as ReturnType<typeof useNode>);
+
+    renderWithQuery(
+      <NetworkDetailPanelCRN
+        info={{ ...CRN, status: "linked", score: 0.65 }}
+        parent={PARENT}
+        unreachable={false}
+        onFocusParent={() => {}}
+      />,
+    );
+    expect(
+      screen.getByText(/Low score \(0\.65\) — below the 0\.8 threshold/i),
+    ).toBeInTheDocument();
+  });
+
+  it("prefers the unreachable message when both signals fire (severity cascade)", () => {
+    useNodeMock.mockReturnValue({
+      data: null,
+      isLoading: false,
+    } as unknown as ReturnType<typeof useNode>);
+
+    renderWithQuery(
+      <NetworkDetailPanelCRN
+        info={{ ...CRN, status: "linked", score: 0.4 }}
+        parent={PARENT}
+        unreachable={true}
+        onFocusParent={() => {}}
+      />,
+    );
+    expect(
+      screen.getByText(/Unreachable — scheduler health check is failing/i),
+    ).toBeInTheDocument();
+    expect(
+      screen.queryByText(/Low score/i),
+    ).not.toBeInTheDocument();
   });
 });
