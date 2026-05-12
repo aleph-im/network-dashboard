@@ -282,17 +282,25 @@ function StatusSection({
   title,
   baseUrl,
   results,
-  leading,
+  extraRowAfterFirst,
+  extraHealthy = 0,
+  extraTotal = 0,
 }: {
   title: string;
   baseUrl: string;
   results: EndpointResult[];
-  leading?: ReactNode;
+  // Optional row rendered after the first result (e.g. /health) — used for the
+  // WebSocket stream check, which sits below the health row but is counted
+  // separately via extraHealthy/extraTotal.
+  extraRowAfterFirst?: ReactNode;
+  extraHealthy?: number;
+  extraTotal?: number;
 }) {
-  const healthyCount = results.filter(
-    (r) => r.status === "healthy",
-  ).length;
-  const totalCount = results.length;
+  const healthyCount =
+    results.filter((r) => r.status === "healthy").length + extraHealthy;
+  const totalCount = results.length + extraTotal;
+
+  const [first, ...rest] = results;
 
   return (
     <section className="stat-card border border-edge bg-surface/80 backdrop-blur-sm">
@@ -305,13 +313,21 @@ function StatusSection({
         </span>
       </div>
       <ul className="divide-y divide-edge/50">
-        {leading}
-        {results.map((r, i) => (
+        {first && (
+          <EndpointRow
+            key={first.path}
+            result={first}
+            baseUrl={baseUrl}
+            index={0}
+          />
+        )}
+        {extraRowAfterFirst}
+        {rest.map((r, i) => (
           <EndpointRow
             key={r.path}
             result={r}
             baseUrl={baseUrl}
-            index={i}
+            index={i + 1}
           />
         ))}
       </ul>
@@ -351,6 +367,10 @@ function buildPendingList(
 // --- Page ---
 
 export default function StatusPage() {
+  const wsStatus = useWebSocketStatus();
+  const wsHealthy = wsStatus.status === "connected";
+  const wsPending = wsStatus.status === "connecting";
+
   const [schedulerResults, setSchedulerResults] = useState<
     EndpointResult[]
   >(
@@ -507,13 +527,12 @@ export default function StatusPage() {
   const alephBase = getAlephBaseUrl();
 
   const allResults = [...schedulerResults, ...alephResults];
-  const totalHealthy = allResults.filter(
-    (r) => r.status === "healthy",
-  ).length;
-  const totalEndpoints = allResults.length;
-  const allResolved = allResults.every(
-    (r) => r.status !== "pending",
-  );
+  const totalHealthy =
+    allResults.filter((r) => r.status === "healthy").length +
+    (wsHealthy ? 1 : 0);
+  const totalEndpoints = allResults.length + 1;
+  const allResolved =
+    allResults.every((r) => r.status !== "pending") && !wsPending;
   const allHealthy =
     allResolved && totalHealthy === totalEndpoints;
   const degradedCount = totalEndpoints - totalHealthy;
@@ -607,7 +626,9 @@ export default function StatusPage() {
           title="Scheduler API"
           baseUrl={schedulerBase}
           results={schedulerResults}
-          leading={<WebSocketRow />}
+          extraRowAfterFirst={<WebSocketRow />}
+          extraHealthy={wsHealthy ? 1 : 0}
+          extraTotal={1}
         />
         <StatusSection
           title="Aleph API"

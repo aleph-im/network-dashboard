@@ -26,13 +26,18 @@ function CreditsContent() {
     [range],
   );
 
-  const { data: expenses, isLoading: expensesLoading } = useCreditExpenses(
-    start,
-    end,
-  );
+  const {
+    data: expenses,
+    isLoading: expensesLoading,
+    isPlaceholderData: expensesIsPlaceholder,
+  } = useCreditExpenses(start, end);
   const { data: nodeState, isLoading: nodeStateLoading } = useNodeState();
 
-  const isLoading = expensesLoading || nodeStateLoading;
+  // isPlaceholderData is true during range transitions while keepPreviousData
+  // is holding the previous range's data — treat it as loading so cards,
+  // flow diagram, and table show their loading states instead of stale values.
+  const isLoading =
+    expensesLoading || nodeStateLoading || expensesIsPlaceholder;
 
   const summary = useMemo(() => {
     if (!expenses || !nodeState) return undefined;
