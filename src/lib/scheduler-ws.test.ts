@@ -63,4 +63,52 @@ describe("createWsClient — connection lifecycle", () => {
     expect(client.status).toBe("connected");
     client.close();
   });
+
+  it("ignores malformed JSON without crashing", () => {
+    const client = createWsClient("ws://example/api/v1/ws");
+    const sock = MockWebSocket.instances[0]!;
+    sock.triggerOpen();
+
+    sock.triggerMessage("not-json-{");
+
+    expect(client.eventCount).toBe(0);
+    expect(client.lastEventAt).toBeNull();
+    client.close();
+  });
+
+  it("ignores valid JSON with an unknown event type", () => {
+    const client = createWsClient("ws://example/api/v1/ws");
+    const sock = MockWebSocket.instances[0]!;
+    sock.triggerOpen();
+
+    sock.triggerMessage(JSON.stringify({ type: "NotAThing", vmHash: "v1" }));
+
+    expect(client.eventCount).toBe(0);
+    client.close();
+  });
+
+  it("dispatches a valid VmScheduled event to subscribers", () => {
+    const client = createWsClient("ws://example/api/v1/ws");
+    const sock = MockWebSocket.instances[0]!;
+    sock.triggerOpen();
+    const fn = vi.fn();
+    client.subscribe(fn);
+
+    sock.triggerMessage(
+      JSON.stringify({
+        type: "VmScheduled",
+        vmHash: "vm-1",
+        nodeHash: "node-1",
+      }),
+    );
+
+    expect(client.eventCount).toBe(1);
+    expect(client.lastEventAt).not.toBeNull();
+    expect(fn).toHaveBeenCalledWith({
+      type: "VmScheduled",
+      vmHash: "vm-1",
+      nodeHash: "node-1",
+    });
+    client.close();
+  });
 });
