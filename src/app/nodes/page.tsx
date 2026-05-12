@@ -50,8 +50,12 @@ function NodesContent() {
     selectedParam,
   );
 
+  const tabParam = searchParams.get("tab");
+  const initialTab: "overview" | "earnings" =
+    tabParam === "earnings" ? "earnings" : "overview";
+
   if (viewHash) {
-    return <NodeDetailView hash={viewHash} />;
+    return <NodeDetailView hash={viewHash} initialTab={initialTab} />;
   }
 
   return (
