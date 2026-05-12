@@ -1,6 +1,7 @@
 "use client";
 
 import { useState, useTransition, useMemo, useEffect } from "react";
+import { useRouter, usePathname, useSearchParams } from "next/navigation";
 import { Table, type Column } from "@aleph-front/ds/table";
 import { StatusDot } from "@aleph-front/ds/status-dot";
 import {
@@ -199,6 +200,9 @@ export function NodeTable({
   sidePanel,
 }: NodeTableProps) {
   const [, startTransition] = useTransition();
+  const router = useRouter();
+  const pathname = usePathname();
+  const searchParams = useSearchParams();
 
   // Search
   const [searchInput, setSearchInput] = useState(initialQuery ?? "");
@@ -342,7 +346,17 @@ export function NodeTable({
       <FilterToolbar
         statuses={STATUS_PILLS}
         activeStatus={statusFilter}
-        onStatusChange={(s) => startTransition(() => setStatusFilter(s))}
+        onStatusChange={(s) => {
+          startTransition(() => setStatusFilter(s));
+          const params = new URLSearchParams(searchParams.toString());
+          if (s) {
+            params.set("status", s);
+          } else {
+            params.delete("status");
+          }
+          const qs = params.toString();
+          router.replace(qs ? `${pathname}?${qs}` : pathname);
+        }}
         formatCount={formatCount}
         filtersOpen={filtersOpen}
         onFiltersToggle={() => setFiltersOpen((v) => !v)}

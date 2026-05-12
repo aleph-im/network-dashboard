@@ -475,7 +475,17 @@ export function VMTable({
       <FilterToolbar
         statuses={STATUS_PILLS}
         activeStatus={statusFilter}
-        onStatusChange={(s) => startTransition(() => setStatusFilter(s))}
+        onStatusChange={(s) => {
+          startTransition(() => setStatusFilter(s));
+          const params = new URLSearchParams(searchParams.toString());
+          if (s) {
+            params.set("status", s);
+          } else {
+            params.delete("status");
+          }
+          const qs = params.toString();
+          router.replace(qs ? `${pathname}?${qs}` : pathname);
+        }}
         formatCount={formatCount}
         filtersOpen={filtersOpen}
         onFiltersToggle={() => setFiltersOpen((v) => !v)}
