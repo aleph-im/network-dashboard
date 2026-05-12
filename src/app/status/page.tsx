@@ -1,10 +1,11 @@
 "use client";
 
-import { useCallback, useEffect, useRef, useState } from "react";
+import { useCallback, useEffect, useRef, useState, type ReactNode } from "react";
 import { Pulse } from "@phosphor-icons/react";
 import { Button } from "@aleph-front/ds/button";
 import { StatusDot } from "@aleph-front/ds/status-dot";
 import { Badge } from "@aleph-front/ds/badge";
+import { useWebSocketStatus } from "@/components/websocket-provider";
 
 type EndpointResult = {
   path: string;
@@ -128,6 +129,56 @@ async function timedFetch(
   return { res, latencyMs };
 }
 
+function formatRelativeTime(ms: number | null): string {
+  if (ms == null) return "—";
+  const deltaSec = Math.max(0, Math.round((Date.now() - ms) / 1000));
+  if (deltaSec < 60) return `${deltaSec}s ago`;
+  const min = Math.floor(deltaSec / 60);
+  if (min < 60) return `${min}m ago`;
+  const hr = Math.floor(min / 60);
+  return `${hr}h ago`;
+}
+
+type WsRowStatus = "healthy" | "degraded" | "offline";
+
+function wsRowStatus(
+  s: ReturnType<typeof useWebSocketStatus>["status"],
+): WsRowStatus {
+  if (s === "connected") return "healthy";
+  if (s === "disconnected") return "offline";
+  return "degraded"; // connecting / reconnecting
+}
+
+function WebSocketRow() {
+  const { status, eventCount, lastEventAt } = useWebSocketStatus();
+  const dotStatus = wsRowStatus(status);
+  const label =
+    status === "connected" && eventCount === 0
+      ? "connected · awaiting events"
+      : status === "connected"
+        ? `${eventCount} event${eventCount === 1 ? "" : "s"} · last ${formatRelativeTime(lastEventAt)}`
+        : status === "reconnecting"
+          ? "reconnecting…"
+          : status === "connecting"
+            ? "connecting…"
+            : "disconnected";
+
+  return (
+    <li className="flex items-center gap-3 px-4 py-2.5">
+      <StatusDot status={dotStatus} />
+      <div className="min-w-0 flex-1">
+        <span className="block truncate font-mono text-sm text-foreground">
+          /api/v1/ws
+        </span>
+        <p className="text-xs text-muted-foreground">WebSocket stream</p>
+      </div>
+      <span className="font-mono text-xs tabular-nums text-muted-foreground">
+        {label}
+      </span>
+    </li>
+  );
+}
+
 async function probeEndpoint(
   url: string,
   displayPath: string,
@@ -231,10 +282,12 @@ function StatusSection({
   title,
   baseUrl,
   results,
+  leading,
 }: {
   title: string;
   baseUrl: string;
   results: EndpointResult[];
+  leading?: ReactNode;
 }) {
   const healthyCount = results.filter(
     (r) => r.status === "healthy",
@@ -252,6 +305,7 @@ function StatusSection({
         </span>
       </div>
       <ul className="divide-y divide-edge/50">
+        {leading}
         {results.map((r, i) => (
           <EndpointRow
             key={r.path}
@@ -553,6 +607,7 @@ export default function StatusPage() {
           title="Scheduler API"
           baseUrl={schedulerBase}
           results={schedulerResults}
+          leading={<WebSocketRow />}
         />
         <StatusSection
           title="Aleph API"
