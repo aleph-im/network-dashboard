@@ -29,8 +29,8 @@ import { Badge } from "@aleph-front/ds/badge";
 import {
   isPending,
   isUnderstaked,
+  type EdgeType,
   type Graph,
-  type GraphLayer,
   type GraphNode,
 } from "@/lib/network-graph-model";
 import { NetworkNode, RADIUS } from "./network-node";
@@ -51,7 +51,7 @@ function labelVariant(
 }
 
 type SimNode = SimulationNodeDatum & GraphNode;
-type SimLink = SimulationLinkDatum<SimNode> & { type: GraphLayer };
+type SimLink = SimulationLinkDatum<SimNode> & { type: EdgeType };
 
 type Props = {
   graph: Graph;

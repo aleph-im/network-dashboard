@@ -1,5 +1,6 @@
 import { describe, expect, it } from "vitest";
 import type { CCNInfo, CRNInfo, NodeState } from "@/api/credit-types";
+import type { VM } from "@/api/types";
 import { buildGraph, type GraphLayer } from "./network-graph-model";
 
 function makeState(overrides?: {
@@ -357,7 +358,7 @@ describe("buildGraph — geo layer", () => {
       ccns: [ccn("c1")],
       crns: [crn("r1", { parent: "c1" })],
     });
-    const graph = buildGraph(state, new Set(["structural"]), undefined, undefined, {
+    const graph = buildGraph(state, new Set(["structural"]), undefined, undefined, undefined, {
       locations: { c1: { country: "FR" }, r1: { country: "FR" } },
       centroids: { FR: FR_CENTROID },
     });
@@ -373,7 +374,7 @@ describe("buildGraph — geo layer", () => {
         crn("r2", { parent: "c1" }),
       ],
     });
-    const graph = buildGraph(state, new Set(["geo"]), undefined, undefined, {
+    const graph = buildGraph(state, new Set(["geo"]), undefined, undefined, undefined, {
       locations: {
         c1: { country: "FR" },
         r1: { country: "FR" },
@@ -396,7 +397,7 @@ describe("buildGraph — geo layer", () => {
       ccns: [ccn("c1")],
       crns: [crn("r1", { parent: "c1" })],
     });
-    const graph = buildGraph(state, new Set(["geo"]), undefined, undefined, {
+    const graph = buildGraph(state, new Set(["geo"]), undefined, undefined, undefined, {
       locations: { c1: { country: "FR" }, r1: { country: "FR" } },
       centroids: { FR: FR_CENTROID },
     });
@@ -410,7 +411,7 @@ describe("buildGraph — geo layer", () => {
       ccns: [ccn("c1")],
       crns: [crn("r_no_loc", { parent: "c1" })],
     });
-    const graph = buildGraph(state, new Set(["geo"]), undefined, undefined, {
+    const graph = buildGraph(state, new Set(["geo"]), undefined, undefined, undefined, {
       locations: { c1: { country: "FR" } },
       centroids: { FR: FR_CENTROID },
     });
@@ -422,7 +423,7 @@ describe("buildGraph — geo layer", () => {
     const state = makeState({
       ccns: [ccn("c1")],
     });
-    const graph = buildGraph(state, new Set(["geo"]), undefined, undefined, {
+    const graph = buildGraph(state, new Set(["geo"]), undefined, undefined, undefined, {
       locations: { c1: { country: "ZZ" } },
       centroids: {},
     });
@@ -434,11 +435,93 @@ describe("buildGraph — geo layer", () => {
     const state = makeState({
       ccns: [ccn("c1")],
     });
-    const graph = buildGraph(state, new Set(["geo"]), undefined, undefined, {
+    const graph = buildGraph(state, new Set(["geo"]), undefined, undefined, undefined, {
       locations: { c1: { country: "FR" } },
       centroids: { FR: FR_CENTROID },
     });
     const c = graph.nodes.find((n) => n.id === "c1")!;
     expect(c.country).toBe("FR");
+  });
+});
+
+function makeMigratingVm(
+  allocatedNode: string,
+  migrationTarget: string,
+  hash = `mig-${allocatedNode}-${migrationTarget}`,
+): VM {
+  return {
+    hash,
+    type: "instance",
+    allocatedNode,
+    observedNodes: [],
+    status: "migrating",
+    requirements: { vcpus: null, memoryMb: null, diskMb: null },
+    paymentStatus: null,
+    updatedAt: "2026-05-12T00:00:00Z",
+    allocatedAt: null,
+    lastObservedAt: null,
+    paymentType: null,
+    gpuRequirements: [],
+    requiresConfidential: false,
+    schedulingStatus: null,
+    migrationTarget,
+    migrationStartedAt: null,
+    owner: null,
+  };
+}
+
+describe("buildGraph — migration edges", () => {
+  it("emits a migration edge between two CRN nodes that exist in the model", () => {
+    const state = makeState({
+      ccns: [ccn("c1", { resourceNodes: ["r1", "r2"] })],
+      crns: [crn("r1", { parent: "c1" }), crn("r2", { parent: "c1" })],
+    });
+    const migrations = [makeMigratingVm("r1", "r2")];
+    const graph = buildGraph(
+      state,
+      new Set(["structural"]),
+      undefined,
+      undefined,
+      migrations,
+    );
+    const migrationEdges = graph.edges.filter((e) => e.type === "migration");
+    expect(migrationEdges).toHaveLength(1);
+    expect(migrationEdges[0]).toMatchObject({
+      source: "r1",
+      target: "r2",
+      type: "migration",
+    });
+  });
+
+  it("skips migration edges when an endpoint is missing from the model", () => {
+    const state = makeState({
+      ccns: [ccn("c1", { resourceNodes: ["r1"] })],
+      crns: [crn("r1", { parent: "c1" })],
+    });
+    const migrations = [makeMigratingVm("r1", "r-ghost")];
+    const graph = buildGraph(
+      state,
+      new Set(["structural"]),
+      undefined,
+      undefined,
+      migrations,
+    );
+    expect(graph.edges.filter((e) => e.type === "migration")).toHaveLength(0);
+  });
+
+  it("emits migration edges even when the structural layer is off (always-on)", () => {
+    const state = makeState({
+      ccns: [ccn("c1", { resourceNodes: ["r1", "r2"] })],
+      crns: [crn("r1", { parent: "c1" }), crn("r2", { parent: "c1" })],
+    });
+    const migrations = [makeMigratingVm("r1", "r2")];
+    const graph = buildGraph(
+      state,
+      new Set<GraphLayer>(),
+      undefined,
+      undefined,
+      migrations,
+    );
+    expect(graph.edges.filter((e) => e.type === "migration")).toHaveLength(1);
   });
 });

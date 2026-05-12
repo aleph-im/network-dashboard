@@ -1,4 +1,5 @@
 import type { NodeState } from "@/api/credit-types";
+import type { VM } from "@/api/types";
 import locationsJson from "@/data/node-locations.json";
 import centroidsJson from "@/data/country-centroids.json";
 
@@ -91,10 +92,15 @@ export type GraphNode = {
   geo?: { lat: number; lng: number };
 };
 
+// Edge type discriminator. Most edge types correspond 1:1 to a `GraphLayer`
+// (toggleable via URL), but `"migration"` is always-on — migrations are rare
+// and informative, so we don't gate them behind a layer toggle.
+export type EdgeType = GraphLayer | "migration";
+
 export type GraphEdge = {
   source: string;
   target: string;
-  type: GraphLayer;
+  type: EdgeType;
 };
 
 // CCN/CRN that are registered on-chain but not yet adopted into the operational
@@ -120,6 +126,7 @@ export function buildGraph(
   layers: Set<GraphLayer>,
   ownerBalances?: Map<string, number>,
   crnStatuses?: Map<string, string>,
+  migrations?: VM[],
   geo: GeoData = DEFAULT_GEO,
 ): Graph {
   const nodes: GraphNode[] = [];
@@ -216,6 +223,20 @@ export function buildGraph(
     if (!centroid) continue;
     n.country = loc.country;
     represented.add(loc.country);
+  }
+
+  // Migration edges are always-on (not gated by a layer toggle). Both endpoints
+  // must resolve to CRN nodes in the model; otherwise skip silently.
+  if (migrations && migrations.length > 0) {
+    const crnIds = new Set<string>();
+    for (const r of state.crns.values()) crnIds.add(r.hash);
+    for (const vm of migrations) {
+      const src = vm.allocatedNode;
+      const dst = vm.migrationTarget;
+      if (src == null || dst == null) continue;
+      if (!crnIds.has(src) || !crnIds.has(dst)) continue;
+      edges.push({ source: src, target: dst, type: "migration" });
+    }
   }
 
   if (layers.has("geo")) {
