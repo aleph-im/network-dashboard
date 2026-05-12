@@ -58,6 +58,7 @@ export type NodeFilters = {
 export type VmStatus =
   | "scheduled"
   | "dispatched"
+  | "migrating"
   | "duplicated"
   | "misplaced"
   | "missing"
@@ -88,6 +89,10 @@ export type VM = {
   paymentType: string | null;
   gpuRequirements: GpuDevice[];
   requiresConfidential: boolean;
+  schedulingStatus: VmStatus | null;
+  migrationTarget: string | null;
+  migrationStartedAt: string | null;
+  owner: string | null;
 };
 
 export type VmDetail = VM & {
@@ -178,6 +183,10 @@ export type ApiVmRow = {
   cpu_architecture: string | null;
   cpu_vendor: string | null;
   cpu_features: string[];
+  scheduling_status: VmStatus | null;
+  migration_target: string | null;
+  migration_started_at: string | null;
+  owner: string | null;
 };
 
 export type ApiHistoryRow = {
