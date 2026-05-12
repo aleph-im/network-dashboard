@@ -155,4 +155,68 @@ describe("createWsClient — connection lifecycle", () => {
     client.close();
     expect(fn).not.toHaveBeenCalled();
   });
+
+  it("reconnects with exponential backoff 1s/2s/4s after close", () => {
+    vi.useFakeTimers();
+    const client = createWsClient("ws://example/api/v1/ws");
+    expect(MockWebSocket.instances).toHaveLength(1);
+
+    // First reconnect after 1s
+    MockWebSocket.instances[0]!.triggerClose();
+    expect(client.status).toBe("reconnecting");
+    vi.advanceTimersByTime(999);
+    expect(MockWebSocket.instances).toHaveLength(1);
+    vi.advanceTimersByTime(1);
+    expect(MockWebSocket.instances).toHaveLength(2);
+
+    // Second reconnect after 2s
+    MockWebSocket.instances[1]!.triggerClose();
+    vi.advanceTimersByTime(2_000);
+    expect(MockWebSocket.instances).toHaveLength(3);
+
+    // Third reconnect after 4s
+    MockWebSocket.instances[2]!.triggerClose();
+    vi.advanceTimersByTime(4_000);
+    expect(MockWebSocket.instances).toHaveLength(4);
+
+    client.close();
+  });
+
+  it("resets backoff to 1s after a successful reconnect", () => {
+    vi.useFakeTimers();
+    const client = createWsClient("ws://example/api/v1/ws");
+
+    // Burn through 1s + 2s of backoff
+    MockWebSocket.instances[0]!.triggerClose();
+    vi.advanceTimersByTime(1_000);
+    MockWebSocket.instances[1]!.triggerClose();
+    vi.advanceTimersByTime(2_000);
+    expect(MockWebSocket.instances).toHaveLength(3);
+
+    // Successful reconnect resets the timer
+    MockWebSocket.instances[2]!.triggerOpen();
+    expect(client.status).toBe("connected");
+
+    // Next failure reconnects at 1s again, not 4s
+    MockWebSocket.instances[2]!.triggerClose();
+    vi.advanceTimersByTime(1_000);
+    expect(MockWebSocket.instances).toHaveLength(4);
+
+    client.close();
+  });
+
+  it("caps backoff at 30s", () => {
+    vi.useFakeTimers();
+    const client = createWsClient("ws://example/api/v1/ws");
+
+    // Walk through 1, 2, 4, 8, 16, 32→30, then expect 30 for the next round.
+    const steps = [1_000, 2_000, 4_000, 8_000, 16_000, 30_000, 30_000];
+    for (const ms of steps) {
+      MockWebSocket.instances.at(-1)!.triggerClose();
+      vi.advanceTimersByTime(ms);
+    }
+    expect(MockWebSocket.instances).toHaveLength(steps.length + 1);
+
+    client.close();
+  });
 });
