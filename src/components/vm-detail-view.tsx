@@ -129,17 +129,21 @@ export function VMDetailView({ hash }: VMDetailViewProps) {
               </Tooltip>
             </TooltipProvider>
           </MetaItem>
-          {messageInfo?.get(vm.hash)?.sender && (
-            <MetaItem label="Owner">
-              <CopyableText
-                text={messageInfo.get(vm.hash)!.sender}
-                startChars={8}
-                endChars={8}
-                size="sm"
-                href={`/wallet?address=${messageInfo.get(vm.hash)!.sender}`}
-              />
-            </MetaItem>
-          )}
+          {(() => {
+            const owner = vm.owner ?? messageInfo?.get(vm.hash)?.sender ?? null;
+            if (!owner) return null;
+            return (
+              <MetaItem label="Owner">
+                <CopyableText
+                  text={owner}
+                  startChars={8}
+                  endChars={8}
+                  size="sm"
+                  href={`/wallet?address=${owner}`}
+                />
+              </MetaItem>
+            );
+          })()}
           <MetaItem label="Type">{vm.type}</MetaItem>
           {vm.paymentType && (
             <MetaItem label="Payment type">
@@ -188,6 +192,37 @@ export function VMDetailView({ hash }: VMDetailViewProps) {
           </p>
         )}
       </Card>
+
+      {/* Migration */}
+      {vm.status === "migrating" && (
+        <Card padding="md">
+          <h3 className="mb-3 text-xs font-semibold uppercase tracking-wider text-muted-foreground">
+            Migration
+          </h3>
+          <dl className="grid gap-x-8 gap-y-1 text-sm sm:grid-cols-2">
+            <MetaItem label="Target">
+              {vm.migrationTarget ? (
+                <CopyableText
+                  text={vm.migrationTarget}
+                  startChars={8}
+                  endChars={8}
+                  size="sm"
+                  href={`/nodes?view=${vm.migrationTarget}`}
+                />
+              ) : (
+                <span className="text-xs text-muted-foreground">unknown</span>
+              )}
+            </MetaItem>
+            {vm.migrationStartedAt && (
+              <MetaItem label="Started">
+                <span className="tabular-nums">
+                  {relativeTime(vm.migrationStartedAt)}
+                </span>
+              </MetaItem>
+            )}
+          </dl>
+        </Card>
+      )}
 
       {/* Observed Nodes */}
       {vm.observedNodes.length > 0 && (
