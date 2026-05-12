@@ -54,15 +54,16 @@ export const NetworkNode = memo(function NetworkNode({
   const r = RADIUS[kind] * sizeScale;
   const color = nodeColor(kind, status, inactive, pending);
   const dottedRing = pending || understaked;
+  // Understaked nodes get the warning ring (amber) at full body opacity —
+  // the previous 0.6 dim hid the cue. Pending and inactive still dim because
+  // their separate visual (grey body + grey pending ring) carries the signal.
   const opacity = dimmed
     ? 0.18
     : inactive
       ? 0.6
       : pending
         ? 0.6
-        : understaked
-          ? 0.6
-          : 1;
+        : 1;
 
   if (kind === "reward") {
     return (
@@ -194,7 +195,7 @@ export const NetworkNode = memo(function NetworkNode({
           cy={y}
           r={r + 3}
           fill="none"
-          stroke={color}
+          stroke={understaked ? "var(--color-warning-500)" : color}
           strokeOpacity={0.6}
           strokeWidth={0.75}
           strokeDasharray="2 2"

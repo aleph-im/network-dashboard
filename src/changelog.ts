@@ -11,9 +11,27 @@ export type VersionEntry = {
   changes: ChangeEntry[];
 };
 
-export const CURRENT_VERSION = "0.14.0";
+export const CURRENT_VERSION = "0.15.0";
 
 export const CHANGELOG: VersionEntry[] = [
+  {
+    version: "0.15.0",
+    date: "2026-05-12",
+    changes: [
+      {
+        type: "fix",
+        text: "Network graph activation thresholds: a CCN now needs **500,000 ALEPH total staked** to activate (was incorrectly described as 700,000), and the owner address must hold **200,000 ALEPH on-chain** before others can stake on the node (a precondition that wasn't enforced before). Dimming is now driven from the actual stake numbers — not the API's `status` string — so the visual self-corrects when stake moves in either direction.",
+      },
+      {
+        type: "feature",
+        text: "Owner-balance lookups for CCN owners: a new `getOwnerBalances()` API + `useOwnerBalances` hook fetches each CCN owner's on-chain ALEPH balance (summed across chains) from api2.aleph.im. Powers the new 200k owner gate without requiring owners to be in their own `stakers` map (which they almost never are).",
+      },
+      {
+        type: "ui",
+        text: "Understaked CCNs now use a **warning ring** — kind color body at full opacity wrapped in an amber dotted ring — instead of the previous dim+grey-ring treatment that hid the alert state. Pending nodes are unchanged (grey body + grey pending ring). Detail panels surface the cause inline: \"Not yet active — activation needs 500,000 ALEPH total staked\" or \"Owner must hold 200,000 ALEPH before others can stake on this node\".",
+      },
+    ],
+  },
   {
     version: "0.14.0",
     date: "2026-05-11",

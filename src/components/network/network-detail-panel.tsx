@@ -15,6 +15,7 @@ import { NetworkFocusPill } from "@/components/network/network-focus-pill";
 type Props = {
   node: GraphNode | null;
   nodeState: NodeState | undefined;
+  ownerBalances: Map<string, number> | undefined;
   visibleGraph: Graph;
   focusNode: GraphNode | null;
   onClose: () => void;
@@ -86,6 +87,7 @@ function countryAggregate(graph: Graph, countryId: string): {
 export function NetworkDetailPanel({
   node,
   nodeState,
+  ownerBalances,
   visibleGraph,
   focusNode,
   onClose,
@@ -100,6 +102,9 @@ export function NetworkDetailPanel({
   const crnInfo = node.kind === "crn" ? nodeState?.crns.get(node.id) : undefined;
   const parentInfo = crnInfo?.parent
     ? nodeState?.ccns.get(crnInfo.parent) ?? null
+    : null;
+  const ccnOwnerBal = ccnInfo
+    ? ownerBalances?.get(ccnInfo.owner.toLowerCase()) ?? null
     : null;
 
   return (
@@ -136,7 +141,11 @@ export function NetworkDetailPanel({
 
       <div className="min-h-0 flex-1 overflow-y-auto">
         {ccnInfo && (
-          <NetworkDetailPanelCCN info={ccnInfo} country={node.country} />
+          <NetworkDetailPanelCCN
+            info={ccnInfo}
+            country={node.country}
+            ownerBalance={ccnOwnerBal}
+          />
         )}
         {crnInfo && (
           <NetworkDetailPanelCRN

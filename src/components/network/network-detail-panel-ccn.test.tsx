@@ -18,7 +18,7 @@ const ACTIVE_CCN: CCNInfo = {
 
 describe("NetworkDetailPanelCCN", () => {
   it("renders identity, score, counts, total staked, owner and reward", () => {
-    render(<NetworkDetailPanelCCN info={ACTIVE_CCN} />);
+    render(<NetworkDetailPanelCCN info={ACTIVE_CCN} ownerBalance={250_000} />);
     expect(screen.getByText("CCN")).toBeInTheDocument();
     expect(screen.getByText("active")).toBeInTheDocument();
     expect(screen.getByText("94.0%")).toBeInTheDocument();
@@ -33,8 +33,33 @@ describe("NetworkDetailPanelCCN", () => {
     render(
       <NetworkDetailPanelCCN
         info={{ ...ACTIVE_CCN, inactiveSince: 1700000000 }}
+        ownerBalance={null}
       />,
     );
     expect(screen.getByText("active")).toBeInTheDocument();
+  });
+
+  it("shows the owner-locked message when owner balance is below 200k", () => {
+    render(
+      <NetworkDetailPanelCCN
+        info={{ ...ACTIVE_CCN, totalStaked: 600_000 }}
+        ownerBalance={100_000}
+      />,
+    );
+    expect(
+      screen.getByText(/Owner must hold 200,000 ALEPH/),
+    ).toBeInTheDocument();
+  });
+
+  it("shows the understaked message when total is below 500k but owner is OK", () => {
+    render(
+      <NetworkDetailPanelCCN
+        info={{ ...ACTIVE_CCN, totalStaked: 428_000 }}
+        ownerBalance={250_000}
+      />,
+    );
+    expect(
+      screen.getByText(/activation needs 500,000 ALEPH total staked/),
+    ).toBeInTheDocument();
   });
 });

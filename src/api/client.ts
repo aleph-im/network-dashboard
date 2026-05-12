@@ -351,6 +351,41 @@ export async function getWalletMessages(
   return allMessages;
 }
 
+// On-chain ALEPH balance for a list of addresses, returned keyed by the
+// lowercased address. The endpoint returns the balance summed across chains
+// (ETH + BASE + …) under `balance`. Failures for individual addresses are
+// skipped — the resulting map is best-effort, and callers should treat a
+// missing entry as "unknown" rather than zero.
+const BALANCE_FETCH_BATCH = 20;
+
+export async function getOwnerBalances(
+  addresses: string[],
+): Promise<Map<string, number>> {
+  const balances = new Map<string, number>();
+  const unique = [...new Set(addresses)];
+  for (let i = 0; i < unique.length; i += BALANCE_FETCH_BATCH) {
+    const batch = unique.slice(i, i + BALANCE_FETCH_BATCH);
+    const results = await Promise.allSettled(
+      batch.map(async (addr): Promise<[string, number]> => {
+        const url =
+          `${getAlephBaseUrl()}/api/v0/addresses/${addr}/balance`;
+        const res = await fetch(url);
+        if (!res.ok) {
+          throw new Error(`balance ${res.status} for ${addr}`);
+        }
+        const data = (await res.json()) as { balance?: number };
+        return [addr.toLowerCase(), data.balance ?? 0];
+      }),
+    );
+    for (const r of results) {
+      if (r.status === "fulfilled") {
+        balances.set(r.value[0], r.value[1]);
+      }
+    }
+  }
+  return balances;
+}
+
 export async function getAuthorizations(
   address: string,
   direction: "granted" | "received",

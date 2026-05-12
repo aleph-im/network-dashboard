@@ -3,6 +3,7 @@
 import { useMemo } from "react";
 import { useSearchParams } from "next/navigation";
 import { useNodeState } from "@/hooks/use-node-state";
+import { useOwnerBalances } from "@/hooks/use-owner-balances";
 import {
   buildGraph,
   type Graph,
@@ -38,11 +39,13 @@ export type UseNetworkGraphResult = {
   isLoading: boolean;
   isFetching: boolean;
   nodeState: NodeState | undefined;
+  ownerBalances: Map<string, number> | undefined;
 };
 
 export function useNetworkGraph(): UseNetworkGraphResult {
   const searchParams = useSearchParams();
   const { data: state, isLoading, isFetching } = useNodeState();
+  const { data: ownerBalances } = useOwnerBalances(state);
 
   const layersParam = searchParams.get("layers");
   const layers = useMemo(() => parseLayers(layersParam), [layersParam]);
@@ -52,8 +55,8 @@ export function useNetworkGraph(): UseNetworkGraphResult {
 
   const fullGraph = useMemo<Graph>(() => {
     if (!state) return { nodes: [], edges: [] };
-    return buildGraph(state, layers);
-  }, [state, layers]);
+    return buildGraph(state, layers, ownerBalances);
+  }, [state, layers, ownerBalances]);
 
   const visibleGraph = useMemo<Graph>(() => {
     if (!focusId) return fullGraph;
@@ -69,5 +72,6 @@ export function useNetworkGraph(): UseNetworkGraphResult {
     isLoading,
     isFetching,
     nodeState: state,
+    ownerBalances,
   };
 }
