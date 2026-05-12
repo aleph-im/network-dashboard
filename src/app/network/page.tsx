@@ -28,6 +28,7 @@ function NetworkContent() {
     isLoading,
     isFetching,
     nodeState,
+    ownerBalances,
   } = useNetworkGraph();
   const [resetKey, setResetKey] = useState(0);
   const [isSettling, setIsSettling] = useState(false);
@@ -234,6 +235,7 @@ function NetworkContent() {
           <NetworkDetailPanel
             node={selectedNode}
             nodeState={nodeState}
+            ownerBalances={ownerBalances}
             visibleGraph={visibleGraph}
             focusNode={focusNode}
             onClose={onClosePanel}

@@ -18,6 +18,44 @@ const DEFAULT_GEO: GeoData = {
 export type GraphLayer =
   | "structural" | "owner" | "staker" | "reward" | "geo";
 
+// ALEPH wallet balance the CCN owner must hold (summed across chains) before
+// others can stake on the node. Below this floor the node is "locked" — it
+// can't accumulate further stake regardless of what's already deposited.
+// Source: `/api/v0/addresses/<owner>/balance` from api2.aleph.im.
+export const CCN_OWNER_BALANCE_THRESHOLD = 200_000;
+
+// Total ALEPH a CCN needs across all stakers to be eligible for activation.
+// A CCN is treated as understaked (or pending if it also has no CRNs attached)
+// whenever EITHER the owner balance is below [[CCN_OWNER_BALANCE_THRESHOLD]]
+// OR the total stake is below this threshold, regardless of the status string
+// the API reports — status can lag stake changes, but the threshold check
+// self-corrects.
+export const CCN_ACTIVATION_THRESHOLD = 500_000;
+
+// Look up an owner's ALEPH balance from the balances map (keys are
+// case-insensitive). Returns `null` when the balance hasn't been fetched yet
+// or the request failed — distinct from `0`, which means the owner truly
+// holds nothing. Callers use `null` to mean "don't enforce the gate".
+export function ccnOwnerBalance(
+  balances: Map<string, number> | undefined,
+  owner: string,
+): number | null {
+  if (!balances) return null;
+  const v = balances.get(owner.toLowerCase());
+  return v == null ? null : v;
+}
+
+export function isBelowActivation(
+  totalStaked: number,
+  ownerBalance: number | null,
+): boolean {
+  if (totalStaked < CCN_ACTIVATION_THRESHOLD) return true;
+  // Owner balance unknown → don't enforce the owner gate (avoids dimming the
+  // whole network during the brief window before balances finish loading).
+  if (ownerBalance == null) return false;
+  return ownerBalance < CCN_OWNER_BALANCE_THRESHOLD;
+}
+
 export type GraphNodeKind =
   | "ccn" | "crn" | "staker" | "reward" | "country";
 
@@ -29,14 +67,15 @@ export type GraphNode = {
   owner: string | null;
   reward: string | null;
   inactive: boolean;
-  // True for CCN/CRN that are registered ("waiting") but have no operational
-  // connectivity — CRN with no parent CCN, or CCN with no attached CRNs.
-  // Set once in `buildGraph` from the source data.
+  // True for CCN/CRN with no operational connectivity — a CCN below the
+  // activation stake threshold *and* with no attached CRNs, or a CRN with
+  // status "waiting" and no parent CCN. Set once in `buildGraph` from the
+  // source data.
   pending?: boolean;
-  // True for CCNs that have attached CRNs but haven't reached the 700k ALEPH
-  // staking threshold required for activation (`status === "waiting"` while
-  // already operationally connected). Distinct from `pending` (which has no
-  // edges at all) — these still render in their kind color, just dimmed.
+  // True for CCNs that have attached CRNs but are below the activation stake
+  // threshold ([[CCN_ACTIVATION_THRESHOLD]]). Distinct from `pending` (which
+  // has no edges at all) — these still render in their kind color, just
+  // dimmed, so their structural connections stay legible.
   understaked?: boolean;
   country?: string;
   geo?: { lat: number; lng: number };
@@ -48,11 +87,11 @@ export type GraphEdge = {
   type: GraphLayer;
 };
 
-// "waiting" CCN/CRN that are registered on-chain but not yet adopted into the
-// operational topology — CRN with no parent, or CCN with no attached CRNs.
-// Precomputed in `buildGraph` since the check needs the source data, not just
-// the GraphNode. We surface this as a distinct visual + panel state so users
-// don't read these isolated nodes as "broken".
+// CCN/CRN that are registered on-chain but not yet adopted into the operational
+// topology — CRN with no parent, or CCN that's both below the activation stake
+// threshold AND has no attached CRNs. Precomputed in `buildGraph` since the
+// check needs the source data, not just the GraphNode. Surfaced as a distinct
+// visual + panel state so users don't read these isolated nodes as "broken".
 export function isPending(node: GraphNode): boolean {
   return node.pending === true;
 }
@@ -69,6 +108,7 @@ export type Graph = {
 export function buildGraph(
   state: NodeState,
   layers: Set<GraphLayer>,
+  ownerBalances?: Map<string, number>,
   geo: GeoData = DEFAULT_GEO,
 ): Graph {
   const nodes: GraphNode[] = [];
@@ -76,8 +116,10 @@ export function buildGraph(
 
   for (const c of state.ccns.values()) {
     const ccnInactive = c.inactiveSince != null;
-    const ccnWaiting = c.status === "waiting" && !ccnInactive;
     const hasCrns = c.resourceNodes.length > 0;
+    const ownerBal = ccnOwnerBalance(ownerBalances, c.owner);
+    const belowActivation =
+      !ccnInactive && isBelowActivation(c.totalStaked, ownerBal);
     nodes.push({
       id: c.hash,
       kind: "ccn",
@@ -86,8 +128,8 @@ export function buildGraph(
       owner: c.owner,
       reward: c.reward,
       inactive: ccnInactive,
-      pending: ccnWaiting && !hasCrns,
-      understaked: ccnWaiting && hasCrns,
+      pending: belowActivation && !hasCrns,
+      understaked: belowActivation && hasCrns,
     });
   }
   for (const r of state.crns.values()) {

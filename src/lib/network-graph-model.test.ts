@@ -60,6 +60,139 @@ describe("buildGraph", () => {
   });
 });
 
+describe("buildGraph — understaked / pending CCNs", () => {
+  it("marks CCNs below the activation threshold as understaked when they have CRNs", () => {
+    const state = makeState({
+      ccns: [
+        ccn("low", {
+          status: "active",
+          owner: "0xowner",
+          totalStaked: 428_000, // total below 500k
+          resourceNodes: ["r1"],
+        }),
+      ],
+      crns: [crn("r1", { parent: "low" })],
+    });
+    const balances = new Map([["0xowner", 250_000]]); // owner balance met
+    const graph = buildGraph(state, new Set(["structural"]), balances);
+    const node = graph.nodes.find((n) => n.id === "low")!;
+    expect(node.understaked).toBe(true);
+    expect(node.pending).toBe(false);
+  });
+
+  it("marks CCNs below the activation threshold as pending when they have no CRNs", () => {
+    const state = makeState({
+      ccns: [ccn("solo", { owner: "0xowner", totalStaked: 0 })],
+    });
+    const balances = new Map([["0xowner", 250_000]]);
+    const graph = buildGraph(state, new Set(["structural"]), balances);
+    const node = graph.nodes.find((n) => n.id === "solo")!;
+    expect(node.pending).toBe(true);
+    expect(node.understaked).toBe(false);
+  });
+
+  it("does not mark CCNs that meet both the owner and activation thresholds", () => {
+    const state = makeState({
+      ccns: [
+        ccn("ok", {
+          owner: "0xowner",
+          totalStaked: 500_000,
+          resourceNodes: ["r1"],
+        }),
+        ccn("high", {
+          owner: "0xowner",
+          totalStaked: 1_500_000,
+          resourceNodes: ["r2"],
+        }),
+      ],
+      crns: [
+        crn("r1", { parent: "ok" }),
+        crn("r2", { parent: "high" }),
+      ],
+    });
+    const balances = new Map([["0xowner", 200_000]]);
+    const graph = buildGraph(state, new Set(["structural"]), balances);
+    for (const id of ["ok", "high"]) {
+      const node = graph.nodes.find((n) => n.id === id)!;
+      expect(node.understaked).toBe(false);
+      expect(node.pending).toBe(false);
+    }
+  });
+
+  it("marks CCNs where the owner balance is below 200k, even when total is above 500k", () => {
+    const state = makeState({
+      ccns: [
+        ccn("ownerlow", {
+          status: "active",
+          owner: "0xowner",
+          totalStaked: 700_000, // total met
+          resourceNodes: ["r1"],
+        }),
+      ],
+      crns: [crn("r1", { parent: "ownerlow" })],
+    });
+    const balances = new Map([["0xowner", 100_000]]); // owner balance below 200k
+    const graph = buildGraph(state, new Set(["structural"]), balances);
+    const node = graph.nodes.find((n) => n.id === "ownerlow")!;
+    expect(node.understaked).toBe(true);
+  });
+
+  it("matches owner address case-insensitively when looking up balance", () => {
+    const state = makeState({
+      ccns: [
+        ccn("c1", {
+          owner: "0xAbC123",
+          totalStaked: 700_000,
+          resourceNodes: ["r1"],
+        }),
+      ],
+      crns: [crn("r1", { parent: "c1" })],
+    });
+    const balances = new Map([["0xabc123", 250_000]]); // lowercased key
+    const graph = buildGraph(state, new Set(["structural"]), balances);
+    const node = graph.nodes.find((n) => n.id === "c1")!;
+    expect(node.understaked).toBe(false);
+    expect(node.pending).toBe(false);
+  });
+
+  it("does not enforce the owner gate when balance map is missing the owner", () => {
+    const state = makeState({
+      ccns: [
+        ccn("unknown-balance", {
+          owner: "0xowner",
+          totalStaked: 700_000,
+          resourceNodes: ["r1"],
+        }),
+      ],
+      crns: [crn("r1", { parent: "unknown-balance" })],
+    });
+    // Owner balance hasn't been fetched yet — don't dim the node
+    // (avoids flashing the whole network as locked during initial load).
+    const graph = buildGraph(state, new Set(["structural"]), new Map());
+    const node = graph.nodes.find((n) => n.id === "unknown-balance")!;
+    expect(node.understaked).toBe(false);
+    expect(node.pending).toBe(false);
+  });
+
+  it("ignores the threshold for inactive CCNs (inactive takes precedence)", () => {
+    const state = makeState({
+      ccns: [
+        ccn("dead", {
+          totalStaked: 0,
+          inactiveSince: 1_700_000_000,
+          resourceNodes: ["r1"],
+        }),
+      ],
+      crns: [crn("r1", { parent: "dead" })],
+    });
+    const graph = buildGraph(state, new Set(["structural"]));
+    const node = graph.nodes.find((n) => n.id === "dead")!;
+    expect(node.inactive).toBe(true);
+    expect(node.understaked).toBe(false);
+    expect(node.pending).toBe(false);
+  });
+});
+
 describe("buildGraph layers", () => {
   it("draws owner edges between nodes sharing an owner address", () => {
     const state = makeState({
@@ -128,7 +261,7 @@ describe("buildGraph — geo layer", () => {
       ccns: [ccn("c1")],
       crns: [crn("r1", { parent: "c1" })],
     });
-    const graph = buildGraph(state, new Set(["structural"]), {
+    const graph = buildGraph(state, new Set(["structural"]), undefined, {
       locations: { c1: { country: "FR" }, r1: { country: "FR" } },
       centroids: { FR: FR_CENTROID },
     });
@@ -144,7 +277,7 @@ describe("buildGraph — geo layer", () => {
         crn("r2", { parent: "c1" }),
       ],
     });
-    const graph = buildGraph(state, new Set(["geo"]), {
+    const graph = buildGraph(state, new Set(["geo"]), undefined, {
       locations: {
         c1: { country: "FR" },
         r1: { country: "FR" },
@@ -167,7 +300,7 @@ describe("buildGraph — geo layer", () => {
       ccns: [ccn("c1")],
       crns: [crn("r1", { parent: "c1" })],
     });
-    const graph = buildGraph(state, new Set(["geo"]), {
+    const graph = buildGraph(state, new Set(["geo"]), undefined, {
       locations: { c1: { country: "FR" }, r1: { country: "FR" } },
       centroids: { FR: FR_CENTROID },
     });
@@ -181,7 +314,7 @@ describe("buildGraph — geo layer", () => {
       ccns: [ccn("c1")],
       crns: [crn("r_no_loc", { parent: "c1" })],
     });
-    const graph = buildGraph(state, new Set(["geo"]), {
+    const graph = buildGraph(state, new Set(["geo"]), undefined, {
       locations: { c1: { country: "FR" } },
       centroids: { FR: FR_CENTROID },
     });
@@ -193,7 +326,7 @@ describe("buildGraph — geo layer", () => {
     const state = makeState({
       ccns: [ccn("c1")],
     });
-    const graph = buildGraph(state, new Set(["geo"]), {
+    const graph = buildGraph(state, new Set(["geo"]), undefined, {
       locations: { c1: { country: "ZZ" } },
       centroids: {},
     });
@@ -205,7 +338,7 @@ describe("buildGraph — geo layer", () => {
     const state = makeState({
       ccns: [ccn("c1")],
     });
-    const graph = buildGraph(state, new Set(["geo"]), {
+    const graph = buildGraph(state, new Set(["geo"]), undefined, {
       locations: { c1: { country: "FR" } },
       centroids: { FR: FR_CENTROID },
     });
