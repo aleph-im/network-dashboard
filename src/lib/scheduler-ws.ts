@@ -50,7 +50,7 @@ export function createWsClient(url: string): WsClient {
   function setStatus(next: ConnectionStatus): void {
     status = next;
     // Defensive copy — re-entrancy during unsubscribe.
-    for (const fn of [...statusSubs]) fn(next);
+    for (const fn of Array.from(statusSubs)) fn(next);
   }
 
   function open(): void {
@@ -69,7 +69,8 @@ export function createWsClient(url: string): WsClient {
       if (!isSchedulerEvent(parsed)) return;
       eventCount += 1;
       lastEventAt = Date.now();
-      for (const fn of [...eventSubs]) fn(parsed);
+      // Defensive copy — re-entrancy during unsubscribe.
+      for (const fn of Array.from(eventSubs)) fn(parsed);
     };
     const reconnect = () => {
       if (closed) return;
