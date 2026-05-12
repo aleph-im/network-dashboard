@@ -46,7 +46,7 @@ export function replayVmCountTimeline(input: ReplayInput): number[] {
   let count = currentVmCount;
   let eventIdx = 0;
 
-  const counts = new Array<number>(bucketStarts.length).fill(0);
+  const counts: number[] = Array.from({ length: bucketStarts.length }, () => 0);
   for (let i = bucketStarts.length - 1; i >= 0; i--) {
     const bucketStart = bucketStarts[i]!;
     while (eventIdx < events.length && events[eventIdx]!.sec >= bucketStart) {

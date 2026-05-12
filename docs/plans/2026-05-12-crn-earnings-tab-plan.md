@@ -1,3 +1,10 @@
+---
+status: in-progress
+branch: spec/crn-earnings-tab
+date: 2026-05-12
+note: All 11 plan tasks complete + CCN-aware NodeDetailView added during verification (Decision #90). 13 commits on branch (not yet pushed when status set). pnpm check clean (218 tests, 0 lint warnings, build succeeds). User previewed both CRN and CCN flows and confirmed working. Awaiting `/dio:ship` to push, PR, and squash-merge — preview gate already passed.
+---
+
 # CRN / CCN Earnings Tab Implementation Plan
 
 > **For agentic workers:** REQUIRED SUB-SKILL: Use superpowers:subagent-driven-development (recommended) or superpowers:executing-plans to implement this plan task-by-task. Steps use checkbox (`- [ ]`) syntax for tracking.
