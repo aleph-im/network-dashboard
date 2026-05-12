@@ -10,7 +10,7 @@ Scheduler v1 API surface adoption — Wave 1 of 2. This wave lands the new VM-le
 
 | Plan | Branch | Worktree | Reserved Decision | Status |
 |------|--------|----------|-------------------|--------|
-| [vm-fields-migrating-status](../plans/2026-05-12-vm-fields-migrating-status.md) | `feature/vm-fields-migrating-status` | `../scheduler-dashboard--feature-vm-fields-migrating-status` | #86 | in-progress |
+| [vm-fields-migrating-status](../plans/2026-05-12-vm-fields-migrating-status.md) | `feature/vm-fields-migrating-status` | `../scheduler-dashboard--feature-vm-fields-migrating-status` | #86 | done — PR #107 (ed2a963) |
 | [scheduler-websocket](../plans/2026-05-12-scheduler-websocket.md) | `feature/scheduler-websocket` | `../scheduler-dashboard--feature-scheduler-websocket` | #87 | in-progress |
 
 ## Started
