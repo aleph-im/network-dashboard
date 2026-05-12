@@ -271,6 +271,7 @@ export function applyVmAdvancedFilters(
  */
 export const ACTIVE_VM_STATUSES: ReadonlySet<VmStatus> = new Set<VmStatus>([
   "dispatched",
+  "migrating",
   "duplicated",
   "misplaced",
   "missing",

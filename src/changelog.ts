@@ -11,9 +11,27 @@ export type VersionEntry = {
   changes: ChangeEntry[];
 };
 
-export const CURRENT_VERSION = "0.16.0";
+export const CURRENT_VERSION = "0.17.0";
 
 export const CHANGELOG: VersionEntry[] = [
+  {
+    version: "0.17.0",
+    date: "2026-05-12",
+    changes: [
+      {
+        type: "feature",
+        text: "Migrating VMs are now first-class: a new **Migrating** tab on `/vms` (now 4 visible status pills instead of 3), an amber warning pill across all surfaces, an Owner row sourced directly from the scheduler on VM detail, and a Migration section showing target node + time started.",
+      },
+      {
+        type: "feature",
+        text: "Network graph: migrations now render as **amber arrows** from source to target CRN, always-on (not gated by a layer toggle). The CRN detail panel shows a Migrations row with inbound/outbound counts.",
+      },
+      {
+        type: "feature",
+        text: "Issues page: when the scheduler's reported `scheduling_status` diverges from our derived `status`, Schedule vs Reality shows both side-by-side so the discrepancy has concrete grounding.",
+      },
+    ],
+  },
   {
     version: "0.16.0",
     date: "2026-05-12",

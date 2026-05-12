@@ -191,4 +191,44 @@ describe("NetworkDetailPanelCRN", () => {
       screen.queryByText(/Low score/i),
     ).not.toBeInTheDocument();
   });
+
+  it("renders the Migrations row when inbound + outbound > 0", () => {
+    useNodeMock.mockReturnValue({
+      data: null,
+      isLoading: false,
+    } as unknown as ReturnType<typeof useNode>);
+
+    renderWithQuery(
+      <NetworkDetailPanelCRN
+        info={CRN}
+        parent={PARENT}
+        unreachable={false}
+        inboundMigrations={1}
+        outboundMigrations={2}
+        onFocusParent={() => {}}
+      />,
+    );
+    expect(screen.getByText(/Migrations/i)).toBeInTheDocument();
+    expect(screen.getByText(/→\s*2\s*outbound/i)).toBeInTheDocument();
+    expect(screen.getByText(/←\s*1\s*inbound/i)).toBeInTheDocument();
+  });
+
+  it("hides the Migrations row when both counts are zero", () => {
+    useNodeMock.mockReturnValue({
+      data: null,
+      isLoading: false,
+    } as unknown as ReturnType<typeof useNode>);
+
+    renderWithQuery(
+      <NetworkDetailPanelCRN
+        info={CRN}
+        parent={PARENT}
+        unreachable={false}
+        inboundMigrations={0}
+        outboundMigrations={0}
+        onFocusParent={() => {}}
+      />,
+    );
+    expect(screen.queryByText(/Migrations/i)).not.toBeInTheDocument();
+  });
 });

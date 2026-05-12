@@ -146,7 +146,7 @@ function transformNode(raw: ApiNodeRow): Node {
   };
 }
 
-function transformVm(raw: ApiVmRow): VM {
+export function transformVm(raw: ApiVmRow): VM {
   return {
     hash: raw.vm_hash,
     type: raw.vm_type,
@@ -165,6 +165,10 @@ function transformVm(raw: ApiVmRow): VM {
     paymentType: raw.payment_type,
     gpuRequirements: raw.gpu_requirements.map(transformGpu),
     requiresConfidential: raw.requires_confidential,
+    schedulingStatus: raw.scheduling_status,
+    migrationTarget: raw.migration_target,
+    migrationStartedAt: raw.migration_started_at,
+    owner: raw.owner,
   };
 }
 

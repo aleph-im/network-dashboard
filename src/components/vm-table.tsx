@@ -40,6 +40,7 @@ const STATUS_PILLS: { value: VmStatus | undefined; label: string; tooltip?: stri
   { value: undefined, label: "All" },
   { value: "dispatched", label: "Dispatched", tooltip: "Running on the correct node" },
   { value: "scheduled", label: "Scheduled", tooltip: "Assigned to a node but not yet observed" },
+  { value: "migrating", label: "Migrating", tooltip: "Being moved to a different node" },
   { value: "duplicated", label: "Duplicated", tooltip: "Running on correct node plus extra copies" },
   { value: "misplaced", label: "Misplaced", tooltip: "Running on wrong node(s), not on assigned node" },
   { value: "missing", label: "Missing", tooltip: "Scheduled but not found on any node" },
@@ -482,7 +483,7 @@ export function VMTable({
         searchValue={searchInput}
         onSearchChange={setSearchInput}
         searchPlaceholder="Search hash, name, node..."
-        maxVisibleStatuses={3}
+        maxVisibleStatuses={4}
       />
 
       <FilterPanel

@@ -217,6 +217,34 @@ function IssuesVmDetailPanel({ vm, onClose }: IssuesVmDetailPanelProps) {
               )}
             </dd>
           </div>
+          {vm.schedulingStatus != null && vm.schedulingStatus !== vm.status && (
+            <>
+              <div className="flex justify-between pt-1.5">
+                <dt className="text-muted-foreground">Derived</dt>
+                <dd>
+                  <Badge
+                    fill="outline"
+                    variant={VM_STATUS_VARIANT[vm.status]}
+                    size="sm"
+                  >
+                    {vm.status}
+                  </Badge>
+                </dd>
+              </div>
+              <div className="flex justify-between">
+                <dt className="text-muted-foreground">Scheduler</dt>
+                <dd>
+                  <Badge
+                    fill="outline"
+                    variant={VM_STATUS_VARIANT[vm.schedulingStatus]}
+                    size="sm"
+                  >
+                    {vm.schedulingStatus}
+                  </Badge>
+                </dd>
+              </div>
+            </>
+          )}
         </dl>
       </div>
 

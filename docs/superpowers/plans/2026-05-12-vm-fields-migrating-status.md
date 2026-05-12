@@ -1,10 +1,10 @@
 ---
-status: in-progress
+status: done
 branch: feature/vm-fields-migrating-status
 date: 2026-05-12
 wave: 2026-05-12-scheduler-v1
 reservedDecision: 86
-note: fanned out as part of wave 2026-05-12-scheduler-v1
+note: implemented; awaiting preview + ship
 ---
 
 # VM Fields & Migrating Status Implementation Plan

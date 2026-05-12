@@ -15,6 +15,8 @@ type Props = {
   parent: CCNInfo | null;
   country?: string | undefined;
   unreachable: boolean;
+  inboundMigrations?: number;
+  outboundMigrations?: number;
   onFocusParent: (parentId: string) => void;
 };
 
@@ -29,7 +31,15 @@ function crnChipVariant(
   return "warning";
 }
 
-export function NetworkDetailPanelCRN({ info, parent, country, unreachable, onFocusParent }: Props) {
+export function NetworkDetailPanelCRN({
+  info,
+  parent,
+  country,
+  unreachable,
+  inboundMigrations = 0,
+  outboundMigrations = 0,
+  onFocusParent,
+}: Props) {
   const { data: node, isLoading } = useNode(info.hash);
   const showResources =
     isLoading || (node?.resources != null && node.resources.vcpusTotal > 0);
@@ -70,6 +80,23 @@ export function NetworkDetailPanelCRN({ info, parent, country, unreachable, onFo
             {(info.score * 100).toFixed(1)}%
           </dd>
         </div>
+        {inboundMigrations + outboundMigrations > 0 && (
+          <div className="flex justify-between">
+            <dt className="text-muted-foreground">Migrations</dt>
+            <dd className="flex items-center gap-2 text-xs">
+              {outboundMigrations > 0 && (
+                <span className="tabular-nums">
+                  → {outboundMigrations} outbound
+                </span>
+              )}
+              {inboundMigrations > 0 && (
+                <span className="tabular-nums">
+                  ← {inboundMigrations} inbound
+                </span>
+              )}
+            </dd>
+          </div>
+        )}
         {land && (
           <div className="flex justify-between">
             <dt className="text-muted-foreground">Location</dt>

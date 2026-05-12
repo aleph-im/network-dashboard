@@ -93,20 +93,24 @@ export function VMDetailPanel({ hash, onClose }: VMDetailPanelProps) {
         )}
       </dl>
 
-      {messageInfo?.get(vm.hash)?.sender && (
-        <div className="mt-4 space-y-1.5 border-t border-edge pt-3">
-          <h4 className="text-xs font-semibold uppercase tracking-wider text-muted-foreground">
-            Owner
-          </h4>
-          <CopyableText
-            text={messageInfo.get(vm.hash)!.sender}
-            startChars={8}
-            endChars={8}
-            size="sm"
-            href={`/wallet?address=${messageInfo.get(vm.hash)!.sender}`}
-          />
-        </div>
-      )}
+      {(() => {
+        const owner = vm.owner ?? messageInfo?.get(vm.hash)?.sender ?? null;
+        if (!owner) return null;
+        return (
+          <div className="mt-4 space-y-1.5 border-t border-edge pt-3">
+            <h4 className="text-xs font-semibold uppercase tracking-wider text-muted-foreground">
+              Owner
+            </h4>
+            <CopyableText
+              text={owner}
+              startChars={8}
+              endChars={8}
+              size="sm"
+              href={`/wallet?address=${owner}`}
+            />
+          </div>
+        );
+      })()}
 
       <div className="mt-4 space-y-1.5 border-t border-edge pt-3">
         <h4 className="text-xs font-semibold uppercase tracking-wider text-muted-foreground">
@@ -131,6 +135,40 @@ export function VMDetailPanel({ hash, onClose }: VMDetailPanelProps) {
           <span className="text-sm text-muted-foreground">Not allocated</span>
         )}
       </div>
+
+      {vm.status === "migrating" && (
+        <div className="mt-4 space-y-1.5 border-t border-edge pt-3">
+          <h4 className="text-xs font-semibold uppercase tracking-wider text-muted-foreground">
+            Migration
+          </h4>
+          <div className="space-y-1 text-sm">
+            <div className="flex justify-between">
+              <dt className="text-muted-foreground">Target</dt>
+              <dd>
+                {vm.migrationTarget ? (
+                  <CopyableText
+                    text={vm.migrationTarget}
+                    startChars={8}
+                    endChars={8}
+                    size="sm"
+                    href={`/nodes?view=${vm.migrationTarget}`}
+                  />
+                ) : (
+                  <span className="text-xs text-muted-foreground">unknown</span>
+                )}
+              </dd>
+            </div>
+            {vm.migrationStartedAt && (
+              <div className="flex justify-between">
+                <dt className="text-muted-foreground">Started</dt>
+                <dd className="text-xs tabular-nums">
+                  {relativeTime(vm.migrationStartedAt)}
+                </dd>
+              </div>
+            )}
+          </div>
+        </div>
+      )}
 
       {vm.observedNodes.length > 0 && (
         <div className="mt-4 space-y-1.5 border-t border-edge pt-3">
