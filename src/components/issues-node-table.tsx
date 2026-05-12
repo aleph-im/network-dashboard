@@ -2,6 +2,7 @@
 
 import { useState, useTransition, useMemo, useEffect } from "react";
 import Link from "next/link";
+import { useRouter, usePathname, useSearchParams } from "next/navigation";
 import { Table, type Column } from "@aleph-front/ds/table";
 import { Badge } from "@aleph-front/ds/badge";
 import { Card } from "@aleph-front/ds/card";
@@ -346,6 +347,9 @@ export function IssuesNodeTable({
   leading,
 }: IssuesNodeTableProps) {
   const [, startTransition] = useTransition();
+  const router = useRouter();
+  const pathname = usePathname();
+  const searchParams = useSearchParams();
   const [searchInput, setSearchInput] = useState("");
   const debouncedQuery = useDebounce(searchInput, 300);
   const [statusFilter, setStatusFilter] =
@@ -449,9 +453,17 @@ export function IssuesNodeTable({
         leading={leading}
         statuses={STATUS_PILLS}
         activeStatus={statusFilter}
-        onStatusChange={(s) =>
-          startTransition(() => setStatusFilter(s))
-        }
+        onStatusChange={(s) => {
+          startTransition(() => setStatusFilter(s));
+          const params = new URLSearchParams(searchParams.toString());
+          if (s) {
+            params.set("status", s);
+          } else {
+            params.delete("status");
+          }
+          const qs = params.toString();
+          router.replace(qs ? `${pathname}?${qs}` : pathname);
+        }}
         formatCount={formatCount}
         searchValue={searchInput}
         onSearchChange={setSearchInput}
