@@ -232,6 +232,10 @@ export async function getVMs(filters?: VmFilters): Promise<VM[]> {
   const params = new URLSearchParams();
   if (filters?.status) params.set("status", filters.status);
   if (filters?.node) params.set("node", filters.node);
+  if (filters?.owner) params.set("owners", filters.owner);
+  if (filters?.schedulingStatus) {
+    params.set("scheduling_status", filters.schedulingStatus);
+  }
   const qs = params.toString();
   const raw = await fetchAllPages<ApiVmRow>(
     `/api/v1/vms${qs ? `?${qs}` : ""}`,
