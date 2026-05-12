@@ -11,9 +11,19 @@ export type VersionEntry = {
   changes: ChangeEntry[];
 };
 
-export const CURRENT_VERSION = "0.18.0";
+export const CURRENT_VERSION = "0.19.0";
 
 export const CHANGELOG: VersionEntry[] = [
+  {
+    version: "0.19.0",
+    date: "2026-05-12",
+    changes: [
+      {
+        type: "feature",
+        text: "VMs page: new **Owner address** filter in the advanced filter panel. Paste a 0x-prefixed wallet address to see only that owner's VMs — the query goes server-side (`?owners=`) so the payload shrinks from thousands to tens. Debounced 500ms, validated mid-typing without an inline error, persists via `?owner=`, and the active-filter dot on the toolbar lights up when set.",
+      },
+    ],
+  },
   {
     version: "0.18.0",
     date: "2026-05-12",

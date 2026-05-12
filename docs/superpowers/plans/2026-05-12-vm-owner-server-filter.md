@@ -1,9 +1,9 @@
 ---
-status: in-progress
+status: done
 branch: feature/vm-owner-server-filter
 date: 2026-05-12
 reservedDecision: 88
-note: Wave 2 of scheduler v1 API surface; rebases on Wave 1 (PRs #107 + #109 + #111)
+note: Wave 2 of scheduler v1 API surface; rebased on Wave 1 (PRs #107 + #109 + #111). Decision #88 used as reserved; changelog landed at v0.19.0 (Wave 1 had already taken 0.17/0.18). Awaiting preview + ship.
 ---
 
 # VM Owner Server-Side Filter Implementation Plan
