@@ -219,4 +219,20 @@ describe("createWsClient — connection lifecycle", () => {
 
     client.close();
   });
+
+  it("close() prevents further reconnects even on later socket close", () => {
+    vi.useFakeTimers();
+    const client = createWsClient("ws://example/api/v1/ws");
+    MockWebSocket.instances[0]!.triggerOpen();
+
+    client.close();
+    expect(client.status).toBe("disconnected");
+
+    // Subsequent close on the underlying socket must not schedule a reconnect.
+    MockWebSocket.instances[0]!.triggerClose();
+    vi.advanceTimersByTime(60_000);
+
+    expect(MockWebSocket.instances).toHaveLength(1);
+    expect(client.status).toBe("disconnected");
+  });
 });
