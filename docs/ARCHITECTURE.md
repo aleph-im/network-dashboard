@@ -85,7 +85,8 @@ src/
 │   ├── credit-recipient-table.tsx # Credit recipient table (DS Table, FilterToolbar, sortable columns)
 │   ├── credit-summary-bar.tsx # Credit summary stat cards
 │   ├── world-map-card.tsx  # Mercator world map with per-node SVG dots
-│   └── resource-bar.tsx    # CPU/memory/disk usage bar
+│   ├── resource-bar.tsx    # CPU/memory/disk usage bar
+│   └── websocket-provider.tsx # App-wide WS client mount + useWebSocketStatus hook + event→queryKey invalidation map
 ├── lib/
 │   ├── filters.ts          # Filter pipeline: textSearch, countByStatus, applyNodeAdvancedFilters, applyVmAdvancedFilters
 │   ├── filters.test.ts     # Filter unit tests (32 tests)
@@ -94,7 +95,8 @@ src/
 │   ├── format.ts           # relativeTime, relativeTimeFromUnix, truncateHash, formatPercent, formatDateTime, formatCpuLabel, formatGpuLabel, formatAleph, explorerWalletUrl
 │   ├── status-map.ts       # Status-to-visual maps: nodeStatusToDot(), NODE_STATUS_VARIANT, VM_STATUS_VARIANT, MESSAGE_TYPE_VARIANT
 │   ├── world-map-projection.ts  # Web Mercator + equirectangular projection factories + deterministic per-hash scatter (mulberry32 + FNV-1a)
-│   └── world-map-resolution.ts  # Multiaddr/hostname parsing helpers (used by build-time snapshot)
+│   ├── world-map-resolution.ts  # Multiaddr/hostname parsing helpers (used by build-time snapshot)
+│   └── scheduler-ws.ts          # Non-React WebSocket client factory (lifecycle, exponential reconnect, subscribers, getWsUrl)
 └── data/                   # Build-time JSON snapshots (committed)
     ├── country-centroids.json   # ISO-2 → {lat, lng, name}, generated from world-countries
     └── node-locations.json      # node hash → { country }, generated from corechannel + ip3country
@@ -148,6 +150,27 @@ Dashboard on `http://localhost:3000` lists all active previews with links. State
 **Approach:** Each hook uses `refetchInterval` for automatic polling. Detail views poll at 15s, list views and overview stats at 30s.
 **Key files:** `src/hooks/`
 **Notes:** `staleTime: 10_000` and `retry: 2` configured globally in providers.tsx.
+
+### Scheduler WebSocket Cache Invalidation
+
+**Context:** Polling at 15–30s gives near-live data but lags behind real scheduling activity by seconds-to-tens-of-seconds; the scheduler exposes a `/api/v1/ws` event stream that can push state changes immediately.
+
+**Approach:** A non-React module (`src/lib/scheduler-ws.ts`) owns the WebSocket lifecycle — `createWsClient(url)` returns a `WsClient` with `status` / `lastEventAt` / `eventCount` getters, a `subscribe(fn)` registry, an `onStatusChange(fn)` registry, and a `close()` that's final. Reconnect uses exponential backoff (1s → 2s → 4s → 8s → 16s → 30s cap), resets on successful connect, and is suppressed once `close()` runs. `getWsUrl()` derives the socket URL from `getBaseUrl()` (the same helper the HTTP client uses, exported from `src/api/client.ts`), rewriting the `http` / `https` prefix to `ws` / `wss` — so the `?api=` query override and `NEXT_PUBLIC_API_URL` env fallback work uniformly.
+
+A React provider (`src/components/websocket-provider.tsx`) mounts a single client for the whole app inside `PersistQueryClientProvider` in `src/app/providers.tsx`. It subscribes to events and dispatches each one through `handleEvent(event, queryClient)`, which calls `queryClient.invalidateQueries(...)` against the existing keys:
+
+| Event | Invalidated keys |
+|-------|------------------|
+| `VmScheduled` / `VmUnscheduled` / `VmUnschedulable` | `["overview-stats"]`, `["vms"]`, `["vm", vmHash]` |
+| `VmMigrated` | the above + `["nodes"]`, `["node", sourceHash]`, `["node", targetHash]` |
+
+Wallet (`["wallet-vms", …]`, `["wallet-activity", …]`) and credit-expense (`["credit-expenses", …]`) keys are intentionally excluded — they source from api2, not the scheduler. Polling stays in place as the fallback so disconnected periods don't lose correctness; the WS is purely an invalidation accelerant.
+
+`useWebSocketStatus()` exposes `{ status, eventCount, lastEventAt }` through React context. The Network Health page (`/status`) consumes it via a `WebSocketRow` rendered as the leading row of the Scheduler API list — `StatusDot` flips green/amber/grey on status, the right column reads `connected · awaiting events` until the first event then switches to `N events · last <relative>` (`formatRelativeTime`).
+
+**Key files:** `src/lib/scheduler-ws.ts`, `src/lib/scheduler-ws.test.ts`, `src/components/websocket-provider.tsx`, `src/components/websocket-provider.test.tsx`, `src/api/client.ts` (exports `getBaseUrl`), `src/app/providers.tsx`, `src/app/status/page.tsx`
+
+**Notes:** `handleEvent` is exported alongside the provider so the invalidation map is unit-testable without spinning up a real WS. Tests mock `WebSocket` via `vi.stubGlobal` and use `vi.useFakeTimers()` for backoff assertions. JSON parsing is defensive — malformed payloads and unknown `type` values are ignored without raising. Subscriber dispatch iterates a defensive `[...statusSubs]` / `[...eventSubs]` copy so unsubscribers can detach during dispatch without skipping callbacks.
 
 ### DS Component Policy
 

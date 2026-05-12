@@ -5,6 +5,7 @@ import { PersistQueryClientProvider } from "@tanstack/react-query-persist-client
 import { createSyncStoragePersister } from "@tanstack/query-sync-storage-persister";
 import { useState, type ReactNode } from "react";
 import { CURRENT_VERSION } from "@/changelog";
+import { WebSocketProvider } from "@/components/websocket-provider";
 
 const PERSIST_KEY = "scheduler-dashboard-rq";
 const ONE_DAY_MS = 24 * 60 * 60 * 1000;
@@ -60,7 +61,7 @@ export function Providers({ children }: { children: ReactNode }) {
         },
       }}
     >
-      {children}
+      <WebSocketProvider>{children}</WebSocketProvider>
     </PersistQueryClientProvider>
   );
 }

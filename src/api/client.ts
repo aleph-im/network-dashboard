@@ -22,7 +22,7 @@ import type {
 } from "@/api/types";
 import { ACTIVE_VM_STATUSES } from "@/lib/filters";
 
-function getBaseUrl(): string {
+export function getBaseUrl(): string {
   if (typeof window !== "undefined") {
     const params = new URLSearchParams(window.location.search);
     const override = params.get("api");
