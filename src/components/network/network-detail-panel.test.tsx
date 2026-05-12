@@ -60,6 +60,7 @@ describe("NetworkDetailPanel", () => {
         node={CCN_NODE}
         nodeState={NODE_STATE}
         ownerBalances={undefined}
+        crnStatuses={undefined}
         visibleGraph={EMPTY_GRAPH}
         focusNode={null}
         onClose={() => {}}
@@ -83,6 +84,7 @@ describe("NetworkDetailPanel", () => {
         node={CCN_NODE}
         nodeState={NODE_STATE}
         ownerBalances={undefined}
+        crnStatuses={undefined}
         visibleGraph={EMPTY_GRAPH}
         focusNode={null}
         onClose={() => {}}
@@ -103,6 +105,7 @@ describe("NetworkDetailPanel", () => {
         node={CCN_NODE}
         nodeState={NODE_STATE}
         ownerBalances={undefined}
+        crnStatuses={undefined}
         visibleGraph={EMPTY_GRAPH}
         focusNode={null}
         onClose={onClose}
@@ -137,6 +140,7 @@ describe("NetworkDetailPanel", () => {
         node={stakerNode}
         nodeState={NODE_STATE}
         ownerBalances={undefined}
+        crnStatuses={undefined}
         visibleGraph={graphWithEdges}
         focusNode={null}
         onClose={() => {}}
@@ -158,6 +162,7 @@ describe("NetworkDetailPanel", () => {
         node={null}
         nodeState={NODE_STATE}
         ownerBalances={undefined}
+        crnStatuses={undefined}
         visibleGraph={EMPTY_GRAPH}
         focusNode={null}
         onClose={() => {}}
