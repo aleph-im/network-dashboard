@@ -1,3 +1,11 @@
+---
+status: in-progress
+branch: feature/vm-owner-server-filter
+date: 2026-05-12
+reservedDecision: 88
+note: Wave 2 of scheduler v1 API surface; rebases on Wave 1 (PRs #107 + #109 + #111)
+---
+
 # VM Owner Server-Side Filter Implementation Plan
 
 > **For agentic workers:** REQUIRED SUB-SKILL: Use superpowers:subagent-driven-development (recommended) or superpowers:executing-plans to implement this plan task-by-task. Steps use checkbox (`- [ ]`) syntax for tracking.
