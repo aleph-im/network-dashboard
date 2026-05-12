@@ -113,6 +113,16 @@ export function NetworkDetailPanel({
     ? crnStatuses?.get(crnInfo.hash) ?? null
     : null;
   const crnUnreachable = crnSchedulerStatus === "unreachable";
+  const crnOutboundMigrations = crnInfo
+    ? visibleGraph.edges.filter(
+        (e) => e.type === "migration" && e.source === crnInfo.hash,
+      ).length
+    : 0;
+  const crnInboundMigrations = crnInfo
+    ? visibleGraph.edges.filter(
+        (e) => e.type === "migration" && e.target === crnInfo.hash,
+      ).length
+    : 0;
 
   return (
     <section className="flex max-h-full flex-col">
@@ -160,6 +170,8 @@ export function NetworkDetailPanel({
             parent={parentInfo}
             country={node.country}
             unreachable={crnUnreachable}
+            inboundMigrations={crnInboundMigrations}
+            outboundMigrations={crnOutboundMigrations}
             onFocusParent={onFocus}
           />
         )}
