@@ -236,3 +236,29 @@ describe("createWsClient — connection lifecycle", () => {
     expect(client.status).toBe("disconnected");
   });
 });
+
+describe("getWsUrl", () => {
+  afterEach(() => {
+    window.history.replaceState({}, "", "/");
+  });
+
+  it("rewrites http:// → ws:// when the ?api= override is http", () => {
+    window.history.replaceState(
+      {},
+      "",
+      "/?api=http://override.example.com",
+    );
+    expect(getWsUrl()).toBe("ws://override.example.com/api/v1/ws");
+  });
+
+  it("rewrites https:// → wss:// when the ?api= override is https", () => {
+    window.history.replaceState(
+      {},
+      "",
+      "/?api=https://scheduler.api.aleph.cloud",
+    );
+    expect(getWsUrl()).toBe(
+      "wss://scheduler.api.aleph.cloud/api/v1/ws",
+    );
+  });
+});
