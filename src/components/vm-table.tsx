@@ -13,6 +13,7 @@ import {
 import { ShieldCheck } from "@phosphor-icons/react";
 import { Checkbox } from "@aleph-front/ds/checkbox";
 import { Slider } from "@aleph-front/ds/slider";
+import { Input } from "@aleph-front/ds/input";
 import { Skeleton } from "@aleph-front/ds/ui/skeleton";
 import { usePagination } from "@/hooks/use-pagination";
 import { TablePagination } from "@/components/table-pagination";
@@ -226,6 +227,7 @@ type VMTableProps = {
   onSelectVM: (hash: string) => void;
   initialStatus?: VmStatus;
   initialQuery?: string;
+  initialOwner?: string;
   initialShowInactive?: boolean;
   selectedKey?: string;
   compact?: boolean;
@@ -236,6 +238,7 @@ export function VMTable({
   onSelectVM,
   initialStatus,
   initialQuery,
+  initialOwner,
   initialShowInactive,
   selectedKey,
   compact,
@@ -249,6 +252,14 @@ export function VMTable({
   // Search
   const [searchInput, setSearchInput] = useState(initialQuery ?? "");
   const debouncedQuery = useDebounce(searchInput, 300);
+
+  // Owner address filter — server-side via ?owners=.
+  // Raw input is local; passed to the query only when valid + debounced.
+  const [ownerInput, setOwnerInput] = useState(initialOwner ?? "");
+  const debouncedOwner = useDebounce(ownerInput, 500);
+  const validOwner = /^0x[0-9a-fA-F]{40}$/.test(debouncedOwner)
+    ? debouncedOwner
+    : "";
 
   // Status filter
   const [statusFilter, setStatusFilter] = useState<
@@ -266,8 +277,10 @@ export function VMTable({
     initialShowInactive ? { showInactive: true } : {},
   );
 
-  // Data — fetch full dataset
-  const { data: allVms, isLoading } = useVMs();
+  // Data — fetch full dataset (or owner-filtered subset when valid)
+  const { data: allVms, isLoading } = useVMs(
+    validOwner ? { owner: validOwner } : undefined,
+  );
   const hashes = useMemo(() => (allVms ?? []).map((v) => v.hash), [allVms]);
   const { data: messageInfo } = useVMMessageInfo(hashes);
 
@@ -295,6 +308,7 @@ export function VMTable({
       (advanced.memoryGbRange[0] > 0 ||
         advanced.memoryGbRange[1] < filterMaxes.memoryGb),
     advanced.showInactive === true,
+    validOwner !== "",
   ].filter(Boolean).length;
 
   // Filter pipeline
@@ -357,7 +371,23 @@ export function VMTable({
 
   useEffect(() => {
     setPage(1);
-  }, [debouncedQuery, advanced, statusFilter, setPage]);
+  }, [debouncedQuery, advanced, statusFilter, validOwner, setPage]);
+
+  // Persist ?owner= in the URL. Reflects raw input (not just valid) so a
+  // reload after a typo restores what the user actually typed.
+  useEffect(() => {
+    const params = new URLSearchParams(searchParams.toString());
+    if (ownerInput.trim() === "") {
+      params.delete("owner");
+    } else {
+      params.set("owner", ownerInput);
+    }
+    const qs = params.toString();
+    router.replace(qs ? `${pathname}?${qs}` : pathname);
+    // searchParams is read live via .toString(); excluded from deps to avoid
+    // ping-pong updates when other params change.
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [ownerInput, router, pathname]);
 
   const hasNonStatusFilters =
     debouncedQuery.trim() !== "" || activeAdvancedCount > 0;
@@ -453,9 +483,13 @@ export function VMTable({
   }
 
   function clearAdvanced() {
-    startTransition(() => setAdvanced({}));
+    startTransition(() => {
+      setAdvanced({});
+      setOwnerInput("");
+    });
     const params = new URLSearchParams(searchParams.toString());
     params.delete("showInactive");
+    params.delete("owner");
     const qs = params.toString();
     router.replace(qs ? `${pathname}?${qs}` : pathname);
   }
@@ -656,6 +690,25 @@ export function VMTable({
                   </span>
                 </label>
               </div>
+            </div>
+
+            {/* Owner */}
+            <div>
+              <span className="mb-4 block text-xs font-semibold uppercase tracking-wider text-muted-foreground/50">
+                Owner address
+              </span>
+              <Input
+                size="sm"
+                placeholder="0x…"
+                value={ownerInput}
+                onChange={(e) => setOwnerInput(e.target.value)}
+                spellCheck={false}
+                autoCapitalize="off"
+                autoCorrect="off"
+              />
+              <p className="mt-2 text-xs text-muted-foreground/50">
+                Filters server-side. Loads when a complete address is entered.
+              </p>
             </div>
 
             {/* Requirements */}

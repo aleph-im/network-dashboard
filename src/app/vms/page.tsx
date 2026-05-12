@@ -33,6 +33,7 @@ function VMsContent() {
 
   const queryParam = searchParams.get("q") ?? "";
   const showInactiveParam = searchParams.get("showInactive") === "true";
+  const ownerParam = searchParams.get("owner") ?? "";
 
   const selectedParam = searchParams.get("selected");
   const [selectedVM, setSelectedVM] = useState<string | null>(selectedParam);
@@ -53,6 +54,7 @@ function VMsContent() {
       onSelectVM={setSelectedVM}
       {...(initialStatus ? { initialStatus } : {})}
       initialQuery={queryParam}
+      initialOwner={ownerParam}
       {...(showInactiveParam ? { initialShowInactive: true } : {})}
       {...(selectedVM ? { selectedKey: selectedVM } : {})}
       compact={!!selectedVM}
