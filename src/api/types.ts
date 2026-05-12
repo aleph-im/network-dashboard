@@ -102,6 +102,10 @@ export type VmDetail = VM & {
 export type VmFilters = {
   status?: VmStatus;
   node?: string;
+  // 0x-prefixed wallet address. Filters server-side via `?owners=`.
+  owner?: string;
+  // Raw scheduler value. Plumbing only — no UI consumer yet (see Backlog).
+  schedulingStatus?: VmStatus;
 };
 
 // --- History ---

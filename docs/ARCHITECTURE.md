@@ -42,7 +42,8 @@ src/
 ├── api/
 │   ├── types.ts            # Scheduler entity types + Aleph Message API types
 │   ├── credit-types.ts     # Credit expense + distribution types (wire + app)
-│   └── client.ts           # API client (/api/v1 + api2.aleph.im) with snake→camel transform
+│   ├── client.ts           # API client (/api/v1 + api2.aleph.im) with snake→camel transform
+│   └── client.url.test.ts  # Unit tests: getVMs URL construction (owner/status/scheduling_status)
 ├── changelog.ts             # Version history data (CURRENT_VERSION + CHANGELOG array)
 ├── hooks/
 │   ├── use-nodes.ts        # useNodes, useNode (30s/15s polling)
@@ -77,6 +78,7 @@ src/
 │   ├── node-detail-panel.tsx # Node detail side panel (quick-peek)
 │   ├── node-detail-view.tsx # Node full-width detail view (?view= param)
 │   ├── vm-table.tsx        # VMs table with search, filters, count badges
+│   ├── vm-table.test.tsx   # Smoke test: owner filter debounce + URL persistence
 │   ├── vm-detail-panel.tsx # VM detail side panel (quick-peek)
 │   ├── vm-detail-view.tsx  # VM full-width detail view (?view= param)
 │   ├── issues-vm-table.tsx # Issues page: VM perspective table + detail panel
@@ -313,6 +315,8 @@ Wallet (`["wallet-vms", …]`, `["wallet-activity", …]`) and credit-expense (`
 **Inactive-VM filter (default on).** The VMs page hides VMs whose `status` is not in `ACTIVE_VM_STATUSES` (`{dispatched, migrating, duplicated, misplaced, missing, unschedulable}`) by default — the same active-status definition as the Overview Total VMs card (Decision #65). State lives in `VmAdvancedFilters.showInactive` (default `undefined`/`false` = hidden); toggleable via a checkbox in the FilterPanel's Payment & Allocation column. Two-way URL persistence via `?showInactive=true` (param omitted at default). The pure filter `applyInactiveVmFilter(vms, showInactive)` runs in the pipeline only when no specific status pill is selected — clicking a non-active status pill (e.g. Unknown) bypasses the filter so per-status views always resolve to their true counts. Per-status pill count badges read directly from `filteredCounts` (untouched by the inactive filter); the All-tab badge sums only the active-status counts when `showInactive` is off. `ACTIVE_VM_STATUSES` lives in `src/lib/filters.ts` and is also imported by `src/api/client.ts` for the Overview headline. Count-badge format suppresses the `filtered/total` slash when the only thing culling rows is the default-on inactive-hide (no search, no other advanced filters) — the All-tab reads as a plain count so the default state doesn't shout.
 
 **Tab visibility cap.** The DS `Tabs` component (`@aleph-front/ds@0.14.0+`) supports an optional `maxVisible?: number` prop that caps the visible tab count regardless of available width — used on the VMs page (via `FilterToolbar`'s `maxVisibleStatuses` prop) to lock the visible set to All/Dispatched/Scheduled, with the rest in the existing `⋯` overflow dropdown. When both width-based collapse and `maxVisible` are present, the stricter limit wins. Other list pages (Nodes, Issues) omit the prop and keep pure width-based collapse, so they remain unchanged.
+
+**Server-side filters (selective).** `getVMs()` forwards `owner` → `?owners=` and `schedulingStatus` → `?scheduling_status=` to the scheduler. Other filters (`vmTypes`, `requiresGpu`, ranges, etc.) stay client-side — the dashboard fetches the whole VM list anyway and in-memory filtering is instant. Server-side is reserved for filters where the payload reduction is dramatic (owner = thousands → tens) and the user enters a deliberate query (vs. rapid toggles where a refetch + loading state would degrade UX). The owner input on `/vms` is debounced 500ms and validated against `/^0x[0-9a-fA-F]{40}$/`; only valid addresses are passed to `useVMs({ owner })` so mid-typing keeps the full fleet visible. `?owner=` persists the raw input; the filter-panel Reset clears it and the toolbar's active-filter dot lights up when a valid address is in the input. `schedulingStatus` ships as plumbing only — no UI consumer yet (see Backlog for Issues divergence detection). URL construction unit-tested in `src/api/client.url.test.ts`; debounce + URL persistence smoke-tested in `src/components/vm-table.test.tsx`. See Decision #88.
 
 ### Issues Page — Derived Data Views
 
