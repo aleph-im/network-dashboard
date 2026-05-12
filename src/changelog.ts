@@ -11,9 +11,23 @@ export type VersionEntry = {
   changes: ChangeEntry[];
 };
 
-export const CURRENT_VERSION = "0.19.0";
+export const CURRENT_VERSION = "0.20.0";
 
 export const CHANGELOG: VersionEntry[] = [
+  {
+    version: "0.20.0",
+    date: "2026-05-12",
+    changes: [
+      {
+        type: "feature",
+        text: "Node detail view has a new **Earnings tab** for both CRNs and CCNs at `/nodes?view=<hash>&tab=earnings`. Pick a trailing window (24h / 7d / 30d) and see ALEPH accrued plus the delta vs the previous same-length window, a dual-line chart overlaying ALEPH against VM count (CRN) or linked-CRN count (CCN), and a per-VM breakdown (CRN) or linked-CRN status list (CCN). Numbers come from the existing `aleph_credit_expense` feed using the protocol's distribution split — no new API calls. The chart's diagnostic angle (earnings dropped → VM count dropped) is the operator's primary failure mode.",
+      },
+      {
+        type: "feature",
+        text: "CCNs are finally viewable at `/nodes?view=<ccn-hash>`. The scheduler API only knows about CRNs, so CCN hashes used to land on \"Node not found\" — including the \"View full details →\" link from the network graph's CCN panel. CCNs now route to a dedicated detail view backed by the corechannel aggregate: hash, score, owner, reward, total staked, attached CRNs list, stakers table, plus the new Earnings tab.",
+      },
+    ],
+  },
   {
     version: "0.19.0",
     date: "2026-05-12",

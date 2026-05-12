@@ -52,6 +52,36 @@ Intent is agreed but there are open questions, design choices, or multi-step
 coordination required. Needs a brainstorm or spec before someone can execute.
 Multi-day / multi-PR work.
 
+### 2026-05-12 - Earnings tab: hover tooltip on dual-line chart
+**Source:** Per-CRN/CCN Earnings tab (Decision #90).
+**Description:** Add a hover tooltip on `NodeEarningsChart` showing the exact bucket time, ALEPH value, and secondary-count for the bar/point under the cursor. Requires mouse-position tracking on the SVG, an x-coordinate-to-bucket lookup, and a small absolutely-positioned card. Similar problem to the existing sparkline hover tooltip backlog item — both could share an implementation.
+**Priority:** Low
+
+### 2026-05-12 - Earnings tab: distribution reconciliation view
+**Source:** Per-CRN/CCN Earnings tab (Decision #90).
+**Description:** A small "Where did this CRN's ALEPH come from?" panel breaking the trailing-window total into execution rewards from this node's VMs vs anything that arrived via CCN/staker overlap (if the owner happens to also stake or operate a CCN). Cross-references `computeDistributionSummary`'s recipient list against `nodeState.crns.get(hash).owner`.
+**Priority:** Low
+
+### 2026-05-12 - Per-CRN sparkline on network graph CRN detail panel
+**Source:** Per-CRN/CCN Earnings tab (Decision #90).
+**Description:** Reuse the `useNodeEarnings` bucket output to render a tiny 24h ALEPH sparkline in the network-graph CRN/CCN detail panels (`network-detail-panel-crn.tsx`, `network-detail-panel-ccn.tsx`). Adds an at-a-glance "is this node earning?" signal without leaving the graph. Needs a min-height stipulation on the panel so the spark doesn't push other rows off-screen.
+**Priority:** Low
+
+### 2026-05-12 - Score-over-time line on Earnings tab
+**Source:** Per-CRN/CCN Earnings tab (Decision #90).
+**Description:** Add a third overlay line on the Earnings chart for node score over the same trailing window. Currently the KPI card shows a single score-at-load value; a line would help diagnose "earnings dropped because score fell below 0.8" patterns. Blocked: the API doesn't expose historical scores — would need a backend `/stats/history` endpoint or a client-side accumulator that snapshots `useNodeState` on each refresh.
+**Priority:** Low
+
+### 2026-05-12 - Network-median delta on Earnings KPI cards
+**Source:** Per-CRN/CCN Earnings tab (Decision #90).
+**Description:** Today the ALEPH-accrued KPI card shows "▲ X.X vs prev <range>". An alternative or additional comparison: "▲ vs network median for this node class (CRN with N VMs / CCN with N linked CRNs)". Requires a small per-class aggregator on top of the existing `perNodeBuckets` output. Useful for owners benchmarking against peers, but adds visual complexity to the card — needs a quick sketch before implementing.
+**Priority:** Low
+
+### 2026-05-12 - Persistent localStorage cache for `useNodeEarnings`
+**Source:** Per-CRN/CCN Earnings tab (Decision #90).
+**Description:** Wire `useNodeEarnings` into the persisted-query layer so revisiting a node within the 24h cache window renders instantly. The underlying `useCreditExpenses` already participates in the persisted cache, so the wins are limited to the `computeDistributionSummary` bucket pass — deferred until the bucket math shows up as a hot path under real load.
+**Priority:** Low
+
 ### 2026-05-12 - Wallet view: scheduler-vs-api2 divergence detection
 **Source:** Identified during VM owner server-side filter design (spec 2026-05-12-vm-owner-server-filter-design.md).
 **Description:** In `useWalletVMs(address)`, call `useVMs({ owner: address })` alongside the existing api2 INSTANCE/PROGRAM message fetch. Cross-check the two sets to flag VMs in the scheduler that lack a message (and vice versa). Needs design pass for merge logic + UX (which source wins, how to display divergence). `VmFilters.owner` plumbing already in place via PR/Decision #88.
@@ -199,6 +229,7 @@ Items where the path forward is clear but blocked on external work.
 <details>
 <summary>Archived items</summary>
 
+- ✅ 2026-05-12 - Per-CRN / per-CCN Earnings tab on node detail view — `computeDistributionSummary` gained optional `SummaryOptions` (bucketCount + startTime + endTime) emitting `perNodeBuckets: Map<hash, NodeBucket[]>` (post-share-split ALEPH per bucket) and `perVmInWindow: Map<executionId, { aleph, nodeId }>` when called with options; existing callers unaffected when options is omitted. New `useNodeEarnings(hash, range)` composes `useCreditExpenses` (current + previous window), `useNodeState`, `useNode`, `useNodes` + a pure `replayVmCountTimeline` helper to derive `NodeEarnings = { role, totalAleph, delta, buckets, perVm?, linkedCrns? }`. DS Tabs control on `NodeDetailView` (Overview / Earnings) with `?tab=` + `?earningsRange=24h|7d|30d` URL persistence. Dual-line SVG chart (ALEPH primary, secondary count) + 4-card KPI row + per-VM (CRN) or linked-CRN (CCN) breakdown. Plus a CCN-aware `NodeDetailView` dispatch: `/nodes?view=<ccn-hash>` previously fell through to "Node not found" because the scheduler API only knows CRNs; now routes to a new `NodeDetailViewCcn` shell that reads CCN metadata from `nodeState` (no extra API), unblocking the network-graph CCN panel's "View full details →" link (Decision #90)
 - ✅ 2026-05-12 - VM owner server-side filter — `VmFilters` gained `owner?` + `schedulingStatus?`; `getVMs()` forwards them to the scheduler as `?owners=` / `?scheduling_status=`. The VMs page filter panel gains an Owner address input that debounces 500ms, validates against `/^0x[0-9a-fA-F]{40}$/`, and only fires the server query when valid (mid-typing keeps the full fleet visible). Raw input persists via `?owner=`; Reset clears it; the toolbar's active-filter dot lights up when the filter is on. `schedulingStatus` ships as plumbing only — see "Issues page: scheduling_status divergence detection" and "Wallet view: scheduler-vs-api2 divergence detection" under Needs planning for the consumer plans this unblocks (Decision #88)
 - ✅ 2026-05-12 - Scheduler WebSocket cache invalidation — single app-wide WebSocket (`src/lib/scheduler-ws.ts` + `WebSocketProvider`) subscribes to `/api/v1/ws` and invalidates affected React Query caches per event (`VmScheduled` / `VmUnscheduled` / `VmMigrated` / `VmUnschedulable`); polling stays as the fallback. Exponential reconnect (1s→2s→4s→8s→16s→30s cap), resets on success, `close()` is final. WS URL derived from `getBaseUrl()` so `?api=` override + `NEXT_PUBLIC_API_URL` env fallback work. Wallet + credit-expense keys excluded (sourced from api2). New "WebSocket stream" row on `/status` shows connection state, event count, and last-event relative time. Closes the long-standing "WebSocket migration" roadmap item (Decision #87)
 - ✅ 2026-05-12 - VM fields + migrating status — scheduler now reports `scheduling_status`, `migration_target`, `migration_started_at`, `owner` per VM plus a new `migrating` status. `migrating` joins `ACTIVE_VM_STATUSES`, gets an amber warning Badge, and is promoted to a visible tab on `/vms` (cap 3 → 4). VM detail panel + view show scheduler-supplied Owner (api2 fallback) and a Migration section (target + started). Issues page surfaces a Scheduler sub-row inside Schedule vs Reality when `scheduling_status` diverges from derived `status`; `migrating` itself stays out of `DISCREPANCY_STATUSES`. Network graph emits always-on amber migration arrows between source and target CRN (new `EdgeType = GraphLayer | "migration"`, `arrow-end-warning` marker); CRN detail panel shows a Migrations row with inbound/outbound counts (Decision #86)
