@@ -17,9 +17,10 @@ import { Skeleton } from "@aleph-front/ds/ui/skeleton";
 import { CopyableText } from "@aleph-front/ds/copyable-text";
 import { useNode } from "@/hooks/use-nodes";
 import { useNodeState } from "@/hooks/use-node-state";
+import { useOwnerBalances } from "@/hooks/use-owner-balances";
 import { ResourceBar } from "@/components/resource-bar";
 import { NodeEarningsTab } from "@/components/node-earnings-tab";
-import { NodeEarningsTabCcn } from "@/components/node-earnings-tab-ccn";
+import { NodeDetailViewCcn } from "@/components/node-detail-view-ccn";
 import {
   relativeTime,
   formatDateTime,
@@ -57,8 +58,9 @@ export function NodeDetailView({ hash, initialTab }: NodeDetailViewProps) {
   const router = useRouter();
   const pathname = usePathname();
   const searchParams = useSearchParams();
-  const { data: node, isLoading, error } = useNode(hash);
-  const { data: nodeState } = useNodeState();
+  const { data: node, isLoading: nodeLoading, error } = useNode(hash);
+  const { data: nodeState, isLoading: stateLoading } = useNodeState();
+  const { data: ownerBalances } = useOwnerBalances(nodeState);
   const [tab, setTab] = useState<DetailTab>(initialTab ?? "overview");
 
   const handleTabChange = (next: string) => {
@@ -72,9 +74,22 @@ export function NodeDetailView({ hash, initialTab }: NodeDetailViewProps) {
     );
   };
 
-  const isCcn = nodeState?.ccns.has(hash) ?? false;
+  // CCN dispatch — the scheduler API only returns CRN data, so CCNs are
+  // routed to a separate detail view backed by nodeState.
+  const ccn = nodeState?.ccns.get(hash);
+  if (ccn) {
+    return (
+      <NodeDetailViewCcn
+        hash={hash}
+        ccn={ccn}
+        ownerBalance={ownerBalances?.get(ccn.owner) ?? null}
+        {...(initialTab ? { initialTab } : {})}
+      />
+    );
+  }
 
-  if (isLoading) {
+  // From here on, the hash is a CRN (or unknown).
+  if (nodeLoading || (!node && stateLoading)) {
     return (
       <div className="space-y-6">
         <Skeleton className="h-8 w-64" />
@@ -366,8 +381,6 @@ export function NodeDetailView({ hash, initialTab }: NodeDetailViewProps) {
         )}
       </Card>
         </>
-      ) : isCcn ? (
-        <NodeEarningsTabCcn hash={hash} />
       ) : (
         <NodeEarningsTab hash={hash} />
       )}
