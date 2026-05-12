@@ -4,6 +4,7 @@ import { useMemo } from "react";
 import { useSearchParams } from "next/navigation";
 import { useNodeState } from "@/hooks/use-node-state";
 import { useOwnerBalances } from "@/hooks/use-owner-balances";
+import { useNodes } from "@/hooks/use-nodes";
 import {
   buildGraph,
   type Graph,
@@ -40,12 +41,22 @@ export type UseNetworkGraphResult = {
   isFetching: boolean;
   nodeState: NodeState | undefined;
   ownerBalances: Map<string, number> | undefined;
+  crnStatuses: Map<string, string> | undefined;
 };
 
 export function useNetworkGraph(): UseNetworkGraphResult {
   const searchParams = useSearchParams();
   const { data: state, isLoading, isFetching } = useNodeState();
   const { data: ownerBalances } = useOwnerBalances(state);
+  const { data: nodesData } = useNodes();
+  const crnStatuses = useMemo(() => {
+    if (!nodesData) return undefined;
+    const map = new Map<string, string>();
+    for (const n of nodesData) {
+      map.set(n.hash, n.status);
+    }
+    return map;
+  }, [nodesData]);
 
   const layersParam = searchParams.get("layers");
   const layers = useMemo(() => parseLayers(layersParam), [layersParam]);
@@ -55,8 +66,8 @@ export function useNetworkGraph(): UseNetworkGraphResult {
 
   const fullGraph = useMemo<Graph>(() => {
     if (!state) return { nodes: [], edges: [] };
-    return buildGraph(state, layers, ownerBalances);
-  }, [state, layers, ownerBalances]);
+    return buildGraph(state, layers, ownerBalances, crnStatuses);
+  }, [state, layers, ownerBalances, crnStatuses]);
 
   const visibleGraph = useMemo<Graph>(() => {
     if (!focusId) return fullGraph;
@@ -73,5 +84,6 @@ export function useNetworkGraph(): UseNetworkGraphResult {
     isFetching,
     nodeState: state,
     ownerBalances,
+    crnStatuses,
   };
 }
