@@ -4,19 +4,18 @@ import {
   QueryClient,
   QueryClientProvider,
 } from "@tanstack/react-query";
-import type { WsClient, SchedulerEvent } from "@/lib/scheduler-ws";
+import type { WsClient } from "@/lib/scheduler-ws";
 import {
   WebSocketProvider,
   useWebSocketStatus,
   handleEvent,
 } from "@/components/websocket-provider";
 
-// We mock the WS module so tests don't open a real socket and so we
-// can drive events imperatively from the test body.
-let eventDispatch: ((e: SchedulerEvent) => void) | null = null;
-let statusDispatch:
-  | ((s: WsClient["status"]) => void)
-  | null = null;
+// We mock the WS module so tests don't open a real socket. Tests
+// verify the provider's lifecycle (mount/unmount) and the event-to-
+// queryKey map directly via `handleEvent`; no test fires synthetic
+// events through the mocked socket, so subscribe/onStatusChange just
+// return no-op unsubscribers.
 let lastCreated: WsClient | null = null;
 
 vi.mock("@/lib/scheduler-ws", async () => {
@@ -31,18 +30,8 @@ vi.mock("@/lib/scheduler-ws", async () => {
         status: "connecting",
         lastEventAt: null,
         eventCount: 0,
-        subscribe(fn) {
-          eventDispatch = fn;
-          return () => {
-            eventDispatch = null;
-          };
-        },
-        onStatusChange(fn) {
-          statusDispatch = fn;
-          return () => {
-            statusDispatch = null;
-          };
-        },
+        subscribe: () => () => {},
+        onStatusChange: () => () => {},
         close: vi.fn(),
       };
       lastCreated = client;
@@ -61,8 +50,6 @@ function wrapper({ children }: { children: React.ReactNode }) {
 }
 
 beforeEach(() => {
-  eventDispatch = null;
-  statusDispatch = null;
   lastCreated = null;
 });
 
