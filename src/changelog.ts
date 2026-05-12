@@ -11,9 +11,19 @@ export type VersionEntry = {
   changes: ChangeEntry[];
 };
 
-export const CURRENT_VERSION = "0.17.0";
+export const CURRENT_VERSION = "0.18.0";
 
 export const CHANGELOG: VersionEntry[] = [
+  {
+    version: "0.18.0",
+    date: "2026-05-12",
+    changes: [
+      {
+        type: "feature",
+        text: "Scheduler WebSocket cache invalidation: a single app-wide WebSocket subscribes to the scheduler's new event stream and invalidates the affected React Query caches per event, so every existing page — Overview, Nodes, VMs, Issues — refreshes in near-real-time as VMs are scheduled, migrated, or fail to schedule. Polling stays as a fallback, so disconnected periods don't lose correctness. The Network Health page gains a new \"WebSocket stream\" row that surfaces connection state, event count, and last-event relative time.",
+      },
+    ],
+  },
   {
     version: "0.17.0",
     date: "2026-05-12",

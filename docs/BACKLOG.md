@@ -87,6 +87,16 @@ Multi-day / multi-PR work.
 **Description:** The scheduler API now supports a `?scheduling_status=` filter for raw scheduling intent (scheduled/unscheduled/unschedulable/unknown), independent of observation-based `?status=`. Could be exposed as a second filter dimension (e.g. two-tier tabs or an advanced filter) for power users who want to combine intent + observation queries. Not needed for v1 of the status expansion — the flat status tabs cover the primary use case.
 **Priority:** Low
 
+### 2026-05-12 - Optimistic WebSocket updates via setQueryData
+**Source:** Scheduler WebSocket cache invalidation (Decision #87, deferred from v1)
+**Description:** Move from invalidate-only to optimistic in-place updates: each `SchedulerEvent` would call `queryClient.setQueryData(...)` to patch the cached VM/node rows directly, skipping the network round-trip after invalidation. Requires per-event reducers that mirror the full transform pipeline (`apiVmRowToVm`, history append, status remap) — non-trivial correctness surface. Worth doing once the WS stream has been live long enough to confirm the event payload shape is stable and we know which page paints feel slow despite invalidation.
+**Priority:** Low
+
+### 2026-05-12 - Zod-based validation for scheduler WebSocket events
+**Source:** Scheduler WebSocket cache invalidation (Decision #87, deferred from v1)
+**Description:** Replace the manual `isSchedulerEvent` discriminant in `src/lib/scheduler-ws.ts` with a zod schema for runtime validation. Only worth adding if malformed events are observed in production — the current four-variant discriminant is cheap, but zod gives better error reporting and survives a wider event taxonomy.
+**Priority:** Low
+
 ### 2026-03-05 - Mobile-responsive filter UI
 **Source:** Identified while brainstorming list page filtering overhaul
 **Description:** Adapt the new filter bar (search, collapsible filters, status pills with count badges) for mobile viewports. Desktop version comes first; mobile adaptation deferred.
@@ -120,11 +130,6 @@ context lands.
 **Source:** Wallet view brainstorming
 **Description:** Expand the wallet view beyond ops/debugging into a richer identity hub: wallet balance, ALEPH staking, transaction history, etc. Part of a broader evolution from an ops dashboard to a User Command Center. Build on top of the Phase 1 ops-focused wallet view.
 **Priority:** Low
-
-### 2026-03-01 - WebSocket migration
-**Source:** Design doc
-**Description:** Replace polling with WebSocket connections for real-time event streaming. Would reduce latency and server load compared to 10-30s polling intervals.
-**Priority:** Medium
 
 ### 2026-03-01 - Sidebar component in DS
 **Source:** App shell implementation
@@ -184,6 +189,7 @@ Items where the path forward is clear but blocked on external work.
 <details>
 <summary>Archived items</summary>
 
+- ✅ 2026-05-12 - Scheduler WebSocket cache invalidation — single app-wide WebSocket (`src/lib/scheduler-ws.ts` + `WebSocketProvider`) subscribes to `/api/v1/ws` and invalidates affected React Query caches per event (`VmScheduled` / `VmUnscheduled` / `VmMigrated` / `VmUnschedulable`); polling stays as the fallback. Exponential reconnect (1s→2s→4s→8s→16s→30s cap), resets on success, `close()` is final. WS URL derived from `getBaseUrl()` so `?api=` override + `NEXT_PUBLIC_API_URL` env fallback work. Wallet + credit-expense keys excluded (sourced from api2). New "WebSocket stream" row on `/status` shows connection state, event count, and last-event relative time. Closes the long-standing "WebSocket migration" roadmap item (Decision #87)
 - ✅ 2026-05-12 - VM fields + migrating status — scheduler now reports `scheduling_status`, `migration_target`, `migration_started_at`, `owner` per VM plus a new `migrating` status. `migrating` joins `ACTIVE_VM_STATUSES`, gets an amber warning Badge, and is promoted to a visible tab on `/vms` (cap 3 → 4). VM detail panel + view show scheduler-supplied Owner (api2 fallback) and a Migration section (target + started). Issues page surfaces a Scheduler sub-row inside Schedule vs Reality when `scheduling_status` diverges from derived `status`; `migrating` itself stays out of `DISCREPANCY_STATUSES`. Network graph emits always-on amber migration arrows between source and target CRN (new `EdgeType = GraphLayer | "migration"`, `arrow-end-warning` marker); CRN detail panel shows a Migrations row with inbound/outbound counts (Decision #86)
 - ✅ 2026-05-11 - Network graph geo layer + focus chain in URL — fifth `geo` toggle on `/network` (off by default) groups located CCN/CRN around a per-country hub node; country is a top-tier visual (`RADIUS=22`, cyan/teal, full node treatment) with click/focus/search parity, connected to its located nodes by visible country-tinted dashed tethers (Decision #76). Layout is force-driven, not projected — country nodes are regular sim nodes placed by cluster mass, with `-800` charge so clusters can't overlap (Decision #74 supersedes the original Mercator-pinning plan after real-world testing). Search input grows an Info icon tooltip listing supported query types (hash / name / 0x address / country) and noting country search requires Geo. Focus chain encoded in URL as comma-separated `?focus=A,B,C` (last = active) so the pill back-button never leaves `/network` even when arriving from a parent route like `/admin/network` (Decision #75). Plan: `docs/plans/2026-05-11-network-map-geo-layout-plan.md`
 - ✅ 2026-05-09 - Network graph detail panel redesign — 280px floating card (`right-4 top-20 bottom-4`) replacing the 400px slide-in; shell + per-kind bodies (CCN/CRN/staker/reward) with content trimmed to graph-relevant facts; CCN body reads from `nodeState` (now exposed by `useNetworkGraph`) so CCN cards stop being empty; CRN body keeps `useNode(hash)` for resource bars and VM count; "View full details →" routes to `/nodes?view=`; Focus action sets both `?focus` and `?selected` so the panel stays open after focusing (Decision #73)

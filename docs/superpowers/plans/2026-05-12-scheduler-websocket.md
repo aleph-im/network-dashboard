@@ -1,10 +1,10 @@
 ---
-status: in-progress
+status: done
 branch: feature/scheduler-websocket
 date: 2026-05-12
 wave: 2026-05-12-scheduler-v1
 reservedDecision: 87
-note: fanned out as part of wave 2026-05-12-scheduler-v1
+note: implemented per plan — 20 new tests, full pnpm check + static export clean; awaiting preview-gate before ship
 ---
 
 # Scheduler WebSocket Cache Invalidation Implementation Plan
