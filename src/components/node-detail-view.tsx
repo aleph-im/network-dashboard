@@ -1,10 +1,12 @@
 "use client";
 
-import { useRouter } from "next/navigation";
+import { useState } from "react";
+import { useRouter, useSearchParams, usePathname } from "next/navigation";
 import { ShieldCheck } from "@phosphor-icons/react";
 import { Card } from "@aleph-front/ds/card";
 import { Badge } from "@aleph-front/ds/badge";
 import { StatusDot } from "@aleph-front/ds/status-dot";
+import { Tabs, TabsList, TabsTrigger } from "@aleph-front/ds/tabs";
 import {
   TooltipProvider,
   Tooltip,
@@ -14,7 +16,10 @@ import {
 import { Skeleton } from "@aleph-front/ds/ui/skeleton";
 import { CopyableText } from "@aleph-front/ds/copyable-text";
 import { useNode } from "@/hooks/use-nodes";
+import { useNodeState } from "@/hooks/use-node-state";
 import { ResourceBar } from "@/components/resource-bar";
+import { NodeEarningsTab } from "@/components/node-earnings-tab";
+import { NodeEarningsTabCcn } from "@/components/node-earnings-tab-ccn";
 import {
   relativeTime,
   formatDateTime,
@@ -26,8 +31,11 @@ import {
   VM_STATUS_VARIANT,
 } from "@/lib/status-map";
 
+type DetailTab = "overview" | "earnings";
+
 type NodeDetailViewProps = {
   hash: string;
+  initialTab?: DetailTab;
 };
 
 function MetaItem({
@@ -45,9 +53,26 @@ function MetaItem({
   );
 }
 
-export function NodeDetailView({ hash }: NodeDetailViewProps) {
+export function NodeDetailView({ hash, initialTab }: NodeDetailViewProps) {
   const router = useRouter();
+  const pathname = usePathname();
+  const searchParams = useSearchParams();
   const { data: node, isLoading, error } = useNode(hash);
+  const { data: nodeState } = useNodeState();
+  const [tab, setTab] = useState<DetailTab>(initialTab ?? "overview");
+
+  const handleTabChange = (next: string) => {
+    if (next !== "overview" && next !== "earnings") return;
+    setTab(next);
+    const params = new URLSearchParams(searchParams.toString());
+    if (next === "overview") params.delete("tab");
+    else params.set("tab", next);
+    router.replace(
+      params.toString() ? `${pathname}?${params.toString()}` : pathname,
+    );
+  };
+
+  const isCcn = nodeState?.ccns.has(hash) ?? false;
 
   if (isLoading) {
     return (
@@ -112,6 +137,15 @@ export function NodeDetailView({ hash }: NodeDetailViewProps) {
         </Badge>
       </div>
 
+      <Tabs value={tab} onValueChange={handleTabChange}>
+        <TabsList variant="underline" size="sm">
+          <TabsTrigger value="overview">Overview</TabsTrigger>
+          <TabsTrigger value="earnings">Earnings</TabsTrigger>
+        </TabsList>
+      </Tabs>
+
+      {tab === "overview" ? (
+        <>
       {/* Metadata */}
       <Card padding="md">
         <h3 className="mb-3 text-xs font-semibold uppercase tracking-wider text-muted-foreground">
@@ -331,6 +365,12 @@ export function NodeDetailView({ hash }: NodeDetailViewProps) {
           </div>
         )}
       </Card>
+        </>
+      ) : isCcn ? (
+        <NodeEarningsTabCcn hash={hash} />
+      ) : (
+        <NodeEarningsTab hash={hash} />
+      )}
     </div>
   );
 }
