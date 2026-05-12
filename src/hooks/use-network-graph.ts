@@ -5,6 +5,7 @@ import { useSearchParams } from "next/navigation";
 import { useNodeState } from "@/hooks/use-node-state";
 import { useOwnerBalances } from "@/hooks/use-owner-balances";
 import { useNodes } from "@/hooks/use-nodes";
+import { useVMs } from "@/hooks/use-vms";
 import {
   buildGraph,
   type Graph,
@@ -12,6 +13,7 @@ import {
 } from "@/lib/network-graph-model";
 import { egoSubgraph } from "@/lib/network-focus";
 import type { NodeState } from "@/api/credit-types";
+import type { VM } from "@/api/types";
 
 const DEFAULT_LAYERS: Set<GraphLayer> = new Set(["structural"]);
 const ALL_LAYERS: GraphLayer[] = [
@@ -58,6 +60,17 @@ export function useNetworkGraph(): UseNetworkGraphResult {
     return map;
   }, [nodesData]);
 
+  const { data: vmsData } = useVMs();
+  const migrations = useMemo<VM[]>(() => {
+    if (!vmsData) return [];
+    return vmsData.filter(
+      (v) =>
+        v.status === "migrating" &&
+        v.allocatedNode != null &&
+        v.migrationTarget != null,
+    );
+  }, [vmsData]);
+
   const layersParam = searchParams.get("layers");
   const layers = useMemo(() => parseLayers(layersParam), [layersParam]);
   const focusParam = searchParams.get("focus");
@@ -66,8 +79,8 @@ export function useNetworkGraph(): UseNetworkGraphResult {
 
   const fullGraph = useMemo<Graph>(() => {
     if (!state) return { nodes: [], edges: [] };
-    return buildGraph(state, layers, ownerBalances, crnStatuses);
-  }, [state, layers, ownerBalances, crnStatuses]);
+    return buildGraph(state, layers, ownerBalances, crnStatuses, migrations);
+  }, [state, layers, ownerBalances, crnStatuses, migrations]);
 
   const visibleGraph = useMemo<Graph>(() => {
     if (!focusId) return fullGraph;
