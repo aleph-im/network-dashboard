@@ -119,6 +119,7 @@ export function buildGraph(
   state: NodeState,
   layers: Set<GraphLayer>,
   ownerBalances?: Map<string, number>,
+  crnStatuses?: Map<string, string>,
   geo: GeoData = DEFAULT_GEO,
 ): Graph {
   const nodes: GraphNode[] = [];
@@ -144,6 +145,16 @@ export function buildGraph(
   }
   for (const r of state.crns.values()) {
     const crnInactive = r.inactiveSince != null;
+    const crnPending =
+      r.status === "waiting" && !crnInactive && r.parent == null;
+    const schedulerStatus = crnStatuses?.get(r.hash) ?? null;
+    const flagged =
+      !crnInactive &&
+      !crnPending &&
+      (
+        r.score < CRN_SCORE_THRESHOLD ||
+        schedulerStatus === "unreachable"
+      );
     nodes.push({
       id: r.hash,
       kind: "crn",
@@ -152,7 +163,8 @@ export function buildGraph(
       owner: r.owner,
       reward: r.reward,
       inactive: crnInactive,
-      pending: r.status === "waiting" && !crnInactive && r.parent == null,
+      pending: crnPending,
+      flagged,
     });
   }
 

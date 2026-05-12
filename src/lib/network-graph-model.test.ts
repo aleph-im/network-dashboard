@@ -193,6 +193,102 @@ describe("buildGraph — understaked / pending CCNs", () => {
   });
 });
 
+describe("buildGraph — flagged CRNs", () => {
+  it("flags a linked CRN with score below 0.8", () => {
+    const state = makeState({
+      ccns: [ccn("c1", { totalStaked: 1_000_000, resourceNodes: ["r1"] })],
+      crns: [crn("r1", { parent: "c1", status: "linked", score: 0.65 })],
+    });
+    const balances = new Map([["0xowner", 250_000]]);
+    const graph = buildGraph(state, new Set(["structural"]), balances);
+    const node = graph.nodes.find((n) => n.id === "r1")!;
+    expect(node.flagged).toBe(true);
+  });
+
+  it("flags a linked CRN that the scheduler reports as unreachable, even if score is high", () => {
+    const state = makeState({
+      ccns: [ccn("c1", { totalStaked: 1_000_000, resourceNodes: ["r1"] })],
+      crns: [crn("r1", { parent: "c1", status: "linked", score: 0.95 })],
+    });
+    const balances = new Map([["0xowner", 250_000]]);
+    const statuses = new Map([["r1", "unreachable"]]);
+    const graph = buildGraph(
+      state, new Set(["structural"]), balances, statuses,
+    );
+    const node = graph.nodes.find((n) => n.id === "r1")!;
+    expect(node.flagged).toBe(true);
+  });
+
+  it("does not flag a healthy linked CRN", () => {
+    const state = makeState({
+      ccns: [ccn("c1", { totalStaked: 1_000_000, resourceNodes: ["r1"] })],
+      crns: [crn("r1", { parent: "c1", status: "linked", score: 0.95 })],
+    });
+    const balances = new Map([["0xowner", 250_000]]);
+    const statuses = new Map([["r1", "healthy"]]);
+    const graph = buildGraph(
+      state, new Set(["structural"]), balances, statuses,
+    );
+    const node = graph.nodes.find((n) => n.id === "r1")!;
+    expect(node.flagged).toBe(false);
+  });
+
+  it("does not flag an inactive CRN even with low score (inactive precedence)", () => {
+    const state = makeState({
+      ccns: [ccn("c1", { totalStaked: 1_000_000, resourceNodes: ["r1"] })],
+      crns: [
+        crn("r1", {
+          parent: "c1",
+          status: "linked",
+          score: 0.3,
+          inactiveSince: 1_700_000_000,
+        }),
+      ],
+    });
+    const balances = new Map([["0xowner", 250_000]]);
+    const graph = buildGraph(state, new Set(["structural"]), balances);
+    const node = graph.nodes.find((n) => n.id === "r1")!;
+    expect(node.flagged).toBe(false);
+  });
+
+  it("does not flag a pending CRN (waiting + no parent) even with low score", () => {
+    const state = makeState({
+      ccns: [],
+      crns: [crn("r-pending", { parent: null, status: "waiting", score: 0.3 })],
+    });
+    const graph = buildGraph(state, new Set(["structural"]), new Map());
+    const node = graph.nodes.find((n) => n.id === "r-pending")!;
+    expect(node.pending).toBe(true);
+    expect(node.flagged).toBe(false);
+  });
+
+  it("does not enforce the unreachable gate when scheduler status is missing", () => {
+    const state = makeState({
+      ccns: [ccn("c1", { totalStaked: 1_000_000, resourceNodes: ["r1"] })],
+      crns: [crn("r1", { parent: "c1", status: "linked", score: 0.95 })],
+    });
+    const balances = new Map([["0xowner", 250_000]]);
+    // crnStatuses omitted entirely — should not flag
+    const graph = buildGraph(state, new Set(["structural"]), balances);
+    const node = graph.nodes.find((n) => n.id === "r1")!;
+    expect(node.flagged).toBe(false);
+  });
+
+  it("flags when both signals fire — still a single boolean, not stackable", () => {
+    const state = makeState({
+      ccns: [ccn("c1", { totalStaked: 1_000_000, resourceNodes: ["r1"] })],
+      crns: [crn("r1", { parent: "c1", status: "linked", score: 0.4 })],
+    });
+    const balances = new Map([["0xowner", 250_000]]);
+    const statuses = new Map([["r1", "unreachable"]]);
+    const graph = buildGraph(
+      state, new Set(["structural"]), balances, statuses,
+    );
+    const node = graph.nodes.find((n) => n.id === "r1")!;
+    expect(node.flagged).toBe(true);
+  });
+});
+
 describe("buildGraph layers", () => {
   it("draws owner edges between nodes sharing an owner address", () => {
     const state = makeState({
@@ -261,7 +357,7 @@ describe("buildGraph — geo layer", () => {
       ccns: [ccn("c1")],
       crns: [crn("r1", { parent: "c1" })],
     });
-    const graph = buildGraph(state, new Set(["structural"]), undefined, {
+    const graph = buildGraph(state, new Set(["structural"]), undefined, undefined, {
       locations: { c1: { country: "FR" }, r1: { country: "FR" } },
       centroids: { FR: FR_CENTROID },
     });
@@ -277,7 +373,7 @@ describe("buildGraph — geo layer", () => {
         crn("r2", { parent: "c1" }),
       ],
     });
-    const graph = buildGraph(state, new Set(["geo"]), undefined, {
+    const graph = buildGraph(state, new Set(["geo"]), undefined, undefined, {
       locations: {
         c1: { country: "FR" },
         r1: { country: "FR" },
@@ -300,7 +396,7 @@ describe("buildGraph — geo layer", () => {
       ccns: [ccn("c1")],
       crns: [crn("r1", { parent: "c1" })],
     });
-    const graph = buildGraph(state, new Set(["geo"]), undefined, {
+    const graph = buildGraph(state, new Set(["geo"]), undefined, undefined, {
       locations: { c1: { country: "FR" }, r1: { country: "FR" } },
       centroids: { FR: FR_CENTROID },
     });
@@ -314,7 +410,7 @@ describe("buildGraph — geo layer", () => {
       ccns: [ccn("c1")],
       crns: [crn("r_no_loc", { parent: "c1" })],
     });
-    const graph = buildGraph(state, new Set(["geo"]), undefined, {
+    const graph = buildGraph(state, new Set(["geo"]), undefined, undefined, {
       locations: { c1: { country: "FR" } },
       centroids: { FR: FR_CENTROID },
     });
@@ -326,7 +422,7 @@ describe("buildGraph — geo layer", () => {
     const state = makeState({
       ccns: [ccn("c1")],
     });
-    const graph = buildGraph(state, new Set(["geo"]), undefined, {
+    const graph = buildGraph(state, new Set(["geo"]), undefined, undefined, {
       locations: { c1: { country: "ZZ" } },
       centroids: {},
     });
@@ -338,7 +434,7 @@ describe("buildGraph — geo layer", () => {
     const state = makeState({
       ccns: [ccn("c1")],
     });
-    const graph = buildGraph(state, new Set(["geo"]), undefined, {
+    const graph = buildGraph(state, new Set(["geo"]), undefined, undefined, {
       locations: { c1: { country: "FR" } },
       centroids: { FR: FR_CENTROID },
     });
