@@ -111,4 +111,48 @@ describe("createWsClient — connection lifecycle", () => {
     });
     client.close();
   });
+
+  it("subscribe() returns an unsubscribe that stops further dispatch", () => {
+    const client = createWsClient("ws://example/api/v1/ws");
+    const sock = MockWebSocket.instances[0]!;
+    sock.triggerOpen();
+
+    const fn = vi.fn();
+    const unsub = client.subscribe(fn);
+
+    sock.triggerMessage(
+      JSON.stringify({
+        type: "VmScheduled",
+        vmHash: "vm-1",
+        nodeHash: "node-1",
+      }),
+    );
+    expect(fn).toHaveBeenCalledTimes(1);
+
+    unsub();
+    sock.triggerMessage(
+      JSON.stringify({
+        type: "VmScheduled",
+        vmHash: "vm-2",
+        nodeHash: "node-1",
+      }),
+    );
+    expect(fn).toHaveBeenCalledTimes(1);
+    client.close();
+  });
+
+  it("onStatusChange() returns an unsubscribe that stops further notifications", () => {
+    const client = createWsClient("ws://example/api/v1/ws");
+    const sock = MockWebSocket.instances[0]!;
+    const fn = vi.fn();
+    const unsub = client.onStatusChange(fn);
+
+    sock.triggerOpen();
+    expect(fn).toHaveBeenCalledWith("connected");
+
+    unsub();
+    fn.mockClear();
+    client.close();
+    expect(fn).not.toHaveBeenCalled();
+  });
 });
