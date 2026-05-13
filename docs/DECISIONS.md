@@ -18,6 +18,14 @@ Each entry includes:
 
 ---
 
+## Decision #92 - 2026-05-13
+**Context:** Per-CRN/CCN Earnings tab (Decision #90) showed what one node earned, but operators using one reward address across many nodes had no in-context view of how that slice fit into the wallet's total window earnings.
+**Decision:** Added a "Reward address breakdown" Card between the chart and the per-VM / linked-CRN table. Four buckets anchored on "this node": this node / other same-kind / cross-kind / staking. Same panel on both CRN and CCN earnings tabs. No-overlap state shown as a one-liner caption rather than a degenerate 100% bar.
+**Rationale:** Reuses the existing `summary.recipients` (`RecipientTotal[]`) — no new API calls. Anchoring on "this node" preserves the Earnings tab's primary framing while adding portfolio context. The one-liner caption explicitly confirms the no-overlap case rather than hiding (which could read as a load failure).
+**Alternatives considered:** Per-node drilldown inside the bar (rejected — `/wallet?address=` already provides that). Fifth KPI card (rejected — competes with node-scoped KPIs). Collapsible disclosure (rejected — fiddly for what is real info). Bucket-level previous-window deltas (deferred — adds complexity for marginal value, easy to add later).
+
+---
+
 ## Decision #91 - 2026-05-13
 **Context:** Decision #90 shipped the Earnings tab as a static chart and three follow-ups in BACKLOG. Two of them — hover tooltip on the chart, and a sparkline in the network-graph CRN/CCN panels — share infrastructure (the same dual-line rendering) so it made sense to ship them together. During brainstorming we also confirmed the spark belongs on the `/nodes` side panel (where the existing truncated VMs list block was a frequent source of cramped layouts on busy nodes).
 **Decision:** Extract a `DualLineChart` primitive that owns geometry + an optional hover-callback pointer-capture rect; refactor `NodeEarningsChart` onto it and add a bucket-anchored crosshair + floating tooltip card (time + ALEPH + secondary, bucket-duration-aware time format); add a new `NodeEarningsSpark` wrapper (static, fixed 24h) embedded in three surfaces: `network-detail-panel-crn.tsx`, `network-detail-panel-ccn.tsx`, and `node-detail-panel.tsx`. The `/nodes` side panel's truncated VMs list block is removed in exchange — the spark conveys "earnings + VM count over 24h", the `VMs` count row at the top of the panel stays, and the panel's "View full details →" link gets users to the full list on the node detail page.
