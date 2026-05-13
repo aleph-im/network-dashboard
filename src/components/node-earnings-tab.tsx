@@ -89,13 +89,13 @@ export function NodeEarningsTab({ hash }: { hash: string }) {
     router.replace(`${pathname}?${params.toString()}`);
   };
 
-  const { data, isLoading } = useNodeEarnings(hash, range);
+  const { data, isLoading, isPlaceholderData } = useNodeEarnings(hash, range);
   const { data: nodeState } = useNodeState();
   const { data: node } = useNode(hash);
 
   const crn = nodeState?.crns.get(hash);
 
-  if (isLoading || !data || !crn) {
+  if (isLoading || isPlaceholderData || !data || !crn) {
     return (
       <div className="space-y-4">
         <Skeleton className="h-8 w-48" />
@@ -133,28 +133,32 @@ export function NodeEarningsTab({ hash }: { hash: string }) {
 
       <NodeEarningsKpiRow cards={cards} />
 
-      <Card padding="md">
-        <div className="mb-2 text-[10px] font-semibold uppercase tracking-wider text-muted-foreground">
-          ALEPH accrual over time
-        </div>
-        <NodeEarningsChart
-          buckets={data.buckets}
-          primaryLabel="ALEPH"
-          secondaryLabel="VMs hosted"
-          {...(crn.parent === null
-            ? {
-                emptyHint:
-                  "Pending CCN attachment — earnings start once linked.",
-              }
-            : {})}
-        />
-      </Card>
+      <div className="grid grid-cols-1 gap-4 lg:grid-cols-3">
+        <Card padding="md" className="lg:col-span-2">
+          <div className="mb-2 text-[10px] font-semibold uppercase tracking-wider text-muted-foreground">
+            ALEPH accrual over time
+          </div>
+          <NodeEarningsChart
+            buckets={data.buckets}
+            primaryLabel="ALEPH"
+            secondaryLabel="VMs hosted"
+            {...(crn.parent === null
+              ? {
+                  emptyHint:
+                    "Pending CCN attachment — earnings start once linked.",
+                }
+              : {})}
+          />
+        </Card>
 
-      <NodeEarningsReconciliation
-        reconciliation={data.reconciliation}
-        range={range}
-        kind="crn"
-      />
+        <div className="lg:col-span-1">
+          <NodeEarningsReconciliation
+            reconciliation={data.reconciliation}
+            range={range}
+            kind="crn"
+          />
+        </div>
+      </div>
 
       {perVm.length > 0 && (
         <Card padding="md">

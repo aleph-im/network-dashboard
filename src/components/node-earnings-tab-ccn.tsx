@@ -89,13 +89,13 @@ export function NodeEarningsTabCcn({ hash }: { hash: string }) {
     router.replace(`${pathname}?${params.toString()}`);
   };
 
-  const { data, isLoading } = useNodeEarnings(hash, range);
+  const { data, isLoading, isPlaceholderData } = useNodeEarnings(hash, range);
   const { data: nodeState } = useNodeState();
   const { data: node } = useNode(hash);
 
   const ccn = nodeState?.ccns.get(hash);
 
-  if (isLoading || !data || !ccn) {
+  if (isLoading || isPlaceholderData || !data || !ccn) {
     return (
       <div className="space-y-4">
         <Skeleton className="h-8 w-48" />
@@ -139,23 +139,27 @@ export function NodeEarningsTabCcn({ hash }: { hash: string }) {
 
       <NodeEarningsKpiRow cards={cards} />
 
-      <Card padding="md">
-        <div className="mb-2 text-[10px] font-semibold uppercase tracking-wider text-muted-foreground">
-          ALEPH accrual over time
-        </div>
-        <NodeEarningsChart
-          buckets={data.buckets}
-          primaryLabel="ALEPH"
-          secondaryLabel="Linked CRNs"
-          {...chartProps}
-        />
-      </Card>
+      <div className="grid grid-cols-1 gap-4 lg:grid-cols-3">
+        <Card padding="md" className="lg:col-span-2">
+          <div className="mb-2 text-[10px] font-semibold uppercase tracking-wider text-muted-foreground">
+            ALEPH accrual over time
+          </div>
+          <NodeEarningsChart
+            buckets={data.buckets}
+            primaryLabel="ALEPH"
+            secondaryLabel="Linked CRNs"
+            {...chartProps}
+          />
+        </Card>
 
-      <NodeEarningsReconciliation
-        reconciliation={data.reconciliation}
-        range={range}
-        kind="ccn"
-      />
+        <div className="lg:col-span-1">
+          <NodeEarningsReconciliation
+            reconciliation={data.reconciliation}
+            range={range}
+            kind="ccn"
+          />
+        </div>
+      </div>
 
       {data.linkedCrns && data.linkedCrns.length > 0 && (
         <Card padding="md">

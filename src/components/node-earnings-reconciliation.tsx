@@ -96,8 +96,8 @@ export function NodeEarningsReconciliation({
   const segments = buildSegments(r, kind);
 
   return (
-    <Card padding="md">
-      <div className="mb-2 flex items-baseline justify-between gap-4">
+    <Card padding="md" className="@container/recon">
+      <div className="mb-2 flex flex-wrap items-baseline justify-between gap-x-4 gap-y-1">
         <div className="text-[10px] font-semibold uppercase tracking-wider text-muted-foreground">
           Reward address breakdown
         </div>
@@ -110,8 +110,8 @@ export function NodeEarningsReconciliation({
       </div>
 
       {hasOverlap ? (
-        <>
-          <div className="mb-3 flex items-center gap-2 text-xs text-muted-foreground">
+        <div onMouseLeave={() => setHoveredKey(null)}>
+          <div className="mb-3 flex flex-wrap items-center gap-x-2 gap-y-1 text-xs text-muted-foreground">
             <CopyableText
               text={r.rewardAddr}
               startChars={6}
@@ -127,7 +127,6 @@ export function NodeEarningsReconciliation({
           <div
             data-testid="reconciliation-bar"
             className="mb-3 flex h-7 overflow-hidden rounded-md"
-            onMouseLeave={() => setHoveredKey(null)}
           >
             {segments.map((seg) => {
               if (seg.aleph <= 0) return null;
@@ -136,7 +135,7 @@ export function NodeEarningsReconciliation({
               return (
                 <div
                   key={seg.key}
-                  className={`${seg.colorClass} transition-opacity ${dimmed ? "opacity-50" : ""}`}
+                  className={`${seg.colorClass} transition-opacity ${dimmed ? "opacity-30" : ""}`}
                   style={{ flexGrow: widthPct, minWidth: "4px" }}
                   aria-label={`${seg.label}: ${formatAleph(seg.aleph)} ALEPH`}
                   onMouseEnter={() => setHoveredKey(seg.key)}
@@ -145,14 +144,19 @@ export function NodeEarningsReconciliation({
             })}
           </div>
 
-          <div className="grid grid-cols-2 gap-x-4 gap-y-2 sm:grid-cols-4">
+          <div className="grid grid-cols-1 gap-x-4 gap-y-2 @md/recon:grid-cols-2 @2xl/recon:grid-cols-4">
             {segments.map((seg) => {
               const pct =
                 r.windowAleph > 0 ? (seg.aleph / r.windowAleph) * 100 : 0;
+              const dimmed = hoveredKey !== null && hoveredKey !== seg.key;
               return (
-                <div key={seg.key} className="flex items-start gap-2">
+                <div
+                  key={seg.key}
+                  className={`flex items-start gap-2 transition-opacity ${dimmed ? "opacity-30" : ""}`}
+                  onMouseEnter={() => setHoveredKey(seg.key)}
+                >
                   <span
-                    className={`mt-1 inline-block h-2 w-2 rounded-full ${seg.swatchClass}`}
+                    className={`mt-1 inline-block h-2 w-2 shrink-0 rounded-full ${seg.swatchClass}`}
                   />
                   <div className="min-w-0 flex-1">
                     <div className="truncate text-xs text-muted-foreground">
@@ -169,9 +173,9 @@ export function NodeEarningsReconciliation({
               );
             })}
           </div>
-        </>
+        </div>
       ) : (
-        <div className="flex items-center gap-2 text-xs text-muted-foreground">
+        <div className="flex flex-wrap items-center gap-x-2 gap-y-1 text-xs text-muted-foreground">
           <CopyableText
             text={r.rewardAddr}
             startChars={6}
