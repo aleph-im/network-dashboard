@@ -95,7 +95,7 @@ export function NodeEarningsTabCcn({ hash }: { hash: string }) {
 
   const ccn = nodeState?.ccns.get(hash);
 
-  if (isLoading || isPlaceholderData || !data || !ccn) {
+  if (isLoading || !data || !ccn) {
     return (
       <div className="space-y-4">
         <Skeleton className="h-8 w-48" />
@@ -137,31 +137,29 @@ export function NodeEarningsTabCcn({ hash }: { hash: string }) {
         </TabsList>
       </Tabs>
 
-      <NodeEarningsKpiRow cards={cards} />
+      <NodeEarningsKpiRow cards={cards} loading={isPlaceholderData} />
 
-      <div className="grid grid-cols-1 gap-4 lg:grid-cols-3">
-        <Card padding="md" className="lg:col-span-2">
-          <div className="mb-2 text-[10px] font-semibold uppercase tracking-wider text-muted-foreground">
-            ALEPH accrual over time
-          </div>
-          <NodeEarningsChart
-            buckets={data.buckets}
-            primaryLabel="ALEPH"
-            secondaryLabel="Linked CRNs"
-            {...chartProps}
-          />
-        </Card>
-
-        <div className="lg:col-span-1">
-          <NodeEarningsReconciliation
-            reconciliation={data.reconciliation}
-            range={range}
-            kind="ccn"
-          />
+      <Card padding="md">
+        <div className="mb-2 text-[10px] font-semibold uppercase tracking-wider text-muted-foreground">
+          ALEPH accrual over time
         </div>
-      </div>
+        <NodeEarningsChart
+          buckets={data.buckets}
+          primaryLabel="ALEPH"
+          secondaryLabel="Linked CRNs"
+          loading={isPlaceholderData}
+          {...chartProps}
+        />
+      </Card>
 
-      {data.linkedCrns && data.linkedCrns.length > 0 && (
+      <NodeEarningsReconciliation
+        reconciliation={data.reconciliation}
+        range={range}
+        kind="ccn"
+        loading={isPlaceholderData}
+      />
+
+      {((data.linkedCrns && data.linkedCrns.length > 0) || isPlaceholderData) && (
         <Card padding="md">
           <div className="mb-2 text-[10px] font-semibold uppercase tracking-wider text-muted-foreground">
             Linked CRNs
@@ -179,32 +177,48 @@ export function NodeEarningsTabCcn({ hash }: { hash: string }) {
               </tr>
             </thead>
             <tbody className="divide-y divide-edge">
-              {data.linkedCrns.map((c) => (
-                <tr key={c.hash}>
-                  <td className="py-1.5 pr-4">
-                    <CopyableText
-                      text={c.hash}
-                      startChars={8}
-                      endChars={8}
-                      size="sm"
-                      href={`/nodes?view=${c.hash}`}
-                    />
-                    {c.name && (
-                      <span className="ml-2 text-xs text-muted-foreground">
-                        {c.name}
-                      </span>
-                    )}
-                  </td>
-                  <td className="py-1.5 pr-4">
-                    <Badge fill="outline" size="sm">
-                      {c.status}
-                    </Badge>
-                  </td>
-                  <td className="py-1.5 text-right tabular-nums">
-                    {c.vmCount}
-                  </td>
-                </tr>
-              ))}
+              {isPlaceholderData
+                ? Array.from({
+                    length: Math.max(1, data.linkedCrns?.length ?? 3),
+                  }).map((_, i) => (
+                    <tr key={`crn-skeleton-${i}`}>
+                      <td className="py-1.5 pr-4">
+                        <Skeleton className="h-4 w-56" />
+                      </td>
+                      <td className="py-1.5 pr-4">
+                        <Skeleton className="h-4 w-20" />
+                      </td>
+                      <td className="py-1.5 text-right">
+                        <Skeleton className="ml-auto h-4 w-10" />
+                      </td>
+                    </tr>
+                  ))
+                : data.linkedCrns?.map((c) => (
+                    <tr key={c.hash}>
+                      <td className="py-1.5 pr-4">
+                        <CopyableText
+                          text={c.hash}
+                          startChars={8}
+                          endChars={8}
+                          size="sm"
+                          href={`/nodes?view=${c.hash}`}
+                        />
+                        {c.name && (
+                          <span className="ml-2 text-xs text-muted-foreground">
+                            {c.name}
+                          </span>
+                        )}
+                      </td>
+                      <td className="py-1.5 pr-4">
+                        <Badge fill="outline" size="sm">
+                          {c.status}
+                        </Badge>
+                      </td>
+                      <td className="py-1.5 text-right tabular-nums">
+                        {c.vmCount}
+                      </td>
+                    </tr>
+                  ))}
             </tbody>
           </table>
         </Card>

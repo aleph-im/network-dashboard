@@ -95,7 +95,7 @@ export function NodeEarningsTab({ hash }: { hash: string }) {
 
   const crn = nodeState?.crns.get(hash);
 
-  if (isLoading || isPlaceholderData || !data || !crn) {
+  if (isLoading || !data || !crn) {
     return (
       <div className="space-y-4">
         <Skeleton className="h-8 w-48" />
@@ -131,36 +131,34 @@ export function NodeEarningsTab({ hash }: { hash: string }) {
         </TabsList>
       </Tabs>
 
-      <NodeEarningsKpiRow cards={cards} />
+      <NodeEarningsKpiRow cards={cards} loading={isPlaceholderData} />
 
-      <div className="grid grid-cols-1 gap-4 lg:grid-cols-3">
-        <Card padding="md" className="lg:col-span-2">
-          <div className="mb-2 text-[10px] font-semibold uppercase tracking-wider text-muted-foreground">
-            ALEPH accrual over time
-          </div>
-          <NodeEarningsChart
-            buckets={data.buckets}
-            primaryLabel="ALEPH"
-            secondaryLabel="VMs hosted"
-            {...(crn.parent === null
-              ? {
-                  emptyHint:
-                    "Pending CCN attachment — earnings start once linked.",
-                }
-              : {})}
-          />
-        </Card>
-
-        <div className="lg:col-span-1">
-          <NodeEarningsReconciliation
-            reconciliation={data.reconciliation}
-            range={range}
-            kind="crn"
-          />
+      <Card padding="md">
+        <div className="mb-2 text-[10px] font-semibold uppercase tracking-wider text-muted-foreground">
+          ALEPH accrual over time
         </div>
-      </div>
+        <NodeEarningsChart
+          buckets={data.buckets}
+          primaryLabel="ALEPH"
+          secondaryLabel="VMs hosted"
+          loading={isPlaceholderData}
+          {...(crn.parent === null
+            ? {
+                emptyHint:
+                  "Pending CCN attachment — earnings start once linked.",
+              }
+            : {})}
+        />
+      </Card>
 
-      {perVm.length > 0 && (
+      <NodeEarningsReconciliation
+        reconciliation={data.reconciliation}
+        range={range}
+        kind="crn"
+        loading={isPlaceholderData}
+      />
+
+      {(perVm.length > 0 || isPlaceholderData) && (
         <Card padding="md">
           <div className="mb-2 text-[10px] font-semibold uppercase tracking-wider text-muted-foreground">
             Hosted VMs — earnings breakdown
@@ -173,23 +171,34 @@ export function NodeEarningsTab({ hash }: { hash: string }) {
               </tr>
             </thead>
             <tbody className="divide-y divide-edge">
-              {visibleVms.map((v) => (
-                <tr key={v.vmHash}>
-                  <td className="py-1.5 pr-4">
-                    <CopyableText
-                      text={v.vmHash}
-                      startChars={8}
-                      endChars={8}
-                      size="sm"
-                      href={`/vms?view=${v.vmHash}`}
-                    />
-                  </td>
-                  <td className="py-1.5 text-right tabular-nums">
-                    {formatAleph(v.aleph)}
-                  </td>
-                </tr>
-              ))}
-              {rest.length > 0 && (
+              {isPlaceholderData
+                ? Array.from({ length: Math.min(TOP_N, Math.max(1, perVm.length)) }).map((_, i) => (
+                    <tr key={`vm-skeleton-${i}`}>
+                      <td className="py-1.5 pr-4">
+                        <Skeleton className="h-4 w-48" />
+                      </td>
+                      <td className="py-1.5 text-right">
+                        <Skeleton className="ml-auto h-4 w-16" />
+                      </td>
+                    </tr>
+                  ))
+                : visibleVms.map((v) => (
+                    <tr key={v.vmHash}>
+                      <td className="py-1.5 pr-4">
+                        <CopyableText
+                          text={v.vmHash}
+                          startChars={8}
+                          endChars={8}
+                          size="sm"
+                          href={`/vms?view=${v.vmHash}`}
+                        />
+                      </td>
+                      <td className="py-1.5 text-right tabular-nums">
+                        {formatAleph(v.aleph)}
+                      </td>
+                    </tr>
+                  ))}
+              {!isPlaceholderData && rest.length > 0 && (
                 <tr>
                   <td colSpan={expandedBreakdown ? 2 : 1} className="py-1.5 pr-4">
                     <button
@@ -212,7 +221,11 @@ export function NodeEarningsTab({ hash }: { hash: string }) {
               <tr className="border-t border-edge font-medium">
                 <td className="pt-2 text-xs text-muted-foreground">Total</td>
                 <td className="pt-2 text-right tabular-nums">
-                  {formatAleph(data.totalAleph)}
+                  {isPlaceholderData ? (
+                    <Skeleton className="ml-auto h-4 w-20" />
+                  ) : (
+                    formatAleph(data.totalAleph)
+                  )}
                 </td>
               </tr>
             </tfoot>

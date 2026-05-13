@@ -4,6 +4,7 @@ import { useState } from "react";
 import Link from "next/link";
 import { Card } from "@aleph-front/ds/card";
 import { CopyableText } from "@aleph-front/ds/copyable-text";
+import { Skeleton } from "@aleph-front/ds/ui/skeleton";
 import { formatAleph } from "@/lib/format";
 import type { Reconciliation } from "@/hooks/use-node-earnings";
 import type { CreditRange } from "@/hooks/use-credit-expenses";
@@ -12,7 +13,26 @@ type Props = {
   reconciliation: Reconciliation | null;
   range: CreditRange;
   kind: "crn" | "ccn";
+  loading?: boolean;
 };
+
+function CardHeader({ walletHref }: { walletHref: string | null }) {
+  return (
+    <div className="mb-2 flex flex-wrap items-baseline justify-between gap-x-4 gap-y-1">
+      <div className="text-[10px] font-semibold uppercase tracking-wider text-muted-foreground">
+        Reward address breakdown
+      </div>
+      {walletHref && (
+        <Link
+          href={walletHref}
+          className="text-xs text-primary-500 transition-colors hover:text-primary-300 dark:text-primary-300"
+        >
+          View full wallet →
+        </Link>
+      )}
+    </div>
+  );
+}
 
 type SegmentKey = "this" | "other" | "cross" | "staker";
 
@@ -83,6 +103,7 @@ export function NodeEarningsReconciliation({
   reconciliation,
   range,
   kind,
+  loading = false,
 }: Props) {
   const [hoveredKey, setHoveredKey] = useState<SegmentKey | null>(null);
 
@@ -95,19 +116,39 @@ export function NodeEarningsReconciliation({
   const walletHref = `/wallet?address=${r.rewardAddr}`;
   const segments = buildSegments(r, kind);
 
+  if (loading) {
+    return (
+      <Card padding="md" className="@container/recon">
+        <CardHeader walletHref={walletHref} />
+        <div className="mb-3 flex flex-wrap items-center gap-x-2 gap-y-1 text-xs text-muted-foreground">
+          <CopyableText
+            text={r.rewardAddr}
+            startChars={6}
+            endChars={4}
+            size="sm"
+          />
+          <span>·</span>
+          <Skeleton className="h-3 w-40" />
+        </div>
+        <Skeleton className="mb-3 h-7 w-full rounded-md" />
+        <div className="grid grid-cols-1 gap-x-4 gap-y-2 @md/recon:grid-cols-2 @2xl/recon:grid-cols-4">
+          {[0, 1, 2, 3].map((i) => (
+            <div key={i} className="flex items-start gap-2">
+              <span className="mt-1 inline-block h-2 w-2 shrink-0 rounded-full bg-muted-foreground/30" />
+              <div className="min-w-0 flex-1 space-y-1">
+                <Skeleton className="h-3 w-20" />
+                <Skeleton className="h-3 w-16" />
+              </div>
+            </div>
+          ))}
+        </div>
+      </Card>
+    );
+  }
+
   return (
     <Card padding="md" className="@container/recon">
-      <div className="mb-2 flex flex-wrap items-baseline justify-between gap-x-4 gap-y-1">
-        <div className="text-[10px] font-semibold uppercase tracking-wider text-muted-foreground">
-          Reward address breakdown
-        </div>
-        <Link
-          href={walletHref}
-          className="text-xs text-primary-500 transition-colors hover:text-primary-300 dark:text-primary-300"
-        >
-          View full wallet →
-        </Link>
-      </div>
+      <CardHeader walletHref={walletHref} />
 
       {hasOverlap ? (
         <div onMouseLeave={() => setHoveredKey(null)}>

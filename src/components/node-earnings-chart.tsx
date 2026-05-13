@@ -1,6 +1,7 @@
 "use client";
 
 import { useState } from "react";
+import { Skeleton } from "@aleph-front/ds/ui/skeleton";
 import { DualLineChart } from "@/components/dual-line-chart";
 import type { NodeEarningsBucket } from "@/hooks/use-node-earnings";
 
@@ -10,6 +11,7 @@ type Props = {
   secondaryLabel: string;
   height?: number;
   emptyHint?: string;
+  loading?: boolean;
 };
 
 const HOURLY_BUCKET_MAX_SEC = 3600 + 60;
@@ -92,8 +94,33 @@ export function NodeEarningsChart({
   secondaryLabel,
   height = 120,
   emptyHint,
+  loading = false,
 }: Props) {
   const [hoverIndex, setHoverIndex] = useState<number | null>(null);
+
+  if (loading) {
+    return (
+      <div>
+        <div className="mb-2 flex items-center gap-4 text-xs text-muted-foreground">
+          <span className="inline-flex items-center gap-1.5">
+            <span
+              aria-hidden="true"
+              className="inline-block h-0.5 w-3 bg-success-500"
+            />
+            {primaryLabel}
+          </span>
+          <span className="inline-flex items-center gap-1.5">
+            <span
+              aria-hidden="true"
+              className="inline-block h-0.5 w-3 bg-primary-500"
+            />
+            {secondaryLabel}
+          </span>
+        </div>
+        <Skeleton style={{ height }} className="w-full" />
+      </div>
+    );
+  }
 
   const hasData = buckets.some((b) => b.aleph > 0 || b.secondaryCount > 0);
   if (!hasData || buckets.length < 2) {

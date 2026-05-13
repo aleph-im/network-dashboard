@@ -1,6 +1,7 @@
 "use client";
 
 import { Card } from "@aleph-front/ds/card";
+import { Skeleton } from "@aleph-front/ds/ui/skeleton";
 
 export type KpiCard = {
   label: string;
@@ -17,7 +18,13 @@ const TONE_CLASS: Record<NonNullable<KpiCard["tone"]>, string> = {
   warning: "text-warning-500",
 };
 
-export function NodeEarningsKpiRow({ cards }: { cards: KpiCard[] }) {
+export function NodeEarningsKpiRow({
+  cards,
+  loading = false,
+}: {
+  cards: KpiCard[];
+  loading?: boolean;
+}) {
   return (
     <div className="grid grid-cols-1 gap-3 sm:grid-cols-2 lg:grid-cols-4">
       {cards.map((c, i) => (
@@ -25,12 +32,23 @@ export function NodeEarningsKpiRow({ cards }: { cards: KpiCard[] }) {
           <div className="text-[10px] font-semibold uppercase tracking-wider text-muted-foreground">
             {c.label}
           </div>
-          <div className="mt-1 font-mono text-2xl font-semibold tabular-nums">
-            {c.primary}
-          </div>
-          <div className={`mt-0.5 text-xs ${TONE_CLASS[c.tone ?? "default"]}`}>
-            {c.secondary}
-          </div>
+          {loading ? (
+            <>
+              <Skeleton className="mt-1 h-8 w-24" />
+              <Skeleton className="mt-1 h-3 w-32" />
+            </>
+          ) : (
+            <>
+              <div className="mt-1 font-mono text-2xl font-semibold tabular-nums">
+                {c.primary}
+              </div>
+              <div
+                className={`mt-0.5 text-xs ${TONE_CLASS[c.tone ?? "default"]}`}
+              >
+                {c.secondary}
+              </div>
+            </>
+          )}
         </Card>
       ))}
     </div>
