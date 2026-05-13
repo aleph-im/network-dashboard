@@ -23,13 +23,13 @@ describe("DualLineChart", () => {
   it("renders no crosshair when highlightedIndex is null", () => {
     const { container } = render(<DualLineChart buckets={sampleBuckets} highlightedIndex={null} />);
     expect(container.querySelector("line")).toBeNull();
-    expect(container.querySelectorAll("circle")).toHaveLength(0);
+    expect(container.querySelectorAll("[data-testid='crosshair-dot']")).toHaveLength(0);
   });
 
-  it("renders crosshair line and two emphasis circles when highlightedIndex is set", () => {
+  it("renders crosshair line and two emphasis dots when highlightedIndex is set", () => {
     const { container } = render(<DualLineChart buckets={sampleBuckets} highlightedIndex={12} />);
     expect(container.querySelector("line")).toBeTruthy();
-    expect(container.querySelectorAll("circle")).toHaveLength(2);
+    expect(container.querySelectorAll("[data-testid='crosshair-dot']")).toHaveLength(2);
   });
 
   it("omits the pointer-capture rect when onHoverIndex is not provided", () => {

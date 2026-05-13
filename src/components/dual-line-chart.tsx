@@ -72,36 +72,45 @@ export function DualLineChart({
     onHoverIndex(nearestBucketIndex(x, rect.width, n));
   }
 
+  const highlightXPct =
+    hasHighlight ? (highlightedIndex / (n - 1)) * 100 : 0;
+  const highlightYPctAleph =
+    hasHighlight && highlight ? (yForAleph(highlight.aleph) / height) * 100 : 0;
+  const highlightYPctSecondary =
+    hasHighlight && highlight
+      ? (yForSecondary(highlight.secondaryCount) / height) * 100
+      : 0;
+
   return (
-    <svg
-      viewBox={`0 0 ${width} ${height}`}
-      width="100%"
-      height={height}
-      preserveAspectRatio="none"
-      className="block overflow-visible"
-      aria-hidden="true"
-    >
-      <polyline
-        points={secondaryPoints}
-        fill="none"
-        stroke="var(--color-primary-500)"
-        strokeWidth={1.5}
-        strokeLinecap="round"
-        strokeLinejoin="round"
-        strokeOpacity={0.7}
-        vectorEffect="non-scaling-stroke"
-      />
-      <polyline
-        points={alephPoints}
-        fill="none"
-        stroke="var(--color-success-500)"
-        strokeWidth={2}
-        strokeLinecap="round"
-        strokeLinejoin="round"
-        vectorEffect="non-scaling-stroke"
-      />
-      {hasHighlight && highlight && (
-        <>
+    <div className="relative" style={{ height }}>
+      <svg
+        viewBox={`0 0 ${width} ${height}`}
+        width="100%"
+        height={height}
+        preserveAspectRatio="none"
+        className="block overflow-visible"
+        aria-hidden="true"
+      >
+        <polyline
+          points={secondaryPoints}
+          fill="none"
+          stroke="var(--color-primary-500)"
+          strokeWidth={1.5}
+          strokeLinecap="round"
+          strokeLinejoin="round"
+          strokeOpacity={0.7}
+          vectorEffect="non-scaling-stroke"
+        />
+        <polyline
+          points={alephPoints}
+          fill="none"
+          stroke="var(--color-success-500)"
+          strokeWidth={2}
+          strokeLinecap="round"
+          strokeLinejoin="round"
+          vectorEffect="non-scaling-stroke"
+        />
+        {hasHighlight && highlight && (
           <line
             x1={xFor(highlightedIndex)}
             y1={0}
@@ -112,32 +121,50 @@ export function DualLineChart({
             strokeDasharray="2 3"
             vectorEffect="non-scaling-stroke"
           />
-          <circle
-            cx={xFor(highlightedIndex)}
-            cy={yForAleph(highlight.aleph)}
-            r={3.5}
-            fill="var(--color-success-500)"
+        )}
+        {onHoverIndex && (
+          <rect
+            x={0}
+            y={0}
+            width={width}
+            height={height}
+            fill="transparent"
+            onPointerMove={handlePointerMove}
+            onPointerLeave={onHoverEnd}
           />
-          <circle
-            cx={xFor(highlightedIndex)}
-            cy={yForSecondary(highlight.secondaryCount)}
-            r={3}
-            fill="var(--color-primary-500)"
-            opacity={0.9}
+        )}
+      </svg>
+      {hasHighlight && highlight && (
+        <>
+          <span
+            data-testid="crosshair-dot"
+            aria-hidden="true"
+            className="pointer-events-none absolute rounded-full"
+            style={{
+              left: `${highlightXPct}%`,
+              top: `${highlightYPctAleph}%`,
+              width: "7px",
+              height: "7px",
+              background: "var(--color-success-500)",
+              transform: "translate(-50%, -50%)",
+            }}
+          />
+          <span
+            data-testid="crosshair-dot"
+            aria-hidden="true"
+            className="pointer-events-none absolute rounded-full"
+            style={{
+              left: `${highlightXPct}%`,
+              top: `${highlightYPctSecondary}%`,
+              width: "6px",
+              height: "6px",
+              background: "var(--color-primary-500)",
+              opacity: 0.9,
+              transform: "translate(-50%, -50%)",
+            }}
           />
         </>
       )}
-      {onHoverIndex && (
-        <rect
-          x={0}
-          y={0}
-          width={width}
-          height={height}
-          fill="transparent"
-          onPointerMove={handlePointerMove}
-          onPointerLeave={onHoverEnd}
-        />
-      )}
-    </svg>
+    </div>
   );
 }
