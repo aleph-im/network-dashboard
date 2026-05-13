@@ -175,10 +175,10 @@ export function NodeEarningsTab({ hash }: { hash: string }) {
                 ? Array.from({ length: Math.min(TOP_N, Math.max(1, perVm.length)) }).map((_, i) => (
                     <tr key={`vm-skeleton-${i}`}>
                       <td className="py-1.5 pr-4">
-                        <Skeleton className="h-4 w-48" />
+                        <Skeleton className="h-4 w-48 bg-foreground/15" />
                       </td>
                       <td className="py-1.5 text-right">
-                        <Skeleton className="ml-auto h-4 w-16" />
+                        <Skeleton className="ml-auto h-4 w-16 bg-foreground/15" />
                       </td>
                     </tr>
                   ))
@@ -222,7 +222,7 @@ export function NodeEarningsTab({ hash }: { hash: string }) {
                 <td className="pt-2 text-xs text-muted-foreground">Total</td>
                 <td className="pt-2 text-right tabular-nums">
                   {isPlaceholderData ? (
-                    <Skeleton className="ml-auto h-4 w-20" />
+                    <Skeleton className="ml-auto h-4 w-20 bg-foreground/15" />
                   ) : (
                     formatAleph(data.totalAleph)
                   )}

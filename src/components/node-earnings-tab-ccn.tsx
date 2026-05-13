@@ -183,13 +183,13 @@ export function NodeEarningsTabCcn({ hash }: { hash: string }) {
                   }).map((_, i) => (
                     <tr key={`crn-skeleton-${i}`}>
                       <td className="py-1.5 pr-4">
-                        <Skeleton className="h-4 w-56" />
+                        <Skeleton className="h-4 w-56 bg-foreground/15" />
                       </td>
                       <td className="py-1.5 pr-4">
-                        <Skeleton className="h-4 w-20" />
+                        <Skeleton className="h-4 w-20 bg-foreground/15" />
                       </td>
                       <td className="py-1.5 text-right">
-                        <Skeleton className="ml-auto h-4 w-10" />
+                        <Skeleton className="ml-auto h-4 w-10 bg-foreground/15" />
                       </td>
                     </tr>
                   ))

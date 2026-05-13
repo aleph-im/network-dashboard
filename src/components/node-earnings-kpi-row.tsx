@@ -34,8 +34,8 @@ export function NodeEarningsKpiRow({
           </div>
           {loading ? (
             <>
-              <Skeleton className="mt-1 h-8 w-24" />
-              <Skeleton className="mt-1 h-3 w-32" />
+              <Skeleton className="mt-1 h-8 w-24 bg-foreground/15" />
+              <Skeleton className="mt-1 h-3 w-32 bg-foreground/15" />
             </>
           ) : (
             <>
