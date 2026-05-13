@@ -1,3 +1,10 @@
+---
+status: done
+branch: feature/earnings-chart-hover-and-spark
+date: 2026-05-13
+note: awaiting preview + ship
+---
+
 # Earnings Chart Hover + Panel Sparkline Implementation Plan
 
 > **For agentic workers:** REQUIRED SUB-SKILL: Use superpowers:subagent-driven-development (recommended) or superpowers:executing-plans to implement this plan task-by-task. Steps use checkbox (`- [ ]`) syntax for tracking.
