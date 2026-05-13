@@ -30,8 +30,8 @@ export function NodeEarningsKpiRow({ cards }: { cards: KpiCard[] }) {
           </div>
           {c.loading ? (
             <>
-              <Skeleton className="mt-1 h-8 w-24 bg-foreground/10" />
-              <Skeleton className="mt-1 h-3 w-32 bg-foreground/10" />
+              <Skeleton className="mt-1 h-8 w-24 bg-edge" />
+              <Skeleton className="mt-1 h-3 w-32 bg-edge" />
             </>
           ) : (
             <>

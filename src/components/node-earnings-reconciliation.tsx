@@ -128,9 +128,9 @@ export function NodeEarningsReconciliation({
             size="sm"
           />
           <span>·</span>
-          <Skeleton className="h-3 w-44 bg-foreground/10" />
+          <Skeleton className="h-3 w-44 bg-edge" />
         </div>
-        <Skeleton className="mb-3 h-7 w-full rounded-md bg-foreground/10" />
+        <Skeleton className="mb-3 h-7 w-full rounded-md bg-edge" />
         <div className="grid grid-cols-1 gap-x-4 gap-y-2 @md/recon:grid-cols-2 @2xl/recon:grid-cols-4">
           {segments.map((seg) => (
             <div key={seg.key} className="flex items-start gap-2">
@@ -141,7 +141,7 @@ export function NodeEarningsReconciliation({
                 <div className="truncate text-xs text-muted-foreground">
                   {seg.label}
                 </div>
-                <Skeleton className="h-3 w-20 bg-foreground/10" />
+                <Skeleton className="h-3 w-20 bg-edge" />
               </div>
             </div>
           ))}

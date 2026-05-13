@@ -188,7 +188,7 @@ export function NodeEarningsTab({ hash }: { hash: string }) {
                   </td>
                   <td className="py-1.5 text-right tabular-nums">
                     {isPlaceholderData ? (
-                      <Skeleton className="ml-auto h-4 w-16 bg-foreground/10" />
+                      <Skeleton className="ml-auto h-4 w-16 bg-edge" />
                     ) : (
                       formatAleph(v.aleph)
                     )}
@@ -219,7 +219,7 @@ export function NodeEarningsTab({ hash }: { hash: string }) {
                 <td className="pt-2 text-xs text-muted-foreground">Total</td>
                 <td className="pt-2 text-right tabular-nums">
                   {isPlaceholderData ? (
-                    <Skeleton className="ml-auto h-4 w-20 bg-foreground/10" />
+                    <Skeleton className="ml-auto h-4 w-20 bg-edge" />
                   ) : (
                     formatAleph(data.totalAleph)
                   )}

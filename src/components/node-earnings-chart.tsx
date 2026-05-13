@@ -117,7 +117,7 @@ export function NodeEarningsChart({
             {secondaryLabel}
           </span>
         </div>
-        <Skeleton style={{ height }} className="w-full bg-foreground/10" />
+        <Skeleton style={{ height }} className="w-full bg-edge" />
       </div>
     );
   }
