@@ -1,7 +1,15 @@
 import { render, screen } from "@testing-library/react";
-import { describe, expect, it } from "vitest";
+import { describe, expect, it, vi } from "vitest";
 import { NetworkDetailPanelCCN } from "@/components/network/network-detail-panel-ccn";
 import type { CCNInfo } from "@/api/credit-types";
+
+vi.mock("@/hooks/use-node-earnings", () => ({
+  useNodeEarnings: vi.fn(() => ({
+    data: undefined,
+    isLoading: false,
+    isPlaceholderData: false,
+  })),
+}));
 
 const ACTIVE_CCN: CCNInfo = {
   hash: "ccn-hash-1",
@@ -49,6 +57,11 @@ describe("NetworkDetailPanelCCN", () => {
     expect(
       screen.getByText(/Owner must hold 200,000 ALEPH/),
     ).toBeInTheDocument();
+  });
+
+  it("renders the Earnings · 24h section heading", () => {
+    render(<NetworkDetailPanelCCN info={ACTIVE_CCN} ownerBalance={250_000} />);
+    expect(screen.getByText(/Earnings · 24h/i)).toBeInTheDocument();
   });
 
   it("shows the understaked message when total is below 500k but owner is OK", () => {

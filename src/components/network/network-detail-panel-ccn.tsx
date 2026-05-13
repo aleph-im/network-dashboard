@@ -2,6 +2,7 @@
 
 import { Badge } from "@aleph-front/ds/badge";
 import { CopyableText } from "@aleph-front/ds/copyable-text";
+import { NodeEarningsSpark } from "@/components/node-earnings-spark";
 import type { CCNInfo } from "@/api/credit-types";
 import { countryFlag } from "@/lib/country-flag";
 import {
@@ -116,6 +117,13 @@ export function NetworkDetailPanelCCN({ info, country, ownerBalance }: Props) {
         <p className="font-mono text-sm">
           {ALEPH_FMT.format(info.totalStaked)} ALEPH
         </p>
+      </div>
+
+      <div className="space-y-2 border-t border-edge pt-3">
+        <h4 className="text-xs font-semibold uppercase tracking-wider text-muted-foreground">
+          Earnings · 24h
+        </h4>
+        <NodeEarningsSpark hash={info.hash} />
       </div>
 
       <div className="space-y-1 border-t border-edge pt-3">
