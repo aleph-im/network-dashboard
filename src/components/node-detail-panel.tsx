@@ -8,12 +8,12 @@ import { StatusDot } from "@aleph-front/ds/status-dot";
 import { Skeleton } from "@aleph-front/ds/ui/skeleton";
 import { CopyableText } from "@aleph-front/ds/copyable-text";
 import { useNode } from "@/hooks/use-nodes";
+import { NodeEarningsSpark } from "@/components/node-earnings-spark";
 import { ResourceBar } from "@/components/resource-bar";
 import { relativeTime, formatCpuLabel } from "@/lib/format";
 import {
   nodeStatusToDot,
   NODE_STATUS_VARIANT,
-  VM_STATUS_VARIANT,
 } from "@/lib/status-map";
 
 type NodeDetailPanelProps = {
@@ -195,34 +195,11 @@ export function NodeDetailPanel({ hash, onClose }: NodeDetailPanelProps) {
       )}
 
       {node.vms.length > 0 && (
-        <div className="mt-4 space-y-1.5 border-t border-edge pt-3">
+        <div className="mt-4 space-y-2 border-t border-edge pt-3">
           <h4 className="text-xs font-semibold uppercase tracking-wider text-muted-foreground">
-            VMs ({node.vms.length})
+            Earnings · 24h
           </h4>
-          <ul className="space-y-1">
-            {node.vms.slice(0, 6).map((vm) => (
-              <li
-                key={vm.hash}
-                className="flex items-center justify-between text-sm"
-              >
-                <CopyableText
-                  text={vm.hash}
-                  startChars={8}
-                  endChars={8}
-                  size="sm"
-                  href={`/vms?view=${vm.hash}`}
-                />
-                <Badge fill="outline" variant={VM_STATUS_VARIANT[vm.status]} size="sm">
-                  {vm.status}
-                </Badge>
-              </li>
-            ))}
-          </ul>
-          {node.vms.length > 6 && (
-            <p className="mt-1.5 text-xs text-muted-foreground">
-              +{node.vms.length - 6} more
-            </p>
-          )}
+          <NodeEarningsSpark hash={node.hash} />
         </div>
       )}
 
