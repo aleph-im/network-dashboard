@@ -9,6 +9,15 @@ import type { Graph, GraphNode } from "@/lib/network-graph-model";
 
 vi.mock("@/hooks/use-nodes", () => ({
   useNode: () => ({ data: null, isLoading: false }),
+  useNodes: () => ({ data: undefined, isLoading: false }),
+}));
+
+vi.mock("@/hooks/use-node-earnings", () => ({
+  useNodeEarnings: () => ({
+    data: undefined,
+    isLoading: false,
+    isPlaceholderData: false,
+  }),
 }));
 
 const CCN_NODE: GraphNode = {

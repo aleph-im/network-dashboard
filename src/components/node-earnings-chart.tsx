@@ -15,7 +15,10 @@ type Props = {
 const HOURLY_BUCKET_MAX_SEC = 3600 + 60;
 
 function bucketDurationSec(buckets: NodeEarningsBucket[]): number {
-  return buckets.length >= 2 ? buckets[1].time - buckets[0].time : 3600;
+  const first = buckets[0];
+  const second = buckets[1];
+  if (!first || !second) return 3600;
+  return second.time - first.time;
 }
 
 function formatBucketTime(epochSec: number, durationSec: number): string {
@@ -133,7 +136,7 @@ export function NodeEarningsChart({
           onHoverIndex={setHoverIndex}
           onHoverEnd={() => setHoverIndex(null)}
         />
-        {hoverIndex != null && (
+        {hoverIndex != null && buckets[hoverIndex] && (
           <HoverCard
             bucket={buckets[hoverIndex]}
             primaryLabel={primaryLabel}
