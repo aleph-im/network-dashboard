@@ -1,4 +1,4 @@
-import { render, screen } from "@testing-library/react";
+import { fireEvent, render, screen } from "@testing-library/react";
 import { describe, expect, it, vi, beforeEach } from "vitest";
 import { NodeEarningsTab } from "./node-earnings-tab";
 
@@ -74,6 +74,43 @@ describe("NodeEarningsTab (CRN)", () => {
     ).toBeInTheDocument();
     // Per-VM hashes appear (CopyableText renders truncated representation)
     expect(screen.getAllByText(/vmA|vmB/).length).toBeGreaterThan(0);
+  });
+
+  it("collapses extra VMs behind a +N more row that expands when clicked", () => {
+    const perVm = Array.from({ length: 7 }, (_, i) => ({
+      vmHash: `vm${i + 1}-aaaaaaaa-bbbbbbbb-cccccccc-dddddddd`,
+      aleph: 10 - i,
+    }));
+    (useNodeEarnings as ReturnType<typeof vi.fn>).mockReturnValue({
+      data: {
+        role: "crn",
+        totalAleph: perVm.reduce((s, v) => s + v.aleph, 0),
+        delta: { aleph: 0, secondaryCount: 0 },
+        buckets: Array.from({ length: 24 }, (_, i) => ({
+          time: i * 3600,
+          aleph: 0.5,
+          secondaryCount: 5,
+        })),
+        perVm,
+      },
+      isLoading: false,
+      isPlaceholderData: false,
+    });
+
+    render(<NodeEarningsTab hash="crn1" />);
+
+    // The "+ 2 more" row is visible by default (since 5 of 7 are shown).
+    const expandTrigger = screen.getByRole("button", { name: /\+ 2 more/i });
+    expect(expandTrigger).toBeInTheDocument();
+    // Hashes 6 and 7 should not be in the DOM yet (they're the collapsed ones).
+    expect(screen.queryByText(/^vm6/)).not.toBeInTheDocument();
+
+    // Click to expand.
+    fireEvent.click(expandTrigger);
+
+    // Now all 7 rows should be visible — and the trigger flips to "Show less".
+    expect(screen.getByRole("button", { name: /show less/i })).toBeInTheDocument();
+    expect(screen.queryByRole("button", { name: /\+ 2 more/i })).not.toBeInTheDocument();
   });
 
   it("renders loading skeleton when data is undefined", () => {

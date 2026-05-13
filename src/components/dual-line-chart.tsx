@@ -78,7 +78,7 @@ export function DualLineChart({
       width="100%"
       height={height}
       preserveAspectRatio="none"
-      className="block"
+      className="block overflow-visible"
       aria-hidden="true"
     >
       <polyline
