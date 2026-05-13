@@ -1,5 +1,6 @@
 "use client";
 
+import { DualLineChart } from "@/components/dual-line-chart";
 import type { NodeEarningsBucket } from "@/hooks/use-node-earnings";
 
 type Props = {
@@ -7,7 +8,6 @@ type Props = {
   primaryLabel: string;
   secondaryLabel: string;
   height?: number;
-  /** Optional role-specific hint shown below the empty-state heading. */
   emptyHint?: string;
 };
 
@@ -31,28 +31,6 @@ export function NodeEarningsChart({
     );
   }
 
-  const width = 600;
-  const maxAleph = Math.max(...buckets.map((b) => b.aleph), 0.0001);
-  const maxSecondary = Math.max(
-    ...buckets.map((b) => b.secondaryCount),
-    0.0001,
-  );
-
-  const n = buckets.length;
-  const xFor = (i: number) => (i / (n - 1)) * width;
-  const yForAleph = (v: number) => height - (v / maxAleph) * height;
-  const yForSecondary = (v: number) => height - (v / maxSecondary) * height;
-
-  const alephPoints = buckets
-    .map((b, i) => `${xFor(i).toFixed(1)},${yForAleph(b.aleph).toFixed(1)}`)
-    .join(" ");
-  const secondaryPoints = buckets
-    .map(
-      (b, i) =>
-        `${xFor(i).toFixed(1)},${yForSecondary(b.secondaryCount).toFixed(1)}`,
-    )
-    .join(" ");
-
   return (
     <div>
       <div className="mb-2 flex items-center gap-4 text-xs text-muted-foreground">
@@ -71,34 +49,7 @@ export function NodeEarningsChart({
           {secondaryLabel}
         </span>
       </div>
-      <svg
-        viewBox={`0 0 ${width} ${height}`}
-        width="100%"
-        height={height}
-        preserveAspectRatio="none"
-        className="block"
-        aria-hidden="true"
-      >
-        <polyline
-          points={secondaryPoints}
-          fill="none"
-          stroke="var(--color-primary-500)"
-          strokeWidth={1.5}
-          strokeLinecap="round"
-          strokeLinejoin="round"
-          strokeOpacity={0.7}
-          vectorEffect="non-scaling-stroke"
-        />
-        <polyline
-          points={alephPoints}
-          fill="none"
-          stroke="var(--color-success-500)"
-          strokeWidth={2}
-          strokeLinecap="round"
-          strokeLinejoin="round"
-          vectorEffect="non-scaling-stroke"
-        />
-      </svg>
+      <DualLineChart buckets={buckets} height={height} />
     </div>
   );
 }
