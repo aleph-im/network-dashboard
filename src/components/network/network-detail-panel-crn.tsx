@@ -3,6 +3,7 @@
 import { Badge } from "@aleph-front/ds/badge";
 import { CopyableText } from "@aleph-front/ds/copyable-text";
 import { Skeleton } from "@aleph-front/ds/ui/skeleton";
+import { NodeEarningsSpark } from "@/components/node-earnings-spark";
 import { ResourceBar } from "@/components/resource-bar";
 import { useNode } from "@/hooks/use-nodes";
 import type { CCNInfo, CRNInfo } from "@/api/credit-types";
@@ -171,6 +172,13 @@ export function NetworkDetailPanelCRN({
           )}
         </div>
       )}
+
+      <div className="space-y-2 border-t border-edge pt-3">
+        <h4 className="text-xs font-semibold uppercase tracking-wider text-muted-foreground">
+          Earnings · 24h
+        </h4>
+        <NodeEarningsSpark hash={info.hash} />
+      </div>
 
       <div className="space-y-1 border-t border-edge pt-3">
         <h4 className="text-xs font-semibold uppercase tracking-wider text-muted-foreground">
