@@ -35,6 +35,7 @@ function buildCrnCards(
   score: number,
   status: string,
   updatedAt: string | undefined,
+  rangeLoading: boolean,
 ): KpiCard[] {
   const dAleph = data.delta.aleph;
   const dCount = data.delta.secondaryCount;
@@ -50,12 +51,14 @@ function buildCrnCards(
       primary: formatAleph(data.totalAleph),
       secondary: `${deltaArrow(dAleph)} ${formatAleph(Math.abs(dAleph))} vs prev ${range}`,
       tone: dAleph > 0 ? "up" : dAleph < 0 ? "down" : "default",
+      loading: rangeLoading,
     },
     {
       label: "VMs hosted (avg)",
       primary: avgVms.toFixed(1),
       secondary: `${deltaArrow(dCount)} ${Math.abs(dCount).toFixed(1)} vs prev ${range}`,
       tone: dCount > 0 ? "up" : dCount < 0 ? "down" : "default",
+      loading: rangeLoading,
     },
     {
       label: "Score",
@@ -111,6 +114,7 @@ export function NodeEarningsTab({ hash }: { hash: string }) {
     crn.score,
     node?.status ?? crn.status,
     node?.updatedAt,
+    isPlaceholderData,
   );
 
   const perVm = data.perVm ?? [];
@@ -131,7 +135,7 @@ export function NodeEarningsTab({ hash }: { hash: string }) {
         </TabsList>
       </Tabs>
 
-      <NodeEarningsKpiRow cards={cards} loading={isPlaceholderData} />
+      <NodeEarningsKpiRow cards={cards} />
 
       <Card padding="md">
         <div className="mb-2 text-[10px] font-semibold uppercase tracking-wider text-muted-foreground">
@@ -158,7 +162,7 @@ export function NodeEarningsTab({ hash }: { hash: string }) {
         loading={isPlaceholderData}
       />
 
-      {(perVm.length > 0 || isPlaceholderData) && (
+      {perVm.length > 0 && (
         <Card padding="md">
           <div className="mb-2 text-[10px] font-semibold uppercase tracking-wider text-muted-foreground">
             Hosted VMs — earnings breakdown
@@ -171,33 +175,26 @@ export function NodeEarningsTab({ hash }: { hash: string }) {
               </tr>
             </thead>
             <tbody className="divide-y divide-edge">
-              {isPlaceholderData
-                ? Array.from({ length: Math.min(TOP_N, Math.max(1, perVm.length)) }).map((_, i) => (
-                    <tr key={`vm-skeleton-${i}`}>
-                      <td className="py-1.5 pr-4">
-                        <Skeleton className="h-4 w-48 bg-foreground/15" />
-                      </td>
-                      <td className="py-1.5 text-right">
-                        <Skeleton className="ml-auto h-4 w-16 bg-foreground/15" />
-                      </td>
-                    </tr>
-                  ))
-                : visibleVms.map((v) => (
-                    <tr key={v.vmHash}>
-                      <td className="py-1.5 pr-4">
-                        <CopyableText
-                          text={v.vmHash}
-                          startChars={8}
-                          endChars={8}
-                          size="sm"
-                          href={`/vms?view=${v.vmHash}`}
-                        />
-                      </td>
-                      <td className="py-1.5 text-right tabular-nums">
-                        {formatAleph(v.aleph)}
-                      </td>
-                    </tr>
-                  ))}
+              {visibleVms.map((v) => (
+                <tr key={v.vmHash}>
+                  <td className="py-1.5 pr-4">
+                    <CopyableText
+                      text={v.vmHash}
+                      startChars={8}
+                      endChars={8}
+                      size="sm"
+                      href={`/vms?view=${v.vmHash}`}
+                    />
+                  </td>
+                  <td className="py-1.5 text-right tabular-nums">
+                    {isPlaceholderData ? (
+                      <Skeleton className="ml-auto h-4 w-16 bg-foreground/10" />
+                    ) : (
+                      formatAleph(v.aleph)
+                    )}
+                  </td>
+                </tr>
+              ))}
               {!isPlaceholderData && rest.length > 0 && (
                 <tr>
                   <td colSpan={expandedBreakdown ? 2 : 1} className="py-1.5 pr-4">
@@ -222,7 +219,7 @@ export function NodeEarningsTab({ hash }: { hash: string }) {
                 <td className="pt-2 text-xs text-muted-foreground">Total</td>
                 <td className="pt-2 text-right tabular-nums">
                   {isPlaceholderData ? (
-                    <Skeleton className="ml-auto h-4 w-20 bg-foreground/15" />
+                    <Skeleton className="ml-auto h-4 w-20 bg-foreground/10" />
                   ) : (
                     formatAleph(data.totalAleph)
                   )}

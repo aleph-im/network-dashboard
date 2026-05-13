@@ -128,16 +128,20 @@ export function NodeEarningsReconciliation({
             size="sm"
           />
           <span>·</span>
-          <Skeleton className="h-3 w-40 bg-foreground/15" />
+          <Skeleton className="h-3 w-44 bg-foreground/10" />
         </div>
-        <Skeleton className="mb-3 h-7 w-full rounded-md bg-foreground/15" />
+        <Skeleton className="mb-3 h-7 w-full rounded-md bg-foreground/10" />
         <div className="grid grid-cols-1 gap-x-4 gap-y-2 @md/recon:grid-cols-2 @2xl/recon:grid-cols-4">
-          {[0, 1, 2, 3].map((i) => (
-            <div key={i} className="flex items-start gap-2">
-              <span className="mt-1 inline-block h-2 w-2 shrink-0 rounded-full bg-foreground/30" />
+          {segments.map((seg) => (
+            <div key={seg.key} className="flex items-start gap-2">
+              <span
+                className={`mt-1 inline-block h-2 w-2 shrink-0 rounded-full ${seg.swatchClass}`}
+              />
               <div className="min-w-0 flex-1 space-y-1">
-                <Skeleton className="h-3 w-20 bg-foreground/15" />
-                <Skeleton className="h-3 w-16 bg-foreground/15" />
+                <div className="truncate text-xs text-muted-foreground">
+                  {seg.label}
+                </div>
+                <Skeleton className="h-3 w-20 bg-foreground/10" />
               </div>
             </div>
           ))}

@@ -9,6 +9,8 @@ export type KpiCard = {
   secondary: string;
   /** Optional tone for the secondary text (controls colour). */
   tone?: "default" | "up" | "down" | "warning";
+  /** When true, render skeletons for primary + secondary (e.g. mid-refetch). */
+  loading?: boolean;
 };
 
 const TONE_CLASS: Record<NonNullable<KpiCard["tone"]>, string> = {
@@ -18,13 +20,7 @@ const TONE_CLASS: Record<NonNullable<KpiCard["tone"]>, string> = {
   warning: "text-warning-500",
 };
 
-export function NodeEarningsKpiRow({
-  cards,
-  loading = false,
-}: {
-  cards: KpiCard[];
-  loading?: boolean;
-}) {
+export function NodeEarningsKpiRow({ cards }: { cards: KpiCard[] }) {
   return (
     <div className="grid grid-cols-1 gap-3 sm:grid-cols-2 lg:grid-cols-4">
       {cards.map((c, i) => (
@@ -32,10 +28,10 @@ export function NodeEarningsKpiRow({
           <div className="text-[10px] font-semibold uppercase tracking-wider text-muted-foreground">
             {c.label}
           </div>
-          {loading ? (
+          {c.loading ? (
             <>
-              <Skeleton className="mt-1 h-8 w-24 bg-foreground/15" />
-              <Skeleton className="mt-1 h-3 w-32 bg-foreground/15" />
+              <Skeleton className="mt-1 h-8 w-24 bg-foreground/10" />
+              <Skeleton className="mt-1 h-3 w-32 bg-foreground/10" />
             </>
           ) : (
             <>

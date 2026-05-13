@@ -43,6 +43,7 @@ function buildCcnCards(
   status: string,
   updatedAt: string | undefined,
   linkedCount: number,
+  rangeLoading: boolean,
 ): KpiCard[] {
   const dAleph = data.delta.aleph;
   return [
@@ -51,6 +52,7 @@ function buildCcnCards(
       primary: formatAleph(data.totalAleph),
       secondary: `${deltaArrow(dAleph)} ${formatAleph(Math.abs(dAleph))} vs prev ${range}`,
       tone: dAleph > 0 ? "up" : dAleph < 0 ? "down" : "default",
+      loading: rangeLoading,
     },
     {
       label: "Score",
@@ -113,6 +115,7 @@ export function NodeEarningsTabCcn({ hash }: { hash: string }) {
     node?.status ?? ccn.status,
     node?.updatedAt,
     linkedCount,
+    isPlaceholderData,
   );
 
   const chartProps =
@@ -137,7 +140,7 @@ export function NodeEarningsTabCcn({ hash }: { hash: string }) {
         </TabsList>
       </Tabs>
 
-      <NodeEarningsKpiRow cards={cards} loading={isPlaceholderData} />
+      <NodeEarningsKpiRow cards={cards} />
 
       <Card padding="md">
         <div className="mb-2 text-[10px] font-semibold uppercase tracking-wider text-muted-foreground">
@@ -159,7 +162,7 @@ export function NodeEarningsTabCcn({ hash }: { hash: string }) {
         loading={isPlaceholderData}
       />
 
-      {((data.linkedCrns && data.linkedCrns.length > 0) || isPlaceholderData) && (
+      {data.linkedCrns && data.linkedCrns.length > 0 && (
         <Card padding="md">
           <div className="mb-2 text-[10px] font-semibold uppercase tracking-wider text-muted-foreground">
             Linked CRNs
@@ -177,48 +180,32 @@ export function NodeEarningsTabCcn({ hash }: { hash: string }) {
               </tr>
             </thead>
             <tbody className="divide-y divide-edge">
-              {isPlaceholderData
-                ? Array.from({
-                    length: Math.max(1, data.linkedCrns?.length ?? 3),
-                  }).map((_, i) => (
-                    <tr key={`crn-skeleton-${i}`}>
-                      <td className="py-1.5 pr-4">
-                        <Skeleton className="h-4 w-56 bg-foreground/15" />
-                      </td>
-                      <td className="py-1.5 pr-4">
-                        <Skeleton className="h-4 w-20 bg-foreground/15" />
-                      </td>
-                      <td className="py-1.5 text-right">
-                        <Skeleton className="ml-auto h-4 w-10 bg-foreground/15" />
-                      </td>
-                    </tr>
-                  ))
-                : data.linkedCrns?.map((c) => (
-                    <tr key={c.hash}>
-                      <td className="py-1.5 pr-4">
-                        <CopyableText
-                          text={c.hash}
-                          startChars={8}
-                          endChars={8}
-                          size="sm"
-                          href={`/nodes?view=${c.hash}`}
-                        />
-                        {c.name && (
-                          <span className="ml-2 text-xs text-muted-foreground">
-                            {c.name}
-                          </span>
-                        )}
-                      </td>
-                      <td className="py-1.5 pr-4">
-                        <Badge fill="outline" size="sm">
-                          {c.status}
-                        </Badge>
-                      </td>
-                      <td className="py-1.5 text-right tabular-nums">
-                        {c.vmCount}
-                      </td>
-                    </tr>
-                  ))}
+              {data.linkedCrns.map((c) => (
+                <tr key={c.hash}>
+                  <td className="py-1.5 pr-4">
+                    <CopyableText
+                      text={c.hash}
+                      startChars={8}
+                      endChars={8}
+                      size="sm"
+                      href={`/nodes?view=${c.hash}`}
+                    />
+                    {c.name && (
+                      <span className="ml-2 text-xs text-muted-foreground">
+                        {c.name}
+                      </span>
+                    )}
+                  </td>
+                  <td className="py-1.5 pr-4">
+                    <Badge fill="outline" size="sm">
+                      {c.status}
+                    </Badge>
+                  </td>
+                  <td className="py-1.5 text-right tabular-nums">
+                    {c.vmCount}
+                  </td>
+                </tr>
+              ))}
             </tbody>
           </table>
         </Card>
