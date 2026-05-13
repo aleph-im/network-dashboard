@@ -26,6 +26,10 @@ export const CHANGELOG: VersionEntry[] = [
         type: "feature",
         text: "Network graph CRN/CCN detail panels and the `/nodes` side panel now show a static **Earnings · 24h** sparkline: a mini dual-line chart with ALEPH earned + VM count (CRN) or linked-CRN count (CCN) over the last 24h, plus a caption like `12.40 ALEPH · 3.2 VMs avg`. The `/nodes` side panel drops its truncated VMs list block in exchange — the spark covers the same VM-count signal, and the full VM list is still reachable via `View full details →`.",
       },
+      {
+        type: "ui",
+        text: "Earnings tab VM breakdown: the `+ N more` row is now a click target — expand it to see every VM that earned in the window, collapse with `Show less`.",
+      },
     ],
   },
   {
