@@ -280,3 +280,158 @@ describe("computeDistributionSummary", () => {
     expect(staker!.roles).toContain("staker");
   });
 });
+
+function makeExpenseAt(
+  time: number,
+  type: "storage" | "execution",
+  totalAleph: number,
+  nodeId?: string,
+  executionId?: string,
+): CreditExpense {
+  const e = makeExpense(type, totalAleph, nodeId, executionId);
+  return { ...e, time };
+}
+
+describe("computeDistributionSummary with bucket options", () => {
+  const start = 1_700_000_000;
+  const end = start + 3600 * 24; // 24h window
+  const bucketCount = 24;
+  const bucketWidth = (end - start) / bucketCount; // 3600
+
+  it("buckets CRN execution rewards by expense time", () => {
+    const state = makeNodeState();
+    const expenses = [
+      makeExpenseAt(start + 30, "execution", 10, "crn1", "vm1"),
+      makeExpenseAt(start + bucketWidth + 30, "execution", 20, "crn1", "vm1"),
+      makeExpenseAt(start + bucketWidth * 5 + 30, "execution", 5, "crn1", "vm2"),
+    ];
+
+    const summary = computeDistributionSummary(expenses, state, {
+      bucketCount,
+      startTime: start,
+      endTime: end,
+    });
+
+    const buckets = summary.perNodeBuckets!.get("crn1")!;
+    expect(buckets).toHaveLength(24);
+    expect(buckets[0]!.aleph).toBeCloseTo(10 * 0.6); // EXECUTION_CRN_SHARE
+    expect(buckets[1]!.aleph).toBeCloseTo(20 * 0.6);
+    expect(buckets[5]!.aleph).toBeCloseTo(5 * 0.6);
+    expect(buckets[10]!.aleph).toBe(0);
+    expect(buckets[0]!.time).toBe(start);
+    expect(buckets[1]!.time).toBe(start + bucketWidth);
+  });
+
+  it("buckets CCN rewards as score-weighted share of CCN pool", () => {
+    const state = makeNodeState({
+      ccns: [
+        {
+          hash: "ccnA",
+          name: "A",
+          owner: "0xA",
+          reward: "0xA",
+          score: 0.8,
+          status: "active",
+          stakers: {},
+          totalStaked: 600_000,
+          inactiveSince: null,
+          resourceNodes: [],
+        },
+        {
+          hash: "ccnB",
+          name: "B",
+          owner: "0xB",
+          reward: "0xB",
+          score: 0.5, // weight = (0.5 - 0.2) / 0.6 = 0.5
+          status: "active",
+          stakers: {},
+          totalStaked: 600_000,
+          inactiveSince: null,
+          resourceNodes: [],
+        },
+      ],
+    });
+    const expenses = [
+      makeExpenseAt(start + 30, "execution", 100, "crnX", "vmX"),
+    ];
+
+    const summary = computeDistributionSummary(expenses, state, {
+      bucketCount,
+      startTime: start,
+      endTime: end,
+    });
+
+    // ccnA weight=1, ccnB weight=0.5; total=1.5
+    // CCN pool from execution = 100 * 0.15 = 15
+    // ccnA share = 15 * 1/1.5 = 10
+    // ccnB share = 15 * 0.5/1.5 = 5
+    expect(summary.perNodeBuckets!.get("ccnA")![0]!.aleph).toBeCloseTo(10);
+    expect(summary.perNodeBuckets!.get("ccnB")![0]!.aleph).toBeCloseTo(5);
+  });
+
+  it("storage expenses use storage CCN share (no CRN share)", () => {
+    const state = makeNodeState();
+    const expenses = [
+      makeExpenseAt(start + 30, "storage", 100, "crn1", "obj1"),
+    ];
+
+    const summary = computeDistributionSummary(expenses, state, {
+      bucketCount,
+      startTime: start,
+      endTime: end,
+    });
+
+    // CRN gets nothing from storage expenses
+    expect(summary.perNodeBuckets!.get("crn1")).toBeUndefined();
+    // CCN gets storage CCN share = 100 * 0.75 = 75 (single active CCN with weight 1)
+    expect(summary.perNodeBuckets!.get("ccn1")![0]!.aleph).toBeCloseTo(75);
+  });
+
+  it("populates perVmInWindow with execution credits", () => {
+    const state = makeNodeState();
+    const expenses = [
+      makeExpenseAt(start + 30, "execution", 10, "crn1", "vmA"),
+      makeExpenseAt(start + 60, "execution", 7, "crn1", "vmA"),
+      makeExpenseAt(start + 90, "execution", 3, "crn1", "vmB"),
+    ];
+
+    const summary = computeDistributionSummary(expenses, state, {
+      bucketCount,
+      startTime: start,
+      endTime: end,
+    });
+
+    expect(summary.perVmInWindow!.get("vmA")!.aleph).toBeCloseTo(17);
+    expect(summary.perVmInWindow!.get("vmA")!.nodeId).toBe("crn1");
+    expect(summary.perVmInWindow!.get("vmB")!.aleph).toBeCloseTo(3);
+  });
+
+  it("returns undefined bucket maps when options omitted", () => {
+    const state = makeNodeState();
+    const summary = computeDistributionSummary(
+      [makeExpenseAt(start + 30, "execution", 10, "crn1", "vm1")],
+      state,
+    );
+    expect(summary.perNodeBuckets).toBeUndefined();
+    expect(summary.perVmInWindow).toBeUndefined();
+  });
+
+  it("clamps expense times outside the window to edge buckets", () => {
+    const state = makeNodeState();
+    const expenses = [
+      makeExpenseAt(start - 100, "execution", 5, "crn1", "vm1"), // before window
+      makeExpenseAt(end + 100, "execution", 7, "crn1", "vm1"), // after window
+    ];
+
+    const summary = computeDistributionSummary(expenses, state, {
+      bucketCount,
+      startTime: start,
+      endTime: end,
+    });
+
+    const buckets = summary.perNodeBuckets!.get("crn1")!;
+    // First and last buckets carry the clamped contributions
+    expect(buckets[0]!.aleph).toBeCloseTo(5 * 0.6);
+    expect(buckets[23]!.aleph).toBeCloseTo(7 * 0.6);
+  });
+});

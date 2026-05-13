@@ -1,10 +1,12 @@
 "use client";
 
-import { useRouter } from "next/navigation";
+import { useState } from "react";
+import { useRouter, useSearchParams, usePathname } from "next/navigation";
 import { ShieldCheck } from "@phosphor-icons/react";
 import { Card } from "@aleph-front/ds/card";
 import { Badge } from "@aleph-front/ds/badge";
 import { StatusDot } from "@aleph-front/ds/status-dot";
+import { Tabs, TabsList, TabsTrigger } from "@aleph-front/ds/tabs";
 import {
   TooltipProvider,
   Tooltip,
@@ -14,7 +16,11 @@ import {
 import { Skeleton } from "@aleph-front/ds/ui/skeleton";
 import { CopyableText } from "@aleph-front/ds/copyable-text";
 import { useNode } from "@/hooks/use-nodes";
+import { useNodeState } from "@/hooks/use-node-state";
+import { useOwnerBalances } from "@/hooks/use-owner-balances";
 import { ResourceBar } from "@/components/resource-bar";
+import { NodeEarningsTab } from "@/components/node-earnings-tab";
+import { NodeDetailViewCcn } from "@/components/node-detail-view-ccn";
 import {
   relativeTime,
   formatDateTime,
@@ -26,8 +32,11 @@ import {
   VM_STATUS_VARIANT,
 } from "@/lib/status-map";
 
+type DetailTab = "overview" | "earnings";
+
 type NodeDetailViewProps = {
   hash: string;
+  initialTab?: DetailTab;
 };
 
 function MetaItem({
@@ -45,11 +54,42 @@ function MetaItem({
   );
 }
 
-export function NodeDetailView({ hash }: NodeDetailViewProps) {
+export function NodeDetailView({ hash, initialTab }: NodeDetailViewProps) {
   const router = useRouter();
-  const { data: node, isLoading, error } = useNode(hash);
+  const pathname = usePathname();
+  const searchParams = useSearchParams();
+  const { data: node, isLoading: nodeLoading, error } = useNode(hash);
+  const { data: nodeState, isLoading: stateLoading } = useNodeState();
+  const { data: ownerBalances } = useOwnerBalances(nodeState);
+  const [tab, setTab] = useState<DetailTab>(initialTab ?? "overview");
 
-  if (isLoading) {
+  const handleTabChange = (next: string) => {
+    if (next !== "overview" && next !== "earnings") return;
+    setTab(next);
+    const params = new URLSearchParams(searchParams.toString());
+    if (next === "overview") params.delete("tab");
+    else params.set("tab", next);
+    router.replace(
+      params.toString() ? `${pathname}?${params.toString()}` : pathname,
+    );
+  };
+
+  // CCN dispatch — the scheduler API only returns CRN data, so CCNs are
+  // routed to a separate detail view backed by nodeState.
+  const ccn = nodeState?.ccns.get(hash);
+  if (ccn) {
+    return (
+      <NodeDetailViewCcn
+        hash={hash}
+        ccn={ccn}
+        ownerBalance={ownerBalances?.get(ccn.owner) ?? null}
+        {...(initialTab ? { initialTab } : {})}
+      />
+    );
+  }
+
+  // From here on, the hash is a CRN (or unknown).
+  if (nodeLoading || (!node && stateLoading)) {
     return (
       <div className="space-y-6">
         <Skeleton className="h-8 w-64" />
@@ -112,6 +152,15 @@ export function NodeDetailView({ hash }: NodeDetailViewProps) {
         </Badge>
       </div>
 
+      <Tabs value={tab} onValueChange={handleTabChange}>
+        <TabsList variant="underline" size="sm">
+          <TabsTrigger value="overview">Overview</TabsTrigger>
+          <TabsTrigger value="earnings">Earnings</TabsTrigger>
+        </TabsList>
+      </Tabs>
+
+      {tab === "overview" ? (
+        <>
       {/* Metadata */}
       <Card padding="md">
         <h3 className="mb-3 text-xs font-semibold uppercase tracking-wider text-muted-foreground">
@@ -331,6 +380,10 @@ export function NodeDetailView({ hash }: NodeDetailViewProps) {
           </div>
         )}
       </Card>
+        </>
+      ) : (
+        <NodeEarningsTab hash={hash} />
+      )}
     </div>
   );
 }

@@ -120,6 +120,13 @@ export type RecipientTotal = {
   ccnCount: number;
 };
 
+export type NodeBucket = {
+  /** Bucket start timestamp (seconds since epoch). */
+  time: number;
+  /** ALEPH attributed to this node in this bucket (post-share-split). */
+  aleph: number;
+};
+
 export type DistributionSummary = {
   totalAleph: number;
   storageAleph: number;
@@ -132,6 +139,14 @@ export type DistributionSummary = {
   // Per-VM and per-node aggregates for table integration
   perVm: Map<string, number>;
   perNode: Map<string, number>;
+  // Bucketed per-node ALEPH timeline (CRN + CCN). Only populated when
+  // `computeDistributionSummary` is called with `options`. CRN buckets carry
+  // execution-share ALEPH attributed by `credit.nodeId`; CCN buckets carry
+  // the score-weighted share of the CCN pool per expense.
+  perNodeBuckets?: Map<string, NodeBucket[]>;
+  // Per-VM ALEPH within the same window (execution credits only). Key is
+  // `credit.executionId`. Only populated when `options` is provided.
+  perVmInWindow?: Map<string, { aleph: number; nodeId: string }>;
 };
 
 export type WalletNodeReward = {
