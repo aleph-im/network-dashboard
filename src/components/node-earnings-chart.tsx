@@ -1,5 +1,7 @@
 "use client";
 
+import { useState } from "react";
+import { DualLineChart } from "@/components/dual-line-chart";
 import type { NodeEarningsBucket } from "@/hooks/use-node-earnings";
 
 type Props = {
@@ -7,9 +9,82 @@ type Props = {
   primaryLabel: string;
   secondaryLabel: string;
   height?: number;
-  /** Optional role-specific hint shown below the empty-state heading. */
   emptyHint?: string;
 };
+
+const HOURLY_BUCKET_MAX_SEC = 3600 + 60;
+
+function bucketDurationSec(buckets: NodeEarningsBucket[]): number {
+  const first = buckets[0];
+  const second = buckets[1];
+  if (!first || !second) return 3600;
+  return second.time - first.time;
+}
+
+function formatBucketTime(epochSec: number, durationSec: number): string {
+  const d = new Date(epochSec * 1000);
+  const isHourly = durationSec <= HOURLY_BUCKET_MAX_SEC;
+  if (isHourly) {
+    return d.toLocaleString("en-US", {
+      month: "short",
+      day: "numeric",
+      hour: "2-digit",
+      minute: "2-digit",
+      hour12: false,
+    });
+  }
+  return d.toLocaleString("en-US", {
+    month: "short",
+    day: "numeric",
+  });
+}
+
+type HoverCardProps = {
+  bucket: NodeEarningsBucket;
+  primaryLabel: string;
+  secondaryLabel: string;
+  durationSec: number;
+  xPct: number;
+};
+
+function HoverCard({
+  bucket,
+  primaryLabel,
+  secondaryLabel,
+  durationSec,
+  xPct,
+}: HoverCardProps) {
+  const label = formatBucketTime(bucket.time, durationSec);
+  // Anchor to the side of the crosshair so the line + dots stay visible.
+  // Right side when the cursor is in the left half; left side otherwise.
+  const onLeftHalf = xPct < 0.5;
+  const transform = onLeftHalf
+    ? "translate(8px, 0)"
+    : "translate(calc(-100% - 8px), 0)";
+
+  return (
+    <div
+      data-testid="hover-card"
+      data-side={onLeftHalf ? "right" : "left"}
+      className="pointer-events-none absolute top-1 z-10 min-w-[140px] rounded-md border border-edge bg-surface px-2.5 py-2 text-xs shadow-lg"
+      style={{ left: `${xPct * 100}%`, transform }}
+    >
+      <div className="mb-1 text-[10px] text-muted-foreground">{label}</div>
+      <div className="flex justify-between gap-3 font-mono">
+        <span className="text-muted-foreground">{primaryLabel}</span>
+        <span style={{ color: "var(--color-success-500)" }}>
+          {bucket.aleph.toFixed(2)}
+        </span>
+      </div>
+      <div className="flex justify-between gap-3 font-mono">
+        <span className="text-muted-foreground">{secondaryLabel}</span>
+        <span style={{ color: "var(--color-primary-500)" }}>
+          {bucket.secondaryCount}
+        </span>
+      </div>
+    </div>
+  );
+}
 
 export function NodeEarningsChart({
   buckets,
@@ -18,6 +93,8 @@ export function NodeEarningsChart({
   height = 120,
   emptyHint,
 }: Props) {
+  const [hoverIndex, setHoverIndex] = useState<number | null>(null);
+
   const hasData = buckets.some((b) => b.aleph > 0 || b.secondaryCount > 0);
   if (!hasData || buckets.length < 2) {
     return (
@@ -31,27 +108,9 @@ export function NodeEarningsChart({
     );
   }
 
-  const width = 600;
-  const maxAleph = Math.max(...buckets.map((b) => b.aleph), 0.0001);
-  const maxSecondary = Math.max(
-    ...buckets.map((b) => b.secondaryCount),
-    0.0001,
-  );
-
-  const n = buckets.length;
-  const xFor = (i: number) => (i / (n - 1)) * width;
-  const yForAleph = (v: number) => height - (v / maxAleph) * height;
-  const yForSecondary = (v: number) => height - (v / maxSecondary) * height;
-
-  const alephPoints = buckets
-    .map((b, i) => `${xFor(i).toFixed(1)},${yForAleph(b.aleph).toFixed(1)}`)
-    .join(" ");
-  const secondaryPoints = buckets
-    .map(
-      (b, i) =>
-        `${xFor(i).toFixed(1)},${yForSecondary(b.secondaryCount).toFixed(1)}`,
-    )
-    .join(" ");
+  const durationSec = bucketDurationSec(buckets);
+  const xPct =
+    hoverIndex != null ? hoverIndex / (buckets.length - 1) : 0;
 
   return (
     <div>
@@ -71,34 +130,24 @@ export function NodeEarningsChart({
           {secondaryLabel}
         </span>
       </div>
-      <svg
-        viewBox={`0 0 ${width} ${height}`}
-        width="100%"
-        height={height}
-        preserveAspectRatio="none"
-        className="block"
-        aria-hidden="true"
-      >
-        <polyline
-          points={secondaryPoints}
-          fill="none"
-          stroke="var(--color-primary-500)"
-          strokeWidth={1.5}
-          strokeLinecap="round"
-          strokeLinejoin="round"
-          strokeOpacity={0.7}
-          vectorEffect="non-scaling-stroke"
+      <div className="relative">
+        <DualLineChart
+          buckets={buckets}
+          height={height}
+          highlightedIndex={hoverIndex}
+          onHoverIndex={setHoverIndex}
+          onHoverEnd={() => setHoverIndex(null)}
         />
-        <polyline
-          points={alephPoints}
-          fill="none"
-          stroke="var(--color-success-500)"
-          strokeWidth={2}
-          strokeLinecap="round"
-          strokeLinejoin="round"
-          vectorEffect="non-scaling-stroke"
-        />
-      </svg>
+        {hoverIndex != null && buckets[hoverIndex] && (
+          <HoverCard
+            bucket={buckets[hoverIndex]}
+            primaryLabel={primaryLabel}
+            secondaryLabel={secondaryLabel}
+            durationSec={durationSec}
+            xPct={xPct}
+          />
+        )}
+      </div>
     </div>
   );
 }

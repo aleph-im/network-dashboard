@@ -34,6 +34,14 @@ vi.mock("@/hooks/use-nodes", () => ({
   useNode: vi.fn(),
 }));
 
+vi.mock("@/hooks/use-node-earnings", () => ({
+  useNodeEarnings: vi.fn(() => ({
+    data: undefined,
+    isLoading: false,
+    isPlaceholderData: false,
+  })),
+}));
+
 import { useNode } from "@/hooks/use-nodes";
 const useNodeMock = vi.mocked(useNode);
 
@@ -211,6 +219,23 @@ describe("NetworkDetailPanelCRN", () => {
     expect(screen.getByText(/Migrations/i)).toBeInTheDocument();
     expect(screen.getByText(/→\s*2\s*outbound/i)).toBeInTheDocument();
     expect(screen.getByText(/←\s*1\s*inbound/i)).toBeInTheDocument();
+  });
+
+  it("renders the Earnings · 24h section heading", () => {
+    useNodeMock.mockReturnValue({
+      data: null,
+      isLoading: false,
+    } as unknown as ReturnType<typeof useNode>);
+
+    renderWithQuery(
+      <NetworkDetailPanelCRN
+        info={CRN}
+        parent={PARENT}
+        unreachable={false}
+        onFocusParent={() => {}}
+      />,
+    );
+    expect(screen.getByText(/Earnings · 24h/i)).toBeInTheDocument();
   });
 
   it("hides the Migrations row when both counts are zero", () => {

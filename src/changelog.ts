@@ -11,9 +11,27 @@ export type VersionEntry = {
   changes: ChangeEntry[];
 };
 
-export const CURRENT_VERSION = "0.20.0";
+export const CURRENT_VERSION = "0.21.0";
 
 export const CHANGELOG: VersionEntry[] = [
+  {
+    version: "0.21.0",
+    date: "2026-05-13",
+    changes: [
+      {
+        type: "feature",
+        text: "The Earnings tab chart now supports hover — move the cursor over the chart to see a bucket-anchored crosshair and a tooltip card with the bucket time, ALEPH value, and secondary count (VMs for CRN, linked CRNs for CCN). Time format adapts to bucket granularity: `MMM D · HH:MM` for the 24h range (hourly buckets), `MMM D` for 7d / 30d (daily buckets).",
+      },
+      {
+        type: "feature",
+        text: "Network graph CRN/CCN detail panels and the `/nodes` side panel now show a static **Earnings · 24h** sparkline: a mini dual-line chart with ALEPH earned + VM count (CRN) or linked-CRN count (CCN) over the last 24h, plus a caption like `12.40 ALEPH · 3.2 VMs avg`. The `/nodes` side panel drops its truncated VMs list block in exchange — the spark covers the same VM-count signal, and the full VM list is still reachable via `View full details →`.",
+      },
+      {
+        type: "ui",
+        text: "Earnings tab VM breakdown: the `+ N more` row is now a click target — expand it to see every VM that earned in the window, collapse with `Show less`.",
+      },
+    ],
+  },
   {
     version: "0.20.0",
     date: "2026-05-12",

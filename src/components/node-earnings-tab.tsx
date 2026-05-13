@@ -78,6 +78,7 @@ export function NodeEarningsTab({ hash }: { hash: string }) {
   const [range, setRange] = useState<CreditRange>(
     rangeParam && RANGE_VALUES.includes(rangeParam) ? rangeParam : "24h",
   );
+  const [expandedBreakdown, setExpandedBreakdown] = useState(false);
 
   const handleRangeChange = (next: string) => {
     if (!RANGE_VALUES.includes(next as CreditRange)) return;
@@ -112,9 +113,10 @@ export function NodeEarningsTab({ hash }: { hash: string }) {
   );
 
   const perVm = data.perVm ?? [];
-  const top = perVm.slice(0, 5);
-  const rest = perVm.slice(5);
+  const TOP_N = 5;
+  const rest = perVm.slice(TOP_N);
   const restAleph = rest.reduce((s, v) => s + v.aleph, 0);
+  const visibleVms = expandedBreakdown ? perVm : perVm.slice(0, TOP_N);
 
   return (
     <div className="space-y-4">
@@ -160,7 +162,7 @@ export function NodeEarningsTab({ hash }: { hash: string }) {
               </tr>
             </thead>
             <tbody className="divide-y divide-edge">
-              {top.map((v) => (
+              {visibleVms.map((v) => (
                 <tr key={v.vmHash}>
                   <td className="py-1.5 pr-4">
                     <CopyableText
@@ -178,12 +180,20 @@ export function NodeEarningsTab({ hash }: { hash: string }) {
               ))}
               {rest.length > 0 && (
                 <tr>
-                  <td className="py-1.5 pr-4 text-xs text-muted-foreground">
-                    + {rest.length} more
+                  <td colSpan={expandedBreakdown ? 2 : 1} className="py-1.5 pr-4">
+                    <button
+                      type="button"
+                      onClick={() => setExpandedBreakdown((v) => !v)}
+                      className="text-xs text-muted-foreground transition-colors hover:text-foreground"
+                    >
+                      {expandedBreakdown ? "Show less" : `+ ${rest.length} more`}
+                    </button>
                   </td>
-                  <td className="py-1.5 text-right text-xs text-muted-foreground tabular-nums">
-                    {formatAleph(restAleph)}
-                  </td>
+                  {!expandedBreakdown && (
+                    <td className="py-1.5 text-right text-xs text-muted-foreground tabular-nums">
+                      {formatAleph(restAleph)}
+                    </td>
+                  )}
                 </tr>
               )}
             </tbody>
