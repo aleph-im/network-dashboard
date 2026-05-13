@@ -55,15 +55,17 @@ function HoverCard({
   xPct,
 }: HoverCardProps) {
   const label = formatBucketTime(bucket.time, durationSec);
-  const transform =
-    xPct < 0.1
-      ? "translate(0, 0)"
-      : xPct > 0.9
-        ? "translate(-100%, 0)"
-        : "translate(-50%, 0)";
+  // Anchor to the side of the crosshair so the line + dots stay visible.
+  // Right side when the cursor is in the left half; left side otherwise.
+  const onLeftHalf = xPct < 0.5;
+  const transform = onLeftHalf
+    ? "translate(8px, 0)"
+    : "translate(calc(-100% - 8px), 0)";
 
   return (
     <div
+      data-testid="hover-card"
+      data-side={onLeftHalf ? "right" : "left"}
       className="pointer-events-none absolute top-1 z-10 min-w-[140px] rounded-md border border-edge bg-surface px-2.5 py-2 text-xs shadow-lg"
       style={{ left: `${xPct * 100}%`, transform }}
     >

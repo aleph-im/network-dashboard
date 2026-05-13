@@ -86,6 +86,26 @@ describe("NodeEarningsChart hover", () => {
     expect(screen.getByText(/\d{2}:\d{2}/)).toBeInTheDocument();
   });
 
+  it("anchors the tooltip to the right of the line when the cursor is in the left half", () => {
+    const { container } = renderChart(3600);
+    const captureRect = container.querySelectorAll("rect")[0]!;
+    captureRect.getBoundingClientRect = () =>
+      ({ left: 0, top: 0, width: 230, height: 120, right: 230, bottom: 120 }) as DOMRect;
+    fireEvent.pointerMove(captureRect, { clientX: 30, clientY: 60 });
+    const card = screen.getByTestId("hover-card");
+    expect(card.getAttribute("data-side")).toBe("right");
+  });
+
+  it("anchors the tooltip to the left of the line when the cursor is in the right half", () => {
+    const { container } = renderChart(3600);
+    const captureRect = container.querySelectorAll("rect")[0]!;
+    captureRect.getBoundingClientRect = () =>
+      ({ left: 0, top: 0, width: 230, height: 120, right: 230, bottom: 120 }) as DOMRect;
+    fireEvent.pointerMove(captureRect, { clientX: 200, clientY: 60 });
+    const card = screen.getByTestId("hover-card");
+    expect(card.getAttribute("data-side")).toBe("left");
+  });
+
   it("formats the bucket time with date only for daily buckets", () => {
     const { container } = renderChart(86_400);
     const captureRect = container.querySelectorAll("rect")[0]!;
