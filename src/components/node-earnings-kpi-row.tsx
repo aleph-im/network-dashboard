@@ -1,6 +1,7 @@
 "use client";
 
 import { Card } from "@aleph-front/ds/card";
+import { Skeleton } from "@aleph-front/ds/ui/skeleton";
 
 export type KpiCard = {
   label: string;
@@ -8,6 +9,8 @@ export type KpiCard = {
   secondary: string;
   /** Optional tone for the secondary text (controls colour). */
   tone?: "default" | "up" | "down" | "warning";
+  /** When true, render skeletons for primary + secondary (e.g. mid-refetch). */
+  loading?: boolean;
 };
 
 const TONE_CLASS: Record<NonNullable<KpiCard["tone"]>, string> = {
@@ -25,12 +28,23 @@ export function NodeEarningsKpiRow({ cards }: { cards: KpiCard[] }) {
           <div className="text-[10px] font-semibold uppercase tracking-wider text-muted-foreground">
             {c.label}
           </div>
-          <div className="mt-1 font-mono text-2xl font-semibold tabular-nums">
-            {c.primary}
-          </div>
-          <div className={`mt-0.5 text-xs ${TONE_CLASS[c.tone ?? "default"]}`}>
-            {c.secondary}
-          </div>
+          {c.loading ? (
+            <>
+              <Skeleton className="mt-1 h-8 w-24 bg-edge" />
+              <Skeleton className="mt-1 h-3 w-32 bg-edge" />
+            </>
+          ) : (
+            <>
+              <div className="mt-1 font-mono text-2xl font-semibold tabular-nums">
+                {c.primary}
+              </div>
+              <div
+                className={`mt-0.5 text-xs ${TONE_CLASS[c.tone ?? "default"]}`}
+              >
+                {c.secondary}
+              </div>
+            </>
+          )}
         </Card>
       ))}
     </div>

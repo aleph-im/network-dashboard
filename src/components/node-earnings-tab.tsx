@@ -17,6 +17,7 @@ import {
   type KpiCard,
 } from "@/components/node-earnings-kpi-row";
 import { NodeEarningsChart } from "@/components/node-earnings-chart";
+import { NodeEarningsReconciliation } from "@/components/node-earnings-reconciliation";
 import { formatAleph, relativeTime } from "@/lib/format";
 import type { CreditRange } from "@/hooks/use-credit-expenses";
 
@@ -34,6 +35,7 @@ function buildCrnCards(
   score: number,
   status: string,
   updatedAt: string | undefined,
+  rangeLoading: boolean,
 ): KpiCard[] {
   const dAleph = data.delta.aleph;
   const dCount = data.delta.secondaryCount;
@@ -49,12 +51,14 @@ function buildCrnCards(
       primary: formatAleph(data.totalAleph),
       secondary: `${deltaArrow(dAleph)} ${formatAleph(Math.abs(dAleph))} vs prev ${range}`,
       tone: dAleph > 0 ? "up" : dAleph < 0 ? "down" : "default",
+      loading: rangeLoading,
     },
     {
       label: "VMs hosted (avg)",
       primary: avgVms.toFixed(1),
       secondary: `${deltaArrow(dCount)} ${Math.abs(dCount).toFixed(1)} vs prev ${range}`,
       tone: dCount > 0 ? "up" : dCount < 0 ? "down" : "default",
+      loading: rangeLoading,
     },
     {
       label: "Score",
@@ -88,7 +92,7 @@ export function NodeEarningsTab({ hash }: { hash: string }) {
     router.replace(`${pathname}?${params.toString()}`);
   };
 
-  const { data, isLoading } = useNodeEarnings(hash, range);
+  const { data, isLoading, isPlaceholderData } = useNodeEarnings(hash, range);
   const { data: nodeState } = useNodeState();
   const { data: node } = useNode(hash);
 
@@ -110,6 +114,7 @@ export function NodeEarningsTab({ hash }: { hash: string }) {
     crn.score,
     node?.status ?? crn.status,
     node?.updatedAt,
+    isPlaceholderData,
   );
 
   const perVm = data.perVm ?? [];
@@ -140,6 +145,7 @@ export function NodeEarningsTab({ hash }: { hash: string }) {
           buckets={data.buckets}
           primaryLabel="ALEPH"
           secondaryLabel="VMs hosted"
+          loading={isPlaceholderData}
           {...(crn.parent === null
             ? {
                 emptyHint:
@@ -148,6 +154,13 @@ export function NodeEarningsTab({ hash }: { hash: string }) {
             : {})}
         />
       </Card>
+
+      <NodeEarningsReconciliation
+        reconciliation={data.reconciliation}
+        range={range}
+        kind="crn"
+        loading={isPlaceholderData}
+      />
 
       {perVm.length > 0 && (
         <Card padding="md">
@@ -174,11 +187,15 @@ export function NodeEarningsTab({ hash }: { hash: string }) {
                     />
                   </td>
                   <td className="py-1.5 text-right tabular-nums">
-                    {formatAleph(v.aleph)}
+                    {isPlaceholderData ? (
+                      <Skeleton className="ml-auto h-4 w-16 bg-edge" />
+                    ) : (
+                      formatAleph(v.aleph)
+                    )}
                   </td>
                 </tr>
               ))}
-              {rest.length > 0 && (
+              {!isPlaceholderData && rest.length > 0 && (
                 <tr>
                   <td colSpan={expandedBreakdown ? 2 : 1} className="py-1.5 pr-4">
                     <button
@@ -201,7 +218,11 @@ export function NodeEarningsTab({ hash }: { hash: string }) {
               <tr className="border-t border-edge font-medium">
                 <td className="pt-2 text-xs text-muted-foreground">Total</td>
                 <td className="pt-2 text-right tabular-nums">
-                  {formatAleph(data.totalAleph)}
+                  {isPlaceholderData ? (
+                    <Skeleton className="ml-auto h-4 w-20 bg-edge" />
+                  ) : (
+                    formatAleph(data.totalAleph)
+                  )}
                 </td>
               </tr>
             </tfoot>

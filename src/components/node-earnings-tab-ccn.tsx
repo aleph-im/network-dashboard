@@ -18,6 +18,7 @@ import {
   type KpiCard,
 } from "@/components/node-earnings-kpi-row";
 import { NodeEarningsChart } from "@/components/node-earnings-chart";
+import { NodeEarningsReconciliation } from "@/components/node-earnings-reconciliation";
 import { formatAleph, relativeTime } from "@/lib/format";
 import type { CreditRange } from "@/hooks/use-credit-expenses";
 
@@ -42,6 +43,7 @@ function buildCcnCards(
   status: string,
   updatedAt: string | undefined,
   linkedCount: number,
+  rangeLoading: boolean,
 ): KpiCard[] {
   const dAleph = data.delta.aleph;
   return [
@@ -50,6 +52,7 @@ function buildCcnCards(
       primary: formatAleph(data.totalAleph),
       secondary: `${deltaArrow(dAleph)} ${formatAleph(Math.abs(dAleph))} vs prev ${range}`,
       tone: dAleph > 0 ? "up" : dAleph < 0 ? "down" : "default",
+      loading: rangeLoading,
     },
     {
       label: "Score",
@@ -88,7 +91,7 @@ export function NodeEarningsTabCcn({ hash }: { hash: string }) {
     router.replace(`${pathname}?${params.toString()}`);
   };
 
-  const { data, isLoading } = useNodeEarnings(hash, range);
+  const { data, isLoading, isPlaceholderData } = useNodeEarnings(hash, range);
   const { data: nodeState } = useNodeState();
   const { data: node } = useNode(hash);
 
@@ -112,6 +115,7 @@ export function NodeEarningsTabCcn({ hash }: { hash: string }) {
     node?.status ?? ccn.status,
     node?.updatedAt,
     linkedCount,
+    isPlaceholderData,
   );
 
   const chartProps =
@@ -146,9 +150,17 @@ export function NodeEarningsTabCcn({ hash }: { hash: string }) {
           buckets={data.buckets}
           primaryLabel="ALEPH"
           secondaryLabel="Linked CRNs"
+          loading={isPlaceholderData}
           {...chartProps}
         />
       </Card>
+
+      <NodeEarningsReconciliation
+        reconciliation={data.reconciliation}
+        range={range}
+        kind="ccn"
+        loading={isPlaceholderData}
+      />
 
       {data.linkedCrns && data.linkedCrns.length > 0 && (
         <Card padding="md">

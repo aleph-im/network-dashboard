@@ -60,6 +60,7 @@ describe("NodeEarningsTabCcn", () => {
           { hash: "crn1", name: "CRN-1", status: "healthy", vmCount: 5 },
           { hash: "crn2", name: "CRN-2", status: "unreachable", vmCount: 0 },
         ],
+        reconciliation: null,
       },
       isLoading: false,
       isPlaceholderData: false,

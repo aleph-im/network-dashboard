@@ -194,6 +194,110 @@ describe("useNodeEarnings", () => {
     expect(result.current.data!.delta.aleph).toBeCloseTo((20 - 10) * 0.6);
   });
 
+  it("computes reconciliation for CRN view when reward address overlaps", async () => {
+    // Two CRNs and a CCN all paying the same reward address `0xWALLET`.
+    // crn1 earns this window; crn2 doesn't appear in expenses but counts toward crnCount.
+    // The CCN earns via score weighting because it's `active`.
+    const expenses = [
+      makeExpense(NOW - 100, 100, "crn1", "vmA"),
+      makeExpense(NOW - 200, 50, "crn1", "vmB"),
+    ];
+    (useCreditExpenses as ReturnType<typeof vi.fn>)
+      .mockReturnValueOnce({ data: expenses, isLoading: false, isPlaceholderData: false })
+      .mockReturnValueOnce({ data: [], isLoading: false, isPlaceholderData: false });
+    (useNodeState as ReturnType<typeof vi.fn>).mockReturnValue({
+      data: makeState(
+        [
+          makeCrn({ hash: "crn1", reward: "0xWALLET" }),
+          makeCrn({ hash: "crn2", reward: "0xWALLET" }),
+        ],
+        [makeCcn({ hash: "ccn1", reward: "0xWALLET" })],
+      ),
+    });
+    (useNode as ReturnType<typeof vi.fn>).mockReturnValue({
+      data: { hash: "crn1", vms: [], history: [] } as unknown as NodeDetail,
+    });
+    (useNodes as ReturnType<typeof vi.fn>).mockReturnValue({ data: [] });
+
+    const { result } = renderHook(() => useNodeEarnings("crn1", "24h"), { wrapper });
+
+    await waitFor(() => {
+      expect(result.current.data).toBeDefined();
+    });
+
+    const recon = result.current.data!.reconciliation;
+    expect(recon).not.toBeNull();
+    expect(recon!.rewardAddr).toBe("0xWALLET");
+    // thisNode = 60% of (100 + 50) = 90 (the CRN execution share for crn1)
+    expect(recon!.thisNode).toBeCloseTo(90);
+    expect(recon!.otherSameKind.count).toBe(1); // crn2
+    expect(recon!.otherSameKind.aleph).toBeCloseTo(0); // crn2 didn't earn this window
+    // The CCN got 15% of execution = 22.5
+    expect(recon!.crossKind.role).toBe("ccn");
+    expect(recon!.crossKind.aleph).toBeCloseTo(22.5);
+    // No stakers configured on the CCN, so staker share didn't get distributed
+    expect(recon!.staker).toBe(0);
+    expect(recon!.windowAleph).toBeCloseTo(90 + 0 + 22.5 + 0);
+  });
+
+  it("computes reconciliation for CCN view with cross-kind CRN earnings", async () => {
+    // CCN earns via score weighting; the same reward address also operates a CRN that earns.
+    const expenses = [makeExpense(NOW - 100, 100, "crn1", "vmA")];
+    (useCreditExpenses as ReturnType<typeof vi.fn>)
+      .mockReturnValueOnce({ data: expenses, isLoading: false, isPlaceholderData: false })
+      .mockReturnValueOnce({ data: [], isLoading: false, isPlaceholderData: false });
+    (useNodeState as ReturnType<typeof vi.fn>).mockReturnValue({
+      data: makeState(
+        [makeCrn({ hash: "crn1", reward: "0xWALLET", parent: "ccn1" })],
+        [makeCcn({ hash: "ccn1", reward: "0xWALLET" })],
+      ),
+    });
+    (useNode as ReturnType<typeof vi.fn>).mockReturnValue({
+      data: { hash: "ccn1", vms: [], history: [] } as unknown as NodeDetail,
+    });
+    (useNodes as ReturnType<typeof vi.fn>).mockReturnValue({ data: [] });
+
+    const { result } = renderHook(() => useNodeEarnings("ccn1", "24h"), { wrapper });
+
+    await waitFor(() => {
+      expect(result.current.data).toBeDefined();
+    });
+
+    const recon = result.current.data!.reconciliation;
+    expect(recon).not.toBeNull();
+    expect(recon!.rewardAddr).toBe("0xWALLET");
+    // thisNode = the CCN's score-weighted share (15% of execution = 15)
+    expect(recon!.thisNode).toBeCloseTo(15);
+    expect(recon!.otherSameKind.count).toBe(0); // no other CCNs paying this reward
+    expect(recon!.otherSameKind.aleph).toBeCloseTo(0);
+    // Cross-kind is CRN share: 60% of 100 = 60
+    expect(recon!.crossKind.role).toBe("crn");
+    expect(recon!.crossKind.aleph).toBeCloseTo(60);
+  });
+
+  it("returns reconciliation = null when reward address has zero earnings in window", async () => {
+    (useCreditExpenses as ReturnType<typeof vi.fn>).mockReturnValue({
+      data: [],
+      isLoading: false,
+      isPlaceholderData: false,
+    });
+    (useNodeState as ReturnType<typeof vi.fn>).mockReturnValue({
+      data: makeState([makeCrn({ reward: "0xWALLET" })], [makeCcn()]),
+    });
+    (useNode as ReturnType<typeof vi.fn>).mockReturnValue({
+      data: { hash: "crn1", vms: [], history: [] } as unknown as NodeDetail,
+    });
+    (useNodes as ReturnType<typeof vi.fn>).mockReturnValue({ data: [] });
+
+    const { result } = renderHook(() => useNodeEarnings("crn1", "24h"), { wrapper });
+
+    await waitFor(() => {
+      expect(result.current.data).toBeDefined();
+    });
+
+    expect(result.current.data!.reconciliation).toBeNull();
+  });
+
   it("isLoading reflects underlying queries", () => {
     (useCreditExpenses as ReturnType<typeof vi.fn>).mockReturnValue({
       data: undefined,

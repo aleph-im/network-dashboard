@@ -11,9 +11,19 @@ export type VersionEntry = {
   changes: ChangeEntry[];
 };
 
-export const CURRENT_VERSION = "0.21.0";
+export const CURRENT_VERSION = "0.22.0";
 
 export const CHANGELOG: VersionEntry[] = [
+  {
+    version: "0.22.0",
+    date: "2026-05-13",
+    changes: [
+      {
+        type: "feature",
+        text: "Earnings tab gets a **Reward address breakdown** Card between the chart and the per-VM / linked-CRN table on both CRN and CCN node detail views. Horizontal stacked bar splits the reward address's window earnings into four buckets — this node / other same-kind nodes / cross-kind ops / staking — so operators using one reward address across many nodes can see this node's contribution in portfolio context. Bidirectional hover: hovering a segment or a legend row dims the rest. When the reward address only earned from this node in the window, a one-liner caption replaces the bar. `View full wallet →` deep links to `/wallet?address=`. No new API calls — built on the existing `summary.recipients`. Switching range (24h → 7d → 30d) now shows scoped skeletons — the truly range-dependent values (ALEPH accrued and VMs hosted avg KPI cards, chart area, reconciliation bar + values, per-VM ALEPH column) swap to inline placeholders during the refetch, while Score, Status, Linked CRNs, VM hashes, swatches, and segment labels keep their real values.",
+      },
+    ],
+  },
   {
     version: "0.21.0",
     date: "2026-05-13",

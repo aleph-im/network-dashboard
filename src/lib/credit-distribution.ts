@@ -61,7 +61,10 @@ export function computeScoreMultiplier(score: number): number {
   return (score - 0.2) / 0.6;
 }
 
-function getRewardAddress(node: { reward: string; owner: string }): string {
+export function getRewardAddress(node: {
+  reward: string;
+  owner: string;
+}): string {
   return node.reward || node.owner;
 }
 

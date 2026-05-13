@@ -9,7 +9,10 @@ import {
 } from "@/hooks/use-credit-expenses";
 import { useNodeState } from "@/hooks/use-node-state";
 import { useNode, useNodes } from "@/hooks/use-nodes";
-import { computeDistributionSummary } from "@/lib/credit-distribution";
+import {
+  computeDistributionSummary,
+  getRewardAddress,
+} from "@/lib/credit-distribution";
 import { replayVmCountTimeline } from "@/lib/node-vm-history";
 
 const CRN_SHARE = 0.6;
@@ -32,6 +35,15 @@ export type NodeEarningsLinkedCrn = {
   vmCount: number;
 };
 
+export type Reconciliation = {
+  rewardAddr: string;
+  windowAleph: number;
+  thisNode: number;
+  otherSameKind: { aleph: number; count: number };
+  crossKind: { aleph: number; role: "crn" | "ccn" };
+  staker: number;
+};
+
 export type NodeEarnings = {
   role: "crn" | "ccn";
   totalAleph: number;
@@ -39,6 +51,7 @@ export type NodeEarnings = {
   buckets: NodeEarningsBucket[];
   perVm?: NodeEarningsPerVm[];
   linkedCrns?: NodeEarningsLinkedCrn[];
+  reconciliation: Reconciliation | null;
 };
 
 const BUCKET_COUNT: Record<CreditRange, number> = {
@@ -77,6 +90,10 @@ export function useNodeEarnings(
     if (!isCcn && !isCrn) return undefined;
 
     const role: "crn" | "ccn" = isCcn ? "ccn" : "crn";
+    const selfNode = isCcn
+      ? nodeState.ccns.get(hash)!
+      : nodeState.crns.get(hash)!;
+    const rewardAddr = getRewardAddress(selfNode);
     const bucketCount = BUCKET_COUNT[range];
 
     const currentSummary = computeDistributionSummary(
@@ -156,7 +173,31 @@ export function useNodeEarnings(
         }
       }
       perVm.sort((a, b) => b.aleph - a.aleph);
-      return { role, totalAleph, delta, buckets: bucketsOut, perVm };
+      const recipient = currentSummary.recipients.find(
+        (r) => r.address === rewardAddr,
+      );
+      const reconciliation: Reconciliation | null = recipient
+        ? {
+            rewardAddr,
+            thisNode: totalAleph,
+            otherSameKind: {
+              aleph: recipient.crnAleph - totalAleph,
+              count: Math.max(0, recipient.crnCount - 1),
+            },
+            crossKind: { aleph: recipient.ccnAleph, role: "ccn" },
+            staker: recipient.stakerAleph,
+            windowAleph:
+              recipient.crnAleph + recipient.ccnAleph + recipient.stakerAleph,
+          }
+        : null;
+      return {
+        role,
+        totalAleph,
+        delta,
+        buckets: bucketsOut,
+        perVm,
+        reconciliation,
+      };
     }
 
     const linkedCrns: NodeEarningsLinkedCrn[] = [];
@@ -170,7 +211,31 @@ export function useNodeEarnings(
         vmCount: live?.vmCount ?? 0,
       });
     }
-    return { role, totalAleph, delta, buckets: bucketsOut, linkedCrns };
+    const recipient = currentSummary.recipients.find(
+      (r) => r.address === rewardAddr,
+    );
+    const reconciliation: Reconciliation | null = recipient
+      ? {
+          rewardAddr,
+          thisNode: totalAleph,
+          otherSameKind: {
+            aleph: recipient.ccnAleph - totalAleph,
+            count: Math.max(0, recipient.ccnCount - 1),
+          },
+          crossKind: { aleph: recipient.crnAleph, role: "crn" },
+          staker: recipient.stakerAleph,
+          windowAleph:
+            recipient.crnAleph + recipient.ccnAleph + recipient.stakerAleph,
+        }
+      : null;
+    return {
+      role,
+      totalAleph,
+      delta,
+      buckets: bucketsOut,
+      linkedCrns,
+      reconciliation,
+    };
   }, [
     hash,
     range,
