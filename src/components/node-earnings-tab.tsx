@@ -17,6 +17,7 @@ import {
   type KpiCard,
 } from "@/components/node-earnings-kpi-row";
 import { NodeEarningsChart } from "@/components/node-earnings-chart";
+import { NodeEarningsReconciliation } from "@/components/node-earnings-reconciliation";
 import { formatAleph, relativeTime } from "@/lib/format";
 import type { CreditRange } from "@/hooks/use-credit-expenses";
 
@@ -148,6 +149,12 @@ export function NodeEarningsTab({ hash }: { hash: string }) {
             : {})}
         />
       </Card>
+
+      <NodeEarningsReconciliation
+        reconciliation={data.reconciliation}
+        range={range}
+        kind="crn"
+      />
 
       {perVm.length > 0 && (
         <Card padding="md">
