@@ -18,6 +18,14 @@ Each entry includes:
 
 ---
 
+## Decision #93 - 2026-05-15
+**Context:** Credit-expense messages on api2 now carry a `hold` array alongside `credits`, representing protocol-subsidized holder-tier usage. The legacy `rewards` array was emitted with the wrong pricing (hold-tier price instead of credit price) and is being amended away in favor of `hold`. Until today, our parser only read `credits`, so every holder-tier VM was invisible in the earnings/distribution math — a meaningful gap given hold entries are ~30–50% of the volume during the credits-transition window.
+**Decision:** Read `expense.hold` alongside `expense.credits` in `parseCreditMessage`, convert with the same `credit_price_aleph` factor, and merge into one `credits[]` list on the parsed `CreditExpense`. Each entry is tagged with `source: "credits" | "hold"`. The legacy `rewards` field is explicitly ignored (defensive — should be amended away on the server, but we don't want to inflate numbers if an unamended message slips through). No downstream code change — `distributeExpense` and `computeDistributionSummary` already iterate `expense.credits` and use `expense.totalAleph`, both of which now reflect the combined data.
+**Rationale:** Symmetric treatment was the explicit call from the data team — when the protocol covers a holder-tier VM, the same 60/15/20/5 split applies (CRN host / CCN pool / staker pool / dev fund). Mechanically the cleanest implementation: the distribution math already does what we want; we just need to feed it the union. Tagging each entry with `source` lets us surface a credit-vs-hold breakdown later without re-parsing. App version bumped to 0.23.0 so the persisted localStorage cache is busted — without that, users with warm caches would keep seeing the pre-hold numbers for up to 24h after deploy.
+**Alternatives considered:** Tracking hold separately on `CreditExpense` (rejected — adds branches in every downstream consumer for no behavioral gain since the split is symmetric). Reading `rewards` for backwards compatibility (rejected — the colleague is amending old messages, and including the buggy pricing would double-count). `hold_excluded` entries (left ignored — they're PROGRAMs/Functions that don't yet support credit payment and aren't subsidized either; `price: 0, amount: 0` so they contribute nothing).
+
+---
+
 ## Decision #92 - 2026-05-13
 **Context:** Per-CRN/CCN Earnings tab (Decision #90) showed what one node earned, but operators using one reward address across many nodes had no in-context view of how that slice fit into the wallet's total window earnings.
 **Decision:** Added a "Reward address breakdown" Card between the chart and the per-VM / linked-CRN table. Four buckets anchored on "this node": this node / other same-kind / cross-kind / staking. Same panel on both CRN and CCN earnings tabs. No-overlap state shown as a one-liner caption rather than a degenerate 100% bar.
