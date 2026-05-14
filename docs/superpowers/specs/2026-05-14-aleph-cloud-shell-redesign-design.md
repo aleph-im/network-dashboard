@@ -96,9 +96,10 @@ A unified shell that:
 ### Page header tier (`PageHeader`)
 
 - One row above the page body, sticky to the scroll container top.
-- **Left:** ☰ collapse toggle (rendered internally by `PageHeader`, wired to `useSidebarCollapse().toggle` from DS — consumers don't pass it in) + page title (and optional breadcrumb), read from `PageHeaderContext`.
+- **Left:** `leading` slot supplied by the consumer (typically the ☰ collapse toggle, wired to `useSidebarCollapse().toggle`) + page title (and optional breadcrumb), read from `PageHeaderContext`.
 - **Right:** optional search slot + actions (`ReactNode`), read from context.
-- Pages that don't call `usePageHeader` get a default title derived from the route via a small `routeTitle(pathname)` helper. `routeTitle("/")` returns `"Overview"`; other routes humanise their leading segment (`"/nodes"` → `"Nodes"`). The helper lives in the consuming app, not DS, so each app can tailor it. No empty state.
+- Pages that don't call `usePageHeader` fall back to the renderer's `fallbackTitle` prop. The consuming app derives this from the route via a small `routeTitle(pathname)` helper (`routeTitle("/")` → `"Overview"`, `routeTitle("/nodes")` → `"Nodes"`). The helper lives in the consuming app, not DS, so each app can tailor it. No empty state.
+- **Effect ordering note:** Falling back via a `fallbackTitle` prop (rather than the shell calling `usePageHeader` with the route title) avoids a parent-overrides-child issue — React fires child effects before parent effects, so a shell-level `usePageHeader` call would clobber the page's call. The fallback prop is read inside the renderer, sidestepping effect ordering entirely.
 - Filter pills, status tabs, range pickers stay in the page body — they're filter state, not page actions. The header carries verbs ("things you do to the page"), not predicates ("things you filter the data by").
 
 ## Data flow & state management
@@ -139,6 +140,12 @@ type PageHeaderConfig = {
   breadcrumb?: ReactNode;      // optional left-side context (e.g. "Network ▸ Nodes")
 };
 function usePageHeader(config: PageHeaderConfig): void;  // sets context on mount, clears on unmount
+
+type PageHeaderProps = {
+  leading?: ReactNode;         // consumer-supplied (typically the ☰ toggle)
+  fallbackTitle?: ReactNode;   // used when no usePageHeader call has registered
+  className?: string;
+};
 ```
 
 ### `usePageHeader` contract
