@@ -74,6 +74,7 @@ function makeExpense(
         timeSec: 3600,
         nodeId: nodeId ?? null,
         executionId: executionId ?? null,
+        source: "credits",
       },
     ],
   };
@@ -403,7 +404,30 @@ describe("computeDistributionSummary with bucket options", () => {
 
     expect(summary.perVmInWindow!.get("vmA")!.aleph).toBeCloseTo(17);
     expect(summary.perVmInWindow!.get("vmA")!.nodeId).toBe("crn1");
+    expect(summary.perVmInWindow!.get("vmA")!.source).toBe("credits");
     expect(summary.perVmInWindow!.get("vmB")!.aleph).toBeCloseTo(3);
+  });
+
+  it("attributes hold-tier VMs with source=hold in perVmInWindow", () => {
+    const state = makeNodeState();
+    const holdExpense = makeExpenseAt(
+      start + 30,
+      "execution",
+      10,
+      "crn1",
+      "vmHold",
+    );
+    // Override the entry to simulate a hold-tier payment path.
+    holdExpense.credits[0]!.source = "hold";
+
+    const summary = computeDistributionSummary([holdExpense], state, {
+      bucketCount,
+      startTime: start,
+      endTime: end,
+    });
+
+    expect(summary.perVmInWindow!.get("vmHold")!.source).toBe("hold");
+    expect(summary.perVmInWindow!.get("vmHold")!.aleph).toBeCloseTo(10);
   });
 
   it("returns undefined bucket maps when options omitted", () => {

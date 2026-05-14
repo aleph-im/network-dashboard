@@ -50,6 +50,8 @@ export type ApiResourceNode = {
 
 export type ExpenseType = "storage" | "execution";
 
+export type CreditEntrySource = "credits" | "hold";
+
 export type CreditEntry = {
   address: string;
   amount: number;
@@ -58,6 +60,7 @@ export type CreditEntry = {
   timeSec: number;
   nodeId: string | null;
   executionId: string | null;
+  source: CreditEntrySource;
 };
 
 export type CreditExpense = {
@@ -146,7 +149,10 @@ export type DistributionSummary = {
   perNodeBuckets?: Map<string, NodeBucket[]>;
   // Per-VM ALEPH within the same window (execution credits only). Key is
   // `credit.executionId`. Only populated when `options` is provided.
-  perVmInWindow?: Map<string, { aleph: number; nodeId: string }>;
+  perVmInWindow?: Map<
+    string,
+    { aleph: number; nodeId: string; source: CreditEntrySource }
+  >;
 };
 
 export type WalletNodeReward = {

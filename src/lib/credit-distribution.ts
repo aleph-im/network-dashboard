@@ -1,5 +1,6 @@
 import type {
   CCNInfo,
+  CreditEntrySource,
   CreditExpense,
   DistributionSummary,
   ExpenseDistribution,
@@ -176,7 +177,10 @@ export function computeDistributionSummary(
   // Bucket bookkeeping (only if options provided)
   const perNodeBuckets = options ? new Map<string, NodeBucket[]>() : undefined;
   const perVmInWindow = options
-    ? new Map<string, { aleph: number; nodeId: string }>()
+    ? new Map<
+        string,
+        { aleph: number; nodeId: string; source: CreditEntrySource }
+      >()
     : undefined;
   const bucketWidth = options
     ? (options.endTime - options.startTime) / options.bucketCount
@@ -247,13 +251,17 @@ export function computeDistributionSummary(
           );
           arr[idx]!.aleph += credit.alephCost * EXECUTION_CRN_SHARE;
 
-          // Per-VM aggregate (raw alephCost; consumers apply the share split)
+          // Per-VM aggregate (raw alephCost; consumers apply the share split).
+          // `source` tracks which payment path attributed ALEPH to this VM —
+          // a VM is paid by credits OR hold throughout its life, not both, so
+          // the source is uniform across all entries we aggregate here.
           if (credit.executionId) {
             const existing = perVmInWindow.get(credit.executionId);
             const aleph = (existing?.aleph ?? 0) + credit.alephCost;
             perVmInWindow.set(credit.executionId, {
               aleph,
               nodeId: credit.nodeId,
+              source: credit.source,
             });
           }
         }

@@ -55,8 +55,8 @@ describe("NodeEarningsTab (CRN)", () => {
           secondaryCount: 18,
         })),
         perVm: [
-          { vmHash: "vmA", aleph: 4.21 },
-          { vmHash: "vmB", aleph: 3.86 },
+          { vmHash: "vmA", aleph: 4.21, source: "credits" as const },
+          { vmHash: "vmB", aleph: 3.86, source: "hold" as const },
         ],
         reconciliation: null,
       },
@@ -75,12 +75,16 @@ describe("NodeEarningsTab (CRN)", () => {
     ).toBeInTheDocument();
     // Per-VM hashes appear (CopyableText renders truncated representation)
     expect(screen.getAllByText(/vmA|vmB/).length).toBeGreaterThan(0);
+    // Payment column distinguishes credit-paid vs hold-tier VMs.
+    expect(screen.getByText("Credits")).toBeInTheDocument();
+    expect(screen.getByText("Hold")).toBeInTheDocument();
   });
 
   it("collapses extra VMs behind a +N more row that expands when clicked", () => {
     const perVm = Array.from({ length: 7 }, (_, i) => ({
       vmHash: `vm${i + 1}-aaaaaaaa-bbbbbbbb-cccccccc-dddddddd`,
       aleph: 10 - i,
+      source: "credits" as const,
     }));
     (useNodeEarnings as ReturnType<typeof vi.fn>).mockReturnValue({
       data: {

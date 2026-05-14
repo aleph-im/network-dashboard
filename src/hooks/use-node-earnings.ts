@@ -14,6 +14,7 @@ import {
   getRewardAddress,
 } from "@/lib/credit-distribution";
 import { replayVmCountTimeline } from "@/lib/node-vm-history";
+import type { CreditEntrySource } from "@/api/credit-types";
 
 const CRN_SHARE = 0.6;
 
@@ -26,6 +27,7 @@ export type NodeEarningsBucket = {
 export type NodeEarningsPerVm = {
   vmHash: string;
   aleph: number;
+  source: CreditEntrySource;
 };
 
 export type NodeEarningsLinkedCrn = {
@@ -169,7 +171,11 @@ export function useNodeEarnings(
       const perVm: NodeEarningsPerVm[] = [];
       for (const [vmHash, entry] of perVmMap) {
         if (entry.nodeId === hash) {
-          perVm.push({ vmHash, aleph: entry.aleph * CRN_SHARE });
+          perVm.push({
+            vmHash,
+            aleph: entry.aleph * CRN_SHARE,
+            source: entry.source,
+          });
         }
       }
       perVm.sort((a, b) => b.aleph - a.aleph);

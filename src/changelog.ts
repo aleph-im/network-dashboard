@@ -11,9 +11,23 @@ export type VersionEntry = {
   changes: ChangeEntry[];
 };
 
-export const CURRENT_VERSION = "0.22.0";
+export const CURRENT_VERSION = "0.23.0";
 
 export const CHANGELOG: VersionEntry[] = [
+  {
+    version: "0.23.0",
+    date: "2026-05-15",
+    changes: [
+      {
+        type: "feature",
+        text: "Earnings now include protocol-subsidized holder-tier usage. Each expense message exposes a new `hold` array alongside `credits` (same shape, same `credit_price_aleph` conversion); both are merged into one entry list before distribution, so CRN/CCN/staker shares and the recipient table reflect the combined ALEPH paid by both customers and the protocol. Each parsed entry carries `source: \"credits\" | \"hold\"` for future UI surfacing. The legacy `rewards` array (deprecated 2026-05-14) is explicitly ignored to avoid double-counting any unamended messages.",
+      },
+      {
+        type: "ui",
+        text: "Node Earnings tab per-VM breakdown table gets a **Payment** column showing whether each VM is `Credits` (customer-paid) or `Hold` (protocol-subsidized holder-tier). Outline Badge per row — neutral for credits, info-colored for hold — so operators can see at a glance which slice of their earnings comes from each payment path.",
+      },
+    ],
+  },
   {
     version: "0.22.0",
     date: "2026-05-13",
