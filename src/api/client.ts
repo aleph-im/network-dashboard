@@ -415,6 +415,17 @@ const CREDIT_EXPENSE_SENDER =
 const CORECHANNEL_SENDER =
   "0xa1B3bb7d2332383D96b7796B908fB7f7F3c2Be10";
 
+type ApiCreditEntryWire = {
+  address: string;
+  amount: number;
+  price: number;
+  ref: string;
+  time: number;
+  node_id?: string;
+  execution_id?: string;
+  size?: number;
+};
+
 type ApiCreditExpenseMessage = {
   item_hash: string;
   time: number;
@@ -426,16 +437,13 @@ type ApiCreditExpenseMessage = {
         count: number;
         credit_price_aleph: number;
         credit_price_usdc: number;
-        credits: {
-          address: string;
-          amount: number;
-          price: number;
-          ref: string;
-          time: number;
-          node_id?: string;
-          execution_id?: string;
-          size?: number;
-        }[];
+        credits: ApiCreditEntryWire[];
+        // Protocol-subsidized holder-tier entries. Same shape as `credits`
+        // and same `credit_price_aleph` conversion. Absent on messages that
+        // pre-date the 2026-05-14 schema migration; ignored entries with
+        // amount:0 land in `hold_excluded` (PROGRAMs/Functions that don't
+        // yet support credits).
+        hold?: ApiCreditEntryWire[];
         start_date: number;
         end_date: number;
       };
@@ -446,13 +454,32 @@ type ApiCreditExpenseMessage = {
 import type {
   CCNInfo,
   CRNInfo,
+  CreditEntry,
+  CreditEntrySource,
   CreditExpense,
   NodeState,
   ApiCorechannelNode,
   ApiResourceNode,
 } from "@/api/credit-types";
 
-function parseCreditMessage(
+function toCreditEntry(
+  c: ApiCreditEntryWire,
+  creditPriceAleph: number,
+  source: CreditEntrySource,
+): CreditEntry {
+  return {
+    address: c.address,
+    amount: c.amount,
+    alephCost: c.amount * creditPriceAleph,
+    ref: c.ref,
+    timeSec: c.time,
+    nodeId: c.node_id ?? null,
+    executionId: c.execution_id ?? null,
+    source,
+  };
+}
+
+export function parseCreditMessage(
   msg: ApiCreditExpenseMessage,
 ): CreditExpense | null {
   const inner = msg.content.content;
@@ -468,26 +495,23 @@ function parseCreditMessage(
   if (!type) return null;
 
   const creditPriceAleph = expense.credit_price_aleph;
+  const holdEntries = expense.hold ?? [];
+
+  const credits: CreditEntry[] = [
+    ...expense.credits.map((c) => toCreditEntry(c, creditPriceAleph, "credits")),
+    ...holdEntries.map((c) => toCreditEntry(c, creditPriceAleph, "hold")),
+  ];
+
+  const totalAleph = credits.reduce((sum, c) => sum + c.alephCost, 0);
 
   return {
     hash: msg.item_hash,
     time: msg.time,
     type,
-    totalAleph: expense.credits.reduce(
-      (sum, c) => sum + c.amount * creditPriceAleph,
-      0,
-    ),
-    creditCount: expense.count,
+    totalAleph,
+    creditCount: credits.length,
     creditPriceAleph,
-    credits: expense.credits.map((c) => ({
-      address: c.address,
-      amount: c.amount,
-      alephCost: c.amount * creditPriceAleph,
-      ref: c.ref,
-      timeSec: c.time,
-      nodeId: c.node_id ?? null,
-      executionId: c.execution_id ?? null,
-    })),
+    credits,
   };
 }
 

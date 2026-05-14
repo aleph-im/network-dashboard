@@ -90,6 +90,7 @@ function makeExpense(
         timeSec: time,
         nodeId: nodeId ?? null,
         executionId: executionId ?? null,
+        source: "credits",
       },
     ],
   };

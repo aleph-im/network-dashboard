@@ -2,6 +2,7 @@
 
 import { useState } from "react";
 import { useSearchParams, useRouter, usePathname } from "next/navigation";
+import { Badge } from "@aleph-front/ds/badge";
 import { Card } from "@aleph-front/ds/card";
 import { Tabs, TabsList, TabsTrigger } from "@aleph-front/ds/tabs";
 import { CopyableText } from "@aleph-front/ds/copyable-text";
@@ -171,6 +172,7 @@ export function NodeEarningsTab({ hash }: { hash: string }) {
             <thead>
               <tr className="border-b border-edge text-left text-xs text-muted-foreground">
                 <th className="pb-2 pr-4 font-medium">VM</th>
+                <th className="pb-2 pr-4 font-medium">Payment</th>
                 <th className="pb-2 font-medium text-right">ALEPH</th>
               </tr>
             </thead>
@@ -186,6 +188,15 @@ export function NodeEarningsTab({ hash }: { hash: string }) {
                       href={`/vms?view=${v.vmHash}`}
                     />
                   </td>
+                  <td className="py-1.5 pr-4">
+                    <Badge
+                      fill="outline"
+                      variant={v.source === "hold" ? "info" : "default"}
+                      size="sm"
+                    >
+                      {v.source === "hold" ? "Hold" : "Credits"}
+                    </Badge>
+                  </td>
                   <td className="py-1.5 text-right tabular-nums">
                     {isPlaceholderData ? (
                       <Skeleton className="ml-auto h-4 w-16 bg-edge" />
@@ -197,7 +208,7 @@ export function NodeEarningsTab({ hash }: { hash: string }) {
               ))}
               {!isPlaceholderData && rest.length > 0 && (
                 <tr>
-                  <td colSpan={expandedBreakdown ? 2 : 1} className="py-1.5 pr-4">
+                  <td colSpan={expandedBreakdown ? 3 : 2} className="py-1.5 pr-4">
                     <button
                       type="button"
                       onClick={() => setExpandedBreakdown((v) => !v)}
@@ -216,7 +227,9 @@ export function NodeEarningsTab({ hash }: { hash: string }) {
             </tbody>
             <tfoot>
               <tr className="border-t border-edge font-medium">
-                <td className="pt-2 text-xs text-muted-foreground">Total</td>
+                <td colSpan={2} className="pt-2 text-xs text-muted-foreground">
+                  Total
+                </td>
                 <td className="pt-2 text-right tabular-nums">
                   {isPlaceholderData ? (
                     <Skeleton className="ml-auto h-4 w-20 bg-edge" />
