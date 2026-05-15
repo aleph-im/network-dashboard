@@ -1,5 +1,6 @@
 "use client";
 
+import { usePageHeader } from "@aleph-front/ds/page-header";
 import { Badge } from "@aleph-front/ds/badge";
 import { Card } from "@aleph-front/ds/card";
 import { CHANGELOG } from "@/changelog";
@@ -25,6 +26,7 @@ const TYPE_VARIANT: Record<
 };
 
 export default function ChangelogPage() {
+  usePageHeader({ title: "Changelog" });
   return (
     <div className="mx-auto max-w-2xl space-y-6 p-6">
       <div className="mb-10">
