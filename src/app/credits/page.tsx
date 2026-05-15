@@ -2,6 +2,7 @@
 
 import { Suspense, useMemo } from "react";
 import { useSearchParams, useRouter } from "next/navigation";
+import { usePageHeader } from "@aleph-front/ds/page-header";
 import { Tabs, TabsList, TabsTrigger } from "@aleph-front/ds/tabs";
 import { Skeleton } from "@aleph-front/ds/ui/skeleton";
 import {
@@ -17,6 +18,7 @@ import { CreditFlowDiagram } from "@/components/credit-flow-diagram";
 import { CreditRecipientTable } from "@/components/credit-recipient-table";
 
 function CreditsContent() {
+  usePageHeader({ title: "Credit Expenses" });
   const searchParams = useSearchParams();
   const router = useRouter();
   const range = (searchParams.get("range") as CreditRange) ?? "24h";
