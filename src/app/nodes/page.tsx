@@ -7,6 +7,10 @@ import { NodeTable } from "@/components/node-table";
 import { NodeDetailPanel } from "@/components/node-detail-panel";
 import { NodeDetailView } from "@/components/node-detail-view";
 import type { NodeStatus } from "@/api/types";
+import { usePageHeader } from "@aleph-front/ds/page-header";
+import { useNodes } from "@/hooks/use-nodes";
+import { Button } from "@aleph-front/ds/button";
+import { ArrowClockwise } from "@phosphor-icons/react/dist/ssr";
 
 const VALID_NODE_STATUSES = new Set<string>([
   "healthy",
@@ -53,6 +57,24 @@ function NodesContent() {
   const tabParam = searchParams.get("tab");
   const initialTab: "overview" | "earnings" =
     tabParam === "earnings" ? "earnings" : "overview";
+
+  const { data: nodes, isFetching, refetch } = useNodes();
+  const total = nodes?.length ?? 0;
+
+  usePageHeader({
+    title: total > 0 ? `Nodes · ${total} total` : "Nodes",
+    actions: (
+      <Button
+        variant="outline"
+        size="xs"
+        onClick={() => { void refetch(); }}
+        disabled={isFetching}
+      >
+        <ArrowClockwise size={12} className="mr-1" />
+        {isFetching ? "Refreshing…" : "Refresh"}
+      </Button>
+    ),
+  });
 
   if (viewHash) {
     return <NodeDetailView hash={viewHash} initialTab={initialTab} />;
