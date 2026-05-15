@@ -123,6 +123,7 @@ export function AppShell({ children }: { children: ReactNode }) {
             <PageHeader
               leading={<SidebarToggle onClick={toggle} />}
               fallbackTitle={routeTitle(pathname)}
+              className="bg-transparent [&_.truncate]:text-xs [&_.truncate]:text-muted-foreground"
             />
             <main
               ref={mainRef}
