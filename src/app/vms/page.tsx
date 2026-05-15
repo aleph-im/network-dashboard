@@ -49,14 +49,14 @@ function VMsContent() {
     title: total > 0 ? `VMs · ${total} total` : "VMs",
     actions: (
       <Button
-        variant="outline"
+        variant="text"
         size="xs"
+        iconLeft={<ArrowClockwise />}
         onClick={() => {
           void refetch();
         }}
         disabled={isFetching}
       >
-        <ArrowClockwise size={12} className="mr-1" />
         {isFetching ? "Refreshing…" : "Refresh"}
       </Button>
     ),

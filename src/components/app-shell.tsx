@@ -71,18 +71,29 @@ export function AppShell({ children }: { children: ReactNode }) {
         activeId={ACTIVE_APP_ID}
         logoHref="https://aleph.cloud"
         right={<ThemeToggle />}
+        className="border-b-0"
       />
       <div className="flex flex-1 overflow-hidden">
         <AppShellSidebar
           appMark={<AppMark collapsed={sidebarCollapsed} />}
           collapsed={collapsed}
           onToggle={toggle}
+          footer={
+            <Link
+              href="/changelog"
+              className="font-mono text-[11px] tabular-nums text-muted-foreground/40 transition-colors hover:text-muted-foreground"
+              style={{ transitionDuration: "var(--duration-fast)" }}
+            >
+              v{CURRENT_VERSION}
+            </Link>
+          }
         >
           {NAV_SECTIONS.map((section) => (
             <AccordionSection
               key={section.id}
               title={section.title}
               sectionId={section.id}
+              {...(section.id === "operations" ? { defaultOpen: false } : {})}
             >
               {section.items.map((item) => {
                 const prefetchProps =
@@ -106,19 +117,20 @@ export function AppShell({ children }: { children: ReactNode }) {
               })}
             </AccordionSection>
           ))}
-          <SidebarFooter />
         </AppShellSidebar>
         <div className="flex flex-1 flex-col overflow-hidden bg-muted/40 dark:bg-surface">
-          <PageHeader
-            leading={<SidebarToggle onClick={toggle} />}
-            fallbackTitle={routeTitle(pathname)}
-          />
-          <main
-            ref={mainRef}
-            className="main-glow relative flex-1 overflow-x-clip overflow-y-auto rounded-tl-2xl bg-background p-4 md:p-6"
-          >
-            {children}
-          </main>
+          <div className="main-glow relative flex flex-1 flex-col overflow-hidden rounded-tl-2xl bg-background">
+            <PageHeader
+              leading={<SidebarToggle onClick={toggle} />}
+              fallbackTitle={routeTitle(pathname)}
+            />
+            <main
+              ref={mainRef}
+              className="relative flex-1 overflow-x-clip overflow-y-auto p-4 md:p-6"
+            >
+              {children}
+            </main>
+          </div>
         </div>
       </div>
     </div>
@@ -151,16 +163,3 @@ function SidebarToggle({ onClick }: { onClick: () => void }) {
   );
 }
 
-function SidebarFooter() {
-  return (
-    <div className="mt-auto pt-4 pl-2 rail-hide">
-      <Link
-        href="/changelog"
-        className="text-[11px] tabular-nums text-muted-foreground/40 transition-colors hover:text-muted-foreground"
-        style={{ transitionDuration: "var(--duration-fast)" }}
-      >
-        v{CURRENT_VERSION}
-      </Link>
-    </div>
-  );
-}

@@ -11,9 +11,35 @@ export type VersionEntry = {
   changes: ChangeEntry[];
 };
 
-export const CURRENT_VERSION = "0.24.1";
+export const CURRENT_VERSION = "0.25.0";
 
 export const CHANGELOG: VersionEntry[] = [
+  {
+    version: "0.25.0",
+    date: "2026-05-15",
+    changes: [
+      {
+        type: "ui",
+        text: "Chrome polish: the rounded surface now envelopes the page header instead of starting below it, so the chrome flows continuously from the product strip down through the page title and into the main content. The product strip itself is taller (54px) and loses its bottom border, so the seam between the cross-app row and the page row disappears.",
+      },
+      {
+        type: "ui",
+        text: "Sidebar brand slot drops the duplicate Aleph logomark — the cross-product mark in the product strip is the anchor; the sidebar identifies the sub-app (Network) with just the wordmark, and goes quiet when collapsed.",
+      },
+      {
+        type: "ui",
+        text: "Page header Refresh buttons are now quieter text links with an icon, matching the rest of the chrome's restraint. Network Health's Recheck and Wallet's Refresh follow the same pattern.",
+      },
+      {
+        type: "feature",
+        text: "Operations section in the sidebar starts collapsed by default — Issues is one click away when you need it, instead of always-on noise next to your daily nav. The other three sections (Dashboard / Resources / Network) keep their default-open behavior.",
+      },
+      {
+        type: "infra",
+        text: "Sidebar version link adopts the new `footer` prop on `AppShellSidebar` (from `@aleph-front/ds@0.19.0`) — it auto-hides and the collapse chevron re-centers when the sidebar shrinks to the rail. Replaces a hand-rolled `rail-hide` workaround.",
+      },
+    ],
+  },
   {
     version: "0.24.1",
     date: "2026-05-15",
