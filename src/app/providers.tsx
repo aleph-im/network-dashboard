@@ -4,6 +4,7 @@ import { QueryClient, type Query } from "@tanstack/react-query";
 import { PersistQueryClientProvider } from "@tanstack/react-query-persist-client";
 import { createSyncStoragePersister } from "@tanstack/query-sync-storage-persister";
 import { useState, type ReactNode } from "react";
+import { PageHeaderProvider } from "@aleph-front/ds/page-header";
 import { CURRENT_VERSION } from "@/changelog";
 import { WebSocketProvider } from "@/components/websocket-provider";
 
@@ -61,7 +62,9 @@ export function Providers({ children }: { children: ReactNode }) {
         },
       }}
     >
-      <WebSocketProvider>{children}</WebSocketProvider>
+      <WebSocketProvider>
+        <PageHeaderProvider>{children}</PageHeaderProvider>
+      </WebSocketProvider>
     </PersistQueryClientProvider>
   );
 }

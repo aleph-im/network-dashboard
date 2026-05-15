@@ -156,11 +156,6 @@ context lands.
 **Description:** Expand the wallet view beyond ops/debugging into a richer identity hub: wallet balance, ALEPH staking, transaction history, etc. Part of a broader evolution from an ops dashboard to a User Command Center. Build on top of the Phase 1 ops-focused wallet view.
 **Priority:** Low
 
-### 2026-03-01 - Sidebar component in DS
-**Source:** App shell implementation
-**Description:** The AppSidebar is currently a local component. If other Aleph projects need similar navigation, consider promoting it to the DS with configurable nav items.
-**Priority:** Low
-
 ### 2026-05-06 - Worldmap v2: interactive node map
 **Source:** Worldmap v1 implementation (Decision #69) explicitly punted interaction
 **Description:** Add hover state per dot (node hash + country tooltip), click-to-detail (link to `/nodes?view=<hash>`), zoom/pan, and layer toggles for CRN vs CCN. Likely the moment to bring in `react-simple-maps` or D3 — pure SVG `<circle>` works for v1 but a real picker / hit-testing logic gets uncomfortable. Could also reuse the expand button (currently disabled with "Coming soon" tooltip) as the entry point to a full-screen modal map.
@@ -214,6 +209,7 @@ Items where the path forward is clear but blocked on external work.
 <details>
 <summary>Archived items</summary>
 
+- ✅ 2026-05-15 - Sidebar promoted to DS as `AppShellSidebar` (+ `AccordionSection`, `NavItem` with `asChild` for routing-aware links, `useSidebarCollapse`, `useAccordionState`), alongside `ProductStrip` and `PageHeader`. Closed via the shell redesign (Decision #94). Surfaced and patched DS Decision #80 along the way (NavItem `asChild` + AnchorHTMLAttributes passthrough so SPA Link + hover-prefetch survive).
 - ✅ 2026-05-15 - Holder-tier expense support — `parseCreditMessage` now reads the new `expense.hold` array alongside `expense.credits` and merges both into one entry list, each tagged `source: "credits" | "hold"`. Same `credit_price_aleph` conversion. The buggy legacy `expense.rewards` field (deprecated and amended away on 2026-05-14) is explicitly ignored to avoid double-counting. CRN/CCN/staker shares and the recipient table now reflect protocol-subsidized holder-tier ALEPH in addition to customer-paid credits. Node Earnings tab gets a **Payment** column on the per-VM breakdown table (`Credits` / `Hold` Badge per VM). App version bumped to 0.23.0 to bust the localStorage cache. Decision #93.
 - ✅ 2026-05-13 - Earnings tab: distribution reconciliation view — new `NodeEarningsReconciliation` Card on both CRN and CCN earnings tabs. Four-bucket stacked bar (this node / other same-kind / cross-kind / staking) anchored on the current node, sourced from `summary.recipients` (RecipientTotal). New `Reconciliation` type on `useNodeEarnings` return shape. `getRewardAddress` exported from `credit-distribution.ts` for reuse. No-overlap state collapses to a one-liner caption + wallet link. Decision #92.
 - ✅ 2026-05-13 - Earnings chart hover tooltip + panel sparkline — `DualLineChart` shared primitive (`src/components/dual-line-chart.tsx`); `NodeEarningsChart` gains bucket-anchored crosshair + floating tooltip card with bucket-duration-aware time format (`MMM D · HH:MM` for hourly, `MMM D` for daily); new `NodeEarningsSpark` (`src/components/node-earnings-spark.tsx`, fixed 24h, static) embedded on the network graph CRN panel, network graph CCN panel, and the `/nodes` side panel — where the truncated VMs list block (lines ~197–227 of `node-detail-panel.tsx`) was removed in exchange. Decision #91.
