@@ -1,13 +1,16 @@
 "use client";
 
-import { Suspense } from "react";
+import { Suspense, useCallback } from "react";
 import { useRouter, useSearchParams } from "next/navigation";
+import { useIsFetching, useQueryClient } from "@tanstack/react-query";
 import { Card } from "@aleph-front/ds/card";
 import { Badge } from "@aleph-front/ds/badge";
 import { Button } from "@aleph-front/ds/button";
 import { CopyableText } from "@aleph-front/ds/copyable-text";
 import { StatusDot } from "@aleph-front/ds/status-dot";
 import { Skeleton } from "@aleph-front/ds/ui/skeleton";
+import { usePageHeader } from "@aleph-front/ds/page-header";
+import { ArrowClockwise, ArrowUpRight } from "@phosphor-icons/react/dist/ssr";
 import {
   useWalletNodes,
   useWalletVMs,
@@ -32,6 +35,16 @@ import {
   VM_STATUS_VARIANT,
   MESSAGE_TYPE_VARIANT,
 } from "@/lib/status-map";
+
+const WALLET_QUERY_KEYS = [
+  "nodes",
+  "vms",
+  "wallet-vms",
+  "wallet-activity",
+  "authorizations",
+  "credit-expenses",
+  "node-state",
+] as const;
 
 // --- Summary Stats ---
 
@@ -534,6 +547,56 @@ function WalletContent() {
     address,
     "received",
   );
+
+  const queryClient = useQueryClient();
+
+  const fetchingCount = useIsFetching({
+    predicate: (q) => {
+      const k = q.queryKey[0];
+      return typeof k === "string" && (WALLET_QUERY_KEYS as readonly string[]).includes(k);
+    },
+  });
+  const isFetching = fetchingCount > 0;
+
+  const refetchAll = useCallback(() => {
+    void queryClient.invalidateQueries({
+      predicate: (q) => {
+        const k = q.queryKey[0];
+        return typeof k === "string" && (WALLET_QUERY_KEYS as readonly string[]).includes(k);
+      },
+    });
+  }, [queryClient]);
+
+  const headerTitle = address
+    ? `${address.slice(0, 6)}…${address.slice(-4)}`
+    : "Wallet";
+
+  usePageHeader({
+    title: headerTitle,
+    actions: (
+      <>
+        <Button
+          variant="outline"
+          size="xs"
+          onClick={refetchAll}
+          disabled={isFetching}
+        >
+          <ArrowClockwise size={12} className="mr-1" />
+          {isFetching ? "Refreshing…" : "Refresh"}
+        </Button>
+        {address && (
+          <a
+            href={explorerWalletUrl(address)}
+            target="_blank"
+            rel="noopener noreferrer"
+            className="inline-flex items-center gap-1 text-xs text-primary-400 hover:underline"
+          >
+            Open in Explorer <ArrowUpRight size={12} />
+          </a>
+        )}
+      </>
+    ),
+  });
 
   if (!address) {
     return (

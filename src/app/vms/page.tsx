@@ -3,9 +3,13 @@
 import { Suspense } from "react";
 import { useSearchParams } from "next/navigation";
 import { useState } from "react";
+import { usePageHeader } from "@aleph-front/ds/page-header";
+import { Button } from "@aleph-front/ds/button";
+import { ArrowClockwise } from "@phosphor-icons/react/dist/ssr";
 import { VMTable } from "@/components/vm-table";
 import { VMDetailPanel } from "@/components/vm-detail-panel";
 import { VMDetailView } from "@/components/vm-detail-view";
+import { useVMs } from "@/hooks/use-vms";
 import type { VmStatus } from "@/api/types";
 
 const VALID_VM_STATUSES = new Set<string>([
@@ -37,6 +41,26 @@ function VMsContent() {
 
   const selectedParam = searchParams.get("selected");
   const [selectedVM, setSelectedVM] = useState<string | null>(selectedParam);
+
+  const { data: vms, isFetching, refetch } = useVMs();
+  const total = vms?.length ?? 0;
+
+  usePageHeader({
+    title: total > 0 ? `VMs · ${total} total` : "VMs",
+    actions: (
+      <Button
+        variant="outline"
+        size="xs"
+        onClick={() => {
+          void refetch();
+        }}
+        disabled={isFetching}
+      >
+        <ArrowClockwise size={12} className="mr-1" />
+        {isFetching ? "Refreshing…" : "Refresh"}
+      </Button>
+    ),
+  });
 
   if (viewHash) {
     return <VMDetailView hash={viewHash} />;

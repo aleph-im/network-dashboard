@@ -1,7 +1,8 @@
 "use client";
 
 import { useCallback, useEffect, useRef, useState, type ReactNode } from "react";
-import { Pulse } from "@phosphor-icons/react";
+import { ArrowClockwise } from "@phosphor-icons/react/dist/ssr";
+import { usePageHeader } from "@aleph-front/ds/page-header";
 import { Button } from "@aleph-front/ds/button";
 import { StatusDot } from "@aleph-front/ds/status-dot";
 import { Badge } from "@aleph-front/ds/badge";
@@ -559,6 +560,21 @@ export default function StatusPage() {
       ? "All Systems Operational"
       : `${degradedCount} endpoint${degradedCount === 1 ? "" : "s"} degraded`;
 
+  usePageHeader({
+    title: "Network Health",
+    actions: (
+      <Button
+        variant="outline"
+        size="xs"
+        onClick={runChecks}
+        disabled={checking}
+      >
+        <ArrowClockwise size={12} className="mr-1" />
+        {checking ? "Checking\u2026" : "Recheck"}
+      </Button>
+    ),
+  });
+
   return (
     <div>
       {/* Header */}
@@ -596,27 +612,13 @@ export default function StatusPage() {
             <span className="ml-1 text-lg font-normal text-muted-foreground/60">ms</span>
           </p>
         </div>
-        <div className="stat-card flex items-center justify-between border border-foreground/[0.06] bg-foreground/[0.03] p-6 sm:col-span-1 max-sm:col-span-2">
-          <div>
-            <p className="text-xs font-semibold uppercase tracking-widest text-muted-foreground/70">
-              Last Checked
-            </p>
-            <p className="mt-3 font-mono text-sm tabular-nums text-muted-foreground">
-              {lastChecked ? lastChecked.toLocaleTimeString() : "\u2026"}
-            </p>
-          </div>
-          <Button
-            variant="text"
-            size="xs"
-            className="shrink-0"
-            iconLeft={
-              <Pulse className={checking ? "animate-pulse" : ""} />
-            }
-            onClick={runChecks}
-            disabled={checking}
-          >
-            {checking ? "Checking" : "Recheck"}
-          </Button>
+        <div className="stat-card border border-foreground/[0.06] bg-foreground/[0.03] p-6">
+          <p className="text-xs font-semibold uppercase tracking-widest text-muted-foreground/70">
+            Last Checked
+          </p>
+          <p className="mt-3 font-mono text-sm tabular-nums text-muted-foreground">
+            {lastChecked ? lastChecked.toLocaleTimeString() : "\u2026"}
+          </p>
         </div>
       </div>
 

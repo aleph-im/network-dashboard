@@ -1,4 +1,4 @@
-import { useMemo } from "react";
+import { useCallback, useMemo } from "react";
 import { useVMs } from "@/hooks/use-vms";
 import { useNodes } from "@/hooks/use-nodes";
 import type { VM, Node, VmStatus } from "@/api/types";
@@ -64,10 +64,25 @@ function isDiscrepancyStatus(
 }
 
 export function useIssues() {
-  const { data: allVMs, isLoading: vmsLoading } = useVMs();
-  const { data: allNodes, isLoading: nodesLoading } = useNodes();
+  const {
+    data: allVMs,
+    isLoading: vmsLoading,
+    isFetching: vmsFetching,
+    refetch: refetchVMs,
+  } = useVMs();
+  const {
+    data: allNodes,
+    isLoading: nodesLoading,
+    isFetching: nodesFetching,
+    refetch: refetchNodes,
+  } = useNodes();
 
   const isLoading = vmsLoading || nodesLoading;
+  const isFetching = vmsFetching || nodesFetching;
+
+  const refetch = useCallback(async () => {
+    await Promise.all([refetchVMs(), refetchNodes()]);
+  }, [refetchVMs, refetchNodes]);
 
   const result = useMemo(() => {
     const vms = allVMs ?? [];
@@ -174,5 +189,5 @@ export function useIssues() {
     };
   }, [allVMs, allNodes]);
 
-  return { ...result, isLoading };
+  return { ...result, isLoading, isFetching, refetch };
 }

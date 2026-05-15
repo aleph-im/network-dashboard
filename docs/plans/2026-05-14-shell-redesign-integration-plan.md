@@ -1,8 +1,6 @@
 ---
-status: in-progress
-branch: feature/shell-chrome-overhaul
+status: done
 date: 2026-05-15
-note: PR 1 Tasks 2-7 committed (DS bump, routeTitle, configs, NavIcon, AppMark). Paused on Task 8 — DS NavItem renders bare `<a>` with no Next Link or prefetch support, so sidebar clicks become full page reloads. User opted to patch DS NavItem first (add a Link-slot / asChild prop) and re-publish before resuming Task 8. DS repo (~/repos/aleph-cloud-ds) has unrelated WIP that the user is cleaning up before the patch can land. Also: spec said `LogoMark` (Task 7); the actual DS export is `Logo` — fixed inline.
 ---
 
 # Shell Redesign Integration Plan

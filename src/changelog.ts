@@ -11,9 +11,31 @@ export type VersionEntry = {
   changes: ChangeEntry[];
 };
 
-export const CURRENT_VERSION = "0.24.0";
+export const CURRENT_VERSION = "0.24.1";
 
 export const CHANGELOG: VersionEntry[] = [
+  {
+    version: "0.24.1",
+    date: "2026-05-15",
+    changes: [
+      {
+        type: "feature",
+        text: "Page titles in the new chrome row now own themselves per page (Overview, Credit Expenses, Network Graph, Network Health, Issues, Changelog) via `usePageHeader`, and the Nodes / VMs titles become data-aware once their fleet loads (e.g. `Nodes · 542 total`, `VMs · 1,238 total`).",
+      },
+      {
+        type: "feature",
+        text: "Refresh actions land in the page header on Nodes, VMs, Network Health, Issues, and Wallet — one click re-runs the underlying React Query refetch (or, on Network Health, the endpoint probe pass). The button disables and shows `Refreshing…` while a request is in flight.",
+      },
+      {
+        type: "ui",
+        text: "Network Health's body-level Recheck button moves into the page header. The Last Checked timestamp stays where it was — it's information, not a verb.",
+      },
+      {
+        type: "feature",
+        text: "Wallet page header gains an `Open in Explorer →` link beside Refresh, deep-linking the current address to explorer.aleph.cloud. The title shows a truncated address (`0x1234…5678`) so you can tell at a glance which wallet you're looking at.",
+      },
+    ],
+  },
   {
     version: "0.24.0",
     date: "2026-05-15",

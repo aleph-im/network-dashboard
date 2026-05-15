@@ -3,6 +3,9 @@
 import { Suspense } from "react";
 import { useSearchParams, useRouter, usePathname } from "next/navigation";
 import { Tabs, TabsList, TabsTrigger } from "@aleph-front/ds/tabs";
+import { usePageHeader } from "@aleph-front/ds/page-header";
+import { Button } from "@aleph-front/ds/button";
+import { ArrowClockwise } from "@phosphor-icons/react/dist/ssr";
 import { useIssues } from "@/hooks/use-issues";
 import { IssuesVMTable } from "@/components/issues-vm-table";
 import { IssuesNodeTable } from "@/components/issues-node-table";
@@ -33,7 +36,22 @@ function IssuesContent() {
       ? (statusParam as DiscrepancyStatus)
       : undefined;
 
-  const { issueVMs, issueNodes, isLoading } = useIssues();
+  const { issueVMs, issueNodes, isLoading, isFetching, refetch } = useIssues();
+
+  usePageHeader({
+    title: "Issues",
+    actions: (
+      <Button
+        variant="outline"
+        size="xs"
+        onClick={() => { void refetch(); }}
+        disabled={isFetching}
+      >
+        <ArrowClockwise size={12} className="mr-1" />
+        {isFetching ? "Refreshing…" : "Refresh"}
+      </Button>
+    ),
+  });
 
   function handlePerspectiveChange(p: string) {
     const params = new URLSearchParams(searchParams.toString());

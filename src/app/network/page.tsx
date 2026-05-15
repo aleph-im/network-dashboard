@@ -4,6 +4,7 @@ import { Suspense, useCallback, useEffect, useMemo, useState } from "react";
 import Link from "next/link";
 import { useRouter, useSearchParams } from "next/navigation";
 import { ArrowsClockwise } from "@phosphor-icons/react";
+import { usePageHeader } from "@aleph-front/ds/page-header";
 import { Button } from "@aleph-front/ds/button";
 import { Spinner } from "@aleph-front/ds/ui/spinner";
 import type { GraphNode } from "@/lib/network-graph-model";
@@ -19,6 +20,7 @@ import { NetworkSearchAddressPanel } from "@/components/network/network-search-a
 const SETTLE_MS = 500;
 
 function NetworkContent() {
+  usePageHeader({ title: "Network Graph" });
   const router = useRouter();
   const searchParams = useSearchParams();
   const {

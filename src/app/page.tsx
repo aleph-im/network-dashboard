@@ -1,11 +1,14 @@
 "use client";
 
+import { usePageHeader } from "@aleph-front/ds/page-header";
 import { SectionLabel, StatsBar } from "@/components/stats-bar";
 import { TopNodesCard } from "@/components/top-nodes-card";
 import { LatestVMsCard } from "@/components/latest-vms-card";
 import { WorldMapCard } from "@/components/world-map-card";
 
 export default function OverviewPage() {
+  usePageHeader({ title: "Overview" });
+
   return (
     <div>
       <div className="mb-10">
