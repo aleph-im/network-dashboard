@@ -11,9 +11,19 @@ export type VersionEntry = {
   changes: ChangeEntry[];
 };
 
-export const CURRENT_VERSION = "0.25.0";
+export const CURRENT_VERSION = "0.25.1";
 
 export const CHANGELOG: VersionEntry[] = [
+  {
+    version: "0.25.1",
+    date: "2026-05-15",
+    changes: [
+      {
+        type: "ui",
+        text: "Page header gets a transparent background so the radial accent glow bleeds through behind the title row, and the title itself is tuned down to a smaller, dimmed weight so it reads as quiet metadata rather than competing with the page's main heading.",
+      },
+    ],
+  },
   {
     version: "0.25.0",
     date: "2026-05-15",
