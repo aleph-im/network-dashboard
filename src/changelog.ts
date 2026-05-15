@@ -11,9 +11,35 @@ export type VersionEntry = {
   changes: ChangeEntry[];
 };
 
-export const CURRENT_VERSION = "0.23.0";
+export const CURRENT_VERSION = "0.24.0";
 
 export const CHANGELOG: VersionEntry[] = [
+  {
+    version: "0.24.0",
+    date: "2026-05-15",
+    changes: [
+      {
+        type: "feature",
+        text: "Shared product strip across the top of every page: Aleph logomark, four cross-app tabs (Cloud · Network · Explorer · Swap), and a clear signal that the dashboard is part of the Aleph product family. Cross-app navigation is one click away from anywhere.",
+      },
+      {
+        type: "feature",
+        text: "Sidebar gets accordion sections (Dashboard / Resources / Network / Operations) and a built-in collapse toggle that shrinks it to an icon rail. Section open/closed state and rail-vs-expanded state both persist in localStorage, so each operator's preferred layout sticks across reloads.",
+      },
+      {
+        type: "ui",
+        text: "Theme toggle moved from the old page header into the product strip's right slot, so it's available consistently across every Aleph app that adopts the shared shell.",
+      },
+      {
+        type: "ui",
+        text: "Issues and Network Health are now top-level sidebar entries (under Operations and Network respectively) instead of being hidden behind a \"More\" overflow popover. One less click to reach the diagnostic surfaces.",
+      },
+      {
+        type: "infra",
+        text: "New page header slot wired into the shell, ready for per-page Refresh actions and entity-aware titles in the next release. For now the header uses a `routeTitle(pathname)` fallback so every route ships with a sensible title without per-page changes.",
+      },
+    ],
+  },
   {
     version: "0.23.0",
     date: "2026-05-15",

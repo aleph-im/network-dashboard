@@ -60,9 +60,9 @@ src/
 │   ├── use-debounce.ts     # useDebounce hook (generic, configurable delay)
 │   └── use-pagination.ts   # usePagination hook (client-side page/pageSize state + slice)
 ├── components/
-│   ├── app-shell.tsx       # Layout: sidebar + header + content
-│   ├── app-sidebar.tsx     # Navigation sidebar
-│   ├── app-header.tsx      # Hamburger menu + theme toggle
+│   ├── app-shell.tsx       # Composes DS ProductStrip + AppShellSidebar + PageHeader
+│   ├── app-mark.tsx        # Per-app identity mark (logomark + Network wordmark)
+│   ├── nav-icon.tsx        # Sidebar icon switch
 │   ├── theme-toggle.tsx    # Dark/light toggle with localStorage
 │   ├── stats-bar.tsx       # Overview stats grid (glass cards, noise texture, semantic colors)
 │   ├── node-health-summary.tsx  # Node health bar chart + legend
@@ -98,7 +98,12 @@ src/
 │   ├── status-map.ts       # Status-to-visual maps: nodeStatusToDot(), NODE_STATUS_VARIANT, VM_STATUS_VARIANT, MESSAGE_TYPE_VARIANT
 │   ├── world-map-projection.ts  # Web Mercator + equirectangular projection factories + deterministic per-hash scatter (mulberry32 + FNV-1a)
 │   ├── world-map-resolution.ts  # Multiaddr/hostname parsing helpers (used by build-time snapshot)
-│   └── scheduler-ws.ts          # Non-React WebSocket client factory (lifecycle, exponential reconnect, subscribers, getWsUrl)
+│   ├── scheduler-ws.ts          # Non-React WebSocket client factory (lifecycle, exponential reconnect, subscribers, getWsUrl)
+│   ├── route-title.ts      # routeTitle(pathname) — PageHeader fallback title derived from route
+│   └── route-title.test.ts # Unit tests for routeTitle (11 cases covering all routes + edge cases)
+├── config/
+│   ├── apps.ts             # APPS list (Cloud / Network / Explorer / Swap) + ACTIVE_APP_ID for ProductStrip
+│   └── nav.ts              # NAV_SECTIONS — sidebar accordion structure (Dashboard / Resources / Network / Operations)
 └── data/                   # Build-time JSON snapshots (committed)
     ├── country-centroids.json   # ISO-2 → {lat, lng, name}, generated from world-countries
     └── node-locations.json      # node hash → { country }, generated from corechannel + ip3country
@@ -215,9 +220,9 @@ Wallet (`["wallet-vms", …]`, `["wallet-activity", …]`) and credit-expense (`
 
 ### App Shell Layout
 
-**Context:** Consistent navigation across all pages.
-**Approach:** AppShell wraps all pages with sidebar + header + scrollable content area. Three-layer visual hierarchy: sidebar and header use `bg-surface` (dark mode) / `bg-muted/40` (light mode) as app chrome; main content area uses `bg-background` with `rounded-tl-2xl` as a recessed panel; individual cards sit inside with their own borders. A subtle accent-colored radial glow (`main-glow::before`) adds depth to the content area. The header inherits its background from the parent wrapper (no own bg class) to avoid opacity stacking. Scroll position resets to top on route change via `usePathname` + ref. On desktop (`md+`), the sidebar is always visible. On mobile, it collapses to an off-canvas drawer. The sidebar auto-closes on route change. The sidebar header uses `LogoFull` from the DS (icon + "Aleph Cloud" wordmark). The API Status link shows a `StatusDot` with an animated SVG ring (`poll-ring` CSS animation) that draws over 30s matching the health poll interval, color-coded by `/health` endpoint status.
-**Key files:** `src/components/app-shell.tsx`, `src/components/app-sidebar.tsx`, `src/components/app-header.tsx`, `src/hooks/use-health.ts`
+**Context:** Consistent chrome across all pages, integrated with the wider Aleph product family (Cloud · Network · Explorer · Swap).
+**Approach:** `AppShell` composes three DS primitives from `@aleph-front/ds@0.18.0+` instead of the old AppSidebar/AppHeader pair: `ProductStrip` (top bar with cross-app tabs from `src/config/apps.ts`, logomark linking to `https://aleph.cloud`, theme toggle in the right slot), `AppShellSidebar` (collapsible expanded ↔ icon-rail, built-in toggle, accordion sections from `src/config/nav.ts`), and `PageHeader` (sticky chrome row above page content with a `leading` slot for the ☰ toggle and a title). Sidebar collapse and per-section accordion state persist in localStorage via the DS hooks `useSidebarCollapse` (`localStorage["sidebar.collapsed"]`) and `useAccordionState` (`localStorage["sidebar.section.<id>"]`). Active route detection uses `usePathname` plus a small `isActive` helper. Scroll-to-top on route change is still owned by `app-shell.tsx` (effect on `usePathname`). `routeTitle(pathname)` in `src/lib/route-title.ts` provides the PageHeader's fallback title when no page has called `usePageHeader` — per-page action slots arrive in a follow-up PR. `PageHeaderProvider` wraps the app inside `WebSocketProvider` in `src/app/providers.tsx`, so both the `PageHeader` reader and page-level writers see the same context. NavItem is wired with `asChild` + Next.js `<Link>` so SPA navigation works; `/credits` keeps hover-prefetch by passing `onMouseEnter` / `onFocus` through to the cloned anchor (DS NavItem patch shipped in `@aleph-front/ds@0.18.0`, DS Decision #80). The `AppMark` component (logomark + "Network" wordmark) sits in the `AppShellSidebar` brand slot; the wordmark collapses with the rail.
+**Key files:** `src/components/app-shell.tsx`, `src/components/app-mark.tsx`, `src/components/nav-icon.tsx`, `src/config/apps.ts`, `src/config/nav.ts`, `src/lib/route-title.ts`, `src/app/providers.tsx`
 
 ### Overview Page Redesign
 
@@ -301,9 +306,9 @@ Wallet (`["wallet-vms", …]`, `["wallet-activity", …]`) and credit-expense (`
 ### Detail Views (Full-Width)
 
 **Context:** Side panels show truncated data (10 history rows, no owner/IPv6/payment fields). Users need a full view with all metadata and complete history.
-**Approach:** Search-param-based view switching. When `?view=hash` is present on `/nodes` or `/vms`, the page renders a `NodeDetailView` or `VMDetailView` instead of the table+panel layout. Side panels remain as quick-peek with a "View full details →" link. The `AppHeader` reads `?view=` to show entity-specific titles (e.g. "Node: abc12..."). Cross-links between detail views use `?view=` (not `?selected=`).
-**Key files:** `src/components/node-detail-view.tsx`, `src/components/node-detail-view-ccn.tsx`, `src/components/vm-detail-view.tsx`, `src/app/nodes/page.tsx`, `src/app/vms/page.tsx`, `src/components/app-header.tsx`
-**Notes:** Uses search params instead of dynamic route segments (`/nodes/[hash]`) because IPFS static export can't resolve arbitrary dynamic paths. The `AppHeader` wraps `useSearchParams()` in a `<Suspense>` boundary to avoid hydration issues. New API fields surfaced: `owner`, `supportsIpv6`, `discoveredAt` (nodes), `allocatedAt`, `lastObservedAt`, `paymentType` (VMs). VM panels/detail views cross-reference the allocated node via `useNode(hash)` to display the node name alongside the hash link. Both detail views show an error card (with back button and error message) instead of rendering blank when the API call fails. Secondary fetches (history, related VMs) use `.catch(() => [])` so the primary entity still renders even if history endpoints fail. The "← Nodes" / "← Virtual Machines" back navigation uses `router.back()` instead of a hardcoded `<Link>` so it returns to the actual previous page (e.g. Overview, Issues) rather than always navigating to the list page.
+**Approach:** Search-param-based view switching. When `?view=hash` is present on `/nodes` or `/vms`, the page renders a `NodeDetailView` or `VMDetailView` instead of the table+panel layout. Side panels remain as quick-peek with a "View full details →" link. Page titles flow through the DS `PageHeader` (sticky chrome row above page content) — today the shell uses `routeTitle(pathname)` as a fallback; pages will call `usePageHeader` for entity-aware titles in a follow-up PR. Cross-links between detail views use `?view=` (not `?selected=`).
+**Key files:** `src/components/node-detail-view.tsx`, `src/components/node-detail-view-ccn.tsx`, `src/components/vm-detail-view.tsx`, `src/app/nodes/page.tsx`, `src/app/vms/page.tsx`, `src/components/app-shell.tsx`, `src/lib/route-title.ts`
+**Notes:** Uses search params instead of dynamic route segments (`/nodes/[hash]`) because IPFS static export can't resolve arbitrary dynamic paths. New API fields surfaced: `owner`, `supportsIpv6`, `discoveredAt` (nodes), `allocatedAt`, `lastObservedAt`, `paymentType` (VMs). VM panels/detail views cross-reference the allocated node via `useNode(hash)` to display the node name alongside the hash link. Both detail views show an error card (with back button and error message) instead of rendering blank when the API call fails. Secondary fetches (history, related VMs) use `.catch(() => [])` so the primary entity still renders even if history endpoints fail. The "← Nodes" / "← Virtual Machines" back navigation uses `router.back()` instead of a hardcoded `<Link>` so it returns to the actual previous page (e.g. Overview, Issues) rather than always navigating to the list page.
 
 **CCN dispatch.** `useNode(hash)` hits `/api/v1/nodes/<hash>`, which only knows CRNs — CCN hashes used to land on "Node not found". `NodeDetailView` now reads `useNodeState()` early and dispatches to `NodeDetailViewCcn` when `nodeState.ccns.has(hash)`, passing the `CCNInfo` from `nodeState` plus the owner balance from `useOwnerBalances()` so the activation-gate cascade (owner-locked > pending > understaked) reads consistently with the network graph CCN panel. The CCN shell renders an Overview tab built from `nodeState` alone (no extra API: hash, score, owner, reward, total staked, attached CRN count, italic activation notes, Linked CRNs list, Stakers table) and the Earnings tab via `NodeEarningsTabCcn`. The CRN branch is unchanged — `useNode()` still drives the existing resources/GPUs/VMs/history cards. Loading is gated on `nodeLoading || (!node && stateLoading)` so CRN visits don't wait for `nodeState`; CCN visits wait long enough to read the CCN entry. This also fixes the "View full details →" link in the network-graph CCN panel, which has always routed to `/nodes?view=<ccn-hash>` but couldn't resolve until now.
 
@@ -357,8 +362,8 @@ Wallet (`["wallet-vms", …]`, `["wallet-activity", …]`) and credit-expense (`
 ### Persisted Query Cache + Prefetch
 
 **Context:** The credit-expenses query against api2 takes ~20s on a throttled connection — every visit to `/credits` blocked on it. The wallet page hits the same endpoint for 24h windows.
-**Approach:** `PersistQueryClientProvider` (from `@tanstack/react-query-persist-client`) wraps the app with a localStorage-backed persister (`@tanstack/query-sync-storage-persister`). `dehydrateOptions.shouldDehydrateQuery` whitelists only the `credit-expenses` query-key prefix — fast-polling queries (nodes, vms, health) and queries containing non-JSON-serializable values stay in-memory only. `maxAge: 24h`, `buster: CURRENT_VERSION` so a version bump invalidates persisted entries. Stable 5-minute-rounded timestamps mean cache keys collide across mounts. `useCreditExpenses` uses `placeholderData: keepPreviousData` so the cache entry stays populated across range-tab switches and revisits to a previously-fetched range render instantly; the `/credits` page reads `isPlaceholderData` from the query and folds it into its `isLoading` flag so range transitions show skeletons / placeholder chrome on the summary cards, flow diagram, and recipient table instead of holding the previous range's numbers as if they were current (Decision #89). The Credits sidebar link calls `queryClient.prefetchQuery` for 24h expenses + node-state on `onMouseEnter`/`onFocus` (once per mount, guarded by a ref) so the in-memory cache is warm by the time the user clicks. The 24h prefetch shares its cache entry with `useWalletRewards` (which is also 24h) and matches the credits page's default range.
-**Key files:** `src/app/providers.tsx`, `src/hooks/use-credit-expenses.ts`, `src/components/app-sidebar.tsx`
+**Approach:** `PersistQueryClientProvider` (from `@tanstack/react-query-persist-client`) wraps the app with a localStorage-backed persister (`@tanstack/query-sync-storage-persister`). `dehydrateOptions.shouldDehydrateQuery` whitelists only the `credit-expenses` query-key prefix — fast-polling queries (nodes, vms, health) and queries containing non-JSON-serializable values stay in-memory only. `maxAge: 24h`, `buster: CURRENT_VERSION` so a version bump invalidates persisted entries. Stable 5-minute-rounded timestamps mean cache keys collide across mounts. `useCreditExpenses` uses `placeholderData: keepPreviousData` so the cache entry stays populated across range-tab switches and revisits to a previously-fetched range render instantly; the `/credits` page reads `isPlaceholderData` from the query and folds it into its `isLoading` flag so range transitions show skeletons / placeholder chrome on the summary cards, flow diagram, and recipient table instead of holding the previous range's numbers as if they were current (Decision #89). The Credits NavItem in the shell calls `queryClient.prefetchQuery` for 24h expenses + node-state on `onMouseEnter`/`onFocus` (once per mount, guarded by a ref) so the in-memory cache is warm by the time the user clicks. The handlers are passed through DS NavItem's `asChild` cloneElement to the underlying Next.js `<Link>` (DS Decision #80, `@aleph-front/ds@0.18.0`). The 24h prefetch shares its cache entry with `useWalletRewards` (which is also 24h) and matches the credits page's default range.
+**Key files:** `src/app/providers.tsx`, `src/hooks/use-credit-expenses.ts`, `src/components/app-shell.tsx`
 **Notes:** Persister storage is `undefined` during SSR/static-export build (the package supports this). The localStorage key is `scheduler-dashboard-rq`. The `buster` field on `persistOptions` is the React Query mechanism for cache invalidation across deploys — pinning to `CURRENT_VERSION` from `changelog.ts` ties cache lifetime to released versions.
 
 **Two non-obvious rules for persisted queries (both enforced in `shouldDehydrateQuery`):**
@@ -389,10 +394,10 @@ Wallet (`["wallet-vms", …]`, `["wallet-activity", …]`) and credit-expense (`
 
 ### Sidebar Categories
 
-**Context:** With 5+ nav items, flat navigation list needed structure.
-**Approach:** Two categories: Dashboard (Overview), Resources (Nodes, VMs, Credits). Small uppercase section titles as visual grouping only (not clickable, no collapse). Issues and API Status are grouped behind a "More" overflow popover button in the sidebar footer — Issues is a dev-focused diagnostic page, not primary navigation. The trigger button shows a `⋯` icon, "More" label, and the API health `StatusDot` so health status is visible at a glance without opening the menu. Popover opens upward, closes on click-outside or navigation.
-**Key files:** `src/components/app-sidebar.tsx`
-**Notes:** `NAV_SECTIONS` array drives the main nav rendering. The `UtilityMenu` component manages popover state with `mousedown` click-outside detection.
+**Context:** With 7+ nav items, flat navigation needed structure, and operators wanted to keep frequently-collapsed sections out of the way without losing them in a hidden overflow popover.
+**Approach:** Sidebar renders four DS `AccordionSection` blocks (`@aleph-front/ds/app-shell-sidebar`) — Dashboard (Overview), Resources (Nodes, VMs, Credits), Network (Graph, Health), Operations (Issues). Each section can be collapsed/expanded independently; per-section state persists in `localStorage["sidebar.section.<id>"]` via the DS `useAccordionState` hook. The whole sidebar can also collapse to an icon rail via the built-in DS collapse toggle anchored at the bottom of `AppShellSidebar`; that state persists in `localStorage["sidebar.collapsed"]`. The structure is data-driven from `NAV_SECTIONS` in `src/config/nav.ts` — each entry pairs a section id + label with an array of `{ href, label, iconKey }` items resolved at render via `NavIcon`. The old "More" popover / `UtilityMenu` is gone: Issues moved into the Operations section, Network Health into the Network section, both as top-level entries.
+**Key files:** `src/components/app-shell.tsx`, `src/config/nav.ts`
+**Notes:** Section order is significant — Dashboard first (the overview entrypoint), Resources next (the bulk of the work), Network and Operations last (diagnostic surfaces). Default-open state is decided per section via `defaultOpen` on `AccordionSection`; today all four default to open.
 
 ### Client-Side Pagination
 
@@ -406,7 +411,7 @@ Wallet (`["wallet-vms", …]`, `["wallet-activity", …]`) and credit-expense (`
 
 **Context:** Dashboard must work on mobile, tablet, and desktop.
 **Approach:** Two breakpoints: `md` (768px) for sidebar visibility, `lg` (1024px) for detail panel layout. Mobile sidebar is a fixed overlay with backdrop. Detail panels (Nodes, VMs) render as full-width slide-in overlays below `lg`, inline side panels above. Tables use `overflow-x-auto` for horizontal scrolling on narrow screens. When a detail panel is open on desktop, lower-priority table columns are hidden to prevent the table from being squeezed — columns reappear when the panel closes. Each table defines a `COMPACT_HIDDEN_HEADERS` set; columns are filtered by header string when `compact` is true (or when the internal selection state is non-null for self-contained tables like Issues). The `FilterToolbar` + `FilterPanel` always render above the `flex gap-6` container that holds the table and detail panel side-by-side — this ensures the toolbar gets full width regardless of whether the panel is open. Table components (`NodeTable`, `VMTable`) accept a `sidePanel` prop for the detail panel; the flex layout wrapping `Table` + `TablePagination` + `sidePanel` lives inside the table component.
-**Key files:** `src/components/app-sidebar.tsx`, `src/app/nodes/page.tsx`, `src/app/vms/page.tsx`, `src/components/node-detail-panel.tsx`, `src/components/vm-detail-panel.tsx`, `src/components/node-table.tsx`, `src/components/vm-table.tsx`, `src/components/issues-vm-table.tsx`, `src/components/issues-node-table.tsx`
+**Key files:** `src/components/app-shell.tsx`, `src/app/nodes/page.tsx`, `src/app/vms/page.tsx`, `src/components/node-detail-panel.tsx`, `src/components/vm-detail-panel.tsx`, `src/components/node-table.tsx`, `src/components/vm-table.tsx`, `src/components/issues-vm-table.tsx`, `src/components/issues-node-table.tsx`
 **Notes:** Uses `bg-background` token for the content area. Detail panels use glass card styling (`bg-foreground/[0.03]`, `border-foreground/[0.06]`, `variant="ghost"`), `lg:sticky lg:top-0` to stay visible while scrolling, and truncate long lists (6 VMs, 5 history entries) with "+N more" indicators to keep the "View full details →" CTA reachable. Adaptive column hiding priority tiers: Nodes hides GPU/CPU/VMs; VMs hides Type/Node/Last Updated; Issues VM hides Scheduled On/Observed On; Issues Node hides Total VMs/Last Updated.
 
 ---
@@ -416,7 +421,7 @@ Wallet (`["wallet-vms", …]`, `["wallet-activity", …]`) and credit-expense (`
 ### Adding a New Page
 
 1. Create `src/app/<route>/page.tsx`
-2. Add nav entry to `NAV_ITEMS` in `src/components/app-sidebar.tsx`
+2. Add nav entry to `NAV_SECTIONS` in `src/config/nav.ts`
 3. Verify with `pnpm build` (static export must include the route)
 
 ### Typography & Motion System
@@ -429,7 +434,7 @@ Wallet (`["wallet-vms", …]`, `["wallet-activity", …]`) and credit-expense (`
 
 **Context:** The API Status page needed marketing-grade presentation for prospective operators.
 **Approach:** Reframed `/status` as "Network Health" with left-aligned title and a status `Badge` (success/error variant) showing "All Systems Operational" or degraded count. Glassmorphism stat cards for Endpoints Healthy and Avg Latency (computed from probe results). A third card shows Last Checked timestamp with a Recheck button. Endpoint sections in a side-by-side 2-column grid (`lg:grid-cols-2`), simplified headers with "N/N healthy" text count (removed per-section donut rings). Same endpoint probing logic — no new API calls.
-**Key files:** `src/app/status/page.tsx`, `src/components/app-sidebar.tsx`
+**Key files:** `src/app/status/page.tsx`, `src/components/app-shell.tsx`
 
 ### API Status Page (legacy name — now Network Health)
 
