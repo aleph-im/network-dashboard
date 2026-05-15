@@ -564,12 +564,12 @@ export default function StatusPage() {
     title: "Network Health",
     actions: (
       <Button
-        variant="outline"
+        variant="text"
         size="xs"
+        iconLeft={<ArrowClockwise />}
         onClick={runChecks}
         disabled={checking}
       >
-        <ArrowClockwise size={12} className="mr-1" />
         {checking ? "Checking\u2026" : "Recheck"}
       </Button>
     ),
