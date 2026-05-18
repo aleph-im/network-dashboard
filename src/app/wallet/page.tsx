@@ -210,7 +210,58 @@ function VMsSection({ vms }: { vms: WalletVM[] }) {
       <h3 className="mb-3 text-xs font-semibold uppercase tracking-wider text-muted-foreground">
         Virtual Machines ({vms.length})
       </h3>
-      <div className="overflow-x-auto">
+      <div className="space-y-3 md:hidden">
+        {vms.map((vm) => (
+          <MobileTableCardRow
+            key={vm.hash}
+            {...(vm.schedulerStatus ? { href: `/vms?view=${vm.hash}` } : {})}
+            primary={
+              <CopyableText
+                text={vm.hash}
+                startChars={8}
+                endChars={8}
+                size="sm"
+              />
+            }
+            fields={[
+              { label: "Name", value: vm.name ?? "—" },
+              {
+                label: "Type",
+                value: (
+                  <Badge fill="outline" variant="default" size="sm">
+                    {vm.type}
+                  </Badge>
+                ),
+              },
+              {
+                label: "Status",
+                value: vm.schedulerStatus ? (
+                  <Badge
+                    fill="outline"
+                    variant={VM_STATUS_VARIANT[vm.schedulerStatus]}
+                    size="sm"
+                  >
+                    {vm.schedulerStatus}
+                  </Badge>
+                ) : (
+                  <Badge fill="outline" variant="default" size="sm">
+                    not tracked
+                  </Badge>
+                ),
+              },
+              {
+                label: "Created",
+                value: (
+                  <span className="text-muted-foreground tabular-nums">
+                    {relativeTimeFromUnix(vm.createdAt)}
+                  </span>
+                ),
+              },
+            ]}
+          />
+        ))}
+      </div>
+      <div className="hidden overflow-x-auto md:block">
         <table className="w-full text-sm">
           <thead>
             <tr className="border-b border-edge text-left text-xs text-muted-foreground">
