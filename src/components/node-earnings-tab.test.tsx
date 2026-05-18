@@ -75,9 +75,11 @@ describe("NodeEarningsTab (CRN)", () => {
     ).toBeInTheDocument();
     // Per-VM hashes appear (CopyableText renders truncated representation)
     expect(screen.getAllByText(/vmA|vmB/).length).toBeGreaterThan(0);
-    // Payment column distinguishes credit-paid vs hold-tier VMs.
-    expect(screen.getByText("Credits")).toBeInTheDocument();
-    expect(screen.getByText("Hold")).toBeInTheDocument();
+    // Payment column distinguishes credit-paid vs hold-tier VMs. Both mobile
+    // card list and desktop table render to DOM (CSS gates visibility), so each
+    // badge appears twice.
+    expect(screen.getAllByText("Credits").length).toBeGreaterThan(0);
+    expect(screen.getAllByText("Hold").length).toBeGreaterThan(0);
   });
 
   it("collapses extra VMs behind a +N more row that expands when clicked", () => {
@@ -105,17 +107,18 @@ describe("NodeEarningsTab (CRN)", () => {
 
     render(<NodeEarningsTab hash="crn1" />);
 
-    // The "+ 2 more" row is visible by default (since 5 of 7 are shown).
-    const expandTrigger = screen.getByRole("button", { name: /\+ 2 more/i });
-    expect(expandTrigger).toBeInTheDocument();
+    // The "+ 2 more" trigger renders once in the mobile card list and once in
+    // the desktop table footer — both in DOM, CSS gates visibility.
+    const expandTriggers = screen.getAllByRole("button", { name: /\+ 2 more/i });
+    expect(expandTriggers.length).toBe(2);
     // Hashes 6 and 7 should not be in the DOM yet (they're the collapsed ones).
     expect(screen.queryByText(/^vm6/)).not.toBeInTheDocument();
 
-    // Click to expand.
-    fireEvent.click(expandTrigger);
+    // Click to expand the first (mobile) trigger — they share state.
+    fireEvent.click(expandTriggers[0]!);
 
-    // Now all 7 rows should be visible — and the trigger flips to "Show less".
-    expect(screen.getByRole("button", { name: /show less/i })).toBeInTheDocument();
+    // Now all 7 rows should be visible — and both triggers flip to "Show less".
+    expect(screen.getAllByRole("button", { name: /show less/i }).length).toBe(2);
     expect(screen.queryByRole("button", { name: /\+ 2 more/i })).not.toBeInTheDocument();
   });
 
