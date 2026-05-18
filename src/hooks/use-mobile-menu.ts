@@ -5,10 +5,9 @@ import { usePathname } from "next/navigation";
 
 const MD_BREAKPOINT = "(min-width: 768px)";
 
-export function useMobileDrawer(): {
+export function useMobileMenu(): {
   open: boolean;
-  openDrawer: () => void;
-  closeDrawer: () => void;
+  close: () => void;
   toggle: () => void;
 } {
   const [open, setOpen] = useState(false);
@@ -28,9 +27,29 @@ export function useMobileDrawer(): {
     return () => mql.removeEventListener("change", onChange);
   }, []);
 
-  const openDrawer = useCallback(() => setOpen(true), []);
-  const closeDrawer = useCallback(() => setOpen(false), []);
+  useEffect(() => {
+    if (!open) return;
+    const onKey = (e: KeyboardEvent) => {
+      if (e.key === "Escape") setOpen(false);
+    };
+    window.addEventListener("keydown", onKey);
+    return () => window.removeEventListener("keydown", onKey);
+  }, [open]);
+
+  useEffect(() => {
+    if (typeof document === "undefined") return;
+    if (open) {
+      const prev = document.body.style.overflow;
+      document.body.style.overflow = "hidden";
+      return () => {
+        document.body.style.overflow = prev;
+      };
+    }
+    return undefined;
+  }, [open]);
+
+  const close = useCallback(() => setOpen(false), []);
   const toggle = useCallback(() => setOpen((v) => !v), []);
 
-  return { open, openDrawer, closeDrawer, toggle };
+  return { open, close, toggle };
 }

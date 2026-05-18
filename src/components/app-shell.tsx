@@ -16,7 +16,7 @@ import { ThemeToggle } from "@/components/theme-toggle";
 import { AppMark } from "@/components/app-mark";
 import { MobileSidebarDrawer } from "@/components/mobile-sidebar-drawer";
 import { NavIcon } from "@/components/nav-icon";
-import { useMobileDrawer } from "@/hooks/use-mobile-drawer";
+import { useMobileMenu } from "@/hooks/use-mobile-menu";
 import { ACTIVE_APP_ID, APPS } from "@/config/apps";
 import { NAV_SECTIONS } from "@/config/nav";
 import { routeTitle } from "@/lib/route-title";
@@ -34,10 +34,10 @@ export function AppShell({ children }: { children: ReactNode }) {
   const creditsPrefetchedRef = useRef(false);
   const { collapsed, toggle } = useSidebarCollapse();
   const {
-    open: drawerOpen,
-    closeDrawer,
-    toggle: toggleDrawer,
-  } = useMobileDrawer();
+    open: menuOpen,
+    close: closeMenu,
+    toggle: toggleMenu,
+  } = useMobileMenu();
 
   useEffect(() => {
     mainRef.current?.scrollTo(0, 0);
@@ -50,9 +50,9 @@ export function AppShell({ children }: { children: ReactNode }) {
     ) {
       toggle();
     } else {
-      toggleDrawer();
+      toggleMenu();
     }
-  }, [toggle, toggleDrawer]);
+  }, [toggle, toggleMenu]);
 
   const isActive = useCallback(
     (href: string): boolean => {
@@ -92,7 +92,7 @@ export function AppShell({ children }: { children: ReactNode }) {
         className="border-b-0"
       />
       <div className="flex flex-1 overflow-hidden">
-        <MobileSidebarDrawer open={drawerOpen} onClose={closeDrawer}>
+        <MobileSidebarDrawer open={menuOpen} onClose={closeMenu}>
           <AppShellSidebar
             appMark={<AppMark collapsed={sidebarCollapsed} />}
             collapsed={collapsed}
