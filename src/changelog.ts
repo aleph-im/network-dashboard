@@ -11,9 +11,23 @@ export type VersionEntry = {
   changes: ChangeEntry[];
 };
 
-export const CURRENT_VERSION = "0.26.0";
+export const CURRENT_VERSION = "0.26.1";
 
 export const CHANGELOG: VersionEntry[] = [
+  {
+    version: "0.26.1",
+    date: "2026-05-18",
+    changes: [
+      {
+        type: "ui",
+        text: "Cross-app tabs in the top product strip (Cloud / Explorer / Swap) now show a small external-link affordance so it's clear they take you off-app. Network stays unmarked since it's the current app.",
+      },
+      {
+        type: "infra",
+        text: "Design system bumped from 0.20.0 to 0.23.1.",
+      },
+    ],
+  },
   {
     version: "0.26.0",
     date: "2026-05-18",
