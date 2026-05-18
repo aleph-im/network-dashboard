@@ -672,30 +672,36 @@ function WalletContent() {
     ? `${address.slice(0, 6)}…${address.slice(-4)}`
     : "Wallet";
 
+  const headerActions = (
+    <>
+      <Button
+        variant="text"
+        size="xs"
+        iconLeft={<ArrowClockwise />}
+        onClick={refetchAll}
+        disabled={isFetching}
+      >
+        {isFetching ? "Refreshing…" : "Refresh"}
+      </Button>
+      {address && (
+        <a
+          href={explorerWalletUrl(address)}
+          target="_blank"
+          rel="noopener noreferrer"
+          className="inline-flex items-center gap-1 text-xs text-primary-400 hover:underline"
+        >
+          Open in Explorer <ArrowUpRight size={12} />
+        </a>
+      )}
+    </>
+  );
+
   usePageHeader({
     title: headerTitle,
     actions: (
-      <>
-        <Button
-          variant="text"
-          size="xs"
-          iconLeft={<ArrowClockwise />}
-          onClick={refetchAll}
-          disabled={isFetching}
-        >
-          {isFetching ? "Refreshing…" : "Refresh"}
-        </Button>
-        {address && (
-          <a
-            href={explorerWalletUrl(address)}
-            target="_blank"
-            rel="noopener noreferrer"
-            className="inline-flex items-center gap-1 text-xs text-primary-400 hover:underline"
-          >
-            Open in Explorer <ArrowUpRight size={12} />
-          </a>
-        )}
-      </>
+      <span className="hidden items-center gap-2 md:inline-flex">
+        {headerActions}
+      </span>
     ),
   });
 
@@ -728,6 +734,9 @@ function WalletContent() {
 
   return (
     <div className="space-y-8">
+      <div className="mb-3 flex items-center justify-end gap-2 md:hidden">
+        {headerActions}
+      </div>
       {/* Header */}
       <div>
         <button

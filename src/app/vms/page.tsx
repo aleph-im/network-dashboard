@@ -45,21 +45,23 @@ function VMsContent() {
   const { data: vms, isFetching, refetch } = useVMs();
   const total = vms?.length ?? 0;
 
+  const refreshButton = (
+    <Button
+      variant="text"
+      size="xs"
+      iconLeft={<ArrowClockwise />}
+      onClick={() => {
+        void refetch();
+      }}
+      disabled={isFetching}
+    >
+      {isFetching ? "Refreshing…" : "Refresh"}
+    </Button>
+  );
+
   usePageHeader({
     title: total > 0 ? `VMs · ${total} total` : "VMs",
-    actions: (
-      <Button
-        variant="text"
-        size="xs"
-        iconLeft={<ArrowClockwise />}
-        onClick={() => {
-          void refetch();
-        }}
-        disabled={isFetching}
-      >
-        {isFetching ? "Refreshing…" : "Refresh"}
-      </Button>
-    ),
+    actions: <span className="hidden md:inline-flex">{refreshButton}</span>,
   });
 
   if (viewHash) {
@@ -68,6 +70,7 @@ function VMsContent() {
 
   return (
     <div>
+      <div className="mb-3 flex justify-end md:hidden">{refreshButton}</div>
       <div className="mb-10">
         <h1 className="text-4xl">Virtual Machines</h1>
         <p className="mt-2 text-base text-muted-foreground">
