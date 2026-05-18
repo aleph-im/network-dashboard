@@ -64,19 +64,13 @@ export function MobileMenu({ open, onClose, appName, children }: Props) {
                     rel="noreferrer noopener"
                     className={className}
                   >
-                    <span>{app.label}</span>
-                    <span aria-hidden="true"> ↗</span>
+                    {app.label} ↗
                   </a>
                 );
               }
-              // Active app: marker + label live inside a single descendant
-              // <span> so neither the outer nor the inner element's direct
-              // text content equals the bare label (avoids collisions with
-              // the header appName when MobileMenu is used for the same
-              // active app — see `getByText` semantics on direct text).
               return (
                 <span key={app.id} className={className}>
-                  <span>• {app.label}</span>
+                  {app.label}
                 </span>
               );
             })}

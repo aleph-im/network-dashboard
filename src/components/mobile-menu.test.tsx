@@ -1,4 +1,4 @@
-import { fireEvent, render, screen } from "@testing-library/react";
+import { fireEvent, render, screen, within } from "@testing-library/react";
 import { describe, expect, it, vi } from "vitest";
 import { MobileMenu } from "./mobile-menu";
 
@@ -20,12 +20,14 @@ describe("MobileMenu", () => {
   });
 
   it("renders header, children, and footer when open", () => {
-    render(
+    const { container } = render(
       <MobileMenu open={true} onClose={() => {}} appName="Network">
         <span>NAV</span>
       </MobileMenu>,
     );
-    expect(screen.getByText("Network")).toBeInTheDocument();
+    const header = container.querySelector("header");
+    expect(header).not.toBeNull();
+    expect(within(header!).getByText("Network")).toBeInTheDocument();
     expect(screen.getByText("NAV")).toBeInTheDocument();
     expect(screen.getByLabelText("Close menu")).toBeInTheDocument();
   });
@@ -53,15 +55,17 @@ describe("MobileMenu", () => {
   });
 
   it("renders all product tabs in the footer", () => {
-    render(
+    const { container } = render(
       <MobileMenu open={true} onClose={() => {}} appName="Network">
         <span>NAV</span>
       </MobileMenu>,
     );
-    expect(screen.getByText("Cloud")).toBeInTheDocument();
-    expect(screen.getAllByText("Network").length).toBeGreaterThan(0);
-    expect(screen.getByText("Explorer")).toBeInTheDocument();
-    expect(screen.getByText("Swap")).toBeInTheDocument();
+    const footer = container.querySelector("footer");
+    expect(footer).not.toBeNull();
+    expect(within(footer!).getByText(/Cloud/)).toBeInTheDocument();
+    expect(within(footer!).getByText("Network")).toBeInTheDocument();
+    expect(within(footer!).getByText(/Explorer/)).toBeInTheDocument();
+    expect(within(footer!).getByText(/Swap/)).toBeInTheDocument();
   });
 
   it("renders the version link", () => {
