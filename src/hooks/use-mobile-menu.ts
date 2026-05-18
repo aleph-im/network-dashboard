@@ -18,7 +18,6 @@ export function useMobileMenu(): {
   }, [pathname]);
 
   useEffect(() => {
-    if (typeof window === "undefined") return;
     const mql = window.matchMedia(MD_BREAKPOINT);
     const onChange = (e: MediaQueryListEvent) => {
       if (e.matches) setOpen(false);
@@ -37,7 +36,6 @@ export function useMobileMenu(): {
   }, [open]);
 
   useEffect(() => {
-    if (typeof document === "undefined") return;
     if (open) {
       const prev = document.body.style.overflow;
       document.body.style.overflow = "hidden";

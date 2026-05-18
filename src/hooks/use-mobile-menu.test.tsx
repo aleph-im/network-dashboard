@@ -78,6 +78,15 @@ describe("useMobileMenu", () => {
     expect(document.body.style.overflow).toBe("");
   });
 
+  it("restores a pre-existing overflow value", () => {
+    document.body.style.overflow = "scroll";
+    const { result } = renderHook(() => useMobileMenu());
+    act(() => result.current.toggle());
+    expect(document.body.style.overflow).toBe("hidden");
+    act(() => result.current.close());
+    expect(document.body.style.overflow).toBe("scroll");
+  });
+
   it("restores body scroll on unmount", () => {
     const { result, unmount } = renderHook(() => useMobileMenu());
     act(() => result.current.toggle());
