@@ -14,7 +14,9 @@ import { useSidebarCollapse } from "@aleph-front/ds/use-sidebar-collapse";
 import { PageHeader } from "@aleph-front/ds/page-header";
 import { ThemeToggle } from "@/components/theme-toggle";
 import { AppMark } from "@/components/app-mark";
+import { MobileSidebarDrawer } from "@/components/mobile-sidebar-drawer";
 import { NavIcon } from "@/components/nav-icon";
+import { useMobileDrawer } from "@/hooks/use-mobile-drawer";
 import { ACTIVE_APP_ID, APPS } from "@/config/apps";
 import { NAV_SECTIONS } from "@/config/nav";
 import { routeTitle } from "@/lib/route-title";
@@ -31,10 +33,26 @@ export function AppShell({ children }: { children: ReactNode }) {
   const queryClient = useQueryClient();
   const creditsPrefetchedRef = useRef(false);
   const { collapsed, toggle } = useSidebarCollapse();
+  const {
+    open: drawerOpen,
+    closeDrawer,
+    toggle: toggleDrawer,
+  } = useMobileDrawer();
 
   useEffect(() => {
     mainRef.current?.scrollTo(0, 0);
   }, [pathname]);
+
+  const handleSidebarToggle = useCallback(() => {
+    if (
+      typeof window !== "undefined" &&
+      window.matchMedia("(min-width: 768px)").matches
+    ) {
+      toggle();
+    } else {
+      toggleDrawer();
+    }
+  }, [toggle, toggleDrawer]);
 
   const isActive = useCallback(
     (href: string): boolean => {
@@ -74,54 +92,56 @@ export function AppShell({ children }: { children: ReactNode }) {
         className="border-b-0"
       />
       <div className="flex flex-1 overflow-hidden">
-        <AppShellSidebar
-          appMark={<AppMark collapsed={sidebarCollapsed} />}
-          collapsed={collapsed}
-          onToggle={toggle}
-          footer={
-            <Link
-              href="/changelog"
-              className="font-mono text-[11px] tabular-nums text-muted-foreground/40 transition-colors hover:text-muted-foreground"
-              style={{ transitionDuration: "var(--duration-fast)" }}
-            >
-              v{CURRENT_VERSION}
-            </Link>
-          }
-        >
-          {NAV_SECTIONS.map((section) => (
-            <AccordionSection
-              key={section.id}
-              title={section.title}
-              sectionId={section.id}
-              {...(section.id === "operations" ? { defaultOpen: false } : {})}
-            >
-              {section.items.map((item) => {
-                const prefetchProps =
-                  item.href === "/credits"
-                    ? {
-                        onMouseEnter: prefetchCredits,
-                        onFocus: prefetchCredits,
-                      }
-                    : {};
-                return (
-                  <NavItem
-                    key={item.href}
-                    asChild
-                    icon={<NavIcon name={item.icon} />}
-                    active={isActive(item.href)}
-                    {...prefetchProps}
-                  >
-                    <Link href={item.href}>{item.label}</Link>
-                  </NavItem>
-                );
-              })}
-            </AccordionSection>
-          ))}
-        </AppShellSidebar>
+        <MobileSidebarDrawer open={drawerOpen} onClose={closeDrawer}>
+          <AppShellSidebar
+            appMark={<AppMark collapsed={sidebarCollapsed} />}
+            collapsed={collapsed}
+            onToggle={toggle}
+            footer={
+              <Link
+                href="/changelog"
+                className="font-mono text-[11px] tabular-nums text-muted-foreground/40 transition-colors hover:text-muted-foreground"
+                style={{ transitionDuration: "var(--duration-fast)" }}
+              >
+                v{CURRENT_VERSION}
+              </Link>
+            }
+          >
+            {NAV_SECTIONS.map((section) => (
+              <AccordionSection
+                key={section.id}
+                title={section.title}
+                sectionId={section.id}
+                {...(section.id === "operations" ? { defaultOpen: false } : {})}
+              >
+                {section.items.map((item) => {
+                  const prefetchProps =
+                    item.href === "/credits"
+                      ? {
+                          onMouseEnter: prefetchCredits,
+                          onFocus: prefetchCredits,
+                        }
+                      : {};
+                  return (
+                    <NavItem
+                      key={item.href}
+                      asChild
+                      icon={<NavIcon name={item.icon} />}
+                      active={isActive(item.href)}
+                      {...prefetchProps}
+                    >
+                      <Link href={item.href}>{item.label}</Link>
+                    </NavItem>
+                  );
+                })}
+              </AccordionSection>
+            ))}
+          </AppShellSidebar>
+        </MobileSidebarDrawer>
         <div className="flex flex-1 flex-col overflow-hidden bg-muted/40 dark:bg-surface">
           <div className="main-glow relative flex flex-1 flex-col overflow-hidden rounded-tl-2xl bg-background">
             <PageHeader
-              leading={<SidebarToggle onClick={toggle} />}
+              leading={<SidebarToggle onClick={handleSidebarToggle} />}
               fallbackTitle={routeTitle(pathname)}
               className="bg-transparent [&_.truncate]:text-xs [&_.truncate]:text-muted-foreground"
             />
