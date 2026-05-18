@@ -29,6 +29,8 @@ export function MobileMenu({ open, onClose, appName, children }: Props) {
         }}
       />
       <div
+        role="dialog"
+        aria-modal="true"
         className="mobile-menu-animated fixed inset-0 z-50 flex flex-col bg-background"
         style={{
           animation:
@@ -41,6 +43,7 @@ export function MobileMenu({ open, onClose, appName, children }: Props) {
             type="button"
             aria-label="Close menu"
             onClick={onClose}
+            autoFocus
             className="rounded p-1 text-muted-foreground transition-colors hover:bg-foreground/5 hover:text-foreground"
             style={{ transitionDuration: "var(--duration-fast)" }}
           >
@@ -69,7 +72,11 @@ export function MobileMenu({ open, onClose, appName, children }: Props) {
                 );
               }
               return (
-                <span key={app.id} className={className}>
+                <span
+                  key={app.id}
+                  className={className}
+                  aria-current="page"
+                >
                   {app.label}
                 </span>
               );
