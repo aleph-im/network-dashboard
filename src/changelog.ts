@@ -11,9 +11,31 @@ export type VersionEntry = {
   changes: ChangeEntry[];
 };
 
-export const CURRENT_VERSION = "0.26.1";
+export const CURRENT_VERSION = "0.27.0";
 
 export const CHANGELOG: VersionEntry[] = [
+  {
+    version: "0.27.0",
+    date: "2026-05-18",
+    changes: [
+      {
+        type: "fix",
+        text: "Sidebar is now an off-canvas drawer on phones — tap ☰ in the header to slide it in, tap the dimmed backdrop or pick a nav item to close. The drawer regressed during the May shell redesign; this restores it.",
+      },
+      {
+        type: "ui",
+        text: "Credits page: on phones, the flow diagram is replaced by a vertical breakdown of Storage and Execution flows (CCN / CRN / Stakers / Dev fund) so the percentages and ALEPH amounts are actually readable. Desktop keeps the SVG diagram.",
+      },
+      {
+        type: "ui",
+        text: "Wide tables on Wallet, Credits, and the Earnings tab now stack as cards on phones — each row becomes a card with the primary identifier on top and supporting fields below. Desktop keeps the full table.",
+      },
+      {
+        type: "ui",
+        text: "Earnings chart on phones now shows the bucket details inline below the chart instead of as a floating tooltip that could fall off the screen.",
+      },
+    ],
+  },
   {
     version: "0.26.1",
     date: "2026-05-18",
