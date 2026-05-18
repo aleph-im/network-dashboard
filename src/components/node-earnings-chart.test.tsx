@@ -68,10 +68,10 @@ describe("NodeEarningsChart hover", () => {
     captureRect.getBoundingClientRect = () =>
       ({ left: 0, top: 0, width: 230, height: 120, right: 230, bottom: 120 }) as DOMRect;
     fireEvent.pointerMove(captureRect, { clientX: 115, clientY: 60 });
-    // ALEPH primary value formatted to 2 decimals
-    expect(screen.getByText("0.50")).toBeInTheDocument();
-    // Secondary value rendered as integer
-    expect(screen.getByText("3")).toBeInTheDocument();
+    // ALEPH primary value formatted to 2 decimals — both the desktop HoverCard
+    // and the mobile InlineReadOut render this, gated by CSS.
+    expect(screen.getAllByText("0.50").length).toBeGreaterThan(0);
+    expect(screen.getAllByText("3").length).toBeGreaterThan(0);
     fireEvent.pointerLeave(captureRect);
     expect(screen.queryByText("0.50")).not.toBeInTheDocument();
   });
@@ -83,7 +83,8 @@ describe("NodeEarningsChart hover", () => {
       ({ left: 0, top: 0, width: 230, height: 120, right: 230, bottom: 120 }) as DOMRect;
     fireEvent.pointerMove(captureRect, { clientX: 0, clientY: 60 });
     // Bucket 0: time = 1_715_000_000s = 2024-05-06T14:13:20Z. Locale en-US, 24h.
-    expect(screen.getByText(/\d{2}:\d{2}/)).toBeInTheDocument();
+    // Both the HoverCard and the mobile InlineReadOut render the bucket time.
+    expect(screen.getAllByText(/\d{2}:\d{2}/).length).toBeGreaterThan(0);
   });
 
   it("anchors the tooltip to the right of the line when the cursor is in the left half", () => {
@@ -114,5 +115,22 @@ describe("NodeEarningsChart hover", () => {
     fireEvent.pointerMove(captureRect, { clientX: 0, clientY: 60 });
     // Should NOT contain "HH:MM" — only "Mon D".
     expect(screen.queryByText(/\d{2}:\d{2}/)).not.toBeInTheDocument();
+  });
+
+  it("renders a mobile-only inline read-out container with the empty-state hint", () => {
+    const buckets = Array.from({ length: 24 }, (_, i) => ({
+      time: i * 3600,
+      aleph: 0.5,
+      secondaryCount: 3,
+    }));
+    render(
+      <NodeEarningsChart
+        buckets={buckets}
+        primaryLabel="ALEPH"
+        secondaryLabel="VMs"
+      />,
+    );
+    // Before any interaction the mobile container shows the empty hint.
+    expect(screen.getByText(/Tap chart to inspect/i)).toBeInTheDocument();
   });
 });

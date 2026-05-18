@@ -68,7 +68,7 @@ function HoverCard({
     <div
       data-testid="hover-card"
       data-side={onLeftHalf ? "right" : "left"}
-      className="pointer-events-none absolute top-1 z-10 min-w-[140px] rounded-md border border-edge bg-surface px-2.5 py-2 text-xs shadow-lg"
+      className="pointer-events-none absolute top-1 z-10 hidden min-w-[140px] rounded-md border border-edge bg-surface px-2.5 py-2 text-xs shadow-lg md:block"
       style={{ left: `${xPct * 100}%`, transform }}
     >
       <div className="mb-1 text-[10px] text-muted-foreground">{label}</div>
@@ -175,6 +175,57 @@ export function NodeEarningsChart({
           />
         )}
       </div>
+      <div className="mt-2 md:hidden">
+        {hoverIndex != null && buckets[hoverIndex] ? (
+          <InlineReadOut
+            bucket={buckets[hoverIndex]}
+            primaryLabel={primaryLabel}
+            secondaryLabel={secondaryLabel}
+            durationSec={durationSec}
+          />
+        ) : (
+          <p className="text-xs text-muted-foreground">Tap chart to inspect</p>
+        )}
+      </div>
+    </div>
+  );
+}
+
+function InlineReadOut({
+  bucket,
+  primaryLabel,
+  secondaryLabel,
+  durationSec,
+}: {
+  bucket: NodeEarningsBucket;
+  primaryLabel: string;
+  secondaryLabel: string;
+  durationSec: number;
+}) {
+  const time = formatBucketTime(bucket.time, durationSec);
+  return (
+    <div className="flex flex-wrap items-center justify-between gap-2 rounded-md border border-foreground/[0.06] bg-foreground/[0.03] px-3 py-2 text-xs">
+      <span className="text-muted-foreground tabular-nums">{time}</span>
+      <span className="flex items-center gap-3">
+        <span>
+          <span className="text-muted-foreground">{primaryLabel}:</span>{" "}
+          <span
+            className="font-mono tabular-nums"
+            style={{ color: "var(--color-success-500)" }}
+          >
+            {bucket.aleph.toFixed(2)}
+          </span>
+        </span>
+        <span>
+          <span className="text-muted-foreground">{secondaryLabel}:</span>{" "}
+          <span
+            className="font-mono tabular-nums"
+            style={{ color: "var(--color-primary-500)" }}
+          >
+            {bucket.secondaryCount}
+          </span>
+        </span>
+      </span>
     </div>
   );
 }
