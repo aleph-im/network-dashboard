@@ -37,14 +37,14 @@ export const NAV_SECTIONS: NavSectionConfig[] = [
   {
     id: "network",
     title: "Network",
-    items: [
-      { label: "Graph",  href: "/network", icon: "network" },
-      { label: "Health", href: "/status",  icon: "signal" },
-    ],
+    items: [{ label: "Graph", href: "/network", icon: "network" }],
   },
   {
     id: "operations",
     title: "Operations",
-    items: [{ label: "Issues", href: "/issues", icon: "warning" }],
+    items: [
+      { label: "Health", href: "/status", icon: "signal" },
+      { label: "Issues", href: "/issues", icon: "warning" },
+    ],
   },
 ];

@@ -73,7 +73,7 @@ describe("NodeEarningsSpark", () => {
       isPlaceholderData: false,
     });
     const { container } = render(<NodeEarningsSpark hash="crn1" />);
-    expect(container.querySelectorAll("polyline")).toHaveLength(2);
+    expect(container.querySelectorAll("path[data-line]")).toHaveLength(2);
     expect(screen.getByText(/12\.40 ALEPH/)).toBeInTheDocument();
     expect(screen.getByText(/3\.5 VMs avg/)).toBeInTheDocument();
   });

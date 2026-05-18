@@ -11,9 +11,31 @@ export type VersionEntry = {
   changes: ChangeEntry[];
 };
 
-export const CURRENT_VERSION = "0.25.1";
+export const CURRENT_VERSION = "0.26.0";
 
 export const CHANGELOG: VersionEntry[] = [
+  {
+    version: "0.26.0",
+    date: "2026-05-18",
+    changes: [
+      {
+        type: "feature",
+        text: "Reward address now shows on the node detail card and the full detail page (CRNs picked it up from the corechannel state — the CCN side already had it).",
+      },
+      {
+        type: "ui",
+        text: "Node detail card slimmed down to identity, status, and earnings. Resources usage bars and the History list moved off the side panel — they live one click away on the full detail page. The card is now a quick-peek triage surface, not a full inspector.",
+      },
+      {
+        type: "ui",
+        text: "Charts and sparklines got fluid smooth curves and a gradient fill under the primary line so the earnings spark on the detail card, the Earnings tab chart, and the cumulative-revenue spark on Credits all share the same depth and feel.",
+      },
+      {
+        type: "ui",
+        text: "Sidebar nav: Network Health moved out of the Network section and into Operations next to Issues. The Network section is reserved for topology views (the Graph); diagnostic surfaces live together under Operations.",
+      },
+    ],
+  },
   {
     version: "0.25.1",
     date: "2026-05-15",

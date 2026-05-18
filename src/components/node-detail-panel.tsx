@@ -8,8 +8,8 @@ import { StatusDot } from "@aleph-front/ds/status-dot";
 import { Skeleton } from "@aleph-front/ds/ui/skeleton";
 import { CopyableText } from "@aleph-front/ds/copyable-text";
 import { useNode } from "@/hooks/use-nodes";
+import { useNodeState } from "@/hooks/use-node-state";
 import { NodeEarningsSpark } from "@/components/node-earnings-spark";
-import { ResourceBar } from "@/components/resource-bar";
 import { relativeTime, formatCpuLabel } from "@/lib/format";
 import {
   nodeStatusToDot,
@@ -23,6 +23,8 @@ type NodeDetailPanelProps = {
 
 export function NodeDetailPanel({ hash, onClose }: NodeDetailPanelProps) {
   const { data: node, isLoading } = useNode(hash);
+  const { data: nodeState } = useNodeState();
+  const reward = nodeState?.crns.get(hash)?.reward;
 
   if (isLoading) {
     return (
@@ -123,29 +125,18 @@ export function NodeDetailPanel({ hash, onClose }: NodeDetailPanelProps) {
         </div>
       )}
 
-      {node.resources && (
-        <div className="mt-4 space-y-2 border-t border-edge pt-3">
+      {reward && (
+        <div className="mt-4 space-y-1.5 border-t border-edge pt-3">
           <h4 className="text-xs font-semibold uppercase tracking-wider text-muted-foreground">
-            Resources
+            Reward
           </h4>
-          <div className="flex items-center justify-between text-sm">
-            <span className="text-muted-foreground">
-              CPU ({node.resources.vcpusTotal} vCPUs)
-            </span>
-            <ResourceBar value={node.resources.cpuUsagePct} label="CPU" />
-          </div>
-          <div className="flex items-center justify-between text-sm">
-            <span className="text-muted-foreground">
-              Mem ({Math.round(node.resources.memoryTotalMb / 1024)} GB)
-            </span>
-            <ResourceBar value={node.resources.memoryUsagePct} label="Memory" />
-          </div>
-          <div className="flex items-center justify-between text-sm">
-            <span className="text-muted-foreground">
-              Disk ({Math.round(node.resources.diskTotalMb / 1024)} GB)
-            </span>
-            <ResourceBar value={node.resources.diskUsagePct} label="Disk" />
-          </div>
+          <CopyableText
+            text={reward}
+            startChars={8}
+            endChars={8}
+            size="sm"
+            href={`/wallet?address=${reward}`}
+          />
         </div>
       )}
 
@@ -200,35 +191,6 @@ export function NodeDetailPanel({ hash, onClose }: NodeDetailPanelProps) {
             Earnings · 24h
           </h4>
           <NodeEarningsSpark hash={node.hash} />
-        </div>
-      )}
-
-      {node.history.length > 0 && (
-        <div className="mt-4 space-y-1.5 border-t border-edge pt-3">
-          <h4 className="text-xs font-semibold uppercase tracking-wider text-muted-foreground">
-            History
-          </h4>
-          <ul className="space-y-1">
-            {node.history.slice(0, 5).map((row) => (
-              <li
-                key={row.id}
-                className="flex items-center justify-between text-sm"
-              >
-                <span className="text-xs text-muted-foreground">
-                  <span className="capitalize">{row.action.replace(/_/g, " ")}</span>
-                  {row.reason ? ` (${row.reason})` : ""}
-                </span>
-                <span className="text-xs text-muted-foreground tabular-nums">
-                  {relativeTime(row.timestamp)}
-                </span>
-              </li>
-            ))}
-          </ul>
-          {node.history.length > 5 && (
-            <p className="mt-1.5 text-xs text-muted-foreground">
-              +{node.history.length - 5} more
-            </p>
-          )}
         </div>
       )}
 

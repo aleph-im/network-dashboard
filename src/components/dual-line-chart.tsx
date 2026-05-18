@@ -1,6 +1,8 @@
 "use client";
 
+import { useId } from "react";
 import type React from "react";
+import { smoothPath, type Point } from "@/lib/smooth-path";
 import type { NodeEarningsBucket } from "@/hooks/use-node-earnings";
 
 type Props = {
@@ -33,6 +35,10 @@ export function DualLineChart({
   onHoverIndex,
   onHoverEnd,
 }: Props) {
+  // useId() can produce colons; strip them to keep url(#id) refs SSR-safe.
+  const rawId = useId();
+  const gradientId = `dual-line-grad${rawId.replace(/:/g, "")}`;
+
   if (buckets.length < 2) {
     return (
       <svg
@@ -54,12 +60,14 @@ export function DualLineChart({
   const yForAleph = (v: number) => height - (v / maxAleph) * height;
   const yForSecondary = (v: number) => height - (v / maxSecondary) * height;
 
-  const alephPoints = buckets
-    .map((b, i) => `${xFor(i).toFixed(1)},${yForAleph(b.aleph).toFixed(1)}`)
-    .join(" ");
-  const secondaryPoints = buckets
-    .map((b, i) => `${xFor(i).toFixed(1)},${yForSecondary(b.secondaryCount).toFixed(1)}`)
-    .join(" ");
+  const alephPoints: Point[] = buckets.map((b, i) => [xFor(i), yForAleph(b.aleph)]);
+  const secondaryPoints: Point[] = buckets.map((b, i) => [
+    xFor(i),
+    yForSecondary(b.secondaryCount),
+  ]);
+  const alephLineD = smoothPath(alephPoints);
+  const secondaryLineD = smoothPath(secondaryPoints);
+  const alephAreaD = `${alephLineD} L${width},${height} L0,${height} Z`;
 
   const hasHighlight =
     highlightedIndex != null && highlightedIndex >= 0 && highlightedIndex < n;
@@ -91,8 +99,16 @@ export function DualLineChart({
         className="block overflow-visible"
         aria-hidden="true"
       >
-        <polyline
-          points={secondaryPoints}
+        <defs>
+          <linearGradient id={gradientId} x1="0" x2="0" y1="0" y2="1">
+            <stop offset="0%" stopColor="var(--color-success-500)" stopOpacity={0.3} />
+            <stop offset="100%" stopColor="var(--color-success-500)" stopOpacity={0} />
+          </linearGradient>
+        </defs>
+        <path d={alephAreaD} fill={`url(#${gradientId})`} />
+        <path
+          data-line
+          d={secondaryLineD}
           fill="none"
           stroke="var(--color-primary-500)"
           strokeWidth={1.5}
@@ -101,8 +117,9 @@ export function DualLineChart({
           strokeOpacity={0.7}
           vectorEffect="non-scaling-stroke"
         />
-        <polyline
-          points={alephPoints}
+        <path
+          data-line
+          d={alephLineD}
           fill="none"
           stroke="var(--color-success-500)"
           strokeWidth={2}
