@@ -18,12 +18,12 @@ export function MobileMenu({ open, onClose, appName, children }: Props) {
   if (!open) return null;
 
   return (
-    <div className="md:hidden">
+    <>
       <button
         type="button"
         aria-label="Close menu backdrop"
         onClick={onClose}
-        className="mobile-menu-animated fixed inset-0 z-40 bg-black/40"
+        className="mobile-menu-animated fixed inset-0 z-40 bg-black/40 md:hidden"
         style={{
           animation: "mobile-menu-backdrop-in var(--duration-default) ease-out",
         }}
@@ -31,7 +31,7 @@ export function MobileMenu({ open, onClose, appName, children }: Props) {
       <div
         role="dialog"
         aria-modal="true"
-        className="mobile-menu-animated fixed inset-0 z-50 flex flex-col bg-background"
+        className="mobile-menu-animated fixed inset-0 z-50 flex flex-col bg-background md:hidden"
         style={{
           animation:
             "mobile-menu-panel-in var(--duration-default) ease-out forwards",
@@ -93,6 +93,6 @@ export function MobileMenu({ open, onClose, appName, children }: Props) {
           </div>
         </footer>
       </div>
-    </div>
+    </>
   );
 }
