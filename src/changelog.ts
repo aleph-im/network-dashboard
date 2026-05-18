@@ -11,9 +11,27 @@ export type VersionEntry = {
   changes: ChangeEntry[];
 };
 
-export const CURRENT_VERSION = "0.27.0";
+export const CURRENT_VERSION = "0.28.0";
 
 export const CHANGELOG: VersionEntry[] = [
+  {
+    version: "0.28.0",
+    date: "2026-05-18",
+    changes: [
+      {
+        type: "ui",
+        text: "Mobile: full-screen drop-down menu replaces the side drawer. Hamburger moves to the top-right and is replaced by the menu's × button when open. Cross-product tabs and theme toggle live in the menu's footer band, freeing up vertical space at the top of the page.",
+      },
+      {
+        type: "ui",
+        text: "Mobile: per-page Refresh / Recheck actions move from the page header to an inline row above page content (Nodes, VMs, Wallet, Network Health, Issues). Desktop layout is unchanged.",
+      },
+      {
+        type: "feature",
+        text: "Menu close behaviors: × button, backdrop, route change, Escape key, and md+ resize all close the menu. Body scroll is locked while the menu is open. The panel uses `role=\"dialog\"` and moves focus to the × button on open.",
+      },
+    ],
+  },
   {
     version: "0.27.0",
     date: "2026-05-18",
