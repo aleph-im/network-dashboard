@@ -31,6 +31,7 @@ export function MobileMenu({ open, onClose, appName, children }: Props) {
       <div
         role="dialog"
         aria-modal="true"
+        aria-labelledby="mobile-menu-title"
         className="mobile-menu-animated fixed inset-0 z-50 flex flex-col bg-background md:hidden"
         style={{
           animation:
@@ -38,7 +39,7 @@ export function MobileMenu({ open, onClose, appName, children }: Props) {
         }}
       >
         <header className="flex items-center justify-between border-b border-border px-4 py-3">
-          <div className="text-sm font-semibold">{appName}</div>
+          <div id="mobile-menu-title" className="text-sm font-semibold">{appName}</div>
           <button
             type="button"
             aria-label="Close menu"
