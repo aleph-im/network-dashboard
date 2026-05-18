@@ -8,6 +8,9 @@ import type { Node } from "@/api/types";
 vi.mock("@/hooks/use-nodes", () => ({
   useNode: vi.fn(),
 }));
+vi.mock("@/hooks/use-node-state", () => ({
+  useNodeState: vi.fn(() => ({ data: undefined })),
+}));
 vi.mock("@/hooks/use-node-earnings", () => ({
   useNodeEarnings: vi.fn(() => ({
     data: undefined,

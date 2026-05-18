@@ -16,8 +16,8 @@ describe("NodeEarningsChart", () => {
         secondaryLabel="VMs"
       />,
     );
-    const polylines = container.querySelectorAll("polyline");
-    expect(polylines).toHaveLength(2);
+    const lines = container.querySelectorAll("path[data-line]");
+    expect(lines).toHaveLength(2);
     expect(screen.getByText("ALEPH")).toBeInTheDocument();
     expect(screen.getByText("VMs")).toBeInTheDocument();
   });

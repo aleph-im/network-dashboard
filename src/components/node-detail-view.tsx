@@ -195,6 +195,17 @@ export function NodeDetailView({ hash, initialTab }: NodeDetailViewProps) {
               />
             </MetaItem>
           )}
+          {nodeState?.crns.get(hash)?.reward && (
+            <MetaItem label="Reward">
+              <CopyableText
+                text={nodeState.crns.get(hash)!.reward}
+                startChars={8}
+                endChars={8}
+                size="sm"
+                href={`/wallet?address=${nodeState.crns.get(hash)!.reward}`}
+              />
+            </MetaItem>
+          )}
           {node.supportsIpv6 != null && (
             <MetaItem label="IPv6">
               {node.supportsIpv6 ? "Yes" : "No"}

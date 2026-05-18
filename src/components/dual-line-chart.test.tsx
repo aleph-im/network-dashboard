@@ -9,14 +9,14 @@ const sampleBuckets = Array.from({ length: 24 }, (_, i) => ({
 }));
 
 describe("DualLineChart", () => {
-  it("renders two polylines when given >=2 buckets", () => {
+  it("renders two line paths when given >=2 buckets", () => {
     const { container } = render(<DualLineChart buckets={sampleBuckets} />);
-    expect(container.querySelectorAll("polyline")).toHaveLength(2);
+    expect(container.querySelectorAll("path[data-line]")).toHaveLength(2);
   });
 
   it("renders an empty SVG when given <2 buckets", () => {
     const { container } = render(<DualLineChart buckets={[]} />);
-    expect(container.querySelectorAll("polyline")).toHaveLength(0);
+    expect(container.querySelectorAll("path[data-line]")).toHaveLength(0);
     expect(container.querySelector("svg")).toBeTruthy();
   });
 

@@ -1,6 +1,7 @@
 "use client";
 
 import { useId } from "react";
+import { smoothPath, type Point } from "@/lib/smooth-path";
 import type { SparklinePoint } from "@/lib/sparkline-data";
 
 type Props = {
@@ -36,20 +37,15 @@ export function Sparkline({
   const innerW = width - pad * 2;
   const innerH = height - pad * 2;
 
-  const points = data.map((d, i) => {
+  const points: Point[] = data.map((d, i) => {
     const x = pad + (i / (data.length - 1)) * innerW;
     const y = pad + innerH - ((d.value - min) / range) * innerH;
-    return `${x},${y}`;
+    return [x, y];
   });
 
-  const polylinePoints = points.join(" ");
-
-  // Closed polygon for the fill area: line points + bottom-right + bottom-left
-  const fillPoints = [
-    ...points,
-    `${pad + innerW},${pad + innerH}`,
-    `${pad},${pad + innerH}`,
-  ].join(" ");
+  const lineD = smoothPath(points);
+  const baselineY = pad + innerH;
+  const areaD = `${lineD} L${pad + innerW},${baselineY} L${pad},${baselineY} Z`;
 
   return (
     <svg
@@ -66,12 +62,10 @@ export function Sparkline({
           <stop offset="100%" stopColor={color} stopOpacity={0} />
         </linearGradient>
       </defs>
-      <polygon
-        points={fillPoints}
-        fill={`url(#${gradientId})`}
-      />
-      <polyline
-        points={polylinePoints}
+      <path d={areaD} fill={`url(#${gradientId})`} />
+      <path
+        data-line
+        d={lineD}
         fill="none"
         stroke={color}
         strokeWidth={1.5}
