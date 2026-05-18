@@ -86,10 +86,12 @@ Severity definitions (this spec only):
 
 ## Fix 2 — Credits flow list fallback
 
-**Behavior below `md`:** replace the SVG `CreditFlowDiagram` with a `CreditFlowList` rendering the same distribution data as a vertical list:
-- Two sections: **Credits** (customer-paid, top) and **Hold** (protocol-subsidized holder-tier, below). Each section header shows the source total in ALEPH.
-- Each section contains four destination rows: Dev fund (5%), CRN execution (60%), CCN storage (75%) + execution (15%), Stakers (20%).
-- Each row: a small color swatch matching the desktop diagram's per-flow color + destination label + percentage + ALEPH amount.
+**Behavior below `md`:** replace the SVG `CreditFlowDiagram` with a `CreditFlowList` rendering the same distribution data as a vertical list, matching the desktop diagram's actual sources and destinations:
+- Two sections: **Storage** (top) and **Execution** (below). Each section header shows the source total in ALEPH.
+- The Storage section has three destination rows: CCN (75%), Stakers (20%), Dev fund (5%).
+- The Execution section has four destination rows: CRN (60%), Stakers (20%), CCN (15%), Dev fund (5%).
+- Each row: a small color swatch matching the desktop diagram's per-flow color (using the same `COLORS` map: storage = `--color-accent-500`, execution = `--color-success-500`, crn = `--color-success-500`, ccn = `--color-primary-400`, staker = `--color-warning-400`, devFund = `--color-error-400`) + destination label + percentage + ALEPH amount formatted via `formatAleph`.
+- Empty sections (`storageAleph === 0` or `executionAleph === 0`) collapse silently rather than rendering an empty header.
 - Loading state: skeleton rows in the same vertical structure.
 
 **Behavior above `md`:** keep `CreditFlowDiagram` unchanged.
