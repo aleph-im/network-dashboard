@@ -116,6 +116,22 @@ export function isUnderstaked(node: GraphNode): boolean {
   return node.understaked === true;
 }
 
+// Maps a GraphNode to the StatusDot variant it should render. Shared between
+// the desktop detail panel (`network-detail-panel.tsx`) and the mobile
+// summary (`network-mobile-summary.tsx`) so both views agree.
+export type DotStatus = "healthy" | "degraded" | "error" | "offline" | "unknown";
+
+export function dotStatusFor(node: GraphNode): DotStatus {
+  if (node.kind === "country") return "unknown";
+  if (node.inactive) return "offline";
+  if (node.kind === "staker" || node.kind === "reward") return "unknown";
+  if (node.kind === "crn" && node.flagged) return "degraded";
+  if (node.status === "active" || node.status === "linked") return "healthy";
+  if (node.status === "unreachable") return "error";
+  if (node.status === "unknown") return "unknown";
+  return "degraded";
+}
+
 export type Graph = {
   nodes: GraphNode[];
   edges: GraphEdge[];
