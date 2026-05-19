@@ -4,6 +4,7 @@ import { useMemo, useState } from "react";
 import Link from "next/link";
 import { ArrowsClockwise } from "@phosphor-icons/react";
 import { Badge } from "@aleph-front/ds/badge";
+import { Card } from "@aleph-front/ds/card";
 import { Skeleton } from "@aleph-front/ds/ui/skeleton";
 import { StatusDot } from "@aleph-front/ds/status-dot";
 import type { Graph, GraphNode } from "@/lib/network-graph-model";
@@ -139,26 +140,26 @@ function CcnSection({
 
   if (isLoading || !nodeState) {
     return (
-      <section className="flex flex-col gap-2">
+      <Card padding="md" className="flex flex-col gap-2">
         <SectionHeader label="CCNs" count={null} />
         <RowSkeletons />
-      </section>
+      </Card>
     );
   }
 
   if (ccns.length === 0) {
     return (
-      <section className="flex flex-col gap-2">
+      <Card padding="md" className="flex flex-col gap-2">
         <SectionHeader label="CCNs" count={0} />
         <EmptyLine text="No data yet" />
-      </section>
+      </Card>
     );
   }
 
   const visible = expanded ? ccns : ccns.slice(0, VISIBLE_LIMIT);
 
   return (
-    <section className="flex flex-col gap-2">
+    <Card padding="md" className="flex flex-col gap-2">
       <SectionHeader label="CCNs" count={ccns.length} />
       <ul className="flex flex-col divide-y divide-foreground/[0.06]">
         {visible.map((n) => {
@@ -186,7 +187,7 @@ function CcnSection({
         })}
       </ul>
       <ExpandToggle total={ccns.length} expanded={expanded} onToggle={onToggle} />
-    </section>
+    </Card>
   );
 }
 
@@ -208,26 +209,26 @@ function CountrySection({
 
   if (isLoading) {
     return (
-      <section className="flex flex-col gap-2">
+      <Card padding="md" className="flex flex-col gap-2">
         <SectionHeader label="Top countries" count={null} />
         <RowSkeletons />
-      </section>
+      </Card>
     );
   }
 
   if (countries.length === 0) {
     return (
-      <section className="flex flex-col gap-2">
+      <Card padding="md" className="flex flex-col gap-2">
         <SectionHeader label="Top countries" count={0} />
         <EmptyLine text="No location data yet" />
-      </section>
+      </Card>
     );
   }
 
   const visible = expanded ? countries : countries.slice(0, VISIBLE_LIMIT);
 
   return (
-    <section className="flex flex-col gap-2">
+    <Card padding="md" className="flex flex-col gap-2">
       <SectionHeader label="Top countries" count={countries.length} />
       <ul className="flex flex-col divide-y divide-foreground/[0.06]">
         {visible.map((c) => (
@@ -245,7 +246,7 @@ function CountrySection({
         ))}
       </ul>
       <ExpandToggle total={countries.length} expanded={expanded} onToggle={onToggle} />
-    </section>
+    </Card>
   );
 }
 
@@ -269,26 +270,26 @@ function RewardSection({
 
   if (isLoading || !nodeState) {
     return (
-      <section className="flex flex-col gap-2">
+      <Card padding="md" className="flex flex-col gap-2">
         <SectionHeader label="Top reward addresses" count={null} />
         <RowSkeletons />
-      </section>
+      </Card>
     );
   }
 
   if (rewards.length === 0) {
     return (
-      <section className="flex flex-col gap-2">
+      <Card padding="md" className="flex flex-col gap-2">
         <SectionHeader label="Top reward addresses" count={0} />
         <EmptyLine text="No data yet" />
-      </section>
+      </Card>
     );
   }
 
   const visible = expanded ? rewards : rewards.slice(0, VISIBLE_LIMIT);
 
   return (
-    <section className="flex flex-col gap-2">
+    <Card padding="md" className="flex flex-col gap-2">
       <SectionHeader label="Top reward addresses" count={rewards.length} />
       <ul className="flex flex-col divide-y divide-foreground/[0.06]">
         {visible.map((r) => (
@@ -318,6 +319,6 @@ function RewardSection({
         ))}
       </ul>
       <ExpandToggle total={rewards.length} expanded={expanded} onToggle={onToggle} />
-    </section>
+    </Card>
   );
 }
