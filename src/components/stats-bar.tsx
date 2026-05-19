@@ -97,31 +97,31 @@ function StatCard({
 
   return (
     <div
-      className="stat-card flex h-full flex-col border border-foreground/[0.06] bg-foreground/[0.03] p-6"
+      className="stat-card flex h-full flex-col border border-foreground/[0.06] bg-foreground/[0.03] p-4 md:p-6"
       style={{
         "--stat-tint": tint ?? "transparent",
       } as React.CSSProperties}
     >
-      {showRing ? (
-        <div className="absolute right-5 top-5">
-          <DonutRing
-            value={value}
-            total={total}
-            color={color}
-            icon={icon}
-          />
-        </div>
-      ) : null}
       <div className="flex items-center gap-2">
         {color ? (
           <span
-            className="inline-block size-2.5 rounded-full"
+            className="inline-block size-2.5 shrink-0 rounded-full"
             style={{ backgroundColor: color }}
           />
         ) : null}
-        <p className="text-xs font-semibold uppercase tracking-widest text-muted-foreground/70">
+        <p className="min-w-0 truncate text-xs font-semibold uppercase tracking-widest text-muted-foreground/70">
           {label}
         </p>
+        {showRing ? (
+          <div className="ml-auto shrink-0">
+            <DonutRing
+              value={value}
+              total={total}
+              color={color}
+              icon={icon}
+            />
+          </div>
+        ) : null}
       </div>
       {isLoading ? (
         <Skeleton className="mt-3 h-11 w-24" />
