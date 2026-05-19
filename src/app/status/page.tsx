@@ -579,7 +579,6 @@ export default function StatusPage() {
 
   return (
     <div>
-      <div className="mb-3 flex justify-end md:hidden">{recheckButton}</div>
       {/* Header */}
       <div className="mb-10">
         <div className="flex items-center gap-3">

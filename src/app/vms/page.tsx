@@ -85,7 +85,6 @@ function VMsContent() {
 
   return (
     <div>
-      <div className="mb-3 flex justify-end md:hidden">{refreshButton}</div>
       <div className="mb-10">
         <h1 className="text-4xl">Virtual Machines</h1>
         <p className="mt-2 text-base text-muted-foreground">

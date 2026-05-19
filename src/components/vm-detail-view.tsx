@@ -1,6 +1,6 @@
 "use client";
 
-import { useMemo, useState } from "react";
+import { useMemo } from "react";
 import { useRouter } from "next/navigation";
 import { ShieldCheck } from "@phosphor-icons/react";
 import { Card } from "@aleph-front/ds/card";
@@ -10,6 +10,12 @@ import { CopyableText } from "@aleph-front/ds/copyable-text";
 import { useVM } from "@/hooks/use-vms";
 import { useNodes } from "@/hooks/use-nodes";
 import { useVMMessageInfo } from "@/hooks/use-vm-creation-times";
+import {
+  getIssueDescription,
+  isDiscrepancyStatus,
+} from "@/hooks/use-issues";
+import { usePagination } from "@/hooks/use-pagination";
+import { TablePagination } from "@/components/table-pagination";
 import {
   relativeTime,
   formatDateTime,
@@ -35,8 +41,6 @@ function MetaItem({
   );
 }
 
-const HISTORY_PREVIEW = 50;
-
 export function VMDetailView({ hash }: VMDetailViewProps) {
   const router = useRouter();
   const { data: vm, isLoading, error } = useVM(hash);
@@ -49,7 +53,17 @@ export function VMDetailView({ hash }: VMDetailViewProps) {
         : undefined,
     [nodes, vm?.allocatedNode],
   );
-  const [historyExpanded, setHistoryExpanded] = useState(false);
+  const {
+    page: historyPage,
+    pageSize: historyPageSize,
+    totalPages: historyTotalPages,
+    totalItems: historyTotalItems,
+    startItem: historyStartItem,
+    endItem: historyEndItem,
+    pageItems: historyPageItems,
+    setPage: setHistoryPage,
+    setPageSize: setHistoryPageSize,
+  } = usePagination(vm?.history ?? []);
 
   if (isLoading) {
     return (
@@ -115,6 +129,44 @@ export function VMDetailView({ hash }: VMDetailViewProps) {
           </Badge>
         )}
       </div>
+
+      {/* Issue explanation */}
+      {isDiscrepancyStatus(vm.status) && (
+        <div className="space-y-3 rounded-lg border border-warning-400/20 bg-warning-400/5 p-4">
+          <p className="text-sm leading-relaxed text-warning-300">
+            {getIssueDescription(vm.status)}
+          </p>
+          {vm.schedulingStatus != null &&
+            vm.schedulingStatus !== vm.status && (
+              <dl className="grid gap-x-6 gap-y-1 text-sm sm:grid-cols-2">
+                <div className="flex justify-between gap-4">
+                  <dt className="text-muted-foreground">Derived</dt>
+                  <dd>
+                    <Badge
+                      fill="outline"
+                      variant={VM_STATUS_VARIANT[vm.status]}
+                      size="sm"
+                    >
+                      {vm.status}
+                    </Badge>
+                  </dd>
+                </div>
+                <div className="flex justify-between gap-4">
+                  <dt className="text-muted-foreground">Scheduler</dt>
+                  <dd>
+                    <Badge
+                      fill="outline"
+                      variant={VM_STATUS_VARIANT[vm.schedulingStatus]}
+                      size="sm"
+                    >
+                      {vm.schedulingStatus}
+                    </Badge>
+                  </dd>
+                </div>
+              </dl>
+            )}
+        </div>
+      )}
 
       {/* Metadata */}
       <Card padding="md">
@@ -318,11 +370,8 @@ export function VMDetailView({ hash }: VMDetailViewProps) {
                   </tr>
                 </thead>
                 <tbody className="divide-y divide-edge">
-                  {(historyExpanded
-                    ? vm.history
-                    : vm.history.slice(0, HISTORY_PREVIEW)
-                  ).map((row) => (
-                    <tr key={row.id}>
+                  {historyPageItems.map((row, idx) => (
+                    <tr key={`${row.id}-${idx}`}>
                       <td className="py-1.5 pr-4 capitalize">
                         {row.action.replace(/_/g, " ")}
                       </td>
@@ -346,17 +395,16 @@ export function VMDetailView({ hash }: VMDetailViewProps) {
                 </tbody>
               </table>
             </div>
-            {vm.history.length > HISTORY_PREVIEW && (
-              <button
-                type="button"
-                onClick={() => setHistoryExpanded((v) => !v)}
-                className="mt-3 text-xs text-primary-500 hover:underline dark:text-primary-300"
-              >
-                {historyExpanded
-                  ? "Show less"
-                  : `Show ${vm.history.length - HISTORY_PREVIEW} more`}
-              </button>
-            )}
+            <TablePagination
+              page={historyPage}
+              totalPages={historyTotalPages}
+              pageSize={historyPageSize}
+              startItem={historyStartItem}
+              endItem={historyEndItem}
+              totalItems={historyTotalItems}
+              onPageChange={setHistoryPage}
+              onPageSizeChange={setHistoryPageSize}
+            />
           </>
         )}
       </Card>

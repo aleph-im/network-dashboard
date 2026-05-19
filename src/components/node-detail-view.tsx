@@ -3,7 +3,6 @@
 import { useState } from "react";
 import { useRouter, useSearchParams, usePathname } from "next/navigation";
 
-const HISTORY_PREVIEW = 50;
 const VMS_PREVIEW = 50;
 import { ShieldCheck } from "@phosphor-icons/react";
 import { Card } from "@aleph-front/ds/card";
@@ -15,6 +14,8 @@ import { CopyableText } from "@aleph-front/ds/copyable-text";
 import { useNode } from "@/hooks/use-nodes";
 import { useNodeState } from "@/hooks/use-node-state";
 import { useOwnerBalances } from "@/hooks/use-owner-balances";
+import { usePagination } from "@/hooks/use-pagination";
+import { TablePagination } from "@/components/table-pagination";
 import { ResourceBar } from "@/components/resource-bar";
 import { NodeEarningsTab } from "@/components/node-earnings-tab";
 import { NodeDetailViewCcn } from "@/components/node-detail-view-ccn";
@@ -59,8 +60,18 @@ export function NodeDetailView({ hash, initialTab }: NodeDetailViewProps) {
   const { data: nodeState, isLoading: stateLoading } = useNodeState();
   const { data: ownerBalances } = useOwnerBalances(nodeState);
   const [tab, setTab] = useState<DetailTab>(initialTab ?? "overview");
-  const [historyExpanded, setHistoryExpanded] = useState(false);
   const [vmsExpanded, setVmsExpanded] = useState(false);
+  const {
+    page: historyPage,
+    pageSize: historyPageSize,
+    totalPages: historyTotalPages,
+    totalItems: historyTotalItems,
+    startItem: historyStartItem,
+    endItem: historyEndItem,
+    pageItems: historyPageItems,
+    setPage: setHistoryPage,
+    setPageSize: setHistoryPageSize,
+  } = usePagination(node?.history ?? []);
 
   const handleTabChange = (next: string) => {
     if (next !== "overview" && next !== "earnings") return;
@@ -397,11 +408,8 @@ export function NodeDetailView({ hash, initialTab }: NodeDetailViewProps) {
                   </tr>
                 </thead>
                 <tbody className="divide-y divide-edge">
-                  {(historyExpanded
-                    ? node.history
-                    : node.history.slice(0, HISTORY_PREVIEW)
-                  ).map((row) => (
-                    <tr key={row.id}>
+                  {historyPageItems.map((row, idx) => (
+                    <tr key={`${row.id}-${idx}`}>
                       <td className="py-1.5 pr-4 capitalize">
                         {row.action.replace(/_/g, " ")}
                       </td>
@@ -425,17 +433,16 @@ export function NodeDetailView({ hash, initialTab }: NodeDetailViewProps) {
                 </tbody>
               </table>
             </div>
-            {node.history.length > HISTORY_PREVIEW && (
-              <button
-                type="button"
-                onClick={() => setHistoryExpanded((v) => !v)}
-                className="mt-3 text-xs text-primary-500 hover:underline dark:text-primary-300"
-              >
-                {historyExpanded
-                  ? "Show less"
-                  : `Show ${node.history.length - HISTORY_PREVIEW} more`}
-              </button>
-            )}
+            <TablePagination
+              page={historyPage}
+              totalPages={historyTotalPages}
+              pageSize={historyPageSize}
+              startItem={historyStartItem}
+              endItem={historyEndItem}
+              totalItems={historyTotalItems}
+              onPageChange={setHistoryPage}
+              onPageSizeChange={setHistoryPageSize}
+            />
           </>
         )}
       </Card>

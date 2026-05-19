@@ -57,7 +57,7 @@ export function getIssueShort(status: DiscrepancyStatus): string {
   return ISSUE_SHORT[status];
 }
 
-function isDiscrepancyStatus(
+export function isDiscrepancyStatus(
   status: VmStatus,
 ): status is DiscrepancyStatus {
   return DISCREPANCY_STATUSES.has(status);

@@ -138,7 +138,7 @@ function buildColumns(
     accessor: (r) => {
       const name = msgInfo?.get(r.hash)?.name;
       return (
-        <span className="inline-flex items-center gap-1.5">
+        <span className="inline-flex items-center gap-1.5 whitespace-nowrap">
           {name ? (
             <span className="text-sm">{name}</span>
           ) : (

@@ -11,9 +11,39 @@ export type VersionEntry = {
   changes: ChangeEntry[];
 };
 
-export const CURRENT_VERSION = "0.28.0";
+export const CURRENT_VERSION = "0.29.0";
 
 export const CHANGELOG: VersionEntry[] = [
+  {
+    version: "0.29.0",
+    date: "2026-05-19",
+    changes: [
+      {
+        type: "fix",
+        text: "Mobile: per-page Refresh / Recheck buttons are dropped on phones — the dashboard auto-polls every 15–30s, so the inline row added in 0.28.0 was redundant. Desktop layout is unchanged. Wallet keeps its `Open in Explorer →` link on mobile.",
+      },
+      {
+        type: "feature",
+        text: "VM detail page now shows an amber issue callout when the VM is in a discrepancy state (orphaned / missing / misplaced / duplicated / unschedulable). When the scheduler-reported status diverges from the derived one, a Derived / Scheduler badge pair makes the divergence visible. Previously this lived only in the Issues panel on desktop.",
+      },
+      {
+        type: "fix",
+        text: "Node and VM detail pages: history tables now paginate (25 / 50 / 100 rows per page) instead of using a `Show N more` toggle. The old toggle locked the browser when a single VM accumulated 16k+ history entries.",
+      },
+      {
+        type: "fix",
+        text: "Issues page: on mobile, tapping a row routes straight to the full detail page (matching how Nodes and VMs already work). The slide-in panel only opens on desktop. The panel's `Observed on` row also truncates to the first hash + `+N more` so an orphaned VM observed on hundreds of nodes doesn't explode the panel.",
+      },
+      {
+        type: "ui",
+        text: "Mobile list pages now have consistent row heights across Nodes / VMs / Issues. Some columns (Name, CPU, Issue) were squeezing content into multi-line wraps at narrow widths; they now stay single-line and the table scrolls horizontally instead.",
+      },
+      {
+        type: "fix",
+        text: "Mobile filter toolbar no longer jumps between perspectives. The Issues page tabs row used to grow by 20px when switching from VMs to Nodes (the status tab list mis-measured its height when long labels squeezed in flex layout); fixed by stacking the toolbar vertically on phones and pinning tab widths so labels never wrap.",
+      },
+    ],
+  },
   {
     version: "0.28.0",
     date: "2026-05-18",
