@@ -1,5 +1,6 @@
 "use client";
 
+import { useMemo } from "react";
 import Link from "next/link";
 import { ShieldCheck } from "@phosphor-icons/react";
 import { Card } from "@aleph-front/ds/card";
@@ -8,7 +9,7 @@ import { Skeleton } from "@aleph-front/ds/ui/skeleton";
 import { useVM } from "@/hooks/use-vms";
 import { useVMMessageInfo } from "@/hooks/use-vm-creation-times";
 import { CopyableText } from "@aleph-front/ds/copyable-text";
-import { useNode } from "@/hooks/use-nodes";
+import { useNodes } from "@/hooks/use-nodes";
 import { relativeTime } from "@/lib/format";
 import { VM_STATUS_VARIANT } from "@/lib/status-map";
 
@@ -20,7 +21,14 @@ type VMDetailPanelProps = {
 export function VMDetailPanel({ hash, onClose }: VMDetailPanelProps) {
   const { data: vm, isLoading } = useVM(hash);
   const { data: messageInfo } = useVMMessageInfo([hash]);
-  const { data: allocatedNodeData } = useNode(vm?.allocatedNode ?? "");
+  const { data: nodes } = useNodes();
+  const allocatedNodeName = useMemo(
+    () =>
+      vm?.allocatedNode
+        ? nodes?.find((n) => n.hash === vm.allocatedNode)?.name
+        : undefined,
+    [nodes, vm?.allocatedNode],
+  );
 
   if (isLoading) {
     return (
@@ -125,9 +133,9 @@ export function VMDetailPanel({ hash, onClose }: VMDetailPanelProps) {
               size="sm"
               href={`/nodes?view=${vm.allocatedNode}`}
             />
-            {allocatedNodeData?.name && (
+            {allocatedNodeName && (
               <span className="truncate text-xs text-muted-foreground">
-                {allocatedNodeData.name}
+                {allocatedNodeName}
               </span>
             )}
           </div>

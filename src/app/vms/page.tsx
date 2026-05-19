@@ -1,8 +1,7 @@
 "use client";
 
-import { Suspense } from "react";
-import { useSearchParams } from "next/navigation";
-import { useState } from "react";
+import { Suspense, useCallback, useState } from "react";
+import { useRouter, useSearchParams } from "next/navigation";
 import { usePageHeader } from "@aleph-front/ds/page-header";
 import { Button } from "@aleph-front/ds/button";
 import { ArrowClockwise } from "@phosphor-icons/react/dist/ssr";
@@ -26,6 +25,7 @@ const VALID_VM_STATUSES = new Set<string>([
 ]);
 
 function VMsContent() {
+  const router = useRouter();
   const searchParams = useSearchParams();
   const viewHash = searchParams.get("view");
 
@@ -41,6 +41,21 @@ function VMsContent() {
 
   const selectedParam = searchParams.get("selected");
   const [selectedVM, setSelectedVM] = useState<string | null>(selectedParam);
+
+  const handleSelectVM = useCallback(
+    (hash: string | null) => {
+      if (
+        hash &&
+        typeof window !== "undefined" &&
+        !window.matchMedia("(min-width: 1024px)").matches
+      ) {
+        router.push(`/vms?view=${hash}`);
+        return;
+      }
+      setSelectedVM(hash);
+    },
+    [router],
+  );
 
   const { data: vms, isFetching, refetch } = useVMs();
   const total = vms?.length ?? 0;
@@ -70,7 +85,6 @@ function VMsContent() {
 
   return (
     <div>
-      <div className="mb-3 flex justify-end md:hidden">{refreshButton}</div>
       <div className="mb-10">
         <h1 className="text-4xl">Virtual Machines</h1>
         <p className="mt-2 text-base text-muted-foreground">
@@ -78,7 +92,7 @@ function VMsContent() {
         </p>
       </div>
       <VMTable
-      onSelectVM={setSelectedVM}
+      onSelectVM={handleSelectVM}
       {...(initialStatus ? { initialStatus } : {})}
       initialQuery={queryParam}
       initialOwner={ownerParam}

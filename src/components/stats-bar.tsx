@@ -46,7 +46,7 @@ function DonutRing({
   const offset = animated ? 100 - pct : 100;
 
   return (
-    <div className="relative flex size-10 items-center justify-center">
+    <div className="relative flex size-7 items-center justify-center">
       <svg
         viewBox="0 0 36 36"
         className="absolute inset-0 size-full"
@@ -97,31 +97,31 @@ function StatCard({
 
   return (
     <div
-      className="stat-card flex h-full flex-col border border-foreground/[0.06] bg-foreground/[0.03] p-6"
+      className="stat-card flex h-full flex-col border border-foreground/[0.06] bg-foreground/[0.03] p-4 md:p-6"
       style={{
         "--stat-tint": tint ?? "transparent",
       } as React.CSSProperties}
     >
-      {showRing ? (
-        <div className="absolute right-5 top-5">
-          <DonutRing
-            value={value}
-            total={total}
-            color={color}
-            icon={icon}
-          />
-        </div>
-      ) : null}
       <div className="flex items-center gap-2">
         {color ? (
           <span
-            className="inline-block size-2.5 rounded-full"
+            className="inline-block size-2.5 shrink-0 rounded-full"
             style={{ backgroundColor: color }}
           />
         ) : null}
-        <p className="text-xs font-semibold uppercase tracking-widest text-muted-foreground/70">
+        <p className="min-w-0 truncate text-xs font-semibold uppercase tracking-widest text-muted-foreground/70">
           {label}
         </p>
+        {showRing ? (
+          <div className="ml-auto shrink-0">
+            <DonutRing
+              value={value}
+              total={total}
+              color={color}
+              icon={icon}
+            />
+          </div>
+        ) : null}
       </div>
       {isLoading ? (
         <Skeleton className="mt-3 h-11 w-24" />
@@ -181,7 +181,7 @@ function Stat(props: StatProps & { index?: number }) {
 }
 
 const iconCheck = (
-  <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 256 256" className="size-4" fill="currentColor">
+  <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 256 256" className="size-3" fill="currentColor">
     <path d="M232.49,80.49l-128,128a12,12,0,0,1-17,0l-56-56a12,12,0,1,1,17-17L96,183,215.51,63.51a12,12,0,0,1,17,17Z" />
   </svg>
 );

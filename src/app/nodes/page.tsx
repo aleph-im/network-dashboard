@@ -1,8 +1,7 @@
 "use client";
 
-import { Suspense } from "react";
-import { useSearchParams } from "next/navigation";
-import { useState } from "react";
+import { Suspense, useCallback, useState } from "react";
+import { useRouter, useSearchParams } from "next/navigation";
 import { NodeTable } from "@/components/node-table";
 import { NodeDetailPanel } from "@/components/node-detail-panel";
 import { NodeDetailView } from "@/components/node-detail-view";
@@ -20,6 +19,7 @@ const VALID_NODE_STATUSES = new Set<string>([
 ]);
 
 function NodesContent() {
+  const router = useRouter();
   const searchParams = useSearchParams();
   const viewHash = searchParams.get("view");
 
@@ -54,6 +54,21 @@ function NodesContent() {
     selectedParam,
   );
 
+  const handleSelectNode = useCallback(
+    (hash: string | null) => {
+      if (
+        hash &&
+        typeof window !== "undefined" &&
+        !window.matchMedia("(min-width: 1024px)").matches
+      ) {
+        router.push(`/nodes?view=${hash}`);
+        return;
+      }
+      setSelectedNode(hash);
+    },
+    [router],
+  );
+
   const tabParam = searchParams.get("tab");
   const initialTab: "overview" | "earnings" =
     tabParam === "earnings" ? "earnings" : "overview";
@@ -84,7 +99,6 @@ function NodesContent() {
 
   return (
     <div>
-      <div className="mb-3 flex justify-end md:hidden">{refreshButton}</div>
       <div className="mb-10">
         <h1 className="text-4xl">Nodes</h1>
         <p className="mt-2 text-base text-muted-foreground">
@@ -92,7 +106,7 @@ function NodesContent() {
         </p>
       </div>
       <NodeTable
-      onSelectNode={setSelectedNode}
+      onSelectNode={handleSelectNode}
       {...(initialStatus ? { initialStatus } : {})}
       initialHasVms={hasVms}
       {...(initialSort ? { initialSort } : {})}

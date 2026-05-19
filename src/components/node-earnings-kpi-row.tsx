@@ -22,7 +22,7 @@ const TONE_CLASS: Record<NonNullable<KpiCard["tone"]>, string> = {
 
 export function NodeEarningsKpiRow({ cards }: { cards: KpiCard[] }) {
   return (
-    <div className="grid grid-cols-1 gap-3 sm:grid-cols-2 lg:grid-cols-4">
+    <div className="grid grid-cols-2 gap-3 lg:grid-cols-4">
       {cards.map((c, i) => (
         <Card key={`${c.label}-${i}`} padding="md">
           <div className="text-[10px] font-semibold uppercase tracking-wider text-muted-foreground">

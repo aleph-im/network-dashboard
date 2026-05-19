@@ -80,7 +80,7 @@ const columns: Column<Node>[] = [
   {
     header: "Name",
     accessor: (r) => (
-      <span className="inline-flex items-center gap-1.5">
+      <span className="inline-flex items-center gap-1.5 whitespace-nowrap">
         {r.name ? (
           <span className="text-sm">{r.name}</span>
         ) : (
@@ -129,7 +129,7 @@ const columns: Column<Node>[] = [
   {
     header: "CPU",
     accessor: (r) => (
-      <span className="text-xs">
+      <span className="whitespace-nowrap text-xs">
         {formatCpuLabel(r.cpuVendor, r.cpuArchitecture)}
       </span>
     ),

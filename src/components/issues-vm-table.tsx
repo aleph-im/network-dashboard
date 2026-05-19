@@ -1,6 +1,6 @@
 "use client";
 
-import { useState, useTransition, useMemo, useEffect } from "react";
+import { useState, useTransition, useMemo, useEffect, useCallback } from "react";
 import Link from "next/link";
 import { useRouter, usePathname, useSearchParams } from "next/navigation";
 import { Table, type Column } from "@aleph-front/ds/table";
@@ -69,7 +69,7 @@ const columns: Column<IssueVM>[] = [
   {
     header: "Issue",
     accessor: (r) => (
-      <span className="text-xs text-muted-foreground">
+      <span className="whitespace-nowrap text-xs text-muted-foreground">
         {r.issueDescription}
       </span>
     ),
@@ -198,18 +198,20 @@ function IssuesVmDetailPanel({ vm, onClose }: IssuesVmDetailPanelProps) {
           <div className="flex justify-between">
             <dt className="text-muted-foreground">Observed on</dt>
             <dd>
-              {vm.observedNodes.length > 0 ? (
-                <span className="space-y-0.5">
-                  {vm.observedNodes.map((n) => (
-                    <CopyableText
-                      key={n}
-                      text={n}
-                      startChars={8}
-                      endChars={8}
-                      size="sm"
-                      href={`/nodes?view=${n}`}
-                    />
-                  ))}
+              {vm.observedNodes[0] ? (
+                <span className="inline-flex items-center gap-1">
+                  <CopyableText
+                    text={vm.observedNodes[0]}
+                    startChars={8}
+                    endChars={8}
+                    size="sm"
+                    href={`/nodes?view=${vm.observedNodes[0]}`}
+                  />
+                  {vm.observedNodes.length > 1 && (
+                    <span className="text-xs text-muted-foreground">
+                      +{vm.observedNodes.length - 1} more
+                    </span>
+                  )}
                 </span>
               ) : (
                 <span className="text-xs text-muted-foreground">
@@ -335,6 +337,20 @@ export function IssuesVMTable({
   const [sortDirection, setSortDirection] =
     useState<SortDirection>("asc");
 
+  const handleSelectVM = useCallback(
+    (hash: string) => {
+      if (
+        typeof window !== "undefined" &&
+        !window.matchMedia("(min-width: 1024px)").matches
+      ) {
+        router.push(`/vms?view=${hash}`);
+        return;
+      }
+      setSelectedVM(hash);
+    },
+    [router],
+  );
+
   const { displayedRows, filteredCounts, unfilteredCounts } =
     useMemo(() => {
       const uCounts = countByStatus(issueVMs, (v) => v.status);
@@ -436,7 +452,7 @@ export function IssuesVMTable({
             columns={selectedIssueVM ? columns.filter((c) => !COMPACT_HIDDEN_HEADERS.has(c.header)) : columns}
             data={pageItems}
             keyExtractor={(r) => r.hash}
-            onRowClick={(r) => setSelectedVM(r.hash)}
+            onRowClick={(r) => handleSelectVM(r.hash)}
             activeKey={selectedVM ?? undefined}
             {...(sortColumn ? { sortColumn } : {})}
             sortDirection={sortDirection}

@@ -734,9 +734,18 @@ function WalletContent() {
 
   return (
     <div className="space-y-8">
-      <div className="mb-3 flex items-center justify-end gap-2 md:hidden">
-        {headerActions}
-      </div>
+      {address && (
+        <div className="mb-3 flex items-center justify-end gap-2 md:hidden">
+          <a
+            href={explorerWalletUrl(address)}
+            target="_blank"
+            rel="noopener noreferrer"
+            className="inline-flex items-center gap-1 text-xs text-primary-400 hover:underline"
+          >
+            Open in Explorer <ArrowUpRight size={12} />
+          </a>
+        </div>
+      )}
       {/* Header */}
       <div>
         <button

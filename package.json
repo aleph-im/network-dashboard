@@ -11,7 +11,8 @@
     "lint": "oxlint --import-plugin src/",
     "typecheck": "tsc --noEmit",
     "test": "vitest run",
-    "check": "pnpm lint && pnpm typecheck && pnpm test",
+    "check:tokens": "tsx scripts/check-css-tokens.ts",
+    "check": "pnpm lint && pnpm typecheck && pnpm check:tokens && pnpm test",
     "preview": "bash scripts/preview.sh"
   },
   "dependencies": {

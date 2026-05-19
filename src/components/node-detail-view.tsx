@@ -2,22 +2,20 @@
 
 import { useState } from "react";
 import { useRouter, useSearchParams, usePathname } from "next/navigation";
+
+const VMS_PREVIEW = 50;
 import { ShieldCheck } from "@phosphor-icons/react";
 import { Card } from "@aleph-front/ds/card";
 import { Badge } from "@aleph-front/ds/badge";
 import { StatusDot } from "@aleph-front/ds/status-dot";
 import { Tabs, TabsList, TabsTrigger } from "@aleph-front/ds/tabs";
-import {
-  TooltipProvider,
-  Tooltip,
-  TooltipTrigger,
-  TooltipContent,
-} from "@aleph-front/ds/tooltip";
 import { Skeleton } from "@aleph-front/ds/ui/skeleton";
 import { CopyableText } from "@aleph-front/ds/copyable-text";
 import { useNode } from "@/hooks/use-nodes";
 import { useNodeState } from "@/hooks/use-node-state";
 import { useOwnerBalances } from "@/hooks/use-owner-balances";
+import { usePagination } from "@/hooks/use-pagination";
+import { TablePagination } from "@/components/table-pagination";
 import { ResourceBar } from "@/components/resource-bar";
 import { NodeEarningsTab } from "@/components/node-earnings-tab";
 import { NodeDetailViewCcn } from "@/components/node-detail-view-ccn";
@@ -62,6 +60,18 @@ export function NodeDetailView({ hash, initialTab }: NodeDetailViewProps) {
   const { data: nodeState, isLoading: stateLoading } = useNodeState();
   const { data: ownerBalances } = useOwnerBalances(nodeState);
   const [tab, setTab] = useState<DetailTab>(initialTab ?? "overview");
+  const [vmsExpanded, setVmsExpanded] = useState(false);
+  const {
+    page: historyPage,
+    pageSize: historyPageSize,
+    totalPages: historyTotalPages,
+    totalItems: historyTotalItems,
+    startItem: historyStartItem,
+    endItem: historyEndItem,
+    pageItems: historyPageItems,
+    setPage: setHistoryPage,
+    setPageSize: setHistoryPageSize,
+  } = usePagination(node?.history ?? []);
 
   const handleTabChange = (next: string) => {
     if (next !== "overview" && next !== "earnings") return;
@@ -168,16 +178,12 @@ export function NodeDetailView({ hash, initialTab }: NodeDetailViewProps) {
         </h3>
         <dl className="grid gap-x-8 gap-y-1 text-sm sm:grid-cols-2">
           <MetaItem label="Hash">
-            <TooltipProvider>
-              <Tooltip>
-                <TooltipTrigger asChild>
-                  <span className="cursor-help font-mono text-xs">
-                    {node.hash}
-                  </span>
-                </TooltipTrigger>
-                <TooltipContent>{node.hash}</TooltipContent>
-              </Tooltip>
-            </TooltipProvider>
+            <CopyableText
+              text={node.hash}
+              startChars={8}
+              endChars={8}
+              size="sm"
+            />
           </MetaItem>
           {node.address && (
             <MetaItem label="Address">
@@ -206,6 +212,30 @@ export function NodeDetailView({ hash, initialTab }: NodeDetailViewProps) {
               />
             </MetaItem>
           )}
+          {(() => {
+            const crn = nodeState?.crns.get(hash);
+            if (!crn) return null;
+            const parentHash = crn.parent;
+            const parentCcn = parentHash
+              ? nodeState?.ccns.get(parentHash) ?? null
+              : null;
+            return (
+              <MetaItem label="Parent CCN">
+                {parentCcn ? (
+                  <a
+                    href={`/nodes?view=${parentCcn.hash}`}
+                    className="text-primary-500 hover:underline dark:text-primary-300"
+                  >
+                    {parentCcn.name || `${parentCcn.hash.slice(0, 8)}…${parentCcn.hash.slice(-8)}`}
+                  </a>
+                ) : (
+                  <span className="text-xs italic text-muted-foreground">
+                    Registered but not yet adopted by a CCN.
+                  </span>
+                )}
+              </MetaItem>
+            );
+          })()}
           {node.supportsIpv6 != null && (
             <MetaItem label="IPv6">
               {node.supportsIpv6 ? "Yes" : "No"}
@@ -317,27 +347,40 @@ export function NodeDetailView({ hash, initialTab }: NodeDetailViewProps) {
             Virtual Machines ({node.vms.length})
           </h3>
           <ul className="space-y-1.5">
-            {node.vms.map((vm) => (
-              <li
-                key={vm.hash}
-                className="flex items-center justify-between text-sm"
-              >
-                <CopyableText
-                  text={vm.hash}
-                  startChars={8}
-                  endChars={8}
-                  size="sm"
-                  href={`/vms?view=${vm.hash}`}
-                />
-                <Badge fill="outline"
-                  variant={VM_STATUS_VARIANT[vm.status]}
-                  size="sm"
+            {(vmsExpanded ? node.vms : node.vms.slice(0, VMS_PREVIEW)).map(
+              (vm) => (
+                <li
+                  key={vm.hash}
+                  className="flex items-center justify-between text-sm"
                 >
-                  {vm.status}
-                </Badge>
-              </li>
-            ))}
+                  <CopyableText
+                    text={vm.hash}
+                    startChars={8}
+                    endChars={8}
+                    size="sm"
+                    href={`/vms?view=${vm.hash}`}
+                  />
+                  <Badge fill="outline"
+                    variant={VM_STATUS_VARIANT[vm.status]}
+                    size="sm"
+                  >
+                    {vm.status}
+                  </Badge>
+                </li>
+              ),
+            )}
           </ul>
+          {node.vms.length > VMS_PREVIEW && (
+            <button
+              type="button"
+              onClick={() => setVmsExpanded((v) => !v)}
+              className="mt-3 text-xs text-primary-500 hover:underline dark:text-primary-300"
+            >
+              {vmsExpanded
+                ? "Show less"
+                : `Show ${node.vms.length - VMS_PREVIEW} more`}
+            </button>
+          )}
         </Card>
       )}
 
@@ -351,44 +394,56 @@ export function NodeDetailView({ hash, initialTab }: NodeDetailViewProps) {
             No history events recorded.
           </p>
         ) : (
-          <div className="overflow-x-auto">
-            <table className="w-full text-sm">
-              <thead>
-                <tr className="border-b border-edge text-left text-xs text-muted-foreground">
-                  <th className="pb-2 pr-4 font-medium">Action</th>
-                  <th className="pb-2 pr-4 font-medium">VM</th>
-                  <th className="pb-2 pr-4 font-medium">Reason</th>
-                  <th className="pb-2 font-medium text-right">
-                    Time
-                  </th>
-                </tr>
-              </thead>
-              <tbody className="divide-y divide-edge">
-                {node.history.map((row) => (
-                  <tr key={row.id}>
-                    <td className="py-1.5 pr-4 capitalize">
-                      {row.action.replace(/_/g, " ")}
-                    </td>
-                    <td className="py-1.5 pr-4">
-                      <CopyableText
-                        text={row.vmHash}
-                        startChars={8}
-                        endChars={8}
-                        size="sm"
-                        href={`/vms?view=${row.vmHash}`}
-                      />
-                    </td>
-                    <td className="py-1.5 pr-4 text-muted-foreground">
-                      {row.reason ?? "—"}
-                    </td>
-                    <td className="py-1.5 text-right text-xs text-muted-foreground tabular-nums">
-                      {relativeTime(row.timestamp)}
-                    </td>
+          <>
+            <div className="overflow-x-auto">
+              <table className="w-full text-sm">
+                <thead>
+                  <tr className="border-b border-edge text-left text-xs text-muted-foreground">
+                    <th className="pb-2 pr-4 font-medium">Action</th>
+                    <th className="pb-2 pr-4 font-medium">VM</th>
+                    <th className="pb-2 pr-4 font-medium">Reason</th>
+                    <th className="pb-2 font-medium text-right">
+                      Time
+                    </th>
                   </tr>
-                ))}
-              </tbody>
-            </table>
-          </div>
+                </thead>
+                <tbody className="divide-y divide-edge">
+                  {historyPageItems.map((row, idx) => (
+                    <tr key={`${row.id}-${idx}`}>
+                      <td className="py-1.5 pr-4 capitalize">
+                        {row.action.replace(/_/g, " ")}
+                      </td>
+                      <td className="py-1.5 pr-4">
+                        <CopyableText
+                          text={row.vmHash}
+                          startChars={8}
+                          endChars={8}
+                          size="sm"
+                          href={`/vms?view=${row.vmHash}`}
+                        />
+                      </td>
+                      <td className="py-1.5 pr-4 text-muted-foreground">
+                        {row.reason ?? "—"}
+                      </td>
+                      <td className="py-1.5 text-right text-xs text-muted-foreground tabular-nums">
+                        {relativeTime(row.timestamp)}
+                      </td>
+                    </tr>
+                  ))}
+                </tbody>
+              </table>
+            </div>
+            <TablePagination
+              page={historyPage}
+              totalPages={historyTotalPages}
+              pageSize={historyPageSize}
+              startItem={historyStartItem}
+              endItem={historyEndItem}
+              totalItems={historyTotalItems}
+              onPageChange={setHistoryPage}
+              onPageSizeChange={setHistoryPageSize}
+            />
+          </>
         )}
       </Card>
         </>

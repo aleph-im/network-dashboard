@@ -128,8 +128,13 @@ export function NodeDetailViewCcn({
             <dl className="grid gap-x-8 gap-y-1 text-sm sm:grid-cols-2">
               <div className="flex justify-between gap-4 py-1">
                 <dt className="text-muted-foreground shrink-0">Hash</dt>
-                <dd className="min-w-0 truncate text-right font-mono text-xs">
-                  {hash}
+                <dd className="min-w-0 text-right">
+                  <CopyableText
+                    text={hash}
+                    startChars={8}
+                    endChars={8}
+                    size="sm"
+                  />
                 </dd>
               </div>
               <div className="flex justify-between gap-4 py-1">

@@ -51,14 +51,14 @@ export function FilterToolbar<S>({
   }
 
   return (
-    <div className="mb-4 flex flex-wrap items-center gap-2">
+    <div className="mb-4 flex flex-col gap-2 md:flex-row md:flex-wrap md:items-center">
       {leading && (
-        <>
+        <div className="flex items-center">
           {leading}
-          <div className="mx-2 h-6 w-px bg-white/[0.08]" />
-        </>
+          <div className="mx-2 hidden h-6 w-px bg-white/[0.08] md:block" />
+        </div>
       )}
-      <Tabs value={toTabValue(activeStatus)} onValueChange={handleTabChange} className="min-w-0 flex-1">
+      <Tabs value={toTabValue(activeStatus)} onValueChange={handleTabChange} className="w-full md:min-w-0 md:flex-1 md:w-auto">
         <TabsList
           variant="underline"
           size="sm"
@@ -70,6 +70,7 @@ export function FilterToolbar<S>({
               key={i}
               value={toTabValue(s.value)}
               title={s.tooltip}
+              className="shrink-0 whitespace-nowrap"
             >
               {s.label}{" "}
               <span className="tabular-nums opacity-60">
@@ -84,7 +85,7 @@ export function FilterToolbar<S>({
           variant="text"
           size="xs"
           onClick={onFiltersToggle}
-          className="relative"
+          className="relative self-end md:self-auto"
           aria-label="Toggle filters"
         >
           <svg
@@ -105,7 +106,7 @@ export function FilterToolbar<S>({
           )}
         </Button>
       )}
-      <div className="relative ml-auto w-64">
+      <div className="relative w-full md:ml-auto md:w-64">
         <svg
           className="pointer-events-none absolute left-5 top-1/2 h-4 w-4 -translate-y-1/2 text-muted-foreground"
           xmlns="http://www.w3.org/2000/svg"
