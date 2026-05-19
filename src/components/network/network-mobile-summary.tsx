@@ -41,7 +41,7 @@ export function NetworkMobileSummary({ fullGraph, nodeState, isLoading }: Props)
 
   return (
     <div className="flex flex-col gap-6">
-      <p className="flex items-center gap-2 text-sm text-muted-foreground">
+      <p className="mt-2 flex items-center gap-2 text-sm text-muted-foreground">
         <ArrowsClockwise weight="bold" className="size-4" />
         Rotate device for full network graph
       </p>
