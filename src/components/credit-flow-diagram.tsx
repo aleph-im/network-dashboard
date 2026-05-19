@@ -2,6 +2,7 @@
 
 import { useEffect, useRef, useState, useCallback } from "react";
 import { Card } from "@aleph-front/ds/card";
+import { CreditFlowList } from "@/components/credit-flow-list";
 import { formatAleph } from "@/lib/format";
 import type { DistributionSummary } from "@/api/credit-types";
 
@@ -448,7 +449,16 @@ export function CreditFlowDiagram({ summary }: Props) {
   }
 
   if (isLoading) {
-    return <CreditFlowPlaceholder />;
+    return (
+      <>
+        <div className="md:hidden">
+          <CreditFlowList summary={undefined} />
+        </div>
+        <div className="hidden md:block">
+          <CreditFlowPlaceholder />
+        </div>
+      </>
+    );
   }
 
   // Source positions (left)
@@ -524,12 +534,16 @@ export function CreditFlowDiagram({ summary }: Props) {
 
 
   return (
-    <Card className="overflow-x-auto p-4">
-      <svg
-        viewBox={`0 0 ${W} ${H}`}
-        className="mx-auto w-full max-w-[900px]"
-        style={{ minWidth: 600 }}
-      >
+    <>
+      <div className="md:hidden">
+        <CreditFlowList summary={summary} />
+      </div>
+      <Card className="hidden overflow-x-auto p-4 md:block">
+        <svg
+          viewBox={`0 0 ${W} ${H}`}
+          className="mx-auto w-full max-w-[900px]"
+          style={{ minWidth: 600 }}
+        >
         <defs>
           {/* Gradient definitions: source color → dest color */}
           {paths.map((p) => (
@@ -643,7 +657,8 @@ export function CreditFlowDiagram({ summary }: Props) {
           isDimmed={anyHovered && !highlightedBoxes.has("dev")}
 
         />
-      </svg>
-    </Card>
+        </svg>
+      </Card>
+    </>
   );
 }

@@ -14,7 +14,9 @@ import { useSidebarCollapse } from "@aleph-front/ds/use-sidebar-collapse";
 import { PageHeader } from "@aleph-front/ds/page-header";
 import { ThemeToggle } from "@/components/theme-toggle";
 import { AppMark } from "@/components/app-mark";
+import { MobileMenu } from "@/components/mobile-menu";
 import { NavIcon } from "@/components/nav-icon";
+import { useMobileMenu } from "@/hooks/use-mobile-menu";
 import { ACTIVE_APP_ID, APPS } from "@/config/apps";
 import { NAV_SECTIONS } from "@/config/nav";
 import { routeTitle } from "@/lib/route-title";
@@ -31,10 +33,26 @@ export function AppShell({ children }: { children: ReactNode }) {
   const queryClient = useQueryClient();
   const creditsPrefetchedRef = useRef(false);
   const { collapsed, toggle } = useSidebarCollapse();
+  const {
+    open: menuOpen,
+    close: closeMenu,
+    toggle: toggleMenu,
+  } = useMobileMenu();
 
   useEffect(() => {
     mainRef.current?.scrollTo(0, 0);
   }, [pathname]);
+
+  const handleSidebarToggle = useCallback(() => {
+    if (
+      typeof window !== "undefined" &&
+      window.matchMedia("(min-width: 768px)").matches
+    ) {
+      toggle();
+    } else {
+      toggleMenu();
+    }
+  }, [toggle, toggleMenu]);
 
   const isActive = useCallback(
     (href: string): boolean => {
@@ -64,6 +82,37 @@ export function AppShell({ children }: { children: ReactNode }) {
 
   const sidebarCollapsed = collapsed === true;
 
+  const renderNav = (): ReactNode =>
+    NAV_SECTIONS.map((section) => (
+      <AccordionSection
+        key={section.id}
+        title={section.title}
+        sectionId={section.id}
+        {...(section.id === "operations" ? { defaultOpen: false } : {})}
+      >
+        {section.items.map((item) => {
+          const prefetchProps =
+            item.href === "/credits"
+              ? {
+                  onMouseEnter: prefetchCredits,
+                  onFocus: prefetchCredits,
+                }
+              : {};
+          return (
+            <NavItem
+              key={item.href}
+              asChild
+              icon={<NavIcon name={item.icon} />}
+              active={isActive(item.href)}
+              {...prefetchProps}
+            >
+              <Link href={item.href}>{item.label}</Link>
+            </NavItem>
+          );
+        })}
+      </AccordionSection>
+    ));
+
   return (
     <div className="flex h-screen flex-col overflow-hidden">
       <ProductStrip
@@ -71,59 +120,45 @@ export function AppShell({ children }: { children: ReactNode }) {
         activeId={ACTIVE_APP_ID}
         logoHref="https://aleph.cloud"
         right={<ThemeToggle />}
-        className="border-b-0"
+        className="hidden border-b-0 md:flex"
       />
       <div className="flex flex-1 overflow-hidden">
-        <AppShellSidebar
-          appMark={<AppMark collapsed={sidebarCollapsed} />}
-          collapsed={collapsed}
-          onToggle={toggle}
-          footer={
-            <Link
-              href="/changelog"
-              className="font-mono text-[11px] tabular-nums text-muted-foreground/40 transition-colors hover:text-muted-foreground"
-              style={{ transitionDuration: "var(--duration-fast)" }}
-            >
-              v{CURRENT_VERSION}
-            </Link>
-          }
-        >
-          {NAV_SECTIONS.map((section) => (
-            <AccordionSection
-              key={section.id}
-              title={section.title}
-              sectionId={section.id}
-              {...(section.id === "operations" ? { defaultOpen: false } : {})}
-            >
-              {section.items.map((item) => {
-                const prefetchProps =
-                  item.href === "/credits"
-                    ? {
-                        onMouseEnter: prefetchCredits,
-                        onFocus: prefetchCredits,
-                      }
-                    : {};
-                return (
-                  <NavItem
-                    key={item.href}
-                    asChild
-                    icon={<NavIcon name={item.icon} />}
-                    active={isActive(item.href)}
-                    {...prefetchProps}
-                  >
-                    <Link href={item.href}>{item.label}</Link>
-                  </NavItem>
-                );
-              })}
-            </AccordionSection>
-          ))}
-        </AppShellSidebar>
+        <div className="hidden md:flex">
+          <AppShellSidebar
+            appMark={<AppMark collapsed={sidebarCollapsed} />}
+            collapsed={collapsed}
+            onToggle={toggle}
+            footer={
+              <Link
+                href="/changelog"
+                className="font-mono text-[11px] tabular-nums text-muted-foreground/40 transition-colors hover:text-muted-foreground"
+                style={{ transitionDuration: "var(--duration-fast)" }}
+              >
+                v{CURRENT_VERSION}
+              </Link>
+            }
+          >
+            {renderNav()}
+          </AppShellSidebar>
+        </div>
+        <MobileMenu open={menuOpen} onClose={closeMenu} appName="Network">
+          {renderNav()}
+        </MobileMenu>
         <div className="flex flex-1 flex-col overflow-hidden bg-muted/40 dark:bg-surface">
           <div className="main-glow relative flex flex-1 flex-col overflow-hidden rounded-tl-2xl bg-background">
             <PageHeader
-              leading={<SidebarToggle onClick={toggle} />}
+              leading={
+                <SidebarToggle
+                  onClick={handleSidebarToggle}
+                  className="hidden md:inline-flex"
+                />
+              }
               fallbackTitle={routeTitle(pathname)}
               className="bg-transparent [&_.truncate]:text-xs [&_.truncate]:text-muted-foreground"
+            />
+            <SidebarToggle
+              onClick={handleSidebarToggle}
+              className="fixed right-3 top-3 z-30 md:hidden"
             />
             <main
               ref={mainRef}
@@ -138,13 +173,19 @@ export function AppShell({ children }: { children: ReactNode }) {
   );
 }
 
-function SidebarToggle({ onClick }: { onClick: () => void }) {
+function SidebarToggle({
+  onClick,
+  className = "",
+}: {
+  onClick: () => void;
+  className?: string;
+}) {
   return (
     <button
       type="button"
       onClick={onClick}
       aria-label="Toggle sidebar"
-      className="rounded p-1 text-muted-foreground hover:text-foreground hover:bg-foreground/5 transition-colors"
+      className={`rounded p-1 text-muted-foreground hover:text-foreground hover:bg-foreground/5 transition-colors ${className}`}
       style={{ transitionDuration: "var(--duration-fast)" }}
     >
       <svg

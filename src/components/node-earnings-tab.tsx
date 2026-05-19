@@ -19,6 +19,7 @@ import {
 } from "@/components/node-earnings-kpi-row";
 import { NodeEarningsChart } from "@/components/node-earnings-chart";
 import { NodeEarningsReconciliation } from "@/components/node-earnings-reconciliation";
+import { MobileTableCardRow } from "@/components/mobile-table-card-row";
 import { formatAleph, relativeTime } from "@/lib/format";
 import type { CreditRange } from "@/hooks/use-credit-expenses";
 
@@ -168,7 +169,66 @@ export function NodeEarningsTab({ hash }: { hash: string }) {
           <div className="mb-2 text-[10px] font-semibold uppercase tracking-wider text-muted-foreground">
             Hosted VMs — earnings breakdown
           </div>
-          <table className="w-full text-sm">
+          <div className="space-y-3 md:hidden">
+            {visibleVms.map((v) => (
+              <MobileTableCardRow
+                key={v.vmHash}
+                href={`/vms?view=${v.vmHash}`}
+                primary={
+                  <CopyableText
+                    text={v.vmHash}
+                    startChars={8}
+                    endChars={8}
+                    size="sm"
+                  />
+                }
+                fields={[
+                  {
+                    label: "Payment",
+                    value: (
+                      <Badge
+                        fill="outline"
+                        variant={v.source === "hold" ? "info" : "default"}
+                        size="sm"
+                      >
+                        {v.source === "hold" ? "Hold" : "Credits"}
+                      </Badge>
+                    ),
+                  },
+                  {
+                    label: "ALEPH",
+                    value: isPlaceholderData ? (
+                      <Skeleton className="h-4 w-16 bg-edge" />
+                    ) : (
+                      <span className="font-mono tabular-nums">
+                        {formatAleph(v.aleph)}
+                      </span>
+                    ),
+                  },
+                ]}
+              />
+            ))}
+            {!isPlaceholderData && rest.length > 0 && (
+              <button
+                type="button"
+                onClick={() => setExpandedBreakdown((v) => !v)}
+                className="text-xs text-muted-foreground transition-colors hover:text-foreground"
+              >
+                {expandedBreakdown ? "Show less" : `+ ${rest.length} more (${formatAleph(restAleph)})`}
+              </button>
+            )}
+            <div className="flex items-center justify-between border-t border-edge pt-2 text-sm font-medium">
+              <span className="text-xs text-muted-foreground">Total</span>
+              {isPlaceholderData ? (
+                <Skeleton className="h-4 w-20 bg-edge" />
+              ) : (
+                <span className="font-mono tabular-nums">
+                  {formatAleph(data.totalAleph)}
+                </span>
+              )}
+            </div>
+          </div>
+          <table className="hidden w-full text-sm md:table">
             <thead>
               <tr className="border-b border-edge text-left text-xs text-muted-foreground">
                 <th className="pb-2 pr-4 font-medium">VM</th>

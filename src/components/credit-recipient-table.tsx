@@ -8,6 +8,7 @@ import { CopyableText } from "@aleph-front/ds/copyable-text";
 import { usePagination } from "@/hooks/use-pagination";
 import { TablePagination } from "@/components/table-pagination";
 import { FilterToolbar } from "@/components/filter-toolbar";
+import { MobileTableCardRow } from "@/components/mobile-table-card-row";
 import { applySort, type SortDirection } from "@/lib/sort";
 import { formatAleph } from "@/lib/format";
 import type {
@@ -43,6 +44,38 @@ function buildSourceBadges(r: RecipientTotal): SourceBadge[] {
     badges.push({ key: "staker", label: "Staker", variant: "warning" });
   }
   return badges;
+}
+
+function SourcesCell({
+  recipient,
+  matchedNodeNames,
+}: {
+  recipient: RecipientTotal;
+  matchedNodeNames: string[];
+}) {
+  const badges = buildSourceBadges(recipient);
+  if (badges.length === 0 && matchedNodeNames.length === 0) {
+    return <span className="text-muted-foreground">—</span>;
+  }
+  return (
+    <div className="flex flex-wrap items-center gap-1">
+      {badges.map((b) => (
+        <Badge key={b.key} fill="outline" variant={b.variant} size="sm">
+          {b.label}
+        </Badge>
+      ))}
+      {matchedNodeNames.map((name) => (
+        <Badge key={name} fill="outline" variant="info" size="sm">
+          Matched: {name}
+        </Badge>
+      ))}
+    </div>
+  );
+}
+
+function AlephCell({ amount, bold }: { amount: number; bold?: boolean }) {
+  const cn = bold ? "tabular-nums font-bold" : "tabular-nums";
+  return <span className={cn}>{amount > 0 ? formatAleph(amount) : "—"}</span>;
 }
 
 type NodeIndexEntry = { name: string; kind: "crn" | "ccn" };
@@ -88,70 +121,39 @@ function buildColumns(
     },
     {
       header: "Sources",
-      accessor: (r) => {
-        const badges = buildSourceBadges(r);
-        const matchedNames = matchedNodeNamesByAddress.get(r.address) ?? [];
-        if (badges.length === 0 && matchedNames.length === 0) {
-          return <span className="text-muted-foreground">—</span>;
-        }
-        return (
-          <div className="flex flex-wrap items-center gap-1">
-            {badges.map((b) => (
-              <Badge key={b.key} fill="outline" variant={b.variant} size="sm">
-                {b.label}
-              </Badge>
-            ))}
-            {matchedNames.map((name) => (
-              <Badge key={name} fill="outline" variant="info" size="sm">
-                Matched: {name}
-              </Badge>
-            ))}
-          </div>
-        );
-      },
+      accessor: (r) => (
+        <SourcesCell
+          recipient={r}
+          matchedNodeNames={matchedNodeNamesByAddress.get(r.address) ?? []}
+        />
+      ),
       sortable: true,
       sortValue: (r) => r.crnCount * 1000 + r.ccnCount,
     },
     {
       header: "CRN",
-      accessor: (r) => (
-        <span className="tabular-nums">
-          {r.crnAleph > 0 ? formatAleph(r.crnAleph) : "—"}
-        </span>
-      ),
+      accessor: (r) => <AlephCell amount={r.crnAleph} />,
       sortable: true,
       sortValue: (r) => r.crnAleph,
       align: "right",
     },
     {
       header: "CCN",
-      accessor: (r) => (
-        <span className="tabular-nums">
-          {r.ccnAleph > 0 ? formatAleph(r.ccnAleph) : "—"}
-        </span>
-      ),
+      accessor: (r) => <AlephCell amount={r.ccnAleph} />,
       sortable: true,
       sortValue: (r) => r.ccnAleph,
       align: "right",
     },
     {
       header: "Staking",
-      accessor: (r) => (
-        <span className="tabular-nums">
-          {r.stakerAleph > 0 ? formatAleph(r.stakerAleph) : "—"}
-        </span>
-      ),
+      accessor: (r) => <AlephCell amount={r.stakerAleph} />,
       sortable: true,
       sortValue: (r) => r.stakerAleph,
       align: "right",
     },
     {
       header: "Total",
-      accessor: (r) => (
-        <span className="tabular-nums font-bold">
-          {formatAleph(r.totalAleph)}
-        </span>
-      ),
+      accessor: (r) => <AlephCell amount={r.totalAleph} bold />,
       sortable: true,
       sortValue: (r) => r.totalAleph,
       align: "right",
@@ -273,19 +275,69 @@ export function CreditRecipientTable({ summary, nodeState }: Props) {
         searchPlaceholder="Search address or node name..."
       />
 
-      <Table
-        columns={columns}
-        data={pageItems}
-        keyExtractor={(r) => r.address}
-        emptyState="No recipients found"
-        onRowClick={(r) => router.push(`/wallet?address=${r.address}`)}
-        {...(sortColumn ? { sortColumn } : {})}
-        sortDirection={sortDirection}
-        onSortChange={(col, dir) => {
-          setSortColumn(col);
-          setSortDirection(dir);
-        }}
-      />
+      <div className="hidden md:block">
+        <Table
+          columns={columns}
+          data={pageItems}
+          keyExtractor={(r) => r.address}
+          emptyState="No recipients found"
+          onRowClick={(r) => router.push(`/wallet?address=${r.address}`)}
+          {...(sortColumn ? { sortColumn } : {})}
+          sortDirection={sortDirection}
+          onSortChange={(col, dir) => {
+            setSortColumn(col);
+            setSortDirection(dir);
+          }}
+        />
+      </div>
+
+      <div className="space-y-3 md:hidden">
+        {pageItems.length === 0 ? (
+          <p className="text-sm text-muted-foreground">No recipients found</p>
+        ) : (
+          pageItems.map((r) => (
+            <MobileTableCardRow
+              key={r.address}
+              href={`/wallet?address=${r.address}`}
+              primary={
+                <CopyableText
+                  text={r.address}
+                  startChars={8}
+                  endChars={8}
+                  size="sm"
+                />
+              }
+              fields={[
+                {
+                  label: "Sources",
+                  value: (
+                    <SourcesCell
+                      recipient={r}
+                      matchedNodeNames={
+                        matchedNodeNamesByAddress.get(r.address) ?? []
+                      }
+                    />
+                  ),
+                },
+                { label: "CRN", value: <AlephCell amount={r.crnAleph} /> },
+                { label: "CCN", value: <AlephCell amount={r.ccnAleph} /> },
+                { label: "Staking", value: <AlephCell amount={r.stakerAleph} /> },
+                { label: "Total", value: <AlephCell amount={r.totalAleph} bold /> },
+                {
+                  label: "% of pool",
+                  value: (
+                    <span className="tabular-nums">
+                      {summary.distributedAleph > 0
+                        ? `${((r.totalAleph / summary.distributedAleph) * 100).toFixed(1)}%`
+                        : "—"}
+                    </span>
+                  ),
+                },
+              ]}
+            />
+          ))
+        )}
+      </div>
 
       <TablePagination
         page={page}

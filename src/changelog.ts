@@ -11,9 +11,49 @@ export type VersionEntry = {
   changes: ChangeEntry[];
 };
 
-export const CURRENT_VERSION = "0.26.1";
+export const CURRENT_VERSION = "0.28.0";
 
 export const CHANGELOG: VersionEntry[] = [
+  {
+    version: "0.28.0",
+    date: "2026-05-18",
+    changes: [
+      {
+        type: "ui",
+        text: "Mobile: full-screen drop-down menu replaces the side drawer. Hamburger moves to the top-right and is replaced by the menu's × button when open. Cross-product tabs and theme toggle live in the menu's footer band, freeing up vertical space at the top of the page.",
+      },
+      {
+        type: "ui",
+        text: "Mobile: per-page Refresh / Recheck actions move from the page header to an inline row above page content (Nodes, VMs, Wallet, Network Health, Issues). Desktop layout is unchanged.",
+      },
+      {
+        type: "feature",
+        text: "Menu close behaviors: × button, backdrop, route change, Escape key, and md+ resize all close the menu. Body scroll is locked while the menu is open. The panel uses `role=\"dialog\"` and moves focus to the × button on open.",
+      },
+    ],
+  },
+  {
+    version: "0.27.0",
+    date: "2026-05-18",
+    changes: [
+      {
+        type: "fix",
+        text: "Sidebar is now an off-canvas drawer on phones — tap ☰ in the header to slide it in, tap the dimmed backdrop or pick a nav item to close. The drawer regressed during the May shell redesign; this restores it.",
+      },
+      {
+        type: "ui",
+        text: "Credits page: on phones, the flow diagram is replaced by a vertical breakdown of Storage and Execution flows (CCN / CRN / Stakers / Dev fund) so the percentages and ALEPH amounts are actually readable. Desktop keeps the SVG diagram.",
+      },
+      {
+        type: "ui",
+        text: "Wide tables on Wallet, Credits, and the Earnings tab now stack as cards on phones — each row becomes a card with the primary identifier on top and supporting fields below. Desktop keeps the full table.",
+      },
+      {
+        type: "ui",
+        text: "Earnings chart on phones now shows the bucket details inline below the chart instead of as a floating tooltip that could fall off the screen.",
+      },
+    ],
+  },
   {
     version: "0.26.1",
     date: "2026-05-18",

@@ -38,19 +38,21 @@ function IssuesContent() {
 
   const { issueVMs, issueNodes, isLoading, isFetching, refetch } = useIssues();
 
+  const refreshButton = (
+    <Button
+      variant="text"
+      size="xs"
+      iconLeft={<ArrowClockwise />}
+      onClick={() => { void refetch(); }}
+      disabled={isFetching}
+    >
+      {isFetching ? "Refreshing…" : "Refresh"}
+    </Button>
+  );
+
   usePageHeader({
     title: "Issues",
-    actions: (
-      <Button
-        variant="text"
-        size="xs"
-        iconLeft={<ArrowClockwise />}
-        onClick={() => { void refetch(); }}
-        disabled={isFetching}
-      >
-        {isFetching ? "Refreshing…" : "Refresh"}
-      </Button>
-    ),
+    actions: <span className="hidden md:inline-flex">{refreshButton}</span>,
   });
 
   function handlePerspectiveChange(p: string) {
@@ -71,6 +73,7 @@ function IssuesContent() {
 
   return (
     <div>
+      <div className="mb-3 flex justify-end md:hidden">{refreshButton}</div>
       <div className="mb-8">
         <h1 className="text-4xl">Issues</h1>
         <p className="mt-2 text-base text-muted-foreground">

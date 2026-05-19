@@ -19,6 +19,7 @@ import {
 } from "@/hooks/use-wallet";
 import type { WalletVM, ActivityItem } from "@/hooks/use-wallet";
 import type { Node, AuthorizationResponse, AuthorizationScope } from "@/api/types";
+import { MobileTableCardRow } from "@/components/mobile-table-card-row";
 import { TablePagination } from "@/components/table-pagination";
 import { usePagination } from "@/hooks/use-pagination";
 import {
@@ -92,7 +93,56 @@ function NodesSection({ nodes }: { nodes: Node[] }) {
       <h3 className="mb-3 text-xs font-semibold uppercase tracking-wider text-muted-foreground">
         Nodes ({nodes.length})
       </h3>
-      <div className="overflow-x-auto">
+      <div className="space-y-3 md:hidden">
+        {nodes.map((node) => (
+          <MobileTableCardRow
+            key={node.hash}
+            href={`/nodes?view=${node.hash}`}
+            primary={
+              <CopyableText
+                text={node.hash}
+                startChars={8}
+                endChars={8}
+                size="sm"
+              />
+            }
+            fields={[
+              { label: "Name", value: node.name ?? "—" },
+              {
+                label: "Status",
+                value: (
+                  <span className="inline-flex items-center gap-1.5">
+                    <StatusDot
+                      status={nodeStatusToDot(node.status)}
+                      size="sm"
+                    />
+                    <Badge
+                      fill="outline"
+                      variant={NODE_STATUS_VARIANT[node.status]}
+                      size="sm"
+                    >
+                      {node.status}
+                    </Badge>
+                  </span>
+                ),
+              },
+              {
+                label: "VMs",
+                value: <span className="tabular-nums">{node.vmCount}</span>,
+              },
+              {
+                label: "Updated",
+                value: (
+                  <span className="text-muted-foreground tabular-nums">
+                    {relativeTime(node.updatedAt)}
+                  </span>
+                ),
+              },
+            ]}
+          />
+        ))}
+      </div>
+      <div className="hidden overflow-x-auto md:block">
         <table className="w-full text-sm">
           <thead>
             <tr className="border-b border-edge text-left text-xs text-muted-foreground">
@@ -160,7 +210,58 @@ function VMsSection({ vms }: { vms: WalletVM[] }) {
       <h3 className="mb-3 text-xs font-semibold uppercase tracking-wider text-muted-foreground">
         Virtual Machines ({vms.length})
       </h3>
-      <div className="overflow-x-auto">
+      <div className="space-y-3 md:hidden">
+        {vms.map((vm) => (
+          <MobileTableCardRow
+            key={vm.hash}
+            {...(vm.schedulerStatus ? { href: `/vms?view=${vm.hash}` } : {})}
+            primary={
+              <CopyableText
+                text={vm.hash}
+                startChars={8}
+                endChars={8}
+                size="sm"
+              />
+            }
+            fields={[
+              { label: "Name", value: vm.name ?? "—" },
+              {
+                label: "Type",
+                value: (
+                  <Badge fill="outline" variant="default" size="sm">
+                    {vm.type}
+                  </Badge>
+                ),
+              },
+              {
+                label: "Status",
+                value: vm.schedulerStatus ? (
+                  <Badge
+                    fill="outline"
+                    variant={VM_STATUS_VARIANT[vm.schedulerStatus]}
+                    size="sm"
+                  >
+                    {vm.schedulerStatus}
+                  </Badge>
+                ) : (
+                  <Badge fill="outline" variant="default" size="sm">
+                    not tracked
+                  </Badge>
+                ),
+              },
+              {
+                label: "Created",
+                value: (
+                  <span className="text-muted-foreground tabular-nums">
+                    {relativeTimeFromUnix(vm.createdAt)}
+                  </span>
+                ),
+              },
+            ]}
+          />
+        ))}
+      </div>
+      <div className="hidden overflow-x-auto md:block">
         <table className="w-full text-sm">
           <thead>
             <tr className="border-b border-edge text-left text-xs text-muted-foreground">
@@ -571,30 +672,36 @@ function WalletContent() {
     ? `${address.slice(0, 6)}…${address.slice(-4)}`
     : "Wallet";
 
+  const headerActions = (
+    <>
+      <Button
+        variant="text"
+        size="xs"
+        iconLeft={<ArrowClockwise />}
+        onClick={refetchAll}
+        disabled={isFetching}
+      >
+        {isFetching ? "Refreshing…" : "Refresh"}
+      </Button>
+      {address && (
+        <a
+          href={explorerWalletUrl(address)}
+          target="_blank"
+          rel="noopener noreferrer"
+          className="inline-flex items-center gap-1 text-xs text-primary-400 hover:underline"
+        >
+          Open in Explorer <ArrowUpRight size={12} />
+        </a>
+      )}
+    </>
+  );
+
   usePageHeader({
     title: headerTitle,
     actions: (
-      <>
-        <Button
-          variant="text"
-          size="xs"
-          iconLeft={<ArrowClockwise />}
-          onClick={refetchAll}
-          disabled={isFetching}
-        >
-          {isFetching ? "Refreshing…" : "Refresh"}
-        </Button>
-        {address && (
-          <a
-            href={explorerWalletUrl(address)}
-            target="_blank"
-            rel="noopener noreferrer"
-            className="inline-flex items-center gap-1 text-xs text-primary-400 hover:underline"
-          >
-            Open in Explorer <ArrowUpRight size={12} />
-          </a>
-        )}
-      </>
+      <span className="hidden items-center gap-2 md:inline-flex">
+        {headerActions}
+      </span>
     ),
   });
 
@@ -627,6 +734,9 @@ function WalletContent() {
 
   return (
     <div className="space-y-8">
+      <div className="mb-3 flex items-center justify-end gap-2 md:hidden">
+        {headerActions}
+      </div>
       {/* Header */}
       <div>
         <button

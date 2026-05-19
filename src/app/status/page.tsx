@@ -560,23 +560,26 @@ export default function StatusPage() {
       ? "All Systems Operational"
       : `${degradedCount} endpoint${degradedCount === 1 ? "" : "s"} degraded`;
 
+  const recheckButton = (
+    <Button
+      variant="text"
+      size="xs"
+      iconLeft={<ArrowClockwise />}
+      onClick={runChecks}
+      disabled={checking}
+    >
+      {checking ? "Checking\u2026" : "Recheck"}
+    </Button>
+  );
+
   usePageHeader({
     title: "Network Health",
-    actions: (
-      <Button
-        variant="text"
-        size="xs"
-        iconLeft={<ArrowClockwise />}
-        onClick={runChecks}
-        disabled={checking}
-      >
-        {checking ? "Checking\u2026" : "Recheck"}
-      </Button>
-    ),
+    actions: <span className="hidden md:inline-flex">{recheckButton}</span>,
   });
 
   return (
     <div>
+      <div className="mb-3 flex justify-end md:hidden">{recheckButton}</div>
       {/* Header */}
       <div className="mb-10">
         <div className="flex items-center gap-3">
