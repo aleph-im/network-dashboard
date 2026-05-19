@@ -29,7 +29,7 @@ type CardProps = {
 function CreditStatCard({ label, value, color, isLoading, sparklineData }: CardProps) {
   return (
     <div
-      className="stat-card flex flex-col border border-edge bg-muted/30 p-6"
+      className="stat-card flex flex-col border border-edge bg-muted/30 p-4 md:p-6"
       style={
         color
           ? ({ "--stat-tint": color } as React.CSSProperties)
@@ -39,11 +39,11 @@ function CreditStatCard({ label, value, color, isLoading, sparklineData }: CardP
       <div className="flex items-center gap-2">
         {color ? (
           <span
-            className="inline-block size-2.5 rounded-full"
+            className="inline-block size-2.5 shrink-0 rounded-full"
             style={{ backgroundColor: color }}
           />
         ) : null}
-        <p className="text-xs font-semibold uppercase tracking-widest text-muted-foreground/70">
+        <p className="min-w-0 truncate text-xs font-semibold uppercase tracking-widest text-muted-foreground/70">
           {label}
         </p>
       </div>
@@ -51,14 +51,14 @@ function CreditStatCard({ label, value, color, isLoading, sparklineData }: CardP
         <Skeleton className="mt-3 h-11 w-24" />
       ) : (
         <p
-          className="mt-3 font-heading text-4xl font-extrabold tabular-nums tracking-tight"
+          className="mt-3 font-heading text-3xl font-extrabold tabular-nums tracking-tight md:text-4xl"
           {...(color ? { style: { color } } : {})}
         >
           {formatAleph(value ?? 0)}
         </p>
       )}
       {sparklineData && sparklineData.length >= 2 && !isLoading ? (
-        <div className="-mx-6 -mb-6 mt-3 overflow-hidden rounded-b-[inherit]">
+        <div className="-mx-4 -mb-4 mt-3 overflow-hidden rounded-b-[inherit] md:-mx-6 md:-mb-6">
           <Sparkline
             data={sparklineData}
             height={48}
