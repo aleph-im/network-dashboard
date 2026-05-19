@@ -24,6 +24,11 @@ execute → Completed).
 Scope is clear, no open questions, can be picked up in a single sitting. Small
 to medium size (one PR, one focused session).
 
+### 2026-05-19 - Drop `useVM` / `useNode` polling cadence on detail views
+**Source:** Defense-in-depth follow-up to Decision #99 (detail-page perf)
+**Description:** Decision #99 fixed the render bottleneck and the wasteful supplementary fetch for the allocated-node name, but `useVM(hash)` and `useNode(hash)` still poll every 15s on detail views. For a misplaced VM with a long history, that means re-fetching the full paginated history every 15s while the detail is mounted. Drop the cadence on detail-view consumers to 60s, or move to `refetchOnWindowFocus` semantics instead of an interval. Should be ~10 lines and a couple of test tweaks.
+**Priority:** Low
+
 ### 2026-05-01 - Port deploy-ipfs.py to aleph-cloud-app's robust pattern
 **Source:** Cross-repo learning — aleph-cloud-app's `scripts/deploy/client.py` solved a class of CI deploy failures (PRs #74, #75, #76 there)
 **Description:** Our current script gets the timeout-fix bandage (PR #84 here), but a fuller port would make deploys reliably durable: switch IPFS upload from `aiohttp` to `requests` (simpler, well-understood timeout semantics); switch `create_store`/`create_aggregate` to `sync=False` + poll STORE/AGGREGATE message status until `processed`; add IPFS DHT propagation wait + post-resolve sleep before the STORE write to avoid `error_code: 4 — File not found` rejections; add structured rejection banners + `$GITHUB_STEP_SUMMARY` markdown table; bump GitHub job `timeout-minutes` to ~25. See `aleph-cloud-app/scripts/deploy/client.py` for the canonical pattern.

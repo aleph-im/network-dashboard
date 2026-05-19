@@ -1,19 +1,14 @@
 "use client";
 
+import { useMemo, useState } from "react";
 import { useRouter } from "next/navigation";
 import { ShieldCheck } from "@phosphor-icons/react";
 import { Card } from "@aleph-front/ds/card";
 import { Badge } from "@aleph-front/ds/badge";
-import {
-  TooltipProvider,
-  Tooltip,
-  TooltipTrigger,
-  TooltipContent,
-} from "@aleph-front/ds/tooltip";
 import { Skeleton } from "@aleph-front/ds/ui/skeleton";
 import { CopyableText } from "@aleph-front/ds/copyable-text";
 import { useVM } from "@/hooks/use-vms";
-import { useNode } from "@/hooks/use-nodes";
+import { useNodes } from "@/hooks/use-nodes";
 import { useVMMessageInfo } from "@/hooks/use-vm-creation-times";
 import {
   relativeTime,
@@ -40,11 +35,21 @@ function MetaItem({
   );
 }
 
+const HISTORY_PREVIEW = 50;
+
 export function VMDetailView({ hash }: VMDetailViewProps) {
   const router = useRouter();
   const { data: vm, isLoading, error } = useVM(hash);
   const { data: messageInfo } = useVMMessageInfo([hash]);
-  const { data: allocatedNodeData } = useNode(vm?.allocatedNode ?? "");
+  const { data: nodes } = useNodes();
+  const allocatedNodeName = useMemo(
+    () =>
+      vm?.allocatedNode
+        ? nodes?.find((n) => n.hash === vm.allocatedNode)?.name
+        : undefined,
+    [nodes, vm?.allocatedNode],
+  );
+  const [historyExpanded, setHistoryExpanded] = useState(false);
 
   if (isLoading) {
     return (
@@ -118,16 +123,12 @@ export function VMDetailView({ hash }: VMDetailViewProps) {
         </h3>
         <dl className="grid gap-x-8 gap-y-1 text-sm sm:grid-cols-2">
           <MetaItem label="Hash">
-            <TooltipProvider>
-              <Tooltip>
-                <TooltipTrigger asChild>
-                  <span className="cursor-help font-mono text-xs">
-                    {vm.hash}
-                  </span>
-                </TooltipTrigger>
-                <TooltipContent>{vm.hash}</TooltipContent>
-              </Tooltip>
-            </TooltipProvider>
+            <CopyableText
+              text={vm.hash}
+              startChars={8}
+              endChars={8}
+              size="sm"
+            />
           </MetaItem>
           {(() => {
             const owner = vm.owner ?? messageInfo?.get(vm.hash)?.sender ?? null;
@@ -180,9 +181,9 @@ export function VMDetailView({ hash }: VMDetailViewProps) {
               size="sm"
               href={`/nodes?view=${vm.allocatedNode}`}
             />
-            {allocatedNodeData?.name && (
+            {allocatedNodeName && (
               <span className="text-sm text-muted-foreground">
-                {allocatedNodeData.name}
+                {allocatedNodeName}
               </span>
             )}
           </div>
@@ -303,44 +304,60 @@ export function VMDetailView({ hash }: VMDetailViewProps) {
             No history events recorded.
           </p>
         ) : (
-          <div className="overflow-x-auto">
-            <table className="w-full text-sm">
-              <thead>
-                <tr className="border-b border-edge text-left text-xs text-muted-foreground">
-                  <th className="pb-2 pr-4 font-medium">Action</th>
-                  <th className="pb-2 pr-4 font-medium">Node</th>
-                  <th className="pb-2 pr-4 font-medium">Reason</th>
-                  <th className="pb-2 font-medium text-right">
-                    Time
-                  </th>
-                </tr>
-              </thead>
-              <tbody className="divide-y divide-edge">
-                {vm.history.map((row) => (
-                  <tr key={row.id}>
-                    <td className="py-1.5 pr-4 capitalize">
-                      {row.action.replace(/_/g, " ")}
-                    </td>
-                    <td className="py-1.5 pr-4">
-                      <CopyableText
-                        text={row.nodeHash}
-                        startChars={8}
-                        endChars={8}
-                        size="sm"
-                        href={`/nodes?view=${row.nodeHash}`}
-                      />
-                    </td>
-                    <td className="py-1.5 pr-4 text-muted-foreground">
-                      {row.reason ?? "—"}
-                    </td>
-                    <td className="py-1.5 text-right text-xs text-muted-foreground tabular-nums">
-                      {relativeTime(row.timestamp)}
-                    </td>
+          <>
+            <div className="overflow-x-auto">
+              <table className="w-full text-sm">
+                <thead>
+                  <tr className="border-b border-edge text-left text-xs text-muted-foreground">
+                    <th className="pb-2 pr-4 font-medium">Action</th>
+                    <th className="pb-2 pr-4 font-medium">Node</th>
+                    <th className="pb-2 pr-4 font-medium">Reason</th>
+                    <th className="pb-2 font-medium text-right">
+                      Time
+                    </th>
                   </tr>
-                ))}
-              </tbody>
-            </table>
-          </div>
+                </thead>
+                <tbody className="divide-y divide-edge">
+                  {(historyExpanded
+                    ? vm.history
+                    : vm.history.slice(0, HISTORY_PREVIEW)
+                  ).map((row) => (
+                    <tr key={row.id}>
+                      <td className="py-1.5 pr-4 capitalize">
+                        {row.action.replace(/_/g, " ")}
+                      </td>
+                      <td className="py-1.5 pr-4">
+                        <CopyableText
+                          text={row.nodeHash}
+                          startChars={8}
+                          endChars={8}
+                          size="sm"
+                          href={`/nodes?view=${row.nodeHash}`}
+                        />
+                      </td>
+                      <td className="py-1.5 pr-4 text-muted-foreground">
+                        {row.reason ?? "—"}
+                      </td>
+                      <td className="py-1.5 text-right text-xs text-muted-foreground tabular-nums">
+                        {relativeTime(row.timestamp)}
+                      </td>
+                    </tr>
+                  ))}
+                </tbody>
+              </table>
+            </div>
+            {vm.history.length > HISTORY_PREVIEW && (
+              <button
+                type="button"
+                onClick={() => setHistoryExpanded((v) => !v)}
+                className="mt-3 text-xs text-primary-500 hover:underline dark:text-primary-300"
+              >
+                {historyExpanded
+                  ? "Show less"
+                  : `Show ${vm.history.length - HISTORY_PREVIEW} more`}
+              </button>
+            )}
+          </>
         )}
       </Card>
     </div>

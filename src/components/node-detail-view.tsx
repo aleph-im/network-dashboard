@@ -2,6 +2,9 @@
 
 import { useState } from "react";
 import { useRouter, useSearchParams, usePathname } from "next/navigation";
+
+const HISTORY_PREVIEW = 50;
+const VMS_PREVIEW = 50;
 import { ShieldCheck } from "@phosphor-icons/react";
 import { Card } from "@aleph-front/ds/card";
 import { Badge } from "@aleph-front/ds/badge";
@@ -56,6 +59,8 @@ export function NodeDetailView({ hash, initialTab }: NodeDetailViewProps) {
   const { data: nodeState, isLoading: stateLoading } = useNodeState();
   const { data: ownerBalances } = useOwnerBalances(nodeState);
   const [tab, setTab] = useState<DetailTab>(initialTab ?? "overview");
+  const [historyExpanded, setHistoryExpanded] = useState(false);
+  const [vmsExpanded, setVmsExpanded] = useState(false);
 
   const handleTabChange = (next: string) => {
     if (next !== "overview" && next !== "earnings") return;
@@ -196,6 +201,30 @@ export function NodeDetailView({ hash, initialTab }: NodeDetailViewProps) {
               />
             </MetaItem>
           )}
+          {(() => {
+            const crn = nodeState?.crns.get(hash);
+            if (!crn) return null;
+            const parentHash = crn.parent;
+            const parentCcn = parentHash
+              ? nodeState?.ccns.get(parentHash) ?? null
+              : null;
+            return (
+              <MetaItem label="Parent CCN">
+                {parentCcn ? (
+                  <a
+                    href={`/nodes?view=${parentCcn.hash}`}
+                    className="text-primary-500 hover:underline dark:text-primary-300"
+                  >
+                    {parentCcn.name || `${parentCcn.hash.slice(0, 8)}…${parentCcn.hash.slice(-8)}`}
+                  </a>
+                ) : (
+                  <span className="text-xs italic text-muted-foreground">
+                    Registered but not yet adopted by a CCN.
+                  </span>
+                )}
+              </MetaItem>
+            );
+          })()}
           {node.supportsIpv6 != null && (
             <MetaItem label="IPv6">
               {node.supportsIpv6 ? "Yes" : "No"}
@@ -307,27 +336,40 @@ export function NodeDetailView({ hash, initialTab }: NodeDetailViewProps) {
             Virtual Machines ({node.vms.length})
           </h3>
           <ul className="space-y-1.5">
-            {node.vms.map((vm) => (
-              <li
-                key={vm.hash}
-                className="flex items-center justify-between text-sm"
-              >
-                <CopyableText
-                  text={vm.hash}
-                  startChars={8}
-                  endChars={8}
-                  size="sm"
-                  href={`/vms?view=${vm.hash}`}
-                />
-                <Badge fill="outline"
-                  variant={VM_STATUS_VARIANT[vm.status]}
-                  size="sm"
+            {(vmsExpanded ? node.vms : node.vms.slice(0, VMS_PREVIEW)).map(
+              (vm) => (
+                <li
+                  key={vm.hash}
+                  className="flex items-center justify-between text-sm"
                 >
-                  {vm.status}
-                </Badge>
-              </li>
-            ))}
+                  <CopyableText
+                    text={vm.hash}
+                    startChars={8}
+                    endChars={8}
+                    size="sm"
+                    href={`/vms?view=${vm.hash}`}
+                  />
+                  <Badge fill="outline"
+                    variant={VM_STATUS_VARIANT[vm.status]}
+                    size="sm"
+                  >
+                    {vm.status}
+                  </Badge>
+                </li>
+              ),
+            )}
           </ul>
+          {node.vms.length > VMS_PREVIEW && (
+            <button
+              type="button"
+              onClick={() => setVmsExpanded((v) => !v)}
+              className="mt-3 text-xs text-primary-500 hover:underline dark:text-primary-300"
+            >
+              {vmsExpanded
+                ? "Show less"
+                : `Show ${node.vms.length - VMS_PREVIEW} more`}
+            </button>
+          )}
         </Card>
       )}
 
@@ -341,44 +383,60 @@ export function NodeDetailView({ hash, initialTab }: NodeDetailViewProps) {
             No history events recorded.
           </p>
         ) : (
-          <div className="overflow-x-auto">
-            <table className="w-full text-sm">
-              <thead>
-                <tr className="border-b border-edge text-left text-xs text-muted-foreground">
-                  <th className="pb-2 pr-4 font-medium">Action</th>
-                  <th className="pb-2 pr-4 font-medium">VM</th>
-                  <th className="pb-2 pr-4 font-medium">Reason</th>
-                  <th className="pb-2 font-medium text-right">
-                    Time
-                  </th>
-                </tr>
-              </thead>
-              <tbody className="divide-y divide-edge">
-                {node.history.map((row) => (
-                  <tr key={row.id}>
-                    <td className="py-1.5 pr-4 capitalize">
-                      {row.action.replace(/_/g, " ")}
-                    </td>
-                    <td className="py-1.5 pr-4">
-                      <CopyableText
-                        text={row.vmHash}
-                        startChars={8}
-                        endChars={8}
-                        size="sm"
-                        href={`/vms?view=${row.vmHash}`}
-                      />
-                    </td>
-                    <td className="py-1.5 pr-4 text-muted-foreground">
-                      {row.reason ?? "—"}
-                    </td>
-                    <td className="py-1.5 text-right text-xs text-muted-foreground tabular-nums">
-                      {relativeTime(row.timestamp)}
-                    </td>
+          <>
+            <div className="overflow-x-auto">
+              <table className="w-full text-sm">
+                <thead>
+                  <tr className="border-b border-edge text-left text-xs text-muted-foreground">
+                    <th className="pb-2 pr-4 font-medium">Action</th>
+                    <th className="pb-2 pr-4 font-medium">VM</th>
+                    <th className="pb-2 pr-4 font-medium">Reason</th>
+                    <th className="pb-2 font-medium text-right">
+                      Time
+                    </th>
                   </tr>
-                ))}
-              </tbody>
-            </table>
-          </div>
+                </thead>
+                <tbody className="divide-y divide-edge">
+                  {(historyExpanded
+                    ? node.history
+                    : node.history.slice(0, HISTORY_PREVIEW)
+                  ).map((row) => (
+                    <tr key={row.id}>
+                      <td className="py-1.5 pr-4 capitalize">
+                        {row.action.replace(/_/g, " ")}
+                      </td>
+                      <td className="py-1.5 pr-4">
+                        <CopyableText
+                          text={row.vmHash}
+                          startChars={8}
+                          endChars={8}
+                          size="sm"
+                          href={`/vms?view=${row.vmHash}`}
+                        />
+                      </td>
+                      <td className="py-1.5 pr-4 text-muted-foreground">
+                        {row.reason ?? "—"}
+                      </td>
+                      <td className="py-1.5 text-right text-xs text-muted-foreground tabular-nums">
+                        {relativeTime(row.timestamp)}
+                      </td>
+                    </tr>
+                  ))}
+                </tbody>
+              </table>
+            </div>
+            {node.history.length > HISTORY_PREVIEW && (
+              <button
+                type="button"
+                onClick={() => setHistoryExpanded((v) => !v)}
+                className="mt-3 text-xs text-primary-500 hover:underline dark:text-primary-300"
+              >
+                {historyExpanded
+                  ? "Show less"
+                  : `Show ${node.history.length - HISTORY_PREVIEW} more`}
+              </button>
+            )}
+          </>
         )}
       </Card>
         </>
