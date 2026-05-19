@@ -6,6 +6,7 @@ import type { ReactNode } from "react";
 export type MobileCardField = {
   label: string;
   value: ReactNode;
+  stack?: boolean;
 };
 
 type Props = {
@@ -20,15 +21,22 @@ export function MobileTableCardRow({ primary, fields, href }: Props) {
       <div>{primary}</div>
       {fields.length > 0 && (
         <dl className="space-y-1">
-          {fields.map(({ label, value }) => (
-            <div
-              key={label}
-              className="flex items-center justify-between text-xs"
-            >
-              <dt className="text-muted-foreground">{label}</dt>
-              <dd>{value}</dd>
-            </div>
-          ))}
+          {fields.map(({ label, value, stack }) =>
+            stack ? (
+              <div key={label} className="space-y-1 text-xs">
+                <dt className="text-muted-foreground">{label}</dt>
+                <dd>{value}</dd>
+              </div>
+            ) : (
+              <div
+                key={label}
+                className="flex items-center justify-between text-xs"
+              >
+                <dt className="text-muted-foreground">{label}</dt>
+                <dd>{value}</dd>
+              </div>
+            ),
+          )}
         </dl>
       )}
     </div>

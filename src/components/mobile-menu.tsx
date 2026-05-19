@@ -1,7 +1,7 @@
 "use client";
 
 import Link from "next/link";
-import type { ReactNode } from "react";
+import { useEffect, useState, type ReactNode } from "react";
 import { X } from "@phosphor-icons/react/dist/ssr";
 import { ThemeToggle } from "@/components/theme-toggle";
 import { ACTIVE_APP_ID, APPS } from "@/config/apps";
@@ -14,8 +14,28 @@ type Props = {
   children: ReactNode;
 };
 
+type Phase = "closed" | "open" | "closing";
+
+function prefersReducedMotion(): boolean {
+  if (typeof window === "undefined") return false;
+  return window.matchMedia("(prefers-reduced-motion: reduce)").matches;
+}
+
 export function MobileMenu({ open, onClose, appName, children }: Props) {
-  if (!open) return null;
+  const [phase, setPhase] = useState<Phase>(open ? "open" : "closed");
+
+  useEffect(() => {
+    if (open) {
+      setPhase("open");
+      return;
+    }
+    setPhase((p) => {
+      if (p !== "open") return p;
+      return prefersReducedMotion() ? "closed" : "closing";
+    });
+  }, [open]);
+
+  if (phase === "closed") return null;
 
   return (
     <>
@@ -23,22 +43,21 @@ export function MobileMenu({ open, onClose, appName, children }: Props) {
         type="button"
         aria-label="Close menu backdrop"
         onClick={onClose}
-        className="mobile-menu-animated fixed inset-0 z-40 bg-black/40 md:hidden"
-        style={{
-          animation: "mobile-menu-backdrop-in var(--duration-default) ease-out",
-        }}
+        data-state={phase}
+        className="mobile-menu-backdrop fixed inset-0 z-40 bg-black/40 md:hidden"
       />
       <div
         role="dialog"
         aria-modal="true"
         aria-labelledby="mobile-menu-title"
-        className="mobile-menu-animated fixed inset-0 z-50 flex flex-col bg-background md:hidden"
-        style={{
-          animation:
-            "mobile-menu-panel-in var(--duration-default) ease-out forwards",
+        data-state={phase}
+        onAnimationEnd={(e) => {
+          if (e.target !== e.currentTarget) return;
+          if (phase === "closing") setPhase("closed");
         }}
+        className="mobile-menu-panel fixed inset-0 z-50 flex flex-col bg-background md:hidden"
       >
-        <header className="flex items-center justify-between border-b border-border px-4 py-3">
+        <header className="flex items-center justify-between px-4 py-3">
           <div id="mobile-menu-title" className="text-sm font-semibold">{appName}</div>
           <button
             type="button"
@@ -52,7 +71,7 @@ export function MobileMenu({ open, onClose, appName, children }: Props) {
           </button>
         </header>
         <nav className="flex-1 overflow-y-auto px-4 py-4">{children}</nav>
-        <footer className="border-t border-border bg-muted/40 px-4 py-3 dark:bg-surface">
+        <footer className="bg-muted/40 px-4 py-3 dark:bg-surface">
           <div className="mb-3 flex flex-wrap gap-x-3 gap-y-1 text-xs">
             {APPS.map((app) => {
               const isActive = app.id === ACTIVE_APP_ID;

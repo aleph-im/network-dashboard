@@ -310,6 +310,7 @@ export function CreditRecipientTable({ summary, nodeState }: Props) {
               fields={[
                 {
                   label: "Sources",
+                  stack: true,
                   value: (
                     <SourcesCell
                       recipient={r}
