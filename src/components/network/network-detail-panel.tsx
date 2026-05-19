@@ -5,7 +5,7 @@ import { X } from "@phosphor-icons/react";
 import { Button } from "@aleph-front/ds/button";
 import { StatusDot } from "@aleph-front/ds/status-dot";
 import type { NodeState } from "@/api/credit-types";
-import type { Graph, GraphNode } from "@/lib/network-graph-model";
+import { dotStatusFor, type Graph, type GraphNode } from "@/lib/network-graph-model";
 import { NetworkDetailPanelAddress } from "@/components/network/network-detail-panel-address";
 import { NetworkDetailPanelCCN } from "@/components/network/network-detail-panel-ccn";
 import { NetworkDetailPanelCRN } from "@/components/network/network-detail-panel-crn";
@@ -24,19 +24,6 @@ type Props = {
   onStepBackFocus: () => void;
   onClearFocus: () => void;
 };
-
-type DotStatus = "healthy" | "degraded" | "error" | "offline" | "unknown";
-
-function dotStatusFor(node: GraphNode): DotStatus {
-  if (node.kind === "country") return "unknown";
-  if (node.inactive) return "offline";
-  if (node.kind === "staker" || node.kind === "reward") return "unknown";
-  if (node.kind === "crn" && node.flagged) return "degraded";
-  if (node.status === "active" || node.status === "linked") return "healthy";
-  if (node.status === "unreachable") return "error";
-  if (node.status === "unknown") return "unknown";
-  return "degraded";
-}
 
 function titleFor(node: GraphNode): string {
   if (node.kind === "country") return node.label;

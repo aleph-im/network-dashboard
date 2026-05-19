@@ -11,9 +11,27 @@ export type VersionEntry = {
   changes: ChangeEntry[];
 };
 
-export const CURRENT_VERSION = "0.29.0";
+export const CURRENT_VERSION = "0.30.0";
 
 export const CHANGELOG: VersionEntry[] = [
+  {
+    version: "0.30.0",
+    date: "2026-05-19",
+    changes: [
+      {
+        type: "feature",
+        text: "Portrait `/network` now renders a three-section summary (top 10 CCNs, top countries, top reward addresses) instead of the broken CCN list whose links pointed at a graph that didn't render. CCN rows link to `/nodes?view=<hash>`, reward address rows link to `/wallet?address=<addr>`, country rows are informational. Each section has a `See all N →` inline expand toggle.",
+      },
+      {
+        type: "ui",
+        text: "Portrait `/network` shows a quiet `↻ Rotate device for full network graph` hint at the top — landscape (≥ md) still renders the full force-directed graph.",
+      },
+      {
+        type: "refactor",
+        text: "Promoted `dotStatusFor` from `network-detail-panel.tsx` to `network-graph-model.ts` so the portrait summary and the desktop detail panel share the same status mapping.",
+      },
+    ],
+  },
   {
     version: "0.29.0",
     date: "2026-05-19",
