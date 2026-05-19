@@ -7,12 +7,6 @@ import { Card } from "@aleph-front/ds/card";
 import { Badge } from "@aleph-front/ds/badge";
 import { StatusDot } from "@aleph-front/ds/status-dot";
 import { Tabs, TabsList, TabsTrigger } from "@aleph-front/ds/tabs";
-import {
-  TooltipProvider,
-  Tooltip,
-  TooltipTrigger,
-  TooltipContent,
-} from "@aleph-front/ds/tooltip";
 import { Skeleton } from "@aleph-front/ds/ui/skeleton";
 import { CopyableText } from "@aleph-front/ds/copyable-text";
 import { useNode } from "@/hooks/use-nodes";
@@ -168,16 +162,12 @@ export function NodeDetailView({ hash, initialTab }: NodeDetailViewProps) {
         </h3>
         <dl className="grid gap-x-8 gap-y-1 text-sm sm:grid-cols-2">
           <MetaItem label="Hash">
-            <TooltipProvider>
-              <Tooltip>
-                <TooltipTrigger asChild>
-                  <span className="cursor-help font-mono text-xs">
-                    {node.hash}
-                  </span>
-                </TooltipTrigger>
-                <TooltipContent>{node.hash}</TooltipContent>
-              </Tooltip>
-            </TooltipProvider>
+            <CopyableText
+              text={node.hash}
+              startChars={8}
+              endChars={8}
+              size="sm"
+            />
           </MetaItem>
           {node.address && (
             <MetaItem label="Address">
