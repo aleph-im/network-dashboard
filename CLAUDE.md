@@ -254,7 +254,8 @@ pnpm build        # Static export to out/
 pnpm test         # Vitest
 pnpm lint         # oxlint
 pnpm typecheck    # tsc --noEmit
-pnpm check        # lint + typecheck + test
+pnpm check:tokens # Validate every var(--…) reference resolves to a declared CSS token
+pnpm check        # lint + typecheck + check:tokens + test
 ```
 
 ### Key Directories

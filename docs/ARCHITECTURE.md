@@ -289,6 +289,13 @@ Wallet (`["wallet-vms", …]`, `["wallet-activity", …]`) and credit-expense (`
 
 **Notes:** The `getNodeState()` parser in `src/api/client.ts` previously dropped CCN→CRN parent links; this branch reinstates them via a `parent` field on `CrnNode` and a `resourceNodes: string[]` field on `CcnNode`, used by the graph builder. Static export requires the page to wrap `<NetworkContent>` in `<Suspense>` because of `useSearchParams()` (Next.js 16 errors otherwise).
 
+### CSS Token Guard
+
+**Context:** A mobile-menu animation referenced `var(--duration-default)` — a token that doesn't exist in `globals.css` or `@aleph-front/ds`'s `tokens.css`. The browser fell back to the property's initial value (`0s`) and the animation collapsed to instant. The bad reference came from a plan file that had copied it from earlier code; nobody verified the token existed at write time. CSS references look valid to TS and oxlint, so the bug is silent until someone notices the broken UI.
+**Approach:** `scripts/check-css-tokens.ts` collects every `--name:` declaration from `src/app/globals.css` and `node_modules/@aleph-front/ds/src/styles/tokens.css`, walks `src/**/*.{css,ts,tsx}` (excluding `*.test.*`) for `var(--name)` references, and reports any reference whose token isn't declared. References with a fallback (`var(--x, default)`) are skipped — those are robust to a missing token. Wired into `pnpm check` via a `check:tokens` script between `typecheck` and `test`; exits 1 with `file:line` and a remediation hint on any unresolved reference.
+**Key files:** `scripts/check-css-tokens.ts`, `package.json` (`check:tokens`, `check`).
+**Notes:** Dynamic CSS custom properties set via inline `style` (e.g. `style={{ "--stat-tint": color }}`) are exempt because consumers read them with a fallback. Stylelint has a similar plugin (`stylelint-use-defined-variables`) but adds a stylelint config + dependency; the focused 80-line script does the same job without new dev-dep surface (Decision #100).
+
 ### Build-Time Data Preparation
 
 **Context:** Per-node geolocation requires DNS resolution and an IP-to-country lookup. Doing both at runtime would add latency, network noise, and per-client cost; doing it once per build collapses that to a static JSON read.
