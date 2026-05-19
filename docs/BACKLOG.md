@@ -57,6 +57,14 @@ Intent is agreed but there are open questions, design choices, or multi-step
 coordination required. Needs a brainstorm or spec before someone can execute.
 Multi-day / multi-PR work.
 
+### 2026-05-19 - Portrait `/network` follow-ups
+**Source:** Deferred from the mobile network page redesign (Decision #104, plan `docs/superpowers/plans/2026-05-19-mobile-network-page.md`).
+**Description:** A few enhancements were intentionally left out of v1 to keep the surface simple:
+- **Search / filter** on the portrait summary — let users find a specific CCN, country, or reward address without scrolling top-10 + expand.
+- **Country detail page** — currently country rows are informational because no `/countries?view=<ISO>` page exists. If we want them clickable from portrait (and from the desktop graph), build the page.
+- **Top stakers + top CRNs sections** — the v1 summary covers CCNs, countries, and reward addresses; CRN and staker leaderboards would round out the "who's on the network" story.
+**Priority:** Low
+
 ### 2026-05-12 - Score-over-time line on Earnings tab
 **Source:** Per-CRN/CCN Earnings tab (Decision #90).
 **Description:** Add a third overlay line on the Earnings chart for node score over the same trailing window. Currently the KPI card shows a single score-at-load value; a line would help diagnose "earnings dropped because score fell below 0.8" patterns. Blocked: the API doesn't expose historical scores — would need a backend `/stats/history` endpoint or a client-side accumulator that snapshots `useNodeState` on each refresh.
@@ -214,6 +222,7 @@ Items where the path forward is clear but blocked on external work.
 <details>
 <summary>Archived items</summary>
 
+- ✅ 2026-05-19 - Portrait `/network` redesign — replaced the broken 50-CCN list with `NetworkMobileSummary`, a three-section summary (top 10 CCNs / top 10 countries / top 10 reward addresses) with "See all N →" inline expand toggles and a persistent "↻ Rotate device for full network graph" hint. CCN rows link to `/nodes?view=<hash>`, reward address rows link to `/wallet?address=<addr>`, country rows are informational. Pure aggregation helpers in `src/lib/network-mobile-aggregates.ts` (`aggregateCountries` + `aggregateRewards`, 11 unit tests). `dotStatusFor` promoted from `network-detail-panel.tsx` to `network-graph-model.ts` so the portrait + desktop views share status mapping. Plan: `docs/superpowers/plans/2026-05-19-mobile-network-page.md`. Decision #104.
 - ✅ 2026-05-19 - Mobile polish pass on Issues / detail / list pages — VM detail page picks up an amber issue callout when status is a discrepancy (with Derived/Scheduler badge pair when divergent), so mobile-detail navigation has parity with the Issues panel; Issues VM table routes to `/vms?view=hash` on `<lg` click (matches Nodes/VMs); history tables on both detail views switch from "Show N more" toggle to `TablePagination` after a 16,870-row outlier broke the toggle (Decision #102); mobile row heights normalize to ~46px across Nodes / VMs / Issues by adding `whitespace-nowrap` to prose / Name / CPU columns; `FilterToolbar` stacks vertically below `md` and each `TabsTrigger` gets `shrink-0 whitespace-nowrap` to dodge the DS Tabs `overflow="collapse"` measurement trap (Decision #103); per-page mobile Refresh button dropped (Decision #101) — auto-polling at 15–30s covers freshness, Wallet keeps the `Open in Explorer →` link.
 - ✅ 2026-05-18 - Mobile chrome restructure. Single-row header, full-screen drop menu, inline page actions below `md`. Plan: `docs/plans/2026-05-18-mobile-chrome-restructure-plan.md`. Decision #98.
 - ✅ 2026-05-18 - Mobile audit pass — restored off-canvas sidebar drawer below `md` (consumer-side wrapper around DS `AppShellSidebar`, see Decision #97); replaced the unreadable Credits flow SVG with a vertical `CreditFlowList` showing Storage and Execution distribution rows; wide tables (Wallet Nodes/VMs, Credit Recipients, Earnings per-VM) now render as stacked cards via the new `MobileTableCardRow` helper below `md`; the Earnings chart tooltip moves inline below the chart on mobile so touch users can read the highlighted bucket. Scope was the node-owner-on-mobile flow (Wallet / Node Earnings tab / Credits); other pages (Network graph, Issues, Health) keep their current responsive state. Out of scope: filter UI mobile adaptation (existing entry under Needs planning), ProductStrip overflow if visibly broken at 375px (DS-owned, log a DS issue).
