@@ -46,7 +46,7 @@ function DonutRing({
   const offset = animated ? 100 - pct : 100;
 
   return (
-    <div className="relative flex size-10 items-center justify-center">
+    <div className="relative flex size-7 items-center justify-center">
       <svg
         viewBox="0 0 36 36"
         className="absolute inset-0 size-full"
@@ -181,7 +181,7 @@ function Stat(props: StatProps & { index?: number }) {
 }
 
 const iconCheck = (
-  <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 256 256" className="size-4" fill="currentColor">
+  <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 256 256" className="size-3" fill="currentColor">
     <path d="M232.49,80.49l-128,128a12,12,0,0,1-17,0l-56-56a12,12,0,1,1,17-17L96,183,215.51,63.51a12,12,0,0,1,17,17Z" />
   </svg>
 );
