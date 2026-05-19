@@ -1,8 +1,7 @@
 "use client";
 
-import { Suspense } from "react";
-import { useSearchParams } from "next/navigation";
-import { useState } from "react";
+import { Suspense, useCallback, useState } from "react";
+import { useRouter, useSearchParams } from "next/navigation";
 import { NodeTable } from "@/components/node-table";
 import { NodeDetailPanel } from "@/components/node-detail-panel";
 import { NodeDetailView } from "@/components/node-detail-view";
@@ -20,6 +19,7 @@ const VALID_NODE_STATUSES = new Set<string>([
 ]);
 
 function NodesContent() {
+  const router = useRouter();
   const searchParams = useSearchParams();
   const viewHash = searchParams.get("view");
 
@@ -52,6 +52,21 @@ function NodesContent() {
   const selectedParam = searchParams.get("selected");
   const [selectedNode, setSelectedNode] = useState<string | null>(
     selectedParam,
+  );
+
+  const handleSelectNode = useCallback(
+    (hash: string | null) => {
+      if (
+        hash &&
+        typeof window !== "undefined" &&
+        !window.matchMedia("(min-width: 1024px)").matches
+      ) {
+        router.push(`/nodes?view=${hash}`);
+        return;
+      }
+      setSelectedNode(hash);
+    },
+    [router],
   );
 
   const tabParam = searchParams.get("tab");
@@ -92,7 +107,7 @@ function NodesContent() {
         </p>
       </div>
       <NodeTable
-      onSelectNode={setSelectedNode}
+      onSelectNode={handleSelectNode}
       {...(initialStatus ? { initialStatus } : {})}
       initialHasVms={hasVms}
       {...(initialSort ? { initialSort } : {})}
