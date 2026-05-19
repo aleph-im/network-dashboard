@@ -20,9 +20,6 @@
   "a737feb2e1fcd2bd8e5e9f0debc4c088eaea55e3f093327139cd2cdea8c09239": {
     "country": "FR"
   },
-  "3148eb412d41fb11a9f255a420009090c98e46c9947461ffc3b8751de20e9c3d": {
-    "country": "US"
-  },
   "f61f641f197ac141d285b51fa35c1bfd6c9107d14a7df67ccef9d1f1f117f212": {
     "country": "US"
   },
@@ -140,9 +137,6 @@
   "f772ca31723a4e05f5eefddad2d19b58c5eb9bc52489c245824e7488c1299a7d": {
     "country": "DE"
   },
-  "d959abadb98ac11f74f141c7a92c04276fe1862af2afc29cf0ff35f043748750": {
-    "country": "RU"
-  },
   "4420175f1253ae1364bfdc3ee7ff9e7bc398a0bd2e35e7cbb3a1d09de54bb6aa": {
     "country": "DE"
   },
@@ -154,9 +148,6 @@
   },
   "89517de9781903488ba50952fda02252de702cb5af7924f8e5ef8e689e7c185a": {
     "country": "SE"
-  },
-  "8115108994c7ad0097da86acb04890e54f42101ce3f887a2258e562fe50881a7": {
-    "country": "IL"
   },
   "41298e8fd64506a4c35e81b4578353a3fcb53ef8a9b7ec3ea660afc835172906": {
     "country": "DE"
@@ -739,9 +730,6 @@
   },
   "d346c5d0d6f1641c91ffcc646517d0ff49c43bf71d82f0e9c7ca2dd605687f6d": {
     "country": "IT"
-  },
-  "b0664ab9875569eb5e87f000d2f56bc29f51aace3ac052d43d1662470856a300": {
-    "country": "FR"
   },
   "96cdbc0dd5823678b279cfe7d1577bb147ecbca861f0d9e98f2fe6a8f0e0c3c4": {
     "country": "FR"
@@ -1528,6 +1516,9 @@
   },
   "ff8f7226b9db7ec54d802bbb198406dbf5d2a6b0cb55e16df139a8f698240c37": {
     "country": "FR"
+  },
+  "afb1541084f80a3254e0d2ed9b1e6462508365aa2bfd7b74ee23b09a6cb1ba8a": {
+    "country": "CA"
   },
   "dd8047c9e026000a7849e757e1005ebd4b350b15ac4ca75f7d90091f044ee218": {
     "country": "NL"
