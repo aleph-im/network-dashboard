@@ -18,6 +18,14 @@ Each entry includes:
 
 ---
 
+## Decision #106 - 2026-05-20
+**Context:** The VM quick-peek detail panel rendered a truncated History list (5 events + "+N more"). The full detail page already has a paginated history table. Migration-heavy VMs flood the panel with low-signal repeated history rows. Separately, the amber issue callout (`getIssueDescription`) only appeared on the full detail page, not in the panel.
+**Decision:** Drop the History section from `vm-detail-panel.tsx` entirely — history lives only on the detail page. Add the issue callout to the panel so it shows on both the panel and the page when the VM's status is a discrepancy value. The callout is **prose only**: the scheduler-vs-derived split is shown as a dedicated row outside the callout — a `Scheduler status` row under `Status` in the panel's `dl`, and a `Scheduler status` row in the detail page's Details card — rendered only when `schedulingStatus !== status`.
+**Rationale:** Mirrors the Nodes panel split from Decision #96 — the quick-peek panel is for triage, the page is for investigation. History is investigation-grade detail; the issue callout is triage-grade signal (it tells the operator at a glance *why* the VM is flagged), so it belongs in the panel. The `Derived | Scheduler` badge pair inside the callout duplicated the derived status already shown in the Status row; moving the scheduler status to a labeled `dl` row puts it next to the status it qualifies and removes the repetition.
+**Alternatives considered:** Keeping a shorter history preview in the panel — rejected; any history slice is investigation context the page already covers. Keeping the badge pair inside the callout — rejected as double information. Relabeling the `Status` row to `Derived` when divergent — rejected; `Status` is universal vocabulary and `Derived` is jargon, so the row keeps its name and a `Scheduler status` row is added alongside.
+
+---
+
 ## Decision #105 - 2026-05-20
 **Context:** The Overview hero `WorldMapCard` shipped in v1 (Decision #69) with no interaction — a disabled expand button carrying a "Coming soon" tooltip. The `/network` graph page now exists and is the natural place a user wants to go after glancing at the map.
 **Decision:** Make the whole card a `Link` to `/network`. Implemented as a full-bleed `absolute inset-0` overlay link so clicking anywhere on the map navigates; the header row is `pointer-events-none` and the Vemaps attribution link is lifted to `z-20` so it stays independently clickable (nested `<a>` is invalid HTML, so an overlay link beats wrapping the card). The expand icon drops its disabled/`Coming soon` state and brightens on hover via `group-hover`.
