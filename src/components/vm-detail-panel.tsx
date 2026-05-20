@@ -10,6 +10,7 @@ import { useVM } from "@/hooks/use-vms";
 import { useVMMessageInfo } from "@/hooks/use-vm-creation-times";
 import { CopyableText } from "@aleph-front/ds/copyable-text";
 import { useNodes } from "@/hooks/use-nodes";
+import { getIssueDescription, isDiscrepancyStatus } from "@/hooks/use-issues";
 import { relativeTime } from "@/lib/format";
 import { VM_STATUS_VARIANT } from "@/lib/status-map";
 
@@ -86,6 +87,20 @@ export function VMDetailPanel({ hash, onClose }: VMDetailPanelProps) {
             </Badge>
           </dd>
         </div>
+        {vm.schedulingStatus != null && vm.schedulingStatus !== vm.status && (
+          <div className="flex justify-between">
+            <dt className="text-muted-foreground">Scheduler status</dt>
+            <dd>
+              <Badge
+                fill="outline"
+                variant={VM_STATUS_VARIANT[vm.schedulingStatus]}
+                size="sm"
+              >
+                {vm.schedulingStatus}
+              </Badge>
+            </dd>
+          </div>
+        )}
         {vm.paymentStatus && (
           <div className="flex justify-between">
             <dt className="text-muted-foreground">Payment</dt>
@@ -100,6 +115,14 @@ export function VMDetailPanel({ hash, onClose }: VMDetailPanelProps) {
           </div>
         )}
       </dl>
+
+      {isDiscrepancyStatus(vm.status) && (
+        <div className="mt-4 rounded-lg border border-warning-400/20 bg-warning-400/5 p-3">
+          <p className="text-xs leading-relaxed text-warning-300">
+            {getIssueDescription(vm.status)}
+          </p>
+        </div>
+      )}
 
       {(() => {
         const owner = vm.owner ?? messageInfo?.get(vm.hash)?.sender ?? null;
@@ -256,35 +279,6 @@ export function VMDetailPanel({ hash, onClose }: VMDetailPanelProps) {
           </div>
         </dl>
       </div>
-
-      {vm.history.length > 0 && (
-        <div className="mt-4 space-y-1.5 border-t border-edge pt-3">
-          <h4 className="text-xs font-semibold uppercase tracking-wider text-muted-foreground">
-            History
-          </h4>
-          <ul className="space-y-1">
-            {vm.history.slice(0, 5).map((row) => (
-              <li
-                key={row.id}
-                className="flex items-center justify-between text-sm"
-              >
-                <span className="text-xs text-muted-foreground">
-                  <span className="capitalize">{row.action.replace(/_/g, " ")}</span>
-                  {row.reason ? ` (${row.reason})` : ""}
-                </span>
-                <span className="text-xs text-muted-foreground tabular-nums">
-                  {relativeTime(row.timestamp)}
-                </span>
-              </li>
-            ))}
-          </ul>
-          {vm.history.length > 5 && (
-            <p className="mt-1.5 text-xs text-muted-foreground">
-              +{vm.history.length - 5} more
-            </p>
-          )}
-        </div>
-      )}
 
       <div className="mt-4 border-t border-edge pt-3">
         <Link

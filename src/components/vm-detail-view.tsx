@@ -132,39 +132,10 @@ export function VMDetailView({ hash }: VMDetailViewProps) {
 
       {/* Issue explanation */}
       {isDiscrepancyStatus(vm.status) && (
-        <div className="space-y-3 rounded-lg border border-warning-400/20 bg-warning-400/5 p-4">
+        <div className="rounded-lg border border-warning-400/20 bg-warning-400/5 p-4">
           <p className="text-sm leading-relaxed text-warning-300">
             {getIssueDescription(vm.status)}
           </p>
-          {vm.schedulingStatus != null &&
-            vm.schedulingStatus !== vm.status && (
-              <dl className="grid gap-x-6 gap-y-1 text-sm sm:grid-cols-2">
-                <div className="flex justify-between gap-4">
-                  <dt className="text-muted-foreground">Derived</dt>
-                  <dd>
-                    <Badge
-                      fill="outline"
-                      variant={VM_STATUS_VARIANT[vm.status]}
-                      size="sm"
-                    >
-                      {vm.status}
-                    </Badge>
-                  </dd>
-                </div>
-                <div className="flex justify-between gap-4">
-                  <dt className="text-muted-foreground">Scheduler</dt>
-                  <dd>
-                    <Badge
-                      fill="outline"
-                      variant={VM_STATUS_VARIANT[vm.schedulingStatus]}
-                      size="sm"
-                    >
-                      {vm.schedulingStatus}
-                    </Badge>
-                  </dd>
-                </div>
-              </dl>
-            )}
         </div>
       )}
 
@@ -198,6 +169,18 @@ export function VMDetailView({ hash }: VMDetailViewProps) {
             );
           })()}
           <MetaItem label="Type">{vm.type}</MetaItem>
+          {vm.schedulingStatus != null &&
+            vm.schedulingStatus !== vm.status && (
+              <MetaItem label="Scheduler status">
+                <Badge
+                  fill="outline"
+                  variant={VM_STATUS_VARIANT[vm.schedulingStatus]}
+                  size="sm"
+                >
+                  {vm.schedulingStatus}
+                </Badge>
+              </MetaItem>
+            )}
           {vm.paymentType && (
             <MetaItem label="Payment type">
               {vm.paymentType}

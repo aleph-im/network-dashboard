@@ -11,9 +11,23 @@ export type VersionEntry = {
   changes: ChangeEntry[];
 };
 
-export const CURRENT_VERSION = "0.31.0";
+export const CURRENT_VERSION = "0.31.1";
 
 export const CHANGELOG: VersionEntry[] = [
+  {
+    version: "0.31.1",
+    date: "2026-05-20",
+    changes: [
+      {
+        type: "ui",
+        text: "The VM quick-peek detail panel drops its History section — history lives on the full detail page. The amber issue callout (the reason a VM is flagged) now shows in the panel too, not just the page.",
+      },
+      {
+        type: "ui",
+        text: "When a VM's scheduler status differs from its derived status, the divergence shows as a dedicated `Scheduler status` row next to `Status` (detail panel) or in the Details card (detail page) — the issue callout is now prose only and no longer repeats the derived status.",
+      },
+    ],
+  },
   {
     version: "0.31.0",
     date: "2026-05-20",
