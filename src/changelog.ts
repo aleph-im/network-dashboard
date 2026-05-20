@@ -11,9 +11,19 @@ export type VersionEntry = {
   changes: ChangeEntry[];
 };
 
-export const CURRENT_VERSION = "0.30.0";
+export const CURRENT_VERSION = "0.31.0";
 
 export const CHANGELOG: VersionEntry[] = [
+  {
+    version: "0.31.0",
+    date: "2026-05-20",
+    changes: [
+      {
+        type: "ui",
+        text: "The world map on the Overview hero is now clickable — it navigates to the `/network` graph. The expand icon lost its disabled `Coming soon` state and brightens on hover.",
+      },
+    ],
+  },
   {
     version: "0.30.0",
     date: "2026-05-19",

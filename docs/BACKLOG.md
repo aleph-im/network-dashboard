@@ -171,7 +171,7 @@ context lands.
 
 ### 2026-05-06 - Worldmap v2: interactive node map
 **Source:** Worldmap v1 implementation (Decision #69) explicitly punted interaction
-**Description:** Add hover state per dot (node hash + country tooltip), click-to-detail (link to `/nodes?view=<hash>`), zoom/pan, and layer toggles for CRN vs CCN. Likely the moment to bring in `react-simple-maps` or D3 — pure SVG `<circle>` works for v1 but a real picker / hit-testing logic gets uncomfortable. Could also reuse the expand button (currently disabled with "Coming soon" tooltip) as the entry point to a full-screen modal map.
+**Description:** Add hover state per dot (node hash + country tooltip), click-to-detail (link to `/nodes?view=<hash>`), zoom/pan, and layer toggles for CRN vs CCN. Likely the moment to bring in `react-simple-maps` or D3 — pure SVG `<circle>` works for v1 but a real picker / hit-testing logic gets uncomfortable. The card currently links to `/network`; a full-screen modal map would be a richer alternative entry point.
 
 ### 2026-05-06 - Worldmap city-level granularity
 **Source:** Worldmap v1 implementation (Decision #69)
