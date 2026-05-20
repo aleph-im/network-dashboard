@@ -1,13 +1,8 @@
 "use client";
 
 import Image from "next/image";
+import Link from "next/link";
 import { useMemo } from "react";
-import {
-  Tooltip,
-  TooltipContent,
-  TooltipProvider,
-  TooltipTrigger,
-} from "@aleph-front/ds/tooltip";
 import { useNodeLocations } from "@/hooks/use-node-locations";
 import {
   hashToSeed,
@@ -53,14 +48,20 @@ export function WorldMapCard() {
 
   return (
     <div
-      className="relative flex aspect-[9/5] h-full flex-col overflow-hidden rounded-2xl border border-foreground/[0.06] bg-foreground/[0.03]"
+      className="group relative flex aspect-[9/5] h-full flex-col overflow-hidden rounded-2xl border border-foreground/[0.06] bg-foreground/[0.03] transition-colors hover:border-foreground/[0.12]"
       style={{
         backgroundImage:
           "radial-gradient(circle, var(--map-dot-color) 1px, transparent 1px)",
         backgroundSize: "16px 16px",
       }}
     >
-      <div className="absolute inset-x-0 top-0 z-10 flex items-center justify-between p-5">
+      <Link
+        href="/network"
+        aria-label="View the network graph"
+        className="absolute inset-0 z-10"
+      />
+
+      <div className="pointer-events-none absolute inset-x-0 top-0 z-20 flex items-center justify-between p-5">
         <div className="flex items-center gap-2">
           <span
             className="inline-block size-2.5 rounded-full"
@@ -70,23 +71,9 @@ export function WorldMapCard() {
             Aleph Cloud Nodes
           </p>
         </div>
-        <TooltipProvider>
-          <Tooltip>
-            <TooltipTrigger asChild>
-              <span tabIndex={0}>
-                <button
-                  type="button"
-                  disabled
-                  aria-label="Expand world map (coming soon)"
-                  className="flex size-7 items-center justify-center rounded-md text-muted-foreground/60 hover:bg-foreground/[0.04] disabled:cursor-not-allowed disabled:opacity-60"
-                >
-                  <ExpandIcon />
-                </button>
-              </span>
-            </TooltipTrigger>
-            <TooltipContent side="left">Coming soon</TooltipContent>
-          </Tooltip>
-        </TooltipProvider>
+        <span className="flex size-7 items-center justify-center rounded-md text-muted-foreground/50 transition-colors group-hover:text-muted-foreground">
+          <ExpandIcon />
+        </span>
       </div>
 
       <div className="relative flex-1">
@@ -138,7 +125,7 @@ export function WorldMapCard() {
         href="https://www.vemaps.com/"
         target="_blank"
         rel="noopener"
-        className="absolute bottom-3 left-5 z-10 text-[6px] uppercase tracking-wider text-muted-foreground/20 hover:text-muted-foreground/40"
+        className="absolute bottom-3 left-5 z-20 text-[6px] uppercase tracking-wider text-muted-foreground/20 hover:text-muted-foreground/40"
       >
         Map by Vemaps.com
       </a>

@@ -18,6 +18,14 @@ Each entry includes:
 
 ---
 
+## Decision #105 - 2026-05-20
+**Context:** The Overview hero `WorldMapCard` shipped in v1 (Decision #69) with no interaction — a disabled expand button carrying a "Coming soon" tooltip. The `/network` graph page now exists and is the natural place a user wants to go after glancing at the map.
+**Decision:** Make the whole card a `Link` to `/network`. Implemented as a full-bleed `absolute inset-0` overlay link so clicking anywhere on the map navigates; the header row is `pointer-events-none` and the Vemaps attribution link is lifted to `z-20` so it stays independently clickable (nested `<a>` is invalid HTML, so an overlay link beats wrapping the card). The expand icon drops its disabled/`Coming soon` state and brightens on hover via `group-hover`.
+**Rationale:** The map is a teaser for the network topology; sending the click to the existing `/network` graph is the cheapest, most obvious payoff. A full-screen modal map (the original v1 ambition) stays in the backlog as a richer alternative.
+**Alternatives considered:** Wrapping the entire card in a single `<Link>` — rejected because the Vemaps attribution `<a>` would nest inside it (invalid HTML). Keeping the expand button as the only click target — rejected as a smaller hit area for no benefit now that the whole card navigates.
+
+---
+
 ## Decision #104 - 2026-05-19
 **Context:** The portrait `/network` page rendered a broken 50-CCN list — clicking a node linked to `/network?focus=<id>` but the graph wasn't rendered below `md`, so the focus had no visible effect. The list also omitted CRNs, geo, and reward addresses, so portrait users couldn't see the full network story.
 **Decision:** Replace the portrait fallback with a three-section summary (CCNs / Top countries / Top reward addresses) rendered by `NetworkMobileSummary`. CCN rows link to `/nodes?view=<hash>`, reward address rows link to `/wallet?address=<addr>`, country rows are informational (no detail page exists). A persistent "↻ Rotate device for full network graph" hint sits at the top. No orientation-detection API — the existing width-based media query handles landscape ≥ md. Aggregation lives in `src/lib/network-mobile-aggregates.ts` (pure helpers, unit-tested); `dotStatusFor` was promoted from `network-detail-panel.tsx` to `network-graph-model.ts` so the portrait and desktop views share the same status mapping.
