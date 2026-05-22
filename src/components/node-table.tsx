@@ -85,7 +85,7 @@ const columns: Column<Node>[] = [
         {r.name ? (
           <span className="text-sm">{r.name}</span>
         ) : (
-          <span className="text-xs text-muted-foreground">{"\u2014"}</span>
+          <span className="text-xs text-muted-foreground">{"—"}</span>
         )}
         {r.confidentialComputing && (
           <Tooltip>
@@ -105,7 +105,7 @@ const columns: Column<Node>[] = [
     accessor: (r) => {
       const cu = computeNodeCu(r);
       if (cu == null) {
-        return <span className="text-xs">{"\u2014"}</span>;
+        return <span className="text-xs">{"—"}</span>;
       }
       return (
         <Tooltip>
@@ -113,18 +113,18 @@ const columns: Column<Node>[] = [
             <span className="text-xs tabular-nums">
               {cu.total}
               <span className="ml-1 text-muted-foreground/60">
-                \u00b7 {cu.used} used
+                · {cu.used} used
               </span>
             </span>
           </TooltipTrigger>
           <TooltipContent>
             <span className="block">
-              {cu.total} CU total \u00b7 {cu.available} available \u00b7 {cu.used} used
+              {cu.total} CU total · {cu.available} available · {cu.used} used
             </span>
             <span className="block text-muted-foreground">
               {cu.isGpu
-                ? "GPU-class \u2014 1 CU = 1 vCPU / 6 GB / 60 GB"
-                : "Standard \u2014 1 CU = 1 vCPU / 2 GB / 20 GB"}
+                ? "GPU-class — 1 CU = 1 vCPU / 6 GB / 60 GB"
+                : "Standard — 1 CU = 1 vCPU / 2 GB / 20 GB"}
             </span>
           </TooltipContent>
         </Tooltip>
@@ -138,7 +138,7 @@ const columns: Column<Node>[] = [
     header: "Memory",
     accessor: (r) => {
       const mb = r.resources?.memoryTotalMb;
-      if (mb == null) return <span className="text-xs">{"\u2014"}</span>;
+      if (mb == null) return <span className="text-xs">{"—"}</span>;
       const gb = mb / 1024;
       return (
         <span className="text-xs tabular-nums">
