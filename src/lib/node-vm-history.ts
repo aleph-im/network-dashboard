@@ -9,7 +9,13 @@ type ReplayInput = {
   windowEndSec: number;
 };
 
-const SIGN: Record<HistoryRow["action"], 1 | -1> = {
+/**
+ * VM-count delta per history action. Keyed by `string`, not `HistoryAction`,
+ * because the API emits actions the type doesn't model (e.g. GPU-related
+ * events on GPU nodes); an unknown action resolves to `undefined` and is
+ * treated as a no-op by the `?? 0` at the lookup site.
+ */
+const SIGN: Record<string, 1 | -1> = {
   scheduled: 1,
   migrated_to: 1,
   unscheduled: -1,
@@ -50,7 +56,9 @@ export function replayVmCountTimeline(input: ReplayInput): number[] {
   for (let i = bucketStarts.length - 1; i >= 0; i--) {
     const bucketStart = bucketStarts[i]!;
     while (eventIdx < events.length && events[eventIdx]!.sec >= bucketStart) {
-      const sign = SIGN[events[eventIdx]!.action];
+      // Unknown actions (outside the four VM-scheduling events) don't change
+      // the VM count — `?? 0` keeps `count` a number instead of going NaN.
+      const sign = SIGN[events[eventIdx]!.action] ?? 0;
       count -= sign;
       eventIdx++;
     }

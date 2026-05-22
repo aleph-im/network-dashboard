@@ -26,6 +26,10 @@ export const CHANGELOG: VersionEntry[] = [
         type: "feature",
         text: "The Nodes advanced filters gain a CU range slider alongside the existing vCPUs and Memory sliders.",
       },
+      {
+        type: "fix",
+        text: "The node earnings sparkline no longer shows `NaN VMs avg` on GPU nodes — their history carries event types the VM-count replay didn't recognise, which are now ignored instead of breaking the average.",
+      },
     ],
   },
   {

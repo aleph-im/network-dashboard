@@ -107,6 +107,30 @@ describe("replayVmCountTimeline", () => {
     expect(counts).toEqual([4, 4, 4]);
   });
 
+  it("ignores history actions outside the known set (no NaN)", () => {
+    // GPU nodes emit history actions the HistoryAction type doesn't model.
+    // An unknown action must be a no-op, not poison the count with NaN.
+    const buckets = [1000, 2000, 3000];
+    const history: HistoryRow[] = [
+      row(1, "scheduled", new Date(2500 * 1000).toISOString()),
+      row(
+        2,
+        "gpu_attached" as HistoryRow["action"],
+        new Date(2600 * 1000).toISOString(),
+      ),
+    ];
+    const counts = replayVmCountTimeline({
+      history,
+      currentVmCount: 5,
+      bucketStarts: buckets,
+      windowEndSec: 4000,
+    });
+    // The unknown action leaves count untouched; only the 'scheduled' at 2500
+    // moves it. Before 2500: 4; at/after: 5.
+    expect(counts).toEqual([4, 4, 5]);
+    expect(counts.some((c) => Number.isNaN(c))).toBe(false);
+  });
+
   it("never returns negative counts (defensive clamp)", () => {
     // Inconsistent data: more 'scheduled' events than currentVmCount accounts for.
     const buckets = [1000, 2000];
