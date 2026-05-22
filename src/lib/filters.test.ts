@@ -448,7 +448,7 @@ describe("computeNodeFilterMaxes", () => {
   });
 
   it("rounds up to the next power of two when nodes exceed the floor", () => {
-    // 200 vCPUs → 256 ; 600 GB → 1024 ; 130 VMs → 256
+    // 200 vCPUs → 256 ; 600 GB → 1024 ; 130 VMs → 256 ; CU → 64 (floor; the helper's disk is 0)
     const nodes = [
       makeNode({
         resources: makeResources(200, 600 * 1024),
@@ -542,6 +542,12 @@ describe("CU filter", () => {
     const maxes = computeNodeFilterMaxes([cuTestNode(8), cuTestNode(40)]);
     // 40 CU rounds up to the next power of two (64).
     expect(maxes.cu).toBe(64);
+  });
+
+  it("computeNodeFilterMaxes rounds the cu extent up beyond the floor", () => {
+    // a 100-CU node exceeds the 64 floor → next power of two is 128
+    const maxes = computeNodeFilterMaxes([cuTestNode(100)]);
+    expect(maxes.cu).toBe(128);
   });
 
   it("applyNodeAdvancedFilters filters by cuTotalRange", () => {
