@@ -2,6 +2,18 @@
 
 **Date:** 2026-05-22
 
+> **Correction (2026-05-22, post-implementation).** This spec originally defined
+> `used CU` as `total − available`, where `available` was the limiting-resource
+> `min()` over the node's `*Available` fields. That was wrong: those fields are
+> live runtime utilization, not VM allocation, so a node of 25 idle VMs reported
+> ~1 CU used. The shipped model: **used CU** = the sum of each allocated VM's
+> footprint, where a VM's footprint is the *largest* dimension
+> `max(vCPUs, RAM_GB/ratio, disk_GB/ratio)`, floored at 1 CU; **available** =
+> `max(0, total − used)`. The Nodes table shows **total capacity only** (the
+> node-list payload has no per-VM requirements). See **Decision #107** for the
+> authoritative record. Sections below are kept as the original design;
+> Decision #107 supersedes the `used`/`available` and table-cell details.
+
 ## Problem
 
 The dashboard shows raw `vCPUs` for each CRN, but the operationally meaningful

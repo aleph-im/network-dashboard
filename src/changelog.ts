@@ -20,7 +20,7 @@ export const CHANGELOG: VersionEntry[] = [
     changes: [
       {
         type: "feature",
-        text: "Each CRN now shows its capacity in Compute Units (CU) — total, available, and used. CU is the limiting resource across CPU, RAM, and disk: standard and confidential nodes count 1 CU per 1 vCPU / 2 GB / 20 GB, GPU nodes per 1 vCPU / 6 GB / 60 GB. The Nodes table swaps its vCPUs column for CU (full breakdown in the cell tooltip), the node detail view adds a CU usage bar, and the quick-peek and network graph CRN panels show a CU line.",
+        text: "Each CRN now shows its capacity in Compute Units (CU). Total CU capacity is the limiting resource across CPU, RAM, and disk: standard and confidential nodes count 1 CU per 1 vCPU / 2 GB / 20 GB, GPU nodes per 1 vCPU / 6 GB / 60 GB. Used CU is the sum of each hosted VM's footprint (every VM is at least 1 CU). The Nodes table swaps its vCPUs column for CU (total capacity, with the formula in the cell tooltip); the node detail view, quick-peek panel, and network graph CRN panel show total, used, and available.",
       },
       {
         type: "feature",
