@@ -1,3 +1,10 @@
+---
+status: done
+branch: feature/crn-compute-units
+date: 2026-05-22
+note: all 9 tasks complete, pnpm check clean (318 tests); awaiting preview before ship
+---
+
 # CRN Compute Units (CU) Display — Implementation Plan
 
 > **For agentic workers:** REQUIRED SUB-SKILL: Use superpowers:subagent-driven-development (recommended) or superpowers:executing-plans to implement this plan task-by-task. Steps use checkbox (`- [ ]`) syntax for tracking.
