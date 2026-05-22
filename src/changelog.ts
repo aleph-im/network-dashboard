@@ -11,9 +11,23 @@ export type VersionEntry = {
   changes: ChangeEntry[];
 };
 
-export const CURRENT_VERSION = "0.31.1";
+export const CURRENT_VERSION = "0.32.0";
 
 export const CHANGELOG: VersionEntry[] = [
+  {
+    version: "0.32.0",
+    date: "2026-05-22",
+    changes: [
+      {
+        type: "feature",
+        text: "Each CRN now shows its capacity in Compute Units (CU) — total, available, and used. CU is the limiting resource across CPU, RAM, and disk: standard and confidential nodes count 1 CU per 1 vCPU / 2 GB / 20 GB, GPU nodes per 1 vCPU / 6 GB / 60 GB. The Nodes table swaps its vCPUs column for CU (full breakdown in the cell tooltip), the node detail view adds a CU usage bar, and the quick-peek and network graph CRN panels show a CU line.",
+      },
+      {
+        type: "feature",
+        text: "The Nodes advanced filters gain a CU range slider alongside the existing vCPUs and Memory sliders.",
+      },
+    ],
+  },
   {
     version: "0.31.1",
     date: "2026-05-20",

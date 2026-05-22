@@ -18,6 +18,14 @@ Each entry includes:
 
 ---
 
+## Decision #107 - 2026-05-22
+**Context:** The Nodes table and detail surfaces exposed raw `vCPUs`, but the operationally meaningful capacity unit on Aleph is the Compute Unit (CU) — a bundle of CPU, RAM, and disk. Operators wanted CU per CRN.
+**Decision:** Add `src/lib/compute-units.ts` deriving CU = the limiting resource across CPU / RAM / disk. Standard and confidential CRNs use 1 CU = 1vCPU/2GB/20GB; GPU CRNs (any GPU device present) use 1vCPU/6GB/60GB. CU is floored to a whole number; `available` is clamped to `total` so `used = total − available` is always ≥ 0. CU is shown on four surfaces — the Nodes table (the `vCPUs` column is replaced by `CU`; total prominent, used muted, full breakdown + formula in a cell tooltip), the node detail view Resources card (usage bar + available/class caption), the quick-peek panel (one-line `dl` row), and the network graph CRN panel (one line in Resources). The Nodes advanced filter keeps the vCPUs range slider and gains a CU range slider.
+**Rationale:** All data already exists on the `Node` (`resources` + `gpus`) — CU is pure presentation, no API change. The limiting-resource `min()` is the honest reading of "how many CU can this node host." Keeping the vCPUs filter alongside the new CU filter preserves the underlying-property query while matching the new column.
+**Alternatives considered:** CU from vCPU alone (rejected — ignores RAM/disk limits, the whole point). `used` as a separate `min()` over consumed resources (rejected — wouldn't reconcile with total − available). A `?` tooltip in the CU column header (rejected — the DS `Table` `Column.header` is string-only; the per-cell tooltip carries the formula instead). Replacing the vCPUs filter outright (rejected — vCPU is still a real property operators may query).
+
+---
+
 ## Decision #106 - 2026-05-20
 **Context:** The VM quick-peek detail panel rendered a truncated History list (5 events + "+N more"). The full detail page already has a paginated history table. Migration-heavy VMs flood the panel with low-signal repeated history rows. Separately, the amber issue callout (`getIssueDescription`) only appeared on the full detail page, not in the panel.
 **Decision:** Drop the History section from `vm-detail-panel.tsx` entirely — history lives only on the detail page. Add the issue callout to the panel so it shows on both the panel and the page when the VM's status is a discrepancy value. The callout is **prose only**: the scheduler-vs-derived split is shown as a dedicated row outside the callout — a `Scheduler status` row under `Status` in the panel's `dl`, and a `Scheduler status` row in the detail page's Details card — rendered only when `schedulingStatus !== status`.
