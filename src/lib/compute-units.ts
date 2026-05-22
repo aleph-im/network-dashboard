@@ -12,9 +12,9 @@ export const CU_RATIOS = {
 export type NodeCu = {
   /** CU capacity — whole number. */
   total: number;
-  /** CU committed to allocated VMs — whole number. */
+  /** CU committed to allocated VMs (vCPU/RAM bundles) — whole number. */
   used: number;
-  /** Free CU — `max(0, total - used)`. */
+  /** Free CU — vCPU/RAM headroom, capped by remaining disk. */
   available: number;
   /** Whether the GPU ratio was used (node has GPU devices). */
   isGpu: boolean;
@@ -48,44 +48,63 @@ export function computeNodeCuTotal(node: Node): number | null {
 }
 
 /**
- * CU footprint of one VM — the largest (most demanding) dimension across its
- * requested vCPU / RAM / disk, floored at a 1 CU minimum (every VM occupies
- * at least one CU). `isGpu` must match the host node's class.
+ * CU footprint of one VM — the larger of its requested vCPU and RAM demand,
+ * floored at a 1 CU minimum (every VM occupies at least one CU).
+ *
+ * Disk is deliberately excluded: a CU bundles a fixed vCPU + RAM slice, and a
+ * customer who needs more storage buys it separately as persistent storage.
+ * Counting disk here would inflate the footprint of a storage-heavy VM far
+ * beyond the CU the customer actually provisioned. Disk pressure is instead
+ * reflected in `computeNodeCu`'s `available`. `isGpu` must match the host
+ * node's class.
  */
 export function computeVmCu(
   req: VmRequirements | null | undefined,
   isGpu: boolean,
 ): number {
-  const { ramGbPerCu, diskGbPerCu } = isGpu
-    ? CU_RATIOS.gpu
-    : CU_RATIOS.standard;
+  const { ramGbPerCu } = isGpu ? CU_RATIOS.gpu : CU_RATIOS.standard;
 
   const byCpu = req?.vcpus ?? 0;
   const byRam = (req?.memoryMb ?? 0) / 1024 / ramGbPerCu;
-  const byDisk = (req?.diskMb ?? 0) / 1024 / diskGbPerCu;
 
-  return Math.max(1, byCpu, byRam, byDisk);
+  return Math.max(1, byCpu, byRam);
 }
 
 /**
  * CU capacity, usage, and availability of a CRN.
  *
- * `used` is the sum of every allocated VM's CU footprint (see `computeVmCu`)
- * — this reflects what is committed to VMs, NOT live hardware utilization.
- * `available` is `total - used`, clamped at 0. Returns `null` when the node
- * reports no `resources`.
+ * `used` is the sum of every allocated VM's vCPU/RAM CU footprint (see
+ * `computeVmCu`) — what is committed to VMs, NOT live hardware utilization.
+ *
+ * `available` is the vCPU/RAM headroom (`total - used`) capped by the disk
+ * left on the node: persistent storage is paid separately and consumes disk,
+ * so a node can run out of disk while vCPU/RAM still look free — and the
+ * leftover vCPU/RAM is then unplaceable. Returns `null` when the node reports
+ * no `resources`.
  */
 export function computeNodeCu(node: Node, vms: VM[]): NodeCu | null {
+  const r = node.resources;
   const total = computeNodeCuTotal(node);
-  if (total == null) return null;
+  if (r == null || total == null) return null;
 
   const isGpu = isGpuNode(node);
+  const { diskGbPerCu } = isGpu ? CU_RATIOS.gpu : CU_RATIOS.standard;
+
   const usedRaw = vms.reduce(
     (sum, vm) => sum + computeVmCu(vm.requirements, isGpu),
     0,
   );
   const used = Math.round(usedRaw);
-  const available = Math.max(0, total - used);
+
+  const usedDiskGb = vms.reduce(
+    (sum, vm) => sum + (vm.requirements?.diskMb ?? 0) / 1024,
+    0,
+  );
+  const freeDiskCu = (r.diskTotalMb / 1024 - usedDiskGb) / diskGbPerCu;
+  const available = Math.max(
+    0,
+    Math.floor(Math.min(total - used, freeDiskCu)),
+  );
 
   return { total, used, available, isGpu };
 }

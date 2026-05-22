@@ -7,10 +7,12 @@
 > `min()` over the node's `*Available` fields. That was wrong: those fields are
 > live runtime utilization, not VM allocation, so a node of 25 idle VMs reported
 > ~1 CU used. The shipped model: **used CU** = the sum of each allocated VM's
-> footprint, where a VM's footprint is the *largest* dimension
-> `max(vCPUs, RAM_GB/ratio, disk_GB/ratio)`, floored at 1 CU; **available** =
-> `max(0, total − used)`. The Nodes table shows **total capacity only** (the
-> node-list payload has no per-VM requirements). See **Decision #107** for the
+> footprint, where a VM's footprint is `max(vCPUs, RAM_GB/ratio)`, floored at
+> 1 CU — **disk is excluded** (a CU is a fixed vCPU+RAM bundle; storage is paid
+> separately as persistent storage). **available CU** = the vCPU/RAM headroom
+> `total − used`, capped by remaining disk: `max(0, min(total − used,
+> freeDiskCu))`. The Nodes table shows **total capacity only** (the node-list
+> payload has no per-VM requirements). See **Decision #107** for the
 > authoritative record. Sections below are kept as the original design;
 > Decision #107 supersedes the `used`/`available` and table-cell details.
 
