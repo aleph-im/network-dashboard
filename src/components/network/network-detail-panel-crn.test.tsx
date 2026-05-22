@@ -78,10 +78,14 @@ describe("NetworkDetailPanelCRN", () => {
     const node = {
       hash: "crn-hash-1",
       vms: [{}, {}, {}, {}, {}, {}, {}],
+      gpus: { used: [], available: [] },
       resources: {
         vcpusTotal: 32,
         memoryTotalMb: 131072,
         diskTotalMb: 0,
+        vcpusAvailable: 0,
+        memoryAvailableMb: 0,
+        diskAvailableMb: 0,
         cpuUsagePct: 62,
         memoryUsagePct: 48,
         diskUsagePct: 0,
@@ -255,5 +259,39 @@ describe("NetworkDetailPanelCRN", () => {
       />,
     );
     expect(screen.queryByText(/Migrations/i)).not.toBeInTheDocument();
+  });
+
+  it("renders a CU line in the Resources section", () => {
+    const node = {
+      hash: "crn-hash-1",
+      vms: [],
+      gpus: { used: [], available: [] },
+      resources: {
+        vcpusTotal: 32,
+        memoryTotalMb: 64 * 1024,
+        diskTotalMb: 640 * 1024,
+        vcpusAvailable: 24,
+        memoryAvailableMb: 48 * 1024,
+        diskAvailableMb: 480 * 1024,
+        cpuUsagePct: 25,
+        memoryUsagePct: 25,
+        diskUsagePct: 25,
+      },
+    } as unknown as Node;
+    useNodeMock.mockReturnValue({
+      data: node,
+      isLoading: false,
+    } as unknown as ReturnType<typeof useNode>);
+
+    renderWithQuery(
+      <NetworkDetailPanelCRN
+        info={CRN}
+        parent={PARENT}
+        unreachable={false}
+        onFocusParent={() => {}}
+      />,
+    );
+    expect(screen.getByText("CU")).toBeInTheDocument();
+    expect(screen.getByText("8 / 32 CU · 24 free")).toBeInTheDocument();
   });
 });

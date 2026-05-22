@@ -7,6 +7,7 @@ import { NodeEarningsSpark } from "@/components/node-earnings-spark";
 import { ResourceBar } from "@/components/resource-bar";
 import { useNode } from "@/hooks/use-nodes";
 import type { CCNInfo, CRNInfo } from "@/api/credit-types";
+import { computeNodeCu, formatCuSummary } from "@/lib/compute-units";
 import { countryFlag } from "@/lib/country-flag";
 import { countryName } from "@/lib/network-address-info";
 import { CRN_SCORE_THRESHOLD } from "@/lib/network-graph-model";
@@ -167,6 +168,19 @@ export function NetworkDetailPanelCRN({
                   value={node.resources.memoryUsagePct}
                   label="Memory"
                 />
+              </div>
+              <div className="flex items-center justify-between">
+                <span className="text-xs text-muted-foreground">CU</span>
+                {(() => {
+                  const cu = computeNodeCu(node);
+                  return cu ? (
+                    <span className="text-xs tabular-nums">
+                      {formatCuSummary(cu)}
+                    </span>
+                  ) : (
+                    <span className="text-xs text-muted-foreground">—</span>
+                  );
+                })()}
               </div>
             </>
           )}
