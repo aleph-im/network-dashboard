@@ -11,6 +11,8 @@ import { StatusDot } from "@aleph-front/ds/status-dot";
 import { Tabs, TabsList, TabsTrigger } from "@aleph-front/ds/tabs";
 import { Skeleton } from "@aleph-front/ds/ui/skeleton";
 import { CopyableText } from "@aleph-front/ds/copyable-text";
+import type { Node } from "@/api/types";
+import { computeNodeCu } from "@/lib/compute-units";
 import { useNode } from "@/hooks/use-nodes";
 import { useNodeState } from "@/hooks/use-node-state";
 import { useOwnerBalances } from "@/hooks/use-owner-balances";
@@ -48,6 +50,26 @@ function MetaItem({
     <div className="flex justify-between gap-4 py-1">
       <dt className="text-muted-foreground shrink-0">{label}</dt>
       <dd className="min-w-0 truncate text-right">{children}</dd>
+    </div>
+  );
+}
+
+function NodeCuBar({ node }: { node: Node }) {
+  const cu = computeNodeCu(node);
+  if (cu == null) return null;
+  const usedPct = cu.total > 0 ? Math.round((cu.used / cu.total) * 100) : 0;
+  return (
+    <div className="mb-4 space-y-1 border-b border-edge pb-4">
+      <div className="flex items-center justify-between text-sm">
+        <span className="text-muted-foreground">Compute Units</span>
+        <span className="text-xs tabular-nums">
+          {cu.used} / {cu.total} CU
+        </span>
+      </div>
+      <ResourceBar value={usedPct} label="CU" />
+      <p className="text-xs text-muted-foreground/60">
+        {cu.available} CU available · {cu.isGpu ? "GPU-class" : "standard"}
+      </p>
     </div>
   );
 }
@@ -276,6 +298,7 @@ export function NodeDetailView({ hash, initialTab }: NodeDetailViewProps) {
           <h3 className="mb-3 text-xs font-semibold uppercase tracking-wider text-muted-foreground">
             Resources
           </h3>
+          <NodeCuBar node={node} />
           <div className="grid gap-4 sm:grid-cols-3">
             <div className="space-y-1">
               <div className="flex items-center justify-between text-sm">
