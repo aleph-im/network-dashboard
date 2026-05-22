@@ -23,6 +23,7 @@ import { FilterToolbar } from "@/components/filter-toolbar";
 import { FilterPanel } from "@/components/filter-panel";
 import { CopyableText } from "@aleph-front/ds/copyable-text";
 import { relativeTime, formatGpuLabel, formatCpuLabel } from "@/lib/format";
+import { computeNodeCu } from "@/lib/compute-units";
 import {
   textSearch,
   countByStatus,
@@ -100,14 +101,37 @@ const columns: Column<Node>[] = [
     sortValue: (r) => r.name ?? "",
   },
   {
-    header: "vCPUs",
-    accessor: (r) => (
-      <span className="text-xs tabular-nums">
-        {r.resources?.vcpusTotal ?? "\u2014"}
-      </span>
-    ),
+    header: "CU",
+    accessor: (r) => {
+      const cu = computeNodeCu(r);
+      if (cu == null) {
+        return <span className="text-xs">{"\u2014"}</span>;
+      }
+      return (
+        <Tooltip>
+          <TooltipTrigger asChild>
+            <span className="text-xs tabular-nums">
+              {cu.total}
+              <span className="ml-1 text-muted-foreground/60">
+                \u00b7 {cu.used} used
+              </span>
+            </span>
+          </TooltipTrigger>
+          <TooltipContent>
+            <span className="block">
+              {cu.total} CU total \u00b7 {cu.available} available \u00b7 {cu.used} used
+            </span>
+            <span className="block text-muted-foreground">
+              {cu.isGpu
+                ? "GPU-class \u2014 1 CU = 1 vCPU / 6 GB / 60 GB"
+                : "Standard \u2014 1 CU = 1 vCPU / 2 GB / 20 GB"}
+            </span>
+          </TooltipContent>
+        </Tooltip>
+      );
+    },
     sortable: true,
-    sortValue: (r) => r.resources?.vcpusTotal ?? 0,
+    sortValue: (r) => computeNodeCu(r)?.total ?? 0,
     align: "right",
   },
   {
