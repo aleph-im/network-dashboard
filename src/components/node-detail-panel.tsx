@@ -11,6 +11,7 @@ import { useNode } from "@/hooks/use-nodes";
 import { useNodeState } from "@/hooks/use-node-state";
 import { NodeEarningsSpark } from "@/components/node-earnings-spark";
 import { relativeTime, formatCpuLabel } from "@/lib/format";
+import { computeNodeCu, formatCuSummary } from "@/lib/compute-units";
 import {
   nodeStatusToDot,
   NODE_STATUS_VARIANT,
@@ -38,6 +39,8 @@ export function NodeDetailPanel({ hash, onClose }: NodeDetailPanelProps) {
   }
 
   if (!node) return null;
+
+  const cu = computeNodeCu(node);
 
   return (
     <Card padding="md" variant="ghost" className="w-full rounded-xl border border-foreground/[0.06] bg-foreground/[0.03] lg:sticky lg:top-0 lg:w-96">
@@ -108,6 +111,12 @@ export function NodeDetailPanel({ hash, onClose }: NodeDetailPanelProps) {
           <dt className="text-muted-foreground">Updated</dt>
           <dd className="text-xs">{relativeTime(node.updatedAt)}</dd>
         </div>
+        {cu && (
+          <div className="flex justify-between">
+            <dt className="text-muted-foreground">CU</dt>
+            <dd className="text-xs tabular-nums">{formatCuSummary(cu)}</dd>
+          </div>
+        )}
       </dl>
 
       {node.owner && (

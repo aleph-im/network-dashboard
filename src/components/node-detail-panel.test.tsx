@@ -57,6 +57,22 @@ const BUSY_NODE = {
   gpus: { used: [], available: [] },
 } as unknown as Node;
 
+const CU_NODE = {
+  ...BUSY_NODE,
+  hash: "crn-cu-1",
+  resources: {
+    vcpusTotal: 32,
+    memoryTotalMb: 64 * 1024,
+    diskTotalMb: 640 * 1024,
+    vcpusAvailable: 24,
+    memoryAvailableMb: 48 * 1024,
+    diskAvailableMb: 480 * 1024,
+    cpuUsagePct: 25,
+    memoryUsagePct: 25,
+    diskUsagePct: 25,
+  },
+} as unknown as Node;
+
 describe("NodeDetailPanel", () => {
   it("renders the Earnings · 24h section and no longer renders the VMs list block", () => {
     useNodeMock.mockReturnValue({
@@ -74,5 +90,18 @@ describe("NodeDetailPanel", () => {
 
     // No "+N more" suffix from the truncated list.
     expect(screen.queryByText(/^\+\d+ more$/)).not.toBeInTheDocument();
+  });
+
+  it("renders a CU row when the node reports resources", () => {
+    useNodeMock.mockReturnValue({
+      data: CU_NODE,
+      isLoading: false,
+    } as unknown as ReturnType<typeof useNode>);
+
+    renderWithQuery(<NodeDetailPanel hash="crn-cu-1" onClose={() => {}} />);
+
+    expect(screen.getByText("CU")).toBeInTheDocument();
+    // 32 total, 24 available, used = 8
+    expect(screen.getByText("8 / 32 CU · 24 free")).toBeInTheDocument();
   });
 });
