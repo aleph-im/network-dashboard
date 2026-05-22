@@ -59,14 +59,14 @@ function NodeCuBar({ node }: { node: NodeDetail }) {
   if (cu == null) return null;
   const usedPct = cu.total > 0 ? Math.round((cu.used / cu.total) * 100) : 0;
   return (
-    <div className="mb-4 space-y-1 border-b border-edge pb-4">
-      <div className="flex items-center justify-between text-sm">
+    <div className="mb-4 space-y-2 border-b border-edge pb-4">
+      <div className="flex items-baseline justify-between text-sm">
         <span className="text-muted-foreground">Compute Units</span>
-        <span className="text-xs tabular-nums">
+        <span className="tabular-nums">
           {cu.used} / {cu.total} CU
         </span>
       </div>
-      <ResourceBar value={usedPct} label="CU" />
+      <ResourceBar value={usedPct} label="CU" fullWidth />
       <p className="text-xs text-muted-foreground/60">
         {cu.available} CU available · {cu.isGpu ? "GPU-class" : "standard"}
       </p>

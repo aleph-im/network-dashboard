@@ -107,7 +107,7 @@ const columns: Column<Node>[] = [
       if (total == null) {
         return <span className="text-xs">{"—"}</span>;
       }
-      const isGpu = r.gpus.used.length + r.gpus.available.length > 0;
+      const isGpu = r.gpus.available.length > 0;
       return (
         <Tooltip>
           <TooltipTrigger asChild>

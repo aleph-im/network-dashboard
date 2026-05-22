@@ -73,7 +73,7 @@ describe("computeNodeCuTotal", () => {
     expect(computeNodeCuTotal(makeNode({ resources: RES }))).toBe(32);
   });
 
-  it("uses the GPU ratio when the node has GPU devices", () => {
+  it("uses the GPU ratio when the node has a free GPU", () => {
     // min(32, 64/6=10.6, 640/60=10.6) = 10
     const total = computeNodeCuTotal(
       makeNode({
@@ -85,6 +85,20 @@ describe("computeNodeCuTotal", () => {
       }),
     );
     expect(total).toBe(10);
+  });
+
+  it("reverts to the standard ratio when every GPU is in use", () => {
+    // both GPUs allocated → no free GPU → standard ratio → min(32, 32, 32) = 32
+    const total = computeNodeCuTotal(
+      makeNode({
+        resources: RES,
+        gpus: {
+          used: [{ vendor: "NVIDIA", model: "RTX", deviceName: "RTX" }],
+          available: [],
+        },
+      }),
+    );
+    expect(total).toBe(32);
   });
 
   it("is RAM-limited when memory is the scarce resource", () => {

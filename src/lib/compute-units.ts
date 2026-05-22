@@ -20,9 +20,14 @@ export type NodeCu = {
   isGpu: boolean;
 };
 
-/** A node is GPU-class when it reports any GPU device, used or available. */
+/**
+ * A node is treated as GPU-class while it still has a *free* GPU: its spare
+ * capacity can host a GPU instance, so it is measured with the GPU ratio.
+ * Once every GPU is allocated, only standard instances can be placed, so the
+ * node reverts to the standard ratio.
+ */
 function isGpuNode(node: Node): boolean {
-  return node.gpus.used.length + node.gpus.available.length > 0;
+  return node.gpus.available.length > 0;
 }
 
 /**
