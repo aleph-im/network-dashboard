@@ -2,7 +2,6 @@ import { describe, expect, it } from "vitest";
 import {
   computeNodeCu,
   computeNodeCuTotal,
-  computeVmCu,
   formatCuSummary,
 } from "@/lib/compute-units";
 import type { Node, VM } from "@/api/types";
@@ -63,6 +62,8 @@ const RES = {
   diskUsagePct: 25,
 };
 
+const GPU = { vendor: "NVIDIA", model: "RTX", deviceName: "RTX" };
+
 describe("computeNodeCuTotal", () => {
   it("returns null when resources is null", () => {
     expect(computeNodeCuTotal(makeNode({ resources: null }))).toBeNull();
@@ -76,13 +77,7 @@ describe("computeNodeCuTotal", () => {
   it("uses the GPU ratio when the node has a free GPU", () => {
     // min(32, 64/6=10.6, 640/60=10.6) = 10
     const total = computeNodeCuTotal(
-      makeNode({
-        resources: RES,
-        gpus: {
-          used: [],
-          available: [{ vendor: "NVIDIA", model: "RTX", deviceName: "RTX" }],
-        },
-      }),
+      makeNode({ resources: RES, gpus: { used: [], available: [GPU] } }),
     );
     expect(total).toBe(10);
   });
@@ -90,13 +85,7 @@ describe("computeNodeCuTotal", () => {
   it("reverts to the standard ratio when every GPU is in use", () => {
     // both GPUs allocated → no free GPU → standard ratio → min(32, 32, 32) = 32
     const total = computeNodeCuTotal(
-      makeNode({
-        resources: RES,
-        gpus: {
-          used: [{ vendor: "NVIDIA", model: "RTX", deviceName: "RTX" }],
-          available: [],
-        },
-      }),
+      makeNode({ resources: RES, gpus: { used: [GPU], available: [] } }),
     );
     expect(total).toBe(32);
   });
@@ -116,46 +105,12 @@ describe("computeNodeCuTotal", () => {
   });
 });
 
-describe("computeVmCu", () => {
-  it("is the larger of vCPU and RAM, ignoring disk", () => {
-    // 2 vCPU / 4GB / 2000GB standard → max(2, 4/2=2) = 2 (disk ignored)
-    expect(
-      computeVmCu({ vcpus: 2, memoryMb: 4 * 1024, diskMb: 2000 * 1024 }, false),
-    ).toBe(2);
-  });
-
-  it("is RAM-dominated when RAM is the larger dimension", () => {
-    // 1 vCPU / 16GB standard → max(1, 16/2=8) = 8
-    expect(computeVmCu({ vcpus: 1, memoryMb: 16 * 1024, diskMb: 0 }, false)).toBe(8);
-  });
-
-  it("is vCPU-dominated when vCPU is the larger dimension", () => {
-    // 4 vCPU / 4GB standard → max(4, 4/2=2) = 4
-    expect(computeVmCu({ vcpus: 4, memoryMb: 4 * 1024, diskMb: 0 }, false)).toBe(4);
-  });
-
-  it("floors at 1 CU for a tiny VM", () => {
-    expect(computeVmCu({ vcpus: 1, memoryMb: 256, diskMb: 512 }, false)).toBe(1);
-  });
-
-  it("treats null / missing requirements as 1 CU", () => {
-    expect(computeVmCu({ vcpus: null, memoryMb: null, diskMb: null }, false)).toBe(1);
-    expect(computeVmCu(null, false)).toBe(1);
-  });
-
-  it("uses the GPU ratio when the host is GPU-class", () => {
-    // 1 vCPU / 18GB gpu → max(1, 18/6=3) = 3
-    expect(computeVmCu({ vcpus: 1, memoryMb: 18 * 1024, diskMb: 0 }, true)).toBe(3);
-  });
-});
-
 describe("computeNodeCu", () => {
   it("returns null when resources is null", () => {
     expect(computeNodeCu(makeNode({ resources: null }), [])).toBeNull();
   });
 
   it("has zero used and full available when no VMs are allocated", () => {
-    // total 32; no disk consumed → available capped only by total - used
     expect(computeNodeCu(makeNode({ resources: RES }), [])).toEqual({
       total: 32,
       used: 0,
@@ -164,60 +119,81 @@ describe("computeNodeCu", () => {
     });
   });
 
-  it("sums per-VM vCPU/RAM footprints for used", () => {
-    // VMs: max(1,1)=1 and max(4,4)=4 → used 5; disk 100GB → free 540GB/20=27
+  it("subtracts allocated VM resources from available", () => {
+    // total 32; two balanced VMs consume 8 vCPU / 16 GB / 160 GB
+    // free = min(32-8, (64-16)/2, (640-160)/20) = min(24, 24, 24) = 24
     const vms = [
       makeVm({ vcpus: 1, memoryMb: 2 * 1024, diskMb: 20 * 1024 }),
-      makeVm({ vcpus: 4, memoryMb: 8 * 1024, diskMb: 80 * 1024 }),
+      makeVm({ vcpus: 7, memoryMb: 14 * 1024, diskMb: 140 * 1024 }),
     ];
     expect(computeNodeCu(makeNode({ resources: RES }), vms)).toEqual({
       total: 32,
-      used: 5,
-      available: 27,
+      used: 8,
+      available: 24,
       isGpu: false,
     });
   });
 
-  it("does not inflate used CU for a storage-heavy VM", () => {
-    // 2 vCPU / 4GB / 2000GB → used 2 (disk excluded); disk overflows the node
-    const vms = [makeVm({ vcpus: 2, memoryMb: 4 * 1024, diskMb: 2000 * 1024 })];
-    const cu = computeNodeCu(makeNode({ resources: RES }), vms);
-    expect(cu?.used).toBe(2);
-    expect(cu?.available).toBe(0);
-  });
-
-  it("caps available by the disk left on the node", () => {
-    // 5 VMs of 1 CU each → used 5 (vCPU/RAM headroom would be 27);
-    // disk: 5 × 120GB = 600GB used of 640GB → 40GB free → 2 CU
-    const vms = Array.from({ length: 5 }, () =>
-      makeVm({ vcpus: 1, memoryMb: 2 * 1024, diskMb: 120 * 1024 }),
-    );
+  it("caps available by whichever resource runs out first (disk)", () => {
+    // VMs are CPU/RAM-light but disk-heavy: 600 GB of 640 GB consumed
+    // free = min(32-2, (64-4)/2, (640-600)/20) = min(30, 30, 2) = 2
+    const vms = [
+      makeVm({ vcpus: 1, memoryMb: 2 * 1024, diskMb: 300 * 1024 }),
+      makeVm({ vcpus: 1, memoryMb: 2 * 1024, diskMb: 300 * 1024 }),
+    ];
     expect(computeNodeCu(makeNode({ resources: RES }), vms)).toEqual({
       total: 32,
-      used: 5,
+      used: 30,
       available: 2,
       isGpu: false,
     });
   });
 
-  it("counts every VM as at least 1 CU", () => {
-    // 25 sub-1-CU VMs → used 25 (each floored to 1)
-    const vms = Array.from({ length: 25 }, () =>
-      makeVm({ vcpus: 1, memoryMb: 256, diskMb: 512 }),
+  it("caps available by free vCPUs on a RAM/disk-rich node", () => {
+    // 8 vCPU but RAM/disk-rich → total = min(8, 128/2, 2000/20) = 8
+    // 6 VMs use 6 vCPU; RAM/disk barely touched → free vCPU is the limit
+    const node = makeNode({
+      resources: {
+        ...RES,
+        vcpusTotal: 8,
+        memoryTotalMb: 128 * 1024,
+        diskTotalMb: 2000 * 1024,
+      },
+    });
+    const vms = Array.from({ length: 6 }, () =>
+      makeVm({ vcpus: 1, memoryMb: 1 * 1024, diskMb: 10 * 1024 }),
     );
-    expect(computeNodeCu(makeNode({ resources: RES }), vms)?.used).toBe(25);
+    expect(computeNodeCu(node, vms)).toEqual({
+      total: 8,
+      used: 6,
+      available: 2,
+      isGpu: false,
+    });
   });
 
-  it("clamps available at 0 when VMs overcommit vCPU/RAM", () => {
-    // total = min(4, 8/2=4, 80/20=4) = 4; one 10-CU VM
-    const node = makeNode({
-      resources: { ...RES, vcpusTotal: 4, memoryTotalMb: 8 * 1024, diskTotalMb: 80 * 1024 },
+  it("clamps available at 0 when VMs overcommit a resource", () => {
+    // 40 single-vCPU VMs on a 32 vCPU node → vCPU overcommitted
+    const vms = Array.from({ length: 40 }, () => makeVm({ vcpus: 1 }));
+    expect(computeNodeCu(makeNode({ resources: RES }), vms)).toEqual({
+      total: 32,
+      used: 32,
+      available: 0,
+      isGpu: false,
     });
-    const vms = [makeVm({ vcpus: 10, memoryMb: 20 * 1024, diskMb: 0 })];
-    const cu = computeNodeCu(node, vms);
-    expect(cu?.total).toBe(4);
-    expect(cu?.used).toBe(10);
-    expect(cu?.available).toBe(0);
+  });
+
+  it("uses the GPU ratio for capacity when a GPU is free", () => {
+    // free GPU → GPU ratio → total = min(32, 64/6, 640/60) = 10
+    const node = makeNode({
+      resources: RES,
+      gpus: { used: [], available: [GPU] },
+    });
+    expect(computeNodeCu(node, [])).toEqual({
+      total: 10,
+      used: 0,
+      available: 10,
+      isGpu: true,
+    });
   });
 });
 
