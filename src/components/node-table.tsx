@@ -280,6 +280,8 @@ export function NodeTable({
         advanced.memoryTotalGbRange,
         filterMaxes.memoryGb,
       ),
+    advanced.cuTotalRange != null &&
+      isRangeActive(advanced.cuTotalRange, filterMaxes.cu),
   ].filter(Boolean).length;
 
   // Filter pipeline
@@ -567,6 +569,31 @@ export function NodeTable({
                 Hardware
               </span>
               <div className="space-y-6">
+                <div className="space-y-3">
+                  <div className="flex items-center justify-between text-sm font-semibold text-muted-foreground">
+                    <span>CU</span>
+                    <span className="tabular-nums text-xs">
+                      {advanced.cuTotalRange?.[0] ?? 0}–
+                      {advanced.cuTotalRange?.[1] ?? filterMaxes.cu}
+                    </span>
+                  </div>
+                  <Slider
+                    size="sm"
+                    min={0}
+                    max={filterMaxes.cu}
+                    step={1}
+                    value={
+                      advanced.cuTotalRange ?? [0, filterMaxes.cu]
+                    }
+                    onValueChange={(val) =>
+                      updateAdvanced((p) => ({
+                        ...p,
+                        cuTotalRange: val as [number, number],
+                      }))
+                    }
+                    showTooltip
+                  />
+                </div>
                 <div className="space-y-3">
                   <div className="flex items-center justify-between text-sm font-semibold text-muted-foreground">
                     <span>vCPUs</span>
