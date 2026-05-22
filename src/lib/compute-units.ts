@@ -1,4 +1,4 @@
-import type { Node } from "@/api/types";
+import type { Node, VM, VmRequirements } from "@/api/types";
 
 /**
  * RAM (GB) and disk (GB) bundled into one Compute Unit, by node class.
@@ -12,65 +12,82 @@ export const CU_RATIOS = {
 export type NodeCu = {
   /** CU capacity — whole number. */
   total: number;
-  /** Free CU — whole number, clamped to `<= total`. */
-  available: number;
-  /** Consumed CU — `total - available`, always `>= 0`. */
+  /** CU committed to allocated VMs — whole number. */
   used: number;
+  /** Free CU — `max(0, total - used)`. */
+  available: number;
   /** Whether the GPU ratio was used (node has GPU devices). */
   isGpu: boolean;
 };
 
+/** A node is GPU-class when it reports any GPU device, used or available. */
+function isGpuNode(node: Node): boolean {
+  return node.gpus.used.length + node.gpus.available.length > 0;
+}
+
 /**
- * CU for one resource snapshot: the limiting dimension across CPU, RAM, disk.
- * Memory and disk are supplied in MB and converted to GB before the division.
+ * Total CU capacity of a CRN — the limiting (scarcest) resource across
+ * CPU / RAM / disk, floored to a whole number. Returns `null` when the node
+ * reports no `resources`. GPU-class nodes use the 1vCPU/6GB/60GB ratio;
+ * everything else uses 1vCPU/2GB/20GB. Confidential computing does not change
+ * the ratio.
  */
-function cuFromResources(
-  vcpus: number,
-  memoryMb: number,
-  diskMb: number,
-  ramGbPerCu: number,
-  diskGbPerCu: number,
-): number {
-  const byCpu = vcpus;
-  const byRam = memoryMb / 1024 / ramGbPerCu;
-  const byDisk = diskMb / 1024 / diskGbPerCu;
+export function computeNodeCuTotal(node: Node): number | null {
+  const r = node.resources;
+  if (r == null) return null;
+
+  const { ramGbPerCu, diskGbPerCu } = isGpuNode(node)
+    ? CU_RATIOS.gpu
+    : CU_RATIOS.standard;
+
+  const byCpu = r.vcpusTotal;
+  const byRam = r.memoryTotalMb / 1024 / ramGbPerCu;
+  const byDisk = r.diskTotalMb / 1024 / diskGbPerCu;
+
   return Math.max(0, Math.floor(Math.min(byCpu, byRam, byDisk)));
 }
 
 /**
- * Compute the CU capacity, availability, and usage of a CRN.
- *
- * Returns `null` when the node reports no `resources`. GPU-class nodes (any
- * GPU device, used or available) use the 1vCPU/6GB/60GB ratio; everything
- * else uses 1vCPU/2GB/20GB. Confidential computing does not change the ratio.
+ * CU footprint of one VM — the largest (most demanding) dimension across its
+ * requested vCPU / RAM / disk, floored at a 1 CU minimum (every VM occupies
+ * at least one CU). `isGpu` must match the host node's class.
  */
-export function computeNodeCu(node: Node): NodeCu | null {
-  const r = node.resources;
-  if (r == null) return null;
-
-  const isGpu = node.gpus.used.length + node.gpus.available.length > 0;
+export function computeVmCu(
+  req: VmRequirements | null | undefined,
+  isGpu: boolean,
+): number {
   const { ramGbPerCu, diskGbPerCu } = isGpu
     ? CU_RATIOS.gpu
     : CU_RATIOS.standard;
 
-  const total = cuFromResources(
-    r.vcpusTotal,
-    r.memoryTotalMb,
-    r.diskTotalMb,
-    ramGbPerCu,
-    diskGbPerCu,
-  );
-  const rawAvailable = cuFromResources(
-    r.vcpusAvailable,
-    r.memoryAvailableMb,
-    r.diskAvailableMb,
-    ramGbPerCu,
-    diskGbPerCu,
-  );
-  const available = Math.min(rawAvailable, total);
-  const used = total - available;
+  const byCpu = req?.vcpus ?? 0;
+  const byRam = (req?.memoryMb ?? 0) / 1024 / ramGbPerCu;
+  const byDisk = (req?.diskMb ?? 0) / 1024 / diskGbPerCu;
 
-  return { total, available, used, isGpu };
+  return Math.max(1, byCpu, byRam, byDisk);
+}
+
+/**
+ * CU capacity, usage, and availability of a CRN.
+ *
+ * `used` is the sum of every allocated VM's CU footprint (see `computeVmCu`)
+ * — this reflects what is committed to VMs, NOT live hardware utilization.
+ * `available` is `total - used`, clamped at 0. Returns `null` when the node
+ * reports no `resources`.
+ */
+export function computeNodeCu(node: Node, vms: VM[]): NodeCu | null {
+  const total = computeNodeCuTotal(node);
+  if (total == null) return null;
+
+  const isGpu = isGpuNode(node);
+  const usedRaw = vms.reduce(
+    (sum, vm) => sum + computeVmCu(vm.requirements, isGpu),
+    0,
+  );
+  const used = Math.round(usedRaw);
+  const available = Math.max(0, total - used);
+
+  return { total, used, available, isGpu };
 }
 
 /** Compact one-liner for the detail panels: `"8 / 32 CU · 24 free"`. */

@@ -1,5 +1,5 @@
 import type { Node, VM, VmStatus, VmType } from "@/api/types";
-import { computeNodeCu } from "@/lib/compute-units";
+import { computeNodeCuTotal } from "@/lib/compute-units";
 
 /** Generic text search: matches if any field contains the query. */
 export function textSearch<T>(
@@ -75,7 +75,7 @@ export function computeNodeFilterMaxes(nodes: Node[]): NodeFilterMaxes {
       (n.resources?.memoryTotalMb ?? 0) / 1024,
     );
     vmCount = Math.max(vmCount, n.vmCount);
-    cu = Math.max(cu, computeNodeCu(n)?.total ?? 0);
+    cu = Math.max(cu, computeNodeCuTotal(n) ?? 0);
   }
   return {
     vcpus: roundUpPow2(vcpus, NODE_FILTER_MAX_FLOOR.vcpus),
@@ -169,7 +169,7 @@ export function applyNodeAdvancedFilters(
   ) {
     const [min, max] = filters.cuTotalRange;
     result = result.filter((n) => {
-      const cu = computeNodeCu(n)?.total;
+      const cu = computeNodeCuTotal(n);
       return cu != null && cu >= min && cu <= max;
     });
   }

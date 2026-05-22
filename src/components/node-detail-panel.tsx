@@ -40,7 +40,7 @@ export function NodeDetailPanel({ hash, onClose }: NodeDetailPanelProps) {
 
   if (!node) return null;
 
-  const cu = computeNodeCu(node);
+  const cu = computeNodeCu(node, node.vms);
 
   return (
     <Card padding="md" variant="ghost" className="w-full rounded-xl border border-foreground/[0.06] bg-foreground/[0.03] lg:sticky lg:top-0 lg:w-96">

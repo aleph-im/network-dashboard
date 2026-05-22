@@ -172,7 +172,7 @@ export function NetworkDetailPanelCRN({
               <div className="flex items-center justify-between">
                 <span className="text-xs text-muted-foreground">CU</span>
                 {(() => {
-                  const cu = computeNodeCu(node);
+                  const cu = computeNodeCu(node, node.vms);
                   return cu ? (
                     <span className="text-xs tabular-nums">
                       {formatCuSummary(cu)}

@@ -264,7 +264,10 @@ describe("NetworkDetailPanelCRN", () => {
   it("renders a CU line in the Resources section", () => {
     const node = {
       hash: "crn-hash-1",
-      vms: [],
+      vms: [
+        { requirements: { vcpus: 1, memoryMb: 2 * 1024, diskMb: 20 * 1024 } },
+        { requirements: { vcpus: 4, memoryMb: 8 * 1024, diskMb: 80 * 1024 } },
+      ],
       gpus: { used: [], available: [] },
       resources: {
         vcpusTotal: 32,
@@ -292,6 +295,7 @@ describe("NetworkDetailPanelCRN", () => {
       />,
     );
     expect(screen.getByText("CU")).toBeInTheDocument();
-    expect(screen.getByText("8 / 32 CU · 24 free")).toBeInTheDocument();
+    // 32 total, used = 1 + 4 = 5, available = 27
+    expect(screen.getByText("5 / 32 CU · 27 free")).toBeInTheDocument();
   });
 });

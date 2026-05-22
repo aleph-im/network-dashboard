@@ -71,6 +71,10 @@ const CU_NODE = {
     memoryUsagePct: 25,
     diskUsagePct: 25,
   },
+  vms: [
+    { requirements: { vcpus: 1, memoryMb: 2 * 1024, diskMb: 20 * 1024 } },
+    { requirements: { vcpus: 4, memoryMb: 8 * 1024, diskMb: 80 * 1024 } },
+  ],
 } as unknown as Node;
 
 describe("NodeDetailPanel", () => {
@@ -101,7 +105,7 @@ describe("NodeDetailPanel", () => {
     renderWithQuery(<NodeDetailPanel hash="crn-cu-1" onClose={() => {}} />);
 
     expect(screen.getByText("CU")).toBeInTheDocument();
-    // 32 total, 24 available, used = 8
-    expect(screen.getByText("8 / 32 CU · 24 free")).toBeInTheDocument();
+    // 32 total, used = 1 + 4 = 5, available = 27
+    expect(screen.getByText("5 / 32 CU · 27 free")).toBeInTheDocument();
   });
 });

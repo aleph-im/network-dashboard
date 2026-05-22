@@ -11,7 +11,7 @@ import { StatusDot } from "@aleph-front/ds/status-dot";
 import { Tabs, TabsList, TabsTrigger } from "@aleph-front/ds/tabs";
 import { Skeleton } from "@aleph-front/ds/ui/skeleton";
 import { CopyableText } from "@aleph-front/ds/copyable-text";
-import type { Node } from "@/api/types";
+import type { NodeDetail } from "@/api/types";
 import { computeNodeCu } from "@/lib/compute-units";
 import { useNode } from "@/hooks/use-nodes";
 import { useNodeState } from "@/hooks/use-node-state";
@@ -54,8 +54,8 @@ function MetaItem({
   );
 }
 
-function NodeCuBar({ node }: { node: Node }) {
-  const cu = computeNodeCu(node);
+function NodeCuBar({ node }: { node: NodeDetail }) {
+  const cu = computeNodeCu(node, node.vms);
   if (cu == null) return null;
   const usedPct = cu.total > 0 ? Math.round((cu.used / cu.total) * 100) : 0;
   return (
