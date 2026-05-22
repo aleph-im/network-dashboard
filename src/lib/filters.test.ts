@@ -459,6 +459,7 @@ describe("computeNodeFilterMaxes", () => {
       vcpus: 256,
       memoryGb: 1024,
       vmCount: 256,
+      cu: 64,
     });
   });
 
@@ -500,6 +501,69 @@ describe("computeVmFilterMaxes", () => {
       vcpus: 64,
       memoryGb: 128,
     });
+  });
+});
+
+function cuTestNode(vcpus: number, hasResources = true): Node {
+  return {
+    hash: `n-${vcpus}`,
+    name: null,
+    address: null,
+    status: "healthy",
+    staked: false,
+    resources: hasResources
+      ? {
+          vcpusTotal: vcpus,
+          memoryTotalMb: vcpus * 2 * 1024,
+          diskTotalMb: vcpus * 20 * 1024,
+          vcpusAvailable: vcpus,
+          memoryAvailableMb: vcpus * 2 * 1024,
+          diskAvailableMb: vcpus * 20 * 1024,
+          cpuUsagePct: 0,
+          memoryUsagePct: 0,
+          diskUsagePct: 0,
+        }
+      : null,
+    vmCount: 0,
+    updatedAt: "2026-05-22T00:00:00Z",
+    owner: null,
+    supportsIpv6: null,
+    discoveredAt: null,
+    gpus: { used: [], available: [] },
+    confidentialComputing: false,
+    cpuArchitecture: null,
+    cpuVendor: null,
+    cpuFeatures: [],
+  };
+}
+
+describe("CU filter", () => {
+  it("computeNodeFilterMaxes includes a cu extent", () => {
+    const maxes = computeNodeFilterMaxes([cuTestNode(8), cuTestNode(40)]);
+    // 40 CU rounds up to the next power of two (64).
+    expect(maxes.cu).toBe(64);
+  });
+
+  it("applyNodeAdvancedFilters filters by cuTotalRange", () => {
+    const nodes = [cuTestNode(8), cuTestNode(40), cuTestNode(100)];
+    const maxes = computeNodeFilterMaxes(nodes);
+    const filtered = applyNodeAdvancedFilters(
+      nodes,
+      { cuTotalRange: [10, 50] },
+      maxes,
+    );
+    expect(filtered.map((n) => n.hash)).toEqual(["n-40"]);
+  });
+
+  it("excludes nodes without resources when the cu filter is active", () => {
+    const nodes = [cuTestNode(40), cuTestNode(0, false)];
+    const maxes = computeNodeFilterMaxes(nodes);
+    const filtered = applyNodeAdvancedFilters(
+      nodes,
+      { cuTotalRange: [1, 50] },
+      maxes,
+    );
+    expect(filtered.map((n) => n.hash)).toEqual(["n-40"]);
   });
 });
 
