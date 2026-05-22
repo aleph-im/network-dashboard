@@ -3,6 +3,8 @@
 type ResourceBarProps = {
   value: number;
   label: string;
+  /** Stretch the bar to fill its container instead of the fixed 64px width. */
+  fullWidth?: boolean;
 };
 
 function barColor(pct: number): string {
@@ -11,11 +13,19 @@ function barColor(pct: number): string {
   return "var(--color-success-500)";
 }
 
-export function ResourceBar({ value, label }: ResourceBarProps) {
+export function ResourceBar({
+  value,
+  label,
+  fullWidth = false,
+}: ResourceBarProps) {
   return (
-    <div className="flex items-center gap-2">
+    <div
+      className={`flex items-center gap-2${fullWidth ? " w-full" : ""}`}
+    >
       <div
-        className="h-1.5 w-16 overflow-hidden rounded-full bg-muted"
+        className={`h-1.5 overflow-hidden rounded-full bg-muted${
+          fullWidth ? " flex-1" : " w-16"
+        }`}
         title={`${label}: ${value}%`}
       >
         <div

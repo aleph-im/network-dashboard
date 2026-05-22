@@ -11,9 +11,27 @@ export type VersionEntry = {
   changes: ChangeEntry[];
 };
 
-export const CURRENT_VERSION = "0.31.1";
+export const CURRENT_VERSION = "0.32.0";
 
 export const CHANGELOG: VersionEntry[] = [
+  {
+    version: "0.32.0",
+    date: "2026-05-22",
+    changes: [
+      {
+        type: "feature",
+        text: "Each CRN now shows its capacity in Compute Units (CU) — total, used, and available. Total CU is the node's limiting resource across vCPU, RAM, and disk (1 CU = 1 vCPU / 2 GB / 20 GB, or 1 vCPU / 6 GB / 60 GB while the node has a free GPU); available CU is the scarcest of its remaining resources once every hosted VM's requirements are subtracted. The Nodes table swaps its vCPUs column for CU (total capacity, formula in the cell tooltip); the node detail view, quick-peek panel, and network graph CRN panel show total, used, and available.",
+      },
+      {
+        type: "feature",
+        text: "The Nodes advanced filters gain a CU range slider alongside the existing vCPUs and Memory sliders.",
+      },
+      {
+        type: "fix",
+        text: "The node earnings sparkline no longer shows `NaN VMs avg` on GPU nodes — their history carries event types the VM-count replay didn't recognise, which are now ignored instead of breaking the average.",
+      },
+    ],
+  },
   {
     version: "0.31.1",
     date: "2026-05-20",

@@ -23,6 +23,7 @@ import { FilterToolbar } from "@/components/filter-toolbar";
 import { FilterPanel } from "@/components/filter-panel";
 import { CopyableText } from "@aleph-front/ds/copyable-text";
 import { relativeTime, formatGpuLabel, formatCpuLabel } from "@/lib/format";
+import { computeNodeCuTotal } from "@/lib/compute-units";
 import {
   textSearch,
   countByStatus,
@@ -84,7 +85,7 @@ const columns: Column<Node>[] = [
         {r.name ? (
           <span className="text-sm">{r.name}</span>
         ) : (
-          <span className="text-xs text-muted-foreground">{"\u2014"}</span>
+          <span className="text-xs text-muted-foreground">{"—"}</span>
         )}
         {r.confidentialComputing && (
           <Tooltip>
@@ -100,21 +101,38 @@ const columns: Column<Node>[] = [
     sortValue: (r) => r.name ?? "",
   },
   {
-    header: "vCPUs",
-    accessor: (r) => (
-      <span className="text-xs tabular-nums">
-        {r.resources?.vcpusTotal ?? "\u2014"}
-      </span>
-    ),
+    header: "CU",
+    accessor: (r) => {
+      const total = computeNodeCuTotal(r);
+      if (total == null) {
+        return <span className="text-xs">{"—"}</span>;
+      }
+      const isGpu = r.gpus.available.length > 0;
+      return (
+        <Tooltip>
+          <TooltipTrigger asChild>
+            <span className="text-xs tabular-nums">{total}</span>
+          </TooltipTrigger>
+          <TooltipContent>
+            <span className="block">{total} CU total capacity</span>
+            <span className="block text-muted-foreground">
+              {isGpu
+                ? "GPU-class — 1 CU = 1 vCPU / 6 GB / 60 GB"
+                : "Standard — 1 CU = 1 vCPU / 2 GB / 20 GB"}
+            </span>
+          </TooltipContent>
+        </Tooltip>
+      );
+    },
     sortable: true,
-    sortValue: (r) => r.resources?.vcpusTotal ?? 0,
+    sortValue: (r) => computeNodeCuTotal(r) ?? 0,
     align: "right",
   },
   {
     header: "Memory",
     accessor: (r) => {
       const mb = r.resources?.memoryTotalMb;
-      if (mb == null) return <span className="text-xs">{"\u2014"}</span>;
+      if (mb == null) return <span className="text-xs">{"—"}</span>;
       const gb = mb / 1024;
       return (
         <span className="text-xs tabular-nums">
@@ -256,6 +274,8 @@ export function NodeTable({
         advanced.memoryTotalGbRange,
         filterMaxes.memoryGb,
       ),
+    advanced.cuTotalRange != null &&
+      isRangeActive(advanced.cuTotalRange, filterMaxes.cu),
   ].filter(Boolean).length;
 
   // Filter pipeline
@@ -543,6 +563,31 @@ export function NodeTable({
                 Hardware
               </span>
               <div className="space-y-6">
+                <div className="space-y-3">
+                  <div className="flex items-center justify-between text-sm font-semibold text-muted-foreground">
+                    <span>CU</span>
+                    <span className="tabular-nums text-xs">
+                      {advanced.cuTotalRange?.[0] ?? 0}–
+                      {advanced.cuTotalRange?.[1] ?? filterMaxes.cu}
+                    </span>
+                  </div>
+                  <Slider
+                    size="sm"
+                    min={0}
+                    max={filterMaxes.cu}
+                    step={1}
+                    value={
+                      advanced.cuTotalRange ?? [0, filterMaxes.cu]
+                    }
+                    onValueChange={(val) =>
+                      updateAdvanced((p) => ({
+                        ...p,
+                        cuTotalRange: val as [number, number],
+                      }))
+                    }
+                    showTooltip
+                  />
+                </div>
                 <div className="space-y-3">
                   <div className="flex items-center justify-between text-sm font-semibold text-muted-foreground">
                     <span>vCPUs</span>

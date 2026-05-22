@@ -1,4 +1,5 @@
 import type { Node, VM, VmStatus, VmType } from "@/api/types";
+import { computeNodeCuTotal } from "@/lib/compute-units";
 
 /** Generic text search: matches if any field contains the query. */
 export function textSearch<T>(
@@ -51,6 +52,7 @@ export type NodeFilterMaxes = {
   vmCount: number;
   vcpus: number;
   memoryGb: number;
+  cu: number;
 };
 
 /** Lower bound for slider extents — used when data is empty or loading. */
@@ -58,12 +60,14 @@ export const NODE_FILTER_MAX_FLOOR: NodeFilterMaxes = {
   vmCount: 100,
   vcpus: 128,
   memoryGb: 512,
+  cu: 64,
 };
 
 export function computeNodeFilterMaxes(nodes: Node[]): NodeFilterMaxes {
   let vcpus = 0;
   let memoryGb = 0;
   let vmCount = 0;
+  let cu = 0;
   for (const n of nodes) {
     vcpus = Math.max(vcpus, n.resources?.vcpusTotal ?? 0);
     memoryGb = Math.max(
@@ -71,6 +75,7 @@ export function computeNodeFilterMaxes(nodes: Node[]): NodeFilterMaxes {
       (n.resources?.memoryTotalMb ?? 0) / 1024,
     );
     vmCount = Math.max(vmCount, n.vmCount);
+    cu = Math.max(cu, computeNodeCuTotal(n) ?? 0);
   }
   return {
     vcpus: roundUpPow2(vcpus, NODE_FILTER_MAX_FLOOR.vcpus),
@@ -79,6 +84,7 @@ export function computeNodeFilterMaxes(nodes: Node[]): NodeFilterMaxes {
       NODE_FILTER_MAX_FLOOR.memoryGb,
     ),
     vmCount: roundUpPow2(vmCount, NODE_FILTER_MAX_FLOOR.vmCount),
+    cu: roundUpPow2(cu, NODE_FILTER_MAX_FLOOR.cu),
   };
 }
 
@@ -95,6 +101,7 @@ export type NodeAdvancedFilters = {
   vmCountRange?: [number, number];
   vcpusTotalRange?: [number, number];
   memoryTotalGbRange?: [number, number];
+  cuTotalRange?: [number, number];
 };
 
 export function applyNodeAdvancedFilters(
@@ -154,6 +161,16 @@ export function applyNodeAdvancedFilters(
     result = result.filter((n) => {
       const gb = (n.resources?.memoryTotalMb ?? 0) / 1024;
       return gb >= min && gb <= max;
+    });
+  }
+  if (
+    filters.cuTotalRange &&
+    isRangeActive(filters.cuTotalRange, maxes.cu)
+  ) {
+    const [min, max] = filters.cuTotalRange;
+    result = result.filter((n) => {
+      const cu = computeNodeCuTotal(n);
+      return cu != null && cu >= min && cu <= max;
     });
   }
   return result;
