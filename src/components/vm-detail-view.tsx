@@ -47,13 +47,16 @@ export function VMDetailView({ hash }: VMDetailViewProps) {
   const { data: vm, isLoading, error } = useVM(hash);
   const { data: messageInfo } = useVMMessageInfo([hash]);
   const { data: nodes } = useNodes();
-  const allocatedNodeName = useMemo(
-    () =>
-      vm?.allocatedNode
-        ? nodes?.find((n) => n.hash === vm.allocatedNode)?.name
-        : undefined,
-    [nodes, vm?.allocatedNode],
-  );
+  const nodeNamesByHash = useMemo(() => {
+    const map = new Map<string, string>();
+    for (const n of nodes ?? []) {
+      if (n.name) map.set(n.hash, n.name);
+    }
+    return map;
+  }, [nodes]);
+  const allocatedNodeName = vm?.allocatedNode
+    ? nodeNamesByHash.get(vm.allocatedNode)
+    : undefined;
   const {
     page: historyPage,
     pageSize: historyPageSize,
@@ -208,90 +211,10 @@ export function VMDetailView({ hash }: VMDetailViewProps) {
         </dl>
       </Card>
 
-      {/* Allocated Node */}
+      {/* Configuration */}
       <Card padding="md">
         <h3 className="mb-3 text-xs font-semibold uppercase tracking-wider text-muted-foreground">
-          Allocated Node
-        </h3>
-        {vm.allocatedNode ? (
-          <div className="flex items-center justify-between gap-2">
-            <CopyableText
-              text={vm.allocatedNode}
-              startChars={8}
-              endChars={8}
-              size="sm"
-              href={`/nodes?view=${vm.allocatedNode}`}
-            />
-            {allocatedNodeName && (
-              <span className="text-sm text-muted-foreground">
-                {allocatedNodeName}
-              </span>
-            )}
-          </div>
-        ) : (
-          <p className="text-sm text-muted-foreground">
-            Not allocated
-          </p>
-        )}
-      </Card>
-
-      {/* Migration */}
-      {vm.status === "migrating" && (
-        <Card padding="md">
-          <h3 className="mb-3 text-xs font-semibold uppercase tracking-wider text-muted-foreground">
-            Migration
-          </h3>
-          <dl className="grid gap-x-8 gap-y-1 text-sm sm:grid-cols-2">
-            <MetaItem label="Target">
-              {vm.migrationTarget ? (
-                <CopyableText
-                  text={vm.migrationTarget}
-                  startChars={8}
-                  endChars={8}
-                  size="sm"
-                  href={`/nodes?view=${vm.migrationTarget}`}
-                />
-              ) : (
-                <span className="text-xs text-muted-foreground">unknown</span>
-              )}
-            </MetaItem>
-            {vm.migrationStartedAt && (
-              <MetaItem label="Started">
-                <span className="tabular-nums">
-                  {relativeTime(vm.migrationStartedAt)}
-                </span>
-              </MetaItem>
-            )}
-          </dl>
-        </Card>
-      )}
-
-      {/* Observed Nodes */}
-      {vm.observedNodes.length > 0 && (
-        <Card padding="md">
-          <h3 className="mb-3 text-xs font-semibold uppercase tracking-wider text-muted-foreground">
-            Observed Nodes ({vm.observedNodes.length})
-          </h3>
-          <ul className="space-y-1.5">
-            {vm.observedNodes.map((nodeHash) => (
-              <li key={nodeHash}>
-                <CopyableText
-                  text={nodeHash}
-                  startChars={8}
-                  endChars={8}
-                  size="sm"
-                  href={`/nodes?view=${nodeHash}`}
-                />
-              </li>
-            ))}
-          </ul>
-        </Card>
-      )}
-
-      {/* Requirements */}
-      <Card padding="md">
-        <h3 className="mb-3 text-xs font-semibold uppercase tracking-wider text-muted-foreground">
-          Requirements
+          Configuration
         </h3>
         <dl className="grid gap-x-8 gap-y-1 text-sm sm:grid-cols-3">
           <MetaItem label="vCPUs">
@@ -334,6 +257,102 @@ export function VMDetailView({ hash }: VMDetailViewProps) {
           </MetaItem>
         </dl>
       </Card>
+
+      {/* Allocated + Observed (side-by-side when both render) */}
+      <div
+        className={
+          vm.observedNodes.length > 0 ? "grid gap-6 lg:grid-cols-2" : undefined
+        }
+      >
+        <Card padding="md">
+          <h3 className="mb-3 text-xs font-semibold uppercase tracking-wider text-muted-foreground">
+            Allocated Node
+          </h3>
+          {vm.allocatedNode ? (
+            <div className="flex items-center justify-between gap-2">
+              <CopyableText
+                text={vm.allocatedNode}
+                startChars={8}
+                endChars={8}
+                size="sm"
+                href={`/nodes?view=${vm.allocatedNode}`}
+              />
+              {allocatedNodeName && (
+                <span className="text-sm text-muted-foreground">
+                  {allocatedNodeName}
+                </span>
+              )}
+            </div>
+          ) : (
+            <p className="text-sm text-muted-foreground">
+              Not allocated
+            </p>
+          )}
+        </Card>
+
+        {vm.observedNodes.length > 0 && (
+          <Card padding="md">
+            <h3 className="mb-3 text-xs font-semibold uppercase tracking-wider text-muted-foreground">
+              Observed Nodes ({vm.observedNodes.length})
+            </h3>
+            <ul className="space-y-1.5">
+              {vm.observedNodes.map((nodeHash) => {
+                const observedName = nodeNamesByHash.get(nodeHash);
+                return (
+                  <li
+                    key={nodeHash}
+                    className="flex items-center justify-between gap-2"
+                  >
+                    <CopyableText
+                      text={nodeHash}
+                      startChars={8}
+                      endChars={8}
+                      size="sm"
+                      href={`/nodes?view=${nodeHash}`}
+                    />
+                    {observedName && (
+                      <span className="text-sm text-muted-foreground">
+                        {observedName}
+                      </span>
+                    )}
+                  </li>
+                );
+              })}
+            </ul>
+          </Card>
+        )}
+      </div>
+
+      {/* Migration */}
+      {vm.status === "migrating" && (
+        <Card padding="md">
+          <h3 className="mb-3 text-xs font-semibold uppercase tracking-wider text-muted-foreground">
+            Migration
+          </h3>
+          <dl className="grid gap-x-8 gap-y-1 text-sm sm:grid-cols-2">
+            <MetaItem label="Target">
+              {vm.migrationTarget ? (
+                <CopyableText
+                  text={vm.migrationTarget}
+                  startChars={8}
+                  endChars={8}
+                  size="sm"
+                  href={`/nodes?view=${vm.migrationTarget}`}
+                />
+              ) : (
+                <span className="text-xs text-muted-foreground">unknown</span>
+              )}
+            </MetaItem>
+            {vm.migrationStartedAt && (
+              <MetaItem label="Started">
+                <span className="tabular-nums">
+                  {relativeTime(vm.migrationStartedAt)}
+                </span>
+              </MetaItem>
+            )}
+          </dl>
+        </Card>
+      )}
 
       {/* History */}
       <Card padding="md">

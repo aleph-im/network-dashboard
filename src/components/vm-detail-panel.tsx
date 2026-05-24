@@ -24,13 +24,16 @@ export function VMDetailPanel({ hash, onClose }: VMDetailPanelProps) {
   const { data: vm, isLoading } = useVM(hash);
   const { data: messageInfo } = useVMMessageInfo([hash]);
   const { data: nodes } = useNodes();
-  const allocatedNodeName = useMemo(
-    () =>
-      vm?.allocatedNode
-        ? nodes?.find((n) => n.hash === vm.allocatedNode)?.name
-        : undefined,
-    [nodes, vm?.allocatedNode],
-  );
+  const nodeNamesByHash = useMemo(() => {
+    const map = new Map<string, string>();
+    for (const n of nodes ?? []) {
+      if (n.name) map.set(n.hash, n.name);
+    }
+    return map;
+  }, [nodes]);
+  const allocatedNodeName = vm?.allocatedNode
+    ? nodeNamesByHash.get(vm.allocatedNode)
+    : undefined;
 
   if (isLoading) {
     return (
@@ -215,17 +218,28 @@ export function VMDetailPanel({ hash, onClose }: VMDetailPanelProps) {
             Observed Nodes ({vm.observedNodes.length})
           </h4>
           <ul className="space-y-1">
-            {vm.observedNodes.slice(0, 6).map((nodeHash) => (
-              <li key={nodeHash}>
-                <CopyableText
-                  text={nodeHash}
-                  startChars={8}
-                  endChars={8}
-                  size="sm"
-                  href={`/nodes?view=${nodeHash}`}
-                />
-              </li>
-            ))}
+            {vm.observedNodes.slice(0, 6).map((nodeHash) => {
+              const observedName = nodeNamesByHash.get(nodeHash);
+              return (
+                <li
+                  key={nodeHash}
+                  className="flex items-center justify-between gap-2"
+                >
+                  <CopyableText
+                    text={nodeHash}
+                    startChars={8}
+                    endChars={8}
+                    size="sm"
+                    href={`/nodes?view=${nodeHash}`}
+                  />
+                  {observedName && (
+                    <span className="truncate text-xs text-muted-foreground">
+                      {observedName}
+                    </span>
+                  )}
+                </li>
+              );
+            })}
           </ul>
           {vm.observedNodes.length > 6 && (
             <p className="mt-1.5 text-xs text-muted-foreground">

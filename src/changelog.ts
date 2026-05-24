@@ -11,9 +11,23 @@ export type VersionEntry = {
   changes: ChangeEntry[];
 };
 
-export const CURRENT_VERSION = "0.32.1";
+export const CURRENT_VERSION = "0.32.2";
 
 export const CHANGELOG: VersionEntry[] = [
+  {
+    version: "0.32.2",
+    date: "2026-05-24",
+    changes: [
+      {
+        type: "ui",
+        text: "VM hashes now show their metadata name inline on the node detail Overview tab's Virtual Machines list and on the Earnings tab's Hosted VMs breakdown — matching the wallet's Credit Rewards pattern.",
+      },
+      {
+        type: "ui",
+        text: "VM detail page reshuffle: Requirements is renamed Configuration (it's what the user picks at creation, not a platform requirement) and moves up directly below Details. Allocated Node and Observed Nodes now sit side-by-side on desktop, with observed-node hashes also showing their node names inline.",
+      },
+    ],
+  },
   {
     version: "0.32.1",
     date: "2026-05-24",

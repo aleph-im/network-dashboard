@@ -13,6 +13,7 @@ import {
 } from "@/hooks/use-node-earnings";
 import { useNodeState } from "@/hooks/use-node-state";
 import { useNode } from "@/hooks/use-nodes";
+import { useVMMessageInfo } from "@/hooks/use-vm-creation-times";
 import {
   NodeEarningsKpiRow,
   type KpiCard,
@@ -97,6 +98,9 @@ export function NodeEarningsTab({ hash }: { hash: string }) {
   const { data, isLoading, isPlaceholderData } = useNodeEarnings(hash, range);
   const { data: nodeState } = useNodeState();
   const { data: node } = useNode(hash);
+  const { data: vmMessageInfo } = useVMMessageInfo(
+    data?.perVm?.map((v) => v.vmHash) ?? [],
+  );
 
   const crn = nodeState?.crns.get(hash);
 
@@ -170,17 +174,26 @@ export function NodeEarningsTab({ hash }: { hash: string }) {
             Hosted VMs — earnings breakdown
           </div>
           <div className="space-y-3 md:hidden">
-            {visibleVms.map((v) => (
+            {visibleVms.map((v) => {
+              const vmName = vmMessageInfo?.get(v.vmHash)?.name;
+              return (
               <MobileTableCardRow
                 key={v.vmHash}
                 href={`/vms?view=${v.vmHash}`}
                 primary={
-                  <CopyableText
-                    text={v.vmHash}
-                    startChars={8}
-                    endChars={8}
-                    size="sm"
-                  />
+                  <div className="flex min-w-0 items-center gap-2">
+                    <CopyableText
+                      text={v.vmHash}
+                      startChars={8}
+                      endChars={8}
+                      size="sm"
+                    />
+                    {vmName && (
+                      <span className="truncate text-xs text-muted-foreground">
+                        {vmName}
+                      </span>
+                    )}
+                  </div>
                 }
                 fields={[
                   {
@@ -207,7 +220,8 @@ export function NodeEarningsTab({ hash }: { hash: string }) {
                   },
                 ]}
               />
-            ))}
+              );
+            })}
             {!isPlaceholderData && rest.length > 0 && (
               <button
                 type="button"
@@ -237,16 +251,25 @@ export function NodeEarningsTab({ hash }: { hash: string }) {
               </tr>
             </thead>
             <tbody className="divide-y divide-edge">
-              {visibleVms.map((v) => (
+              {visibleVms.map((v) => {
+                const vmName = vmMessageInfo?.get(v.vmHash)?.name;
+                return (
                 <tr key={v.vmHash}>
                   <td className="py-1.5 pr-4">
-                    <CopyableText
-                      text={v.vmHash}
-                      startChars={8}
-                      endChars={8}
-                      size="sm"
-                      href={`/vms?view=${v.vmHash}`}
-                    />
+                    <div className="flex min-w-0 items-center gap-2">
+                      <CopyableText
+                        text={v.vmHash}
+                        startChars={8}
+                        endChars={8}
+                        size="sm"
+                        href={`/vms?view=${v.vmHash}`}
+                      />
+                      {vmName && (
+                        <span className="truncate text-xs text-muted-foreground">
+                          {vmName}
+                        </span>
+                      )}
+                    </div>
                   </td>
                   <td className="py-1.5 pr-4">
                     <Badge
@@ -265,7 +288,8 @@ export function NodeEarningsTab({ hash }: { hash: string }) {
                     )}
                   </td>
                 </tr>
-              ))}
+                );
+              })}
               {!isPlaceholderData && rest.length > 0 && (
                 <tr>
                   <td colSpan={expandedBreakdown ? 3 : 2} className="py-1.5 pr-4">
