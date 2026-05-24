@@ -16,6 +16,7 @@ import { computeNodeCu } from "@/lib/compute-units";
 import { useNode } from "@/hooks/use-nodes";
 import { useNodeState } from "@/hooks/use-node-state";
 import { useOwnerBalances } from "@/hooks/use-owner-balances";
+import { useVMMessageInfo } from "@/hooks/use-vm-creation-times";
 import { usePagination } from "@/hooks/use-pagination";
 import { TablePagination } from "@/components/table-pagination";
 import { ResourceBar } from "@/components/resource-bar";
@@ -81,6 +82,9 @@ export function NodeDetailView({ hash, initialTab }: NodeDetailViewProps) {
   const { data: node, isLoading: nodeLoading, error } = useNode(hash);
   const { data: nodeState, isLoading: stateLoading } = useNodeState();
   const { data: ownerBalances } = useOwnerBalances(nodeState);
+  const { data: vmMessageInfo } = useVMMessageInfo(
+    node?.vms.map((v) => v.hash) ?? [],
+  );
   const [tab, setTab] = useState<DetailTab>(initialTab ?? "overview");
   const [vmsExpanded, setVmsExpanded] = useState(false);
   const {
@@ -371,26 +375,36 @@ export function NodeDetailView({ hash, initialTab }: NodeDetailViewProps) {
           </h3>
           <ul className="space-y-1.5">
             {(vmsExpanded ? node.vms : node.vms.slice(0, VMS_PREVIEW)).map(
-              (vm) => (
-                <li
-                  key={vm.hash}
-                  className="flex items-center justify-between text-sm"
-                >
-                  <CopyableText
-                    text={vm.hash}
-                    startChars={8}
-                    endChars={8}
-                    size="sm"
-                    href={`/vms?view=${vm.hash}`}
-                  />
-                  <Badge fill="outline"
-                    variant={VM_STATUS_VARIANT[vm.status]}
-                    size="sm"
+              (vm) => {
+                const vmName = vmMessageInfo?.get(vm.hash)?.name;
+                return (
+                  <li
+                    key={vm.hash}
+                    className="flex items-center justify-between gap-3 text-sm"
                   >
-                    {vm.status}
-                  </Badge>
-                </li>
-              ),
+                    <div className="flex min-w-0 items-center gap-2">
+                      <CopyableText
+                        text={vm.hash}
+                        startChars={8}
+                        endChars={8}
+                        size="sm"
+                        href={`/vms?view=${vm.hash}`}
+                      />
+                      {vmName && (
+                        <span className="truncate text-xs text-muted-foreground">
+                          {vmName}
+                        </span>
+                      )}
+                    </div>
+                    <Badge fill="outline"
+                      variant={VM_STATUS_VARIANT[vm.status]}
+                      size="sm"
+                    >
+                      {vm.status}
+                    </Badge>
+                  </li>
+                );
+              },
             )}
           </ul>
           {node.vms.length > VMS_PREVIEW && (

@@ -37,6 +37,9 @@ vi.mock("next/navigation", () => ({
   usePathname: () => "/nodes",
   useSearchParams: () => new URLSearchParams(),
 }));
+vi.mock("@/hooks/use-vm-creation-times", () => ({
+  useVMMessageInfo: () => ({ data: undefined }),
+}));
 
 import { useNodeEarnings } from "@/hooks/use-node-earnings";
 
