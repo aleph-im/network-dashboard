@@ -7,6 +7,7 @@ import { Card } from "@aleph-front/ds/card";
 import { Badge } from "@aleph-front/ds/badge";
 import { Skeleton } from "@aleph-front/ds/ui/skeleton";
 import { CopyableText } from "@aleph-front/ds/copyable-text";
+import { StatusDot } from "@aleph-front/ds/status-dot";
 import { useVM } from "@/hooks/use-vms";
 import { useNodes } from "@/hooks/use-nodes";
 import { useVMMessageInfo } from "@/hooks/use-vm-creation-times";
@@ -20,7 +21,7 @@ import {
   relativeTime,
   formatDateTime,
 } from "@/lib/format";
-import { VM_STATUS_VARIANT } from "@/lib/status-map";
+import { VM_STATUS_VARIANT, vmStatusToDot } from "@/lib/status-map";
 
 type VMDetailViewProps = {
   hash: string;
@@ -108,7 +109,12 @@ export function VMDetailView({ hash }: VMDetailViewProps) {
         </button>
       </div>
       <div className="flex flex-wrap items-center gap-3">
-        <CopyableText text={hash} startChars={8} endChars={8} size="md" />
+        <StatusDot status={vmStatusToDot(vm.status)} />
+        {messageInfo?.get(vm.hash)?.name ? (
+          <h2 className="text-xl font-bold">{messageInfo.get(vm.hash)!.name}</h2>
+        ) : (
+          <CopyableText text={hash} startChars={8} endChars={8} size="md" />
+        )}
         <Badge fill="outline" variant="default" size="sm">
           {vm.type}
         </Badge>

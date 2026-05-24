@@ -11,9 +11,19 @@ export type VersionEntry = {
   changes: ChangeEntry[];
 };
 
-export const CURRENT_VERSION = "0.32.0";
+export const CURRENT_VERSION = "0.32.1";
 
 export const CHANGELOG: VersionEntry[] = [
+  {
+    version: "0.32.1",
+    date: "2026-05-24",
+    changes: [
+      {
+        type: "ui",
+        text: "The VM detail panel and detail page now lead with the VM's metadata name (and a StatusDot) when one is set, falling back to the hash otherwise — mirrors the node header pattern.",
+      },
+    ],
+  },
   {
     version: "0.32.0",
     date: "2026-05-22",

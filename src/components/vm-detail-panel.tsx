@@ -6,13 +6,14 @@ import { ShieldCheck } from "@phosphor-icons/react";
 import { Card } from "@aleph-front/ds/card";
 import { Badge } from "@aleph-front/ds/badge";
 import { Skeleton } from "@aleph-front/ds/ui/skeleton";
+import { StatusDot } from "@aleph-front/ds/status-dot";
 import { useVM } from "@/hooks/use-vms";
 import { useVMMessageInfo } from "@/hooks/use-vm-creation-times";
 import { CopyableText } from "@aleph-front/ds/copyable-text";
 import { useNodes } from "@/hooks/use-nodes";
 import { getIssueDescription, isDiscrepancyStatus } from "@/hooks/use-issues";
 import { relativeTime } from "@/lib/format";
-import { VM_STATUS_VARIANT } from "@/lib/status-map";
+import { VM_STATUS_VARIANT, vmStatusToDot } from "@/lib/status-map";
 
 type VMDetailPanelProps = {
   hash: string;
@@ -46,8 +47,15 @@ export function VMDetailPanel({ hash, onClose }: VMDetailPanelProps) {
 
   return (
     <Card padding="md" variant="ghost" className="w-full rounded-xl border border-foreground/[0.06] bg-foreground/[0.03] lg:sticky lg:top-0 lg:w-96">
-      <div className="mb-4 flex items-start justify-between">
-        <CopyableText text={vm.hash} startChars={8} endChars={8} size="sm" />
+      <div className="mb-4 flex items-start justify-between gap-2">
+        <div className="flex min-w-0 items-center gap-2">
+          <StatusDot status={vmStatusToDot(vm.status)} />
+          {messageInfo?.get(vm.hash)?.name ? (
+            <h3 className="truncate text-sm font-bold">{messageInfo.get(vm.hash)!.name}</h3>
+          ) : (
+            <CopyableText text={vm.hash} startChars={8} endChars={8} size="sm" />
+          )}
+        </div>
         <button
           type="button"
           onClick={onClose}
