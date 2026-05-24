@@ -40,6 +40,23 @@ export const VM_STATUS_VARIANT: Record<VmStatus, BadgeVariant> = {
   unknown: "default",
 };
 
+const VM_STATUS_TO_DOT: Record<VmStatus, DotStatus> = {
+  dispatched: "healthy",
+  scheduled: "unknown",
+  migrating: "degraded",
+  duplicated: "degraded",
+  misplaced: "degraded",
+  missing: "error",
+  orphaned: "degraded",
+  unscheduled: "unknown",
+  unschedulable: "error",
+  unknown: "unknown",
+};
+
+export function vmStatusToDot(status: VmStatus): DotStatus {
+  return VM_STATUS_TO_DOT[status];
+}
+
 export const MESSAGE_TYPE_VARIANT: Record<string, BadgeVariant> = {
   INSTANCE: "info",
   PROGRAM: "success",
