@@ -37,6 +37,7 @@ aleph-cloud-app/
 │       ├── SMOKE.md                        # Smoke flow definitions (stub for Phase 0)
 │       └── WALLET.md                       # Smoke wallet provisioning + IMAP setup
 ├── scripts/
+│   ├── check-css-tokens.ts                 # Ported from scheduler-dashboard (Decision #100)
 │   ├── deploy-ipfs.py                      # Copied verbatim from scheduler-dashboard
 │   └── smoke-imap-fetch.ts                 # NEW — IMAP polling for Privy OTP
 ├── src/
@@ -120,7 +121,8 @@ Expected: `On branch main`, `No commits yet`, `nothing to commit (create/copy fi
     "lint": "oxlint --import-plugin src/",
     "typecheck": "tsc --noEmit",
     "test": "vitest run",
-    "check": "pnpm lint && pnpm typecheck && pnpm test",
+    "check:tokens": "tsx scripts/check-css-tokens.ts",
+    "check": "pnpm lint && pnpm typecheck && pnpm check:tokens && pnpm test",
     "smoke:fetch-otp": "tsx scripts/smoke-imap-fetch.ts"
   },
   "dependencies": {
@@ -161,7 +163,9 @@ Expected: `On branch main`, `No commits yet`, `nothing to commit (create/copy fi
 
 **Why these versions:** every version matches scheduler-dashboard's current `package.json` (verified at plan-write time) so dependency drift between the two apps stays low. `imapflow` is the only NEW dep — modern ESM-friendly IMAP client for the smoke OTP helper.
 
-**What's omitted vs scheduler-dashboard:** d3-* (network graph), ip3country, world-countries, `@types/d3-*`, `build-node-locations.ts` script, `check:tokens` script (deferred to a v0.5 chore task; spec open question 5). These are network-app specific.
+**What's omitted vs scheduler-dashboard:** d3-* (network graph), ip3country, world-countries, `@types/d3-*`, `build-node-locations.ts` script. These are network-app specific.
+
+**What's included vs the spec's initial parked list:** `check:tokens` script + corresponding `pnpm check` integration (spec open question 5 resolved — port from day one per Decision #100 in scheduler-dashboard, since it's already proven, ~150ms runtime cost, and bootstrap is the cheapest moment to install the discipline).
 
 - [ ] **Step 2: Install dependencies**
 
@@ -367,12 +371,130 @@ body {
 
 `@source` directives are Tailwind 4's content scanner — both the new app's src and the DS package source are scanned so DS class names generate rules.
 
-- [ ] **Step 3: Commit**
+- [ ] **Step 3: Write scripts/check-css-tokens.ts**
+
+```ts
+/**
+ * Verifies every `var(--name)` reference in the project resolves to either:
+ *   (a) a `--name:` declaration in src/app/globals.css or @aleph-front/ds/styles/tokens.css, or
+ *   (b) a `var(--name, fallback)` call with a fallback value (treated as safe).
+ *
+ * Catches the class of bug where a token is referenced but never defined —
+ * e.g. `var(--duration-default)` silently resolved to 0s because the token
+ * doesn't exist in the DS or this project.
+ *
+ * Runs as part of `pnpm check`. Exits 1 on any unresolved reference.
+ */
+
+import { readFileSync, statSync, readdirSync } from "node:fs";
+import { join, relative } from "node:path";
+
+const ROOT = process.cwd();
+const SRC_DIR = join(ROOT, "src");
+const GLOBALS_CSS = join(SRC_DIR, "app", "globals.css");
+const DS_TOKENS_CSS = join(
+  ROOT,
+  "node_modules",
+  "@aleph-front",
+  "ds",
+  "src",
+  "styles",
+  "tokens.css",
+);
+
+const TOKEN_DECL = /(?:^|[\s;{])(--[a-zA-Z0-9_-]+)\s*:/g;
+const VAR_REF = /var\(\s*(--[a-zA-Z0-9_-]+)(\s*,)?/g;
+
+function collectDeclarations(file: string): Set<string> {
+  const out = new Set<string>();
+  const text = readFileSync(file, "utf8");
+  for (const m of text.matchAll(TOKEN_DECL)) {
+    out.add(m[1]!);
+  }
+  return out;
+}
+
+function walk(dir: string, files: string[] = []): string[] {
+  for (const name of readdirSync(dir)) {
+    if (name === "node_modules" || name.startsWith(".")) continue;
+    const full = join(dir, name);
+    const stat = statSync(full);
+    if (stat.isDirectory()) {
+      walk(full, files);
+      continue;
+    }
+    if (/\.test\.(ts|tsx)$/.test(name)) continue;
+    if (/\.(css|ts|tsx)$/.test(name)) files.push(full);
+  }
+  return files;
+}
+
+type Issue = { file: string; line: number; token: string };
+
+function scanFile(file: string, defined: Set<string>): Issue[] {
+  const issues: Issue[] = [];
+  const lines = readFileSync(file, "utf8").split("\n");
+  lines.forEach((line, i) => {
+    for (const m of line.matchAll(VAR_REF)) {
+      const token = m[1]!;
+      const hasFallback = m[2] !== undefined;
+      if (hasFallback) continue;
+      if (defined.has(token)) continue;
+      issues.push({ file, line: i + 1, token });
+    }
+  });
+  return issues;
+}
+
+function main(): void {
+  const defined = new Set<string>([
+    ...collectDeclarations(GLOBALS_CSS),
+    ...collectDeclarations(DS_TOKENS_CSS),
+  ]);
+
+  const files = walk(SRC_DIR);
+  const issues = files.flatMap((f) => scanFile(f, defined));
+
+  if (issues.length === 0) {
+    console.log(
+      `check-css-tokens: ${defined.size} tokens defined, all var() refs resolve.`,
+    );
+    return;
+  }
+
+  console.error(
+    `check-css-tokens: ${issues.length} unresolved var() reference${issues.length === 1 ? "" : "s"}:\n`,
+  );
+  for (const { file, line, token } of issues) {
+    console.error(`  ${relative(ROOT, file)}:${line}  var(${token})`);
+  }
+  console.error(
+    `\nFix by either: (1) defining the token in globals.css, (2) using the correct token name, or (3) adding a fallback: var(${issues[0]!.token}, <fallback>).`,
+  );
+  process.exit(1);
+}
+
+main();
+```
+
+Ported verbatim from scheduler-dashboard's `scripts/check-css-tokens.ts` (Decision #100 in that repo). No Cloud-Alpha–specific changes needed — script reads from `src/app/globals.css` and `node_modules/@aleph-front/ds/src/styles/tokens.css`, both of which exist as of Task 4 Steps 1–2.
+
+- [ ] **Step 4: Run check:tokens to verify it works on the current empty CSS**
+
+```bash
+cd ~/repos/aleph-cloud-app && pnpm check:tokens
+```
+
+Expected: `check-css-tokens: <N> tokens defined, all var() refs resolve.` Number depends on DS token count (~150+).
+
+If it errors with `var(--font-sans)` unresolved or similar, that means the DS tokens.css path resolution is off. Verify `node_modules/@aleph-front/ds/src/styles/tokens.css` exists; if missing, `pnpm install` again.
+
+- [ ] **Step 5: Commit**
 
 ```bash
 cd ~/repos/aleph-cloud-app
-git add postcss.config.mjs src/app/globals.css
-git commit -m "chore: add Tailwind 4 + DS tokens setup"
+git add postcss.config.mjs src/app/globals.css scripts/check-css-tokens.ts
+git commit -m "chore: add Tailwind 4 + DS tokens + check:tokens enforcement"
 ```
 
 ---
@@ -410,21 +532,46 @@ export default function RootLayout({ children }: { children: ReactNode }) {
 - [ ] **Step 2: Write src/app/page.tsx**
 
 ```tsx
+"use client";
+
+/**
+ * Root route — client-side redirect to /credits.
+ *
+ * How to use: visit `/` and the browser navigates to `/credits` within a tick.
+ * A visible "Redirecting…" message renders for the brief flash before the
+ * navigation completes (and as a no-JS fallback path label, even though the
+ * meta-refresh below handles no-JS for real).
+ *
+ * Depends on: Next.js App Router `useRouter`.
+ *
+ * Replaced when Cloud Alpha eventually migrates to app.aleph.cloud and `/`
+ * becomes a real dashboard or landing page (BACKLOG entry).
+ */
+import { useEffect } from "react";
+import { useRouter } from "next/navigation";
+
 export default function HomePage() {
+  const router = useRouter();
+  useEffect(() => {
+    router.replace("/credits");
+  }, [router]);
+
   return (
-    <main className="flex min-h-dvh items-center justify-center p-8">
-      <div className="max-w-md text-center">
-        <h1 className="font-bold text-2xl mb-2">Aleph Cloud Alpha</h1>
-        <p className="text-sm text-muted-foreground">
-          Bootstrap complete. Chrome arriving in Phase 1.
-        </p>
-      </div>
-    </main>
+    <>
+      <meta httpEquiv="refresh" content="0;url=/credits" />
+      <main className="flex min-h-dvh items-center justify-center p-8">
+        <p className="text-sm text-muted-foreground">Redirecting to credits…</p>
+      </main>
+    </>
   );
 }
 ```
 
-Holds the route so `pnpm dev` has something to serve. Replaced by a redirect-to-/credits or proper landing in a later phase (spec open question 3).
+**Why client-side redirect + meta-refresh:** Static export can't return a proper HTTP redirect from `/` to `/credits` (no server). The `useEffect` handles the modern path (router.replace fires within a tick of mount, no flash on warm caches). The `<meta http-equiv="refresh">` is the no-JS fallback so the redirect still works for crawlers, archive snapshots, and edge cases where JS is delayed.
+
+**Why this resolves spec open question #3 now:** v0 has exactly one real route (`/credits`). Anything at `/` is dead weight. Once Cloud Alpha migrates to `app.aleph.cloud` (per user's note: "we will just migrate app.aleph.cloud"), the new app will have more routes and `/` becomes a real landing — a future PR will replace this redirect with whatever the post-alpha home is. Tracked in BACKLOG.
+
+**Note on `/credits`:** the route doesn't exist yet in Phase 0. Hitting `/` will redirect to `/credits` which then 404s until Phase 1 adds the route. This is intentional — Phase 0's exit gate is "pnpm dev runs" not "every route resolves". Phase 1's first deploy fixes the 404.
 
 - [ ] **Step 3: Verify pnpm dev runs**
 
@@ -444,7 +591,7 @@ sleep 5
 open http://localhost:3000
 ```
 
-Expected: a dark page reading "Aleph Cloud Alpha — Bootstrap complete. Chrome arriving in Phase 1." `pkill -f "next dev"` to stop the dev server after the check.
+Expected: a brief flash of `Redirecting to credits…` then the URL changes to `/credits` and shows Next's 404 page (because the route doesn't exist yet — Phase 1 adds it). The redirect itself is the verification. `pkill -f "next dev"` to stop the dev server.
 
 - [ ] **Step 5: Commit**
 
@@ -1181,20 +1328,49 @@ import { describe, expect, it } from "vitest";
 import { extractOtpFromBody, isPrivyMessage } from "./smoke-imap-fetch";
 
 describe("isPrivyMessage", () => {
-  it("matches the canonical Privy noreply sender", () => {
-    expect(isPrivyMessage({ from: "noreply@privy.io", subject: "Your login code" })).toBe(true);
+  it("matches the canonical Privy no-reply sender + login-code subject", () => {
+    expect(
+      isPrivyMessage({
+        from: "no-reply@mail.privy.io",
+        subject: "Your login code for Aleph Cloud Alpha",
+      }),
+    ).toBe(true);
   });
 
   it("matches case-insensitive variants", () => {
-    expect(isPrivyMessage({ from: "Noreply@Privy.IO", subject: "Your login code" })).toBe(true);
+    expect(
+      isPrivyMessage({
+        from: "No-Reply@Mail.Privy.IO",
+        subject: "Your Login Code for Aleph Cloud Alpha",
+      }),
+    ).toBe(true);
   });
 
-  it("rejects unrelated senders", () => {
-    expect(isPrivyMessage({ from: "newsletter@example.com", subject: "Your login code" })).toBe(false);
+  it("matches regardless of the project name suffix", () => {
+    expect(
+      isPrivyMessage({
+        from: "no-reply@mail.privy.io",
+        subject: "Your login code for Some Other Project",
+      }),
+    ).toBe(true);
+  });
+
+  it("rejects unrelated senders even with matching subject", () => {
+    expect(
+      isPrivyMessage({
+        from: "newsletter@example.com",
+        subject: "Your login code for Aleph Cloud Alpha",
+      }),
+    ).toBe(false);
   });
 
   it("rejects Privy senders with non-OTP subjects", () => {
-    expect(isPrivyMessage({ from: "noreply@privy.io", subject: "Your account settings" })).toBe(false);
+    expect(
+      isPrivyMessage({
+        from: "no-reply@mail.privy.io",
+        subject: "Your account settings",
+      }),
+    ).toBe(false);
   });
 });
 
@@ -1265,12 +1441,13 @@ interface MailHeader {
 }
 
 export function isPrivyMessage(header: MailHeader): boolean {
+  // Privy sends OTP from `no-reply@mail.privy.io` (note the dash + mail subdomain)
+  // with subject "Your login code for <privy-configured-project-name>".
+  // Both confirmed by user during plan review (2026-05-26).
   const from = header.from.toLowerCase();
   const subject = header.subject.toLowerCase();
-  if (!from.includes("@privy.io")) return false;
-  // Subject heuristic — Privy OTP emails contain "code" in the subject.
-  // Adjust this regex if Privy changes the wording.
-  return /\b(code|login|verify)\b/.test(subject);
+  if (from !== "no-reply@mail.privy.io") return false;
+  return /^your login code for /.test(subject);
 }
 
 export function extractOtpFromBody(body: string): string | null {
@@ -1370,7 +1547,7 @@ if (isDirectRun) {
 cd ~/repos/aleph-cloud-app && pnpm test scripts/smoke-imap-fetch.test.ts
 ```
 
-Expected: `9 passed` (3 for `isPrivyMessage`, 5 for `extractOtpFromBody`).
+Expected: `10 passed` (5 for `isPrivyMessage`, 5 for `extractOtpFromBody`).
 
 - [ ] **Step 5: Run the script (will fail until user provisions creds — expected)**
 
@@ -1730,7 +1907,7 @@ git commit -m "docs: add README with quick start and command reference"
 cd ~/repos/aleph-cloud-app && pnpm check
 ```
 
-Expected: lint passes (0 errors, 0 warnings), typecheck passes, all tests pass (the `sanity.test.ts` + 9 imap-fetcher tests = 10 tests).
+Expected: lint passes (0 errors, 0 warnings), typecheck passes, check:tokens passes (~150 tokens defined, all resolve), all tests pass (the `sanity.test.ts` + 10 imap-fetcher tests = 11 tests).
 
 If anything fails, STOP and fix before continuing. Common failures:
 - typecheck: usually missing `@types/*` for a dep — add to package.json and re-install.
@@ -1755,47 +1932,71 @@ Expected: ~10 commits covering each scaffolding task. All on `main`. Clean tree.
 
 ---
 
-### Task 17: Create GitHub repo + first push
+### Task 17: Attach remote and first push
 
-**Note:** This task requires user confirmation before the GitHub repo is created (a network-side action). The agent should pause and confirm with the user before running step 3.
+The GitHub repo is already created at `git@github.com:aleph-im/aleph-cloud-app.git` (confirmed by user during plan review). The user's local SSH config uses host alias `github-cpascariello` for this account, so the remote URL uses that alias instead of `github.com`.
 
-- [ ] **Step 1: Confirm GitHub repo name with user**
+- [ ] **Step 1: Verify the SSH config alias resolves**
 
-Ask:
-> "About to create the GitHub repo. Default suggestion is `aleph-im/aleph-cloud-app` (matching the local directory name). Confirm or override?"
+```bash
+ssh -T git@github-cpascariello 2>&1 | head -2
+```
 
-Wait for response. Use the user's chosen name in step 3.
+Expected: `Hi <username>! You've successfully authenticated, but GitHub does not provide shell access.` If instead you see `Could not resolve hostname github-cpascariello`, the SSH config in `~/.ssh/config` is missing the `Host github-cpascariello` entry — STOP and ask the user to confirm the alias name.
 
-- [ ] **Step 2: Confirm repo visibility with user**
-
-Ask:
-> "Public or private repo? scheduler-dashboard is public. Default suggestion: public, matching the family pattern."
-
-Wait for response.
-
-- [ ] **Step 3: Create the GitHub repo and push**
-
-(Replace `<repo-name>` with the user's confirmed name, `--public` or `--private` per the user's choice.)
+- [ ] **Step 2: Add the remote using the SSH alias**
 
 ```bash
 cd ~/repos/aleph-cloud-app
-gh repo create aleph-im/<repo-name> --public --source=. --remote=origin --description "Aleph Cloud Alpha — consumer app for credits, computing, hosting, storage"
-git push -u origin main
+git remote add origin git@github-cpascariello:aleph-im/aleph-cloud-app.git
+git remote -v
 ```
 
-Expected: repo created, push succeeds, `Branch 'main' set up to track 'origin/main'`.
+Expected: two lines showing `origin  git@github-cpascariello:aleph-im/aleph-cloud-app.git (fetch)` / `(push)`.
+
+- [ ] **Step 3: Push main to the remote**
+
+```bash
+cd ~/repos/aleph-cloud-app && git push -u origin main
+```
+
+Expected: push succeeds, `Branch 'main' set up to track 'origin/main'`.
+
+If the push is rejected because the remote already has commits (e.g. someone initialized it with a README), STOP and ask the user how to reconcile — common safe options: `git pull --rebase` then push, or `git push --force-with-lease` if the user confirms the remote is throwaway.
 
 - [ ] **Step 4: Verify in browser**
 
 ```bash
-gh repo view --web
+gh repo view aleph-im/aleph-cloud-app --web
 ```
 
-Opens the new repo in browser. Confirm:
-- Repo exists with expected files
+Opens the repo in browser. Confirm:
+- Repo shows the just-pushed commits
 - README renders correctly
 - `.github/workflows/` shows both `doc-diff` and `Deploy to IPFS`
 - `docs/` directory is browsable
+
+- [ ] **Step 5: Provision the `ALEPH_PRIVATE_KEY` secret on the repo**
+
+The deploy workflow needs this secret to sign the Aleph aggregate update. The user owns the private key (same one used for scheduler-dashboard).
+
+```bash
+gh secret set ALEPH_PRIVATE_KEY -R aleph-im/aleph-cloud-app
+```
+
+`gh` prompts for the value interactively. The user pastes the private key (the same value from scheduler-dashboard's `ALEPH_PRIVATE_KEY` secret).
+
+If the user prefers to do this through the GitHub web UI instead, that's fine — visit `Settings → Secrets and variables → Actions → New repository secret`, name `ALEPH_PRIVATE_KEY`.
+
+- [ ] **Step 6: Set `ALEPH_DOMAIN` repo variable (placeholder for Phase 1)**
+
+The deploy workflow references `vars.ALEPH_DOMAIN` for the gateway URL. For now we set it to a placeholder; Phase 1 (first real deploy) is when the actual domain gets locked.
+
+```bash
+gh variable set ALEPH_DOMAIN -R aleph-im/aleph-cloud-app --body "TBD"
+```
+
+Or skip this — the deploy workflow tolerates a missing var (the job summary just shows an empty Gateway field). Set when the URL is finalized (spec open question 2).
 
 ---
 
@@ -1993,13 +2194,14 @@ Write a brief report:
 Phase 0 — Bootstrap COMPLETE
 
 aleph-cloud-app:
-  - Repo: github.com/aleph-im/<repo-name>
+  - Repo: github.com/aleph-im/aleph-cloud-app (SSH alias github-cpascariello)
   - Local: ~/repos/aleph-cloud-app
-  - pnpm check: green
-  - Tests: 10 passing (1 sanity + 9 imap-fetcher)
+  - pnpm check: green (lint + typecheck + check:tokens + test)
+  - Tests: 11 passing (1 sanity + 10 imap-fetcher)
   - CI: doc-diff verified working (passes opt-out, fails on missing docs)
   - Smoke skill: recognised (stub flows)
   - Deploy: workflow exists, not yet run (Phase 1)
+  - Landing: / redirects client-side to /credits (route 404s until Phase 1)
 
 scheduler-dashboard:
   - Decision #108 logged via PR (squash-merged)
@@ -2009,13 +2211,16 @@ scheduler-dashboard:
 Next: Phase 1 — Chrome integration. Plan to be written at
 docs/superpowers/plans/2026-05-26-cloud-alpha-phase-1-chrome.md.
 
-Open follow-ups for the user:
-  1. Create the smoke Gmail account (see new repo docs/smoke/WALLET.md)
-  2. Generate the IMAP App Password
-  3. Write ~/.config/aleph-cloud-smoke/email.env
-  4. Provision ALEPH_PRIVATE_KEY secret in the new repo
-     (gh secret set ALEPH_PRIVATE_KEY -R aleph-im/<repo-name>)
-  5. Lock the deployed URL (open question 2 in the spec)
+Open follow-ups for the user (none block Phase 1; first three block Phase 4 smoke):
+  1. Smoke Gmail account — colleagues to create per user's note;
+     once ready, generate IMAP App Password and write
+     ~/.config/aleph-cloud-smoke/email.env (see docs/smoke/WALLET.md).
+  2. ALEPH_PRIVATE_KEY secret — may be done in Task 17 step 5 if
+     value is available; otherwise provision before Phase 1's first deploy.
+  3. ALEPH_DOMAIN repo variable — locked when deployed URL is decided
+     (spec open question 2).
+  4. Privy project name — required before Phase 2 wires up Privy config;
+     not blocking Phase 0.
 ```
 
 ---
