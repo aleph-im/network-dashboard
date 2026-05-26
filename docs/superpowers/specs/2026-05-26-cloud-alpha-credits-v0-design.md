@@ -10,6 +10,8 @@
 
 The old `front-aleph-cloud-page` (Next 13 Pages Router + twin.macro + `@aleph-front/core`) needs to be rebuilt on the modern chrome family established by this repo: Next 16 + App Router + `@aleph-front/ds` + Tailwind 4 + TanStack Query. The new app — **Cloud Alpha** — will replace the old console over time, starting with credits because:
 
+**Source-of-truth branch for design reference:** `feat/credits-ui` on `aleph-im/front-aleph-cloud-page` — NOT `main`. The main branch still ships all three payment vehicles (credits + hold + PAYG) and reflects the old console as it exists today. `feat/credits-ui` is the work-in-progress that strips the design down to credits-only, matching v0's payment constraint exactly. When Phase 2–4 plans need design intent (top-up flow shape, currency picker UX, balance card layout, etc.), reference `feat/credits-ui`, not `main`. Direct link: `https://github.com/aleph-im/front-aleph-cloud-page/tree/feat/credits-ui`.
+
 1. **Credits-only payment vehicle is the new constraint.** No ALEPH-token holder tier (hold), no Superfluid pay-as-you-go streams (PAYG). Every product area in the eventual full console will charge via credits, so credits is the foundational piece every other surface will depend on.
 2. **The chrome was built for cross-app reuse.** Decision #94 in this repo's `DECISIONS.md` explicitly says: *"Building the primitives in DS rather than in-app means `app.aleph.cloud` and other consumer apps can adopt the same chrome later without a port."* Cloud Alpha cashes in that investment.
 3. **The old console's surface is large.** A full lift-and-shift would be a multi-month effort with no shippable intermediate. Credits-only v0 is the smallest valuable thing.
@@ -439,6 +441,7 @@ To prevent scope creep:
 
 - **Cloud Alpha** — working name of the new app being built. Renamed to "Cloud" once parity is reached.
 - **`@aleph-front/ds`** — the design system used by this repo and the new app. Different from `@aleph-front/core` (used by the old `front-aleph-cloud-page`).
+- **`feat/credits-ui` branch** — the credits-only WIP branch on `aleph-im/front-aleph-cloud-page`. Reference for design intent in Phase 2–4. NOT `main`, which still has hold-tier and PAYG code paths.
 - **Credits** — Aleph's unit of paid usage. 1 credit = $0.000001 (10⁻⁶ USD). `MIN_CREDITS_TOPUP = 1,000,000` = $1.
 - **Privy** — embedded-wallet provider supporting email / social / passkey login.
 - **Reown** — WalletConnect-derived provider for external wallets (MetaMask, etc.).
