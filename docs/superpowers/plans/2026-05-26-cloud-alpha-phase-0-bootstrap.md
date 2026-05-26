@@ -1100,9 +1100,14 @@ half-baked one from **Ready to execute**.
 **Description:** Share Privy / Reown session across ProductStrip apps. Deferred indefinitely — each app handling its own wallet is fine for v0/v0.5.
 **Priority:** Low
 
-### 2026-05-26 - Landing page (`/`)
-**Source:** Source spec open question 3.
-**Description:** Decide whether `/` redirects to `/credits`, renders a marketing intro, or shows a dashboard. Currently a placeholder "Bootstrap complete" page.
+### 2026-05-26 - Migrate to cloud-beta.aleph.cloud, then app.aleph.cloud
+**Source:** User decision during Phase 0 plan review.
+**Description:** Alpha runs on `cloud-alpha.aleph.cloud`. Once the app reaches public-release quality, stand up `cloud-beta.aleph.cloud` (new GitHub variable + DNS) and announce beta. After parity with the old `front-aleph-cloud-page`, point `app.aleph.cloud` at the same artifacts and retire the cloud-alpha + cloud-beta aliases. Also at that point the ProductStrip `Cloud Alpha` tab in scheduler-dashboard is renamed to `Cloud` and the original external `Cloud` tab is removed.
+**Priority:** Low (long horizon)
+
+### 2026-05-26 - Real landing page at `/`
+**Source:** Spec open question #3 (resolved temporarily — currently redirects to `/credits`).
+**Description:** Once Cloud Alpha has more routes (computing / hosting / storage / domain / etc), `/` should become a real landing or dashboard instead of a redirect. Trivial swap when the time comes.
 **Priority:** Low
 
 ### 2026-05-26 - CI-automated smoke
@@ -1988,15 +1993,15 @@ gh secret set ALEPH_PRIVATE_KEY -R aleph-im/aleph-cloud-app
 
 If the user prefers to do this through the GitHub web UI instead, that's fine — visit `Settings → Secrets and variables → Actions → New repository secret`, name `ALEPH_PRIVATE_KEY`.
 
-- [ ] **Step 6: Set `ALEPH_DOMAIN` repo variable (placeholder for Phase 1)**
+- [ ] **Step 6: Set `ALEPH_DOMAIN` repo variable**
 
-The deploy workflow references `vars.ALEPH_DOMAIN` for the gateway URL. For now we set it to a placeholder; Phase 1 (first real deploy) is when the actual domain gets locked.
+The deploy workflow references `vars.ALEPH_DOMAIN` for the gateway URL. Per the user's decision during plan review, Alpha lives at `cloud-alpha.aleph.cloud`. (Subsequent progression: `cloud-beta.aleph.cloud` for the first public release, then eventually migrate `app.aleph.cloud` to point at the same artifacts and retire the cloud-alpha/cloud-beta aliases.)
 
 ```bash
-gh variable set ALEPH_DOMAIN -R aleph-im/aleph-cloud-app --body "TBD"
+gh variable set ALEPH_DOMAIN -R aleph-im/aleph-cloud-app --body "cloud-alpha.aleph.cloud"
 ```
 
-Or skip this — the deploy workflow tolerates a missing var (the job summary just shows an empty Gateway field). Set when the URL is finalized (spec open question 2).
+Note: setting the GitHub variable does NOT configure DNS. The actual DNS record + Aleph aggregate alias need to be set up before Phase 1's deploy resolves at this URL. The variable just gates what the deploy workflow's job summary prints. Track DNS setup as a Phase 1 prerequisite.
 
 ---
 
@@ -2022,7 +2027,7 @@ Insert the new Decision (use the next available number, likely #108):
 ```markdown
 ## Decision #108 - 2026-05-26
 **Context:** The old `front-aleph-cloud-page` (Next 13 + twin.macro + `@aleph-front/core`) needs replacement with a modern stack matching this repo (Next 16 + `@aleph-front/ds`). Brainstorming surfaced two strategic options: absorb the new console into this repo, or build it as a sibling app. Spec at `docs/superpowers/specs/2026-05-26-cloud-alpha-credits-v0-design.md`.
-**Decision:** Build the new app as a separate repo `aleph-cloud-app`, mirroring this repo's stack and chrome but with its own deploy, auth model (Privy + Reown), and audience (consumer customers). The ProductStrip `Cloud` tab stays untouched (still points at `app.aleph.im`); a new `Cloud Alpha` tab will be added in a follow-up PR once the new app is deployable, sitting alongside the existing Cloud tab during the alpha period.
+**Decision:** Build the new app as a separate repo `aleph-cloud-app`, mirroring this repo's stack and chrome but with its own deploy, auth model (Privy + Reown), and audience (consumer customers). URL progression: `cloud-alpha.aleph.cloud` (alpha period) → `cloud-beta.aleph.cloud` (first public release) → migrate `app.aleph.cloud` to point at the new artifacts (eventual retirement of cloud-alpha / cloud-beta aliases). The ProductStrip `Cloud` tab stays untouched (still points at `app.aleph.im`); a new `Cloud Alpha` tab will be added in a follow-up PR once the new app is deployable, sitting alongside the existing Cloud tab during the alpha period and renaming to `Cloud` at the app.aleph.cloud migration.
 **Rationale:** Decision #94 (DS-first chrome) explicitly anticipated this split — chrome primitives in the DS were built so other apps could adopt the same chrome cheaply. Two products with different audiences (operators vs. consumers), different auth (URL-driven vs. wallet-connected), different deploy cadences, and different bundle profiles (no wallet stack in Network) belong in separate repos. Absorbing the consumer surface here would muddle the operator dashboard's identity and force the Network bundle to carry Reown + Privy + Aleph SDK + ethers for users who never sign anything.
 **Alternatives considered:** Absorb into scheduler-dashboard (rejected — bundle weight, repo-identity drift, harder to extract later). Convert this repo into a pnpm monorepo with `apps/network` + `apps/cloud` (rejected for v0 — root reorganization tax outweighs shared-tooling benefit at two apps; revisit if a third surface lands).
 ```
