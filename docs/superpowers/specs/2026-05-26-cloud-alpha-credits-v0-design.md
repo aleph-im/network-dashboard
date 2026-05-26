@@ -268,7 +268,20 @@ Items deliberately out of v0, logged in the new repo's `docs/BACKLOG.md` on day 
 
 Docs serve two audiences in parallel: human developers onboarding, and AI agents working through tasks across sessions. Both need docs that are accurate or they actively mislead. **Treat docs like tests — if the doc is wrong, the change is not done.**
 
-### Doc set (mirrors this repo, plus smoke)
+### Project template as the source of doc structure
+
+The new repo is bootstrapped via the `bootstrap-project` skill, which merges `~/repos/claude-project-template/` into the working directory. The template owns the canonical structure for:
+
+- `CLAUDE.md` — the full working-habits skeleton (Decision logging, Scope drift, Git discipline, Workflow Tiers, Session Workflow, Plan Status Tracking, Plans-must-include-verification rule, `/dio:ship` sequence, Context Recovery sync-up format)
+- `docs/ARCHITECTURE.md` — Stack table, Project Structure, Patterns, Recipes skeletons
+- `docs/DECISIONS.md` — decisions log with the "How Decisions Are Logged" preamble
+- `docs/BACKLOG.md` — Ready / Needs planning / Roadmap / Completed sections with their headers and intros
+- `.gitignore` — the template's minimal baseline
+- `.claude/settings.local.json` — local skill settings
+
+Cloud Alpha's Phase 0 plan customizes these template skeletons rather than rewriting them, so Cloud Alpha inherits future template improvements via `/template-check` runs and never drifts from the canonical pattern. New habits discovered during Cloud Alpha development that generalize (e.g. mandatory smoke coverage, doc-diff CI enforcement, per-file isolation docstring) should be PRed back into `~/repos/claude-project-template/` so other projects benefit too.
+
+### Doc set (template baseline + Cloud-Alpha additions)
 
 | File | Purpose | Primary audience |
 |---|---|---|

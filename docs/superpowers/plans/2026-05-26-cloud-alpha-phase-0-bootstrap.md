@@ -4,7 +4,7 @@
 
 **Goal:** Stand up a brand-new repo `aleph-cloud-app` with the full project scaffolding — Next 16 + DS + Tailwind 4 + Vitest + oxlint + IPFS deploy + mandatory-docs CI + smoke skill wired — such that `pnpm dev` runs an empty app and `pnpm check` is green on zero LOC.
 
-**Architecture:** Mirror this repo's (scheduler-dashboard) stack and tooling verbatim where applicable; deviate only where Cloud Alpha differs (no network-graph deps, no node-location snapshot script, no changelog.ts yet). Add Cloud-Alpha–specific scaffolding that scheduler-dashboard does not have: a PR template, a doc-diff CI workflow, a smoke-coverage CI workflow, an IMAP OTP fetcher script for smoke. Documents are written *as part of* code-adding tasks (not deferred), so the new repo never lives in a state where docs lag the code.
+**Architecture:** Mirror this repo's (scheduler-dashboard) stack and tooling verbatim where applicable; deviate only where Cloud Alpha differs (no network-graph deps, no node-location snapshot script, no changelog.ts yet). Add Cloud-Alpha–specific scaffolding that scheduler-dashboard does not have: a PR template, a doc-diff CI workflow, a smoke-coverage CI workflow, an IMAP OTP fetcher script for smoke. **Doc structure (CLAUDE.md, ARCHITECTURE.md, DECISIONS.md, BACKLOG.md) comes from the `bootstrap-project` skill merging `~/repos/claude-project-template/`** — Cloud Alpha customizes the template's skeletons rather than rewriting them, so future template improvements flow via `/template-check`. Documents are filled in *as part of* code-adding tasks (not deferred), so the new repo never lives in a state where docs lag the code.
 
 **Tech Stack:** Next.js 16.1.6 (App Router, static export, `trailingSlash: true`) · React 19.2.4 · TypeScript 5.9.3 strict · Tailwind CSS 4.2.1 + `@aleph-front/ds@0.23.1` · TanStack React Query 5.75.5 (+ persist) · Vitest 4.0.18 + @testing-library/react 16.3.2 + jsdom 28.1.0 · oxlint 1.50.0 · tsx 4.21.0 · pnpm 10.29.2 · Node 22 LTS.
 
@@ -16,19 +16,21 @@
 
 ## File Structure
 
-What this plan creates in the new `~/repos/aleph-cloud-app/` repo:
+What this plan creates in the new `~/repos/aleph-cloud-app/` repo. Files marked **[T]** come from `~/repos/claude-project-template/` via the `bootstrap-project` skill (Task 1) and are then customized; everything else is written from scratch.
 
 ```
 aleph-cloud-app/
+├── .claude/
+│   └── settings.local.json                 # [T] Template's local skill settings
 ├── .github/
 │   ├── pull_request_template.md            # Mandatory doc-update checklist
 │   └── workflows/
 │       ├── doc-diff.yml                    # Enforces docs update when src changes
 │       └── deploy.yml                      # Manual IPFS deploy
 ├── docs/
-│   ├── ARCHITECTURE.md                     # Patterns + structure (seeded skeleton)
-│   ├── BACKLOG.md                          # Seeded with spec's parked items
-│   ├── DECISIONS.md                        # Decision log (header + first entry)
+│   ├── ARCHITECTURE.md                     # [T] Filled in (stack, structure, patterns)
+│   ├── BACKLOG.md                          # [T] Seeded with spec's parked items
+│   ├── DECISIONS.md                        # [T] Decision #1 + #2 added
 │   ├── plans/                              # Per-feature plans (empty for now)
 │   ├── superpowers/                        # Mirror this repo's superpowers layout
 │   │   ├── plans/
@@ -44,10 +46,11 @@ aleph-cloud-app/
 │   ├── app/
 │   │   ├── globals.css                     # Tailwind + DS tokens + dark variant
 │   │   ├── layout.tsx                      # Bare layout (no providers yet, Phase 1 adds chrome)
-│   │   └── page.tsx                        # Placeholder landing
+│   │   └── page.tsx                        # Client-side redirect to /credits
 │   └── test-setup.ts                       # ResizeObserver + matchMedia polyfills
-├── .gitignore                              # Mirror scheduler-dashboard
-├── CLAUDE.md                               # Working habits + project context for agents
+├── .gitignore                              # [T] Extended with Cloud-Alpha entries
+├── .template-version                       # [T] Tracks template version for /template-check
+├── CLAUDE.md                               # [T] Customized with Cloud Alpha specifics
 ├── README.md                               # Quick-start for humans
 ├── next.config.ts                          # output: export, transpilePackages
 ├── package.json
@@ -97,6 +100,48 @@ cd ~/repos/aleph-cloud-app && git status
 ```
 
 Expected: `On branch main`, `No commits yet`, `nothing to commit (create/copy files and use "git add" to track)`.
+
+- [ ] **Step 4: Run the bootstrap-project skill to merge the template baseline**
+
+The `bootstrap-project` skill (globally installed) merges `~/repos/claude-project-template/` into the current working directory. Run it before any other file is created so the template's CLAUDE.md, doc skeletons, .gitignore, and `.claude/settings.local.json` land on a clean slate.
+
+Invoke via the Skill tool:
+
+```
+Skill: bootstrap-project
+```
+
+(Or via slash command if you prefer: `/bootstrap-project`.)
+
+Expected outputs after the skill runs:
+- `CLAUDE.md` (283 lines, template baseline with `[PROJECT NAME]` placeholder section at the bottom)
+- `docs/ARCHITECTURE.md` (Stack/Structure/Patterns/Recipes skeleton with `[Fill in]` placeholders)
+- `docs/DECISIONS.md` (header + "How Decisions Are Logged" preamble, no decisions yet)
+- `docs/BACKLOG.md` (Ready / Needs planning / Roadmap / Completed sections with headers + intros)
+- `.gitignore` (minimal: just `.template-version`)
+- `.claude/settings.local.json` (local skill settings)
+- `.template-version` (records which template version was applied)
+
+- [ ] **Step 5: Verify template files landed**
+
+```bash
+cd ~/repos/aleph-cloud-app
+ls -la
+ls docs/
+wc -l CLAUDE.md docs/ARCHITECTURE.md docs/BACKLOG.md docs/DECISIONS.md
+```
+
+Expected: all six files exist; CLAUDE.md is ~283 lines, ARCHITECTURE.md is ~50 lines, BACKLOG.md is ~60 lines, DECISIONS.md is ~22 lines (these are template skeletons — Cloud-Alpha-specific content is layered on in Tasks 8 and 9).
+
+- [ ] **Step 6: Commit the template baseline**
+
+```bash
+cd ~/repos/aleph-cloud-app
+git add .
+git commit -m "chore: bootstrap project from claude-project-template"
+```
+
+This isolates the template-baseline commit so future `/template-check` runs can see exactly what came from the template vs what was customized later.
 
 ---
 
@@ -253,7 +298,11 @@ export default config;
 
 Identical to scheduler-dashboard. `output: "export"` is required for IPFS static hosting. `trailingSlash: true` is required for IPFS gateway routing.
 
-- [ ] **Step 3: Write .gitignore**
+- [ ] **Step 3: Extend the template's .gitignore**
+
+The template ships a minimal `.gitignore` containing only `.template-version`. Append the Cloud-Alpha-relevant entries (build artifacts, node modules, env files, etc.) without removing the template's existing line.
+
+Open `~/repos/aleph-cloud-app/.gitignore` and append:
 
 ```
 # build
@@ -291,9 +340,6 @@ __pycache__/
 # superpowers
 .superpowers/
 
-# template
-.template-version
-
 # typescript
 tsconfig.tsbuildinfo
 
@@ -301,7 +347,15 @@ tsconfig.tsbuildinfo
 .worktrees/
 ```
 
-Adapted from scheduler-dashboard. Added `.env.smoke` explicitly (smoke wallet creds) and dropped `.previews.json` (no preview system in v0).
+Verify the resulting file:
+
+```bash
+cd ~/repos/aleph-cloud-app && head -5 .gitignore && echo "---" && tail -10 .gitignore
+```
+
+Expected: first line still `.template-version` (template's baseline), trailing lines show the appended Cloud-Alpha entries.
+
+**Adapted from scheduler-dashboard.** Added `.env.smoke` explicitly (smoke wallet creds) and dropped `.previews.json` (no preview system in v0).
 
 - [ ] **Step 4: Commit progress (intermediate)**
 
@@ -772,96 +826,18 @@ Expected: `nothing to commit, working tree clean`.
 
 ---
 
-### Task 8: CLAUDE.md (project habits + agent-facing context)
+### Task 8: Customize the template's CLAUDE.md with Cloud Alpha specifics
 
 **Files:**
-- Create: `~/repos/aleph-cloud-app/CLAUDE.md`
+- Modify: `~/repos/aleph-cloud-app/CLAUDE.md` (the 283-line template skeleton landed by `bootstrap-project` in Task 1)
 
-- [ ] **Step 1: Write CLAUDE.md**
+The template owns the working-habits scaffold (Decision Logging, Scope Drift Detection, Git Discipline, Workflow Tiers, Session Workflow, Plan Status Tracking, Plans-must-include-verification, `/dio:ship` sequence, Context Recovery format). Do NOT rewrite those sections — Cloud Alpha inherits them so future template improvements flow via `/template-check`. Two surgical edits in this task: fill in the `Project: [PROJECT NAME]` section at the bottom, and add Cloud-Alpha-specific habits before the `Project:` heading.
 
-This file is the agent-facing source of truth — when a fresh session opens, this is what loads automatically. Mirror scheduler-dashboard's structure but adapt for Cloud Alpha specifics.
+- [ ] **Step 1: Replace the `## Project: [PROJECT NAME]` section**
+
+The template's bottom section has placeholders. Replace the entire section (from `## Project: [PROJECT NAME]` to end of file) with this Cloud-Alpha-specific block:
 
 ```markdown
-# Working Habits
-
-Persistent habits for maintaining project memory across sessions.
-
----
-
-## Quick Start
-
-**Sync up:** Say "sync up" or "catch me up" to restore context at session start.
-
----
-
-## Three Habits
-
-### 1. Decision Logging
-
-Log decisions to `docs/DECISIONS.md` when these phrases appear:
-- "decided" / "let's go with" / "rejected"
-- "choosing X because" / "not doing X because"
-- "actually, let's" / "changed my mind"
-
-Before proposing anything, check if it contradicts a past decision. If conflict found:
-> This would contradict Decision #N (summary). Override?
-
-**Format:**
-```
-## Decision #[N] - [Date]
-**Context:** [What we were working on]
-**Decision:** [What was decided]
-**Rationale:** [Why - this is the important part]
-**Alternatives considered:** [If any were discussed]
-```
-
-### 2. Scope Drift Detection
-
-**This is an active interrupt, not a passive log.**
-
-When the conversation drifts from the stated task:
-1. Stop and say: "This is drifting from [original task]. Add to backlog and refocus, or pivot?"
-2. If backlog: log to `docs/BACKLOG.md` and return to the original task
-3. If pivot: continue, but note the scope change
-
-### 3. Git Discipline
-
-**Branching:**
-- Brainstorm and plan on main
-- Pull main before branching — stale main causes merge conflicts
-- When dev starts, create feature branch from main before any file edits
-- Branch naming: `<type>/[name]` (e.g. `feature/`, `fix/`, `chore/`, `refactor/`)
-
-**Doc updates (MANDATORY):** Every PR with src/ changes MUST update at least one of:
-- `docs/ARCHITECTURE.md` — new patterns, files, or structure
-- `CLAUDE.md` — Current Features list when user-facing behavior changes
-- `docs/DECISIONS.md` — design decisions made during the feature
-- `docs/BACKLOG.md` — completed items moved, deferred ideas added
-
-This is enforced by the `doc-diff` GitHub Actions workflow. Opt out only for trivial changes (typos, lockfile bumps) by including `[no-doc]` in the PR title.
-
-**Per-file isolation docstring (MANDATORY):** Every exported component / hook / lib module starts with a 4–8 line JSDoc block answering:
-- What does it do?
-- How do you use it? (one example)
-- What does it depend on?
-
-This is enforced by code review, not CI (yet). The pattern is set by `src/lib/sanity.ts` in the Phase 0 bootstrap.
-
-**Smoke (MANDATORY in `/dio:ship`):** Every feature that adds a user-visible flow MUST add at least one smoke flow to `docs/smoke/SMOKE.md` in the same PR. Smoke is part of the doc set, not a separate test concern.
-
-**Finishing a branch** — use `/dio:ship` which runs:
-1. Catch up on main (`git rebase origin/main` if behind)
-2. Doc audit against `git diff main...HEAD`
-3. `pnpm check`
-4. `/dio:smoke` (mandatory gate)
-5. Commit any doc/audit changes
-6. Push branch with `--force-with-lease`
-7. Create PR if missing
-8. Squash-merge + delete branch
-9. Sync local main
-
----
-
 ## Project: Cloud Alpha
 
 Consumer-facing Aleph Cloud app — credits, computing, hosting, storage, etc. Hosted as static export on IPFS. Sister app to scheduler-dashboard (Network app).
@@ -883,19 +859,32 @@ Consumer-facing Aleph Cloud app — credits, computing, hosting, storage, etc. H
 
 ### Commands
 
-```bash
+\`\`\`bash
 pnpm dev               # Dev server (Turbopack)
 pnpm build             # Static export to out/
 pnpm test              # Vitest
 pnpm lint              # oxlint
 pnpm typecheck         # tsc --noEmit
-pnpm check             # lint + typecheck + test
+pnpm check             # lint + typecheck + check:tokens + test
 pnpm smoke:fetch-otp   # IMAP helper: print the latest Privy OTP from smoke inbox
-```
+\`\`\`
+
+### Key Directories
+
+\`\`\`
+src/
+├── app/                # Next.js App Router pages
+├── api/                # REST clients + types (credit.aleph.im)
+├── hooks/              # React Query hooks
+├── wallet/             # Privy + Reown adapter + unified useWallet hook
+├── components/         # DS-based UI compositions
+├── lib/                # Pure helpers (token-units, route-title)
+└── config/             # apps.ts (ProductStrip) + nav.ts (sidebar)
+\`\`\`
 
 ### Current Features
 
-(v0 in progress — Phase 0 bootstrap complete. No features yet.)
+(v0 in progress — Phase 0 bootstrap complete. No user-visible features yet.)
 
 ### Phases
 
@@ -908,52 +897,103 @@ pnpm smoke:fetch-otp   # IMAP helper: print the latest Privy OTP from smoke inbo
 - Phase 6 — Smoke verification + triage
 ```
 
-- [ ] **Step 2: Commit**
+(Note: the `\`\`\`` escapes are because this is a code-block-inside-a-code-block in the plan. When you actually paste this into the file, use real triple-backticks.)
+
+- [ ] **Step 2: Add Cloud-Alpha-specific habits before the `## Project:` heading**
+
+Cloud Alpha extends the template with three rules the template doesn't enforce: mandatory CI doc-diff, mandatory smoke coverage, mandatory per-file isolation docstring. Insert this section right before the `## Project: Cloud Alpha` heading:
+
+```markdown
+## Cloud Alpha Mandatory Rules
+
+Three rules that the template's "Doc updates" habit hints at but that Cloud Alpha enforces hard:
+
+### 1. CI doc-diff (mandatory)
+
+Every PR that touches `src/` MUST also touch `docs/` or `CLAUDE.md`. The `.github/workflows/doc-diff.yml` workflow fails the PR otherwise. Opt out via `[no-doc]` in the PR title for trivial changes (typos, lockfile bumps, dependency-only updates).
+
+### 2. Smoke coverage (mandatory)
+
+Every PR that touches `src/app/` or `src/components/` MUST also update `docs/smoke/SMOKE.md` with a flow that covers the new behavior. Same workflow enforces it, same `[no-doc]` opt-out for truly trivial UI tweaks.
+
+### 3. Per-file isolation docstring (mandatory by convention)
+
+Every exported component / hook / lib module starts with a 4–8 line JSDoc block:
+- What does it do?
+- How do you use it? (one minimal example)
+- What does it depend on?
+
+Enforced by code review (no CI gate yet). The pattern is set by `src/lib/sanity.ts` (Phase 0 baseline) and `scripts/smoke-imap-fetch.ts` (Phase 0 IMAP helper).
+
+### Source-of-truth design reference
+
+For Phase 2–4 design intent (top-up flow shape, currency picker UX, balance card layout): the `feat/credits-ui` branch on `aleph-im/front-aleph-cloud-page` (NOT `main`). `main` still ships hold-tier and PAYG; `feat/credits-ui` is credits-only and matches v0's constraint exactly.
+
+---
+
+```
+
+- [ ] **Step 3: Verify the customized CLAUDE.md**
+
+```bash
+cd ~/repos/aleph-cloud-app && wc -l CLAUDE.md && grep -c "^##" CLAUDE.md
+```
+
+Expected: file is now ~340–360 lines (template's ~280 + Cloud Alpha customizations); section count (lines starting with `##`) is around 15–18. The template's Working Habits / Context Recovery / Skill Integration / Workflow Tiers / Session Workflow / Plan Status Tracking sections all remain intact.
+
+Sanity-check that key template sections survived:
+
+```bash
+cd ~/repos/aleph-cloud-app
+grep -E "^## (Workflow Tiers|Plan Status Tracking|Context Recovery|Skill Integration|Finishing a branch)" CLAUDE.md
+```
+
+Expected: at least four of those headings present.
+
+- [ ] **Step 4: Commit**
 
 ```bash
 cd ~/repos/aleph-cloud-app
 git add CLAUDE.md
-git commit -m "docs: add CLAUDE.md with project habits and agent context"
+git commit -m "docs(claude): customize template CLAUDE.md for Cloud Alpha"
 ```
 
 ---
 
-### Task 9: ARCHITECTURE.md, DECISIONS.md, BACKLOG.md
+### Task 9: Fill in template's ARCHITECTURE / DECISIONS / BACKLOG skeletons
 
-**Files:**
-- Create: `~/repos/aleph-cloud-app/docs/ARCHITECTURE.md`
-- Create: `~/repos/aleph-cloud-app/docs/DECISIONS.md`
-- Create: `~/repos/aleph-cloud-app/docs/BACKLOG.md`
-- Create: `~/repos/aleph-cloud-app/docs/plans/` (empty directory, kept via `.gitkeep`)
+**Files (all already exist as template skeletons from Task 1):**
+- Modify: `~/repos/aleph-cloud-app/docs/ARCHITECTURE.md`
+- Modify: `~/repos/aleph-cloud-app/docs/DECISIONS.md`
+- Modify: `~/repos/aleph-cloud-app/docs/BACKLOG.md`
+- Create: `~/repos/aleph-cloud-app/docs/plans/` (empty, kept via `.gitkeep`)
 - Create: `~/repos/aleph-cloud-app/docs/superpowers/plans/` (empty, `.gitkeep`)
 - Create: `~/repos/aleph-cloud-app/docs/superpowers/specs/` (empty, `.gitkeep`)
 
-- [ ] **Step 1: Write docs/ARCHITECTURE.md**
+The bootstrap-project skill (Task 1) dropped in skeleton versions of all three doc files. This task fills in the placeholders without rewriting the structure.
+
+- [ ] **Step 1: Fill in docs/ARCHITECTURE.md**
+
+The template's ARCHITECTURE.md has four sections: Stack (table with `[Fill in]` placeholders), Project Structure (placeholder), Patterns (instructions in HTML comments), Recipes (instructions in HTML comments). Replace placeholders, keep section structure.
+
+Replace the Stack table's `[Fill in]` cells with:
 
 ```markdown
-# Architecture
-
-Technical patterns and decisions for Cloud Alpha.
-
----
-
-## Stack
-
 | Layer | Technology |
 |-------|------------|
 | Framework | Next.js 16 (App Router, static export) |
 | Language | TypeScript 5.x (strict, ESM only) |
 | Styling | Tailwind CSS 4 + @aleph-front/ds tokens |
 | Data | TanStack React Query (client-side polling) |
-| Wallet | Privy (primary) + Reown AppKit (backup), ethers v5 signer |
+| Wallet | Privy (primary, OTP email) + Reown AppKit (backup), ethers v5 signer |
 | Tests | Vitest + @testing-library/react + jsdom |
 | Smoke | Playwright MCP via /dio:smoke skill |
-| Deployment | Static export (`out/`) → IPFS via GitHub Actions |
+| Deployment | Static export (`out/`) → IPFS via GitHub Actions (manual `workflow_dispatch`) |
+```
 
----
+Replace the Project Structure placeholder with:
 
-## Project Structure
-
+````markdown
 (Phase 0 — bootstrap state. Sections added as phases land.)
 
 ```
@@ -963,61 +1003,52 @@ src/
 │   ├── layout.tsx
 │   └── page.tsx
 ├── lib/                # Pure helpers
-│   └── sanity.ts       # Throwaway — replaced by real lib code in Phase 2
+│   ├── sanity.ts       # Throwaway — replaced by real lib code in Phase 2
+│   └── sanity.test.ts
 └── test-setup.ts       # Vitest setup (ResizeObserver + matchMedia polyfills)
+
+scripts/
+├── check-css-tokens.ts # Validates every var(--…) reference resolves
+├── deploy-ipfs.py      # IPFS deployment via Aleph SDK
+└── smoke-imap-fetch.ts # IMAP polling for Privy OTP (smoke skill helper)
 ```
+````
 
----
+Add to the Patterns section (replacing the HTML comment skeleton):
 
-## Patterns
-
+```markdown
 ### Per-File Isolation Docstring (MANDATORY)
 
 **Context:** Codebase has two audiences — human developers and AI agents. Both need to understand a unit without reading its internals.
 **Approach:** Every exported component / hook / lib module starts with a 4–8 line JSDoc block answering: what does it do, how do you use it, what does it depend on.
-**Example:** `src/lib/sanity.ts`.
+**Example:** `src/lib/sanity.ts`, `scripts/smoke-imap-fetch.ts`.
 **Notes:** Enforced via code review. May add an ast-grep–based CI check later if drift becomes a problem.
 
 ### Documentation as a First-Class Constraint
 
-**Context:** Spec §8.
-**Approach:** Five mandatory doc files (CLAUDE.md, docs/ARCHITECTURE.md, docs/DECISIONS.md, docs/BACKLOG.md, docs/smoke/SMOKE.md) + a CI workflow (`.github/workflows/doc-diff.yml`) that fails any PR that touches `src/` without touching docs (opt-out: `[no-doc]` in PR title).
+**Context:** Spec §8 in `docs/superpowers/specs/2026-05-26-cloud-alpha-credits-v0-design.md` (this spec lives in scheduler-dashboard for v0).
+**Approach:** Five mandatory doc files (CLAUDE.md, docs/ARCHITECTURE.md, docs/DECISIONS.md, docs/BACKLOG.md, docs/smoke/SMOKE.md) + a CI workflow (`.github/workflows/doc-diff.yml`) that fails any PR that touches `src/` without touching docs (opt-out: `[no-doc]` in PR title). UI changes additionally require `docs/smoke/SMOKE.md` updates.
 **Key files:** `.github/workflows/doc-diff.yml`, `.github/pull_request_template.md`
 **Notes:** `/dio:ship` runs a complementary audit that catches drift even when CI is green (outdated doc lines about removed features).
 
----
+### CSS Token Hygiene
 
-## Recipes
-
-(None yet — added as patterns emerge across phases.)
+**Context:** Tailwind silently resolves missing `var(--name)` to the property's initial value, so a typo or removed token can collapse animations / colors / spacing without any error.
+**Approach:** `scripts/check-css-tokens.ts` walks `src/**/*.{css,ts,tsx}` and verifies every `var(--name)` reference resolves to either a declaration in `src/app/globals.css` / `@aleph-front/ds/styles/tokens.css`, OR has a fallback (`var(--x, default)`). Runs as part of `pnpm check`.
+**Key files:** `scripts/check-css-tokens.ts`, `src/app/globals.css`
+**Notes:** Ported from scheduler-dashboard's Decision #100. Catches the same class of bug that motivated it there.
 ```
 
-- [ ] **Step 2: Write docs/DECISIONS.md (with first entry)**
+Leave the Recipes section as-is (template's HTML comment skeleton) — no recipes yet for Cloud Alpha.
+
+- [ ] **Step 2: Fill in docs/DECISIONS.md (add first two entries)**
+
+The template's DECISIONS.md has a header + "How Decisions Are Logged" preamble + an HTML-commented placeholder where decisions go. Replace the HTML comment (`<!-- Decisions are added here, numbered sequentially, newest first -->`) with these two entries:
 
 ```markdown
-# Decisions Log
-
-Key decisions made during development. When you wonder "why did we do X?", the answer should be here.
-
----
-
-## How Decisions Are Logged
-
-Decisions are captured when these phrases appear:
-- "decided" / "let's go with" / "rejected"
-- "choosing X because" / "not doing X because"
-- "actually, let's" / "changed my mind"
-
-Each entry includes:
-- Context (what we were working on)
-- Decision (what was chosen)
-- Rationale (why — the most important part)
-
----
-
 ## Decision #1 - 2026-05-26
 **Context:** Bootstrap of the Cloud Alpha repo — first design decisions need to be locked in.
-**Decision:** Mirror scheduler-dashboard's stack verbatim (Next 16 + DS + Tailwind 4 + TanStack + Vitest + oxlint + tsx) and tooling conventions (strict tsconfig, `pnpm check` as the single gate). Deviate only where Cloud Alpha genuinely differs from Network (omit d3-* / ip3country / world-countries / `build-node-locations.ts` / `check:tokens` script).
+**Decision:** Mirror scheduler-dashboard's stack verbatim (Next 16 + DS + Tailwind 4 + TanStack + Vitest + oxlint + tsx) and tooling conventions (strict tsconfig, `pnpm check` as the single gate, `check:tokens` for CSS hygiene). Deviate only where Cloud Alpha genuinely differs from Network (omit d3-* / ip3country / world-countries / `build-node-locations.ts`).
 **Rationale:** Two sister apps with diverging stacks would force every shared learning to be ported twice. By mirroring, every chrome / token / pattern improvement in either repo flows naturally to the other. The deviation set is small and concrete (network-graph specific deps).
 **Alternatives considered:** Starting from `create-next-app` defaults — rejected because scheduler-dashboard has years of accumulated config tuning (strict mode flags, vitest setup polyfills, postcss + Tailwind 4 wiring) that we'd have to rediscover. The cost of dragging in a few extra config lines we don't need is negligible.
 
@@ -1030,36 +1061,13 @@ Each entry includes:
 **Alternatives considered:** Mailosaur (paid, cleanest API — rejected for v0 cost), magic-link clicking (more fragile in Playwright), custom-domain catch-all (only worth it if user already has the infra).
 ```
 
-- [ ] **Step 3: Write docs/BACKLOG.md (seeded with spec parked items)**
+- [ ] **Step 3: Fill in docs/BACKLOG.md with seeded entries**
+
+The template's BACKLOG.md ships four sections (Ready to execute / Needs planning / Roadmap ideations / Completed) with their headers + intros + HTML-commented "items added here when…" placeholders. Replace the HTML-commented placeholders in the **Needs planning** and **Roadmap ideations** sections with these seed entries; leave **Ready to execute** and **Completed** with their template intros + an empty body (no entries yet).
+
+In **Needs planning**, replace `<!-- Items added here when scope is agreed but the approach isn't -->` with:
 
 ```markdown
-# Backlog
-
-Ideas and scope creep captured for later consideration, triaged by readiness.
-
----
-
-## How Items Get Here
-
-- Scope drift detected during focused work (active interrupt)
-- Ideas that come up but aren't current priority
-- "We should also..." moments
-- Features identified but deferred
-
-New entries land in one of the three live sections below. When unsure, default
-to **Needs planning** — it's cheaper to demote a too-fuzzy item than to ship a
-half-baked one from **Ready to execute**.
-
----
-
-## Ready to execute
-
-(None yet.)
-
----
-
-## Needs planning
-
 ### 2026-05-26 - Cloud Alpha Phase 1 — Chrome integration
 **Source:** v0 roadmap in source spec (docs/superpowers/specs/2026-05-26-cloud-alpha-credits-v0-design.md, hosted in scheduler-dashboard repo).
 **Description:** Add DS chrome (`ProductStrip` + `AppShellSidebar` + `PageHeader`) wrapped by `AppShell` in `src/app/layout.tsx`. Configure `src/config/apps.ts` (ACTIVE_APP_ID = "cloud-alpha") and `src/config/nav.ts` (one section "Account" with one entry "Credits"). Empty `/credits` route renders placeholder hero. Smoke flow #1 (`disconnected-hero`) added and passing.
@@ -1115,20 +1123,15 @@ half-baked one from **Ready to execute**.
 **Description:** Currently smoke runs only via `/dio:smoke` on demand and inside `/dio:ship`. Automating in CI requires solving wallet/credentials/state-isolation. Revisit in v0.5.
 **Priority:** Low
 
-### 2026-05-26 - check:tokens script for CSS variable enforcement
-**Source:** Source spec open question 5 + scheduler-dashboard Decision #100.
-**Description:** Port `scripts/check-css-tokens.ts` from scheduler-dashboard so `pnpm check` catches phantom token references.
-**Priority:** Medium
-
 ### 2026-05-26 - src/changelog.ts for user-facing version history
 **Source:** scheduler-dashboard pattern not yet adopted.
 **Description:** Add a `CURRENT_VERSION` + `VersionEntry[]` changelog file once Cloud Alpha has user-facing behavior worth versioning (likely Phase 4 ship).
 **Priority:** Low
+```
 
----
+In **Roadmap ideations**, replace `<!-- Items added here when an idea is worth remembering but isn't on deck -->` with:
 
-## Roadmap ideations
-
+```markdown
 ### 2026-05-26 - Computing / hosting / storage / domain / permissions / settings ports
 **Source:** Source spec — v1+ scope.
 **Description:** Full parity with old `front-aleph-cloud-page` console.
@@ -1139,18 +1142,9 @@ half-baked one from **Ready to execute**.
 
 ### 2026-05-26 - Recharts-based usage charts
 **Source:** Source spec §7 — likely replaced by the SVG primitives scheduler-dashboard already owns.
-
----
-
-## Completed
-
-<details>
-<summary>Archived items</summary>
-
-(None yet — first features land in Phase 1.)
-
-</details>
 ```
+
+Leave **Ready to execute** and **Completed** with their template scaffolding (intro paragraph + HTML comment in Ready, intro + empty `<details>` in Completed) — no entries yet.
 
 - [ ] **Step 4: Create empty plans directories with .gitkeep**
 
@@ -1160,12 +1154,28 @@ mkdir -p docs/plans docs/superpowers/plans docs/superpowers/specs
 touch docs/plans/.gitkeep docs/superpowers/plans/.gitkeep docs/superpowers/specs/.gitkeep
 ```
 
-- [ ] **Step 5: Commit**
+- [ ] **Step 5: Verify the customized docs**
+
+```bash
+cd ~/repos/aleph-cloud-app
+wc -l docs/ARCHITECTURE.md docs/DECISIONS.md docs/BACKLOG.md
+grep -c "^###" docs/BACKLOG.md
+grep -c "^## Decision" docs/DECISIONS.md
+```
+
+Expected:
+- ARCHITECTURE.md: ~120–150 lines (template's ~50 + Cloud Alpha additions)
+- DECISIONS.md: ~30–50 lines (template's ~22 + two decision entries)
+- BACKLOG.md: ~80–100 lines (template's ~60 + seeded entries)
+- BACKLOG entries (lines starting with `### `): ~11–12 (10 in Needs planning + 3 in Roadmap)
+- Decision entries: 2
+
+- [ ] **Step 6: Commit**
 
 ```bash
 cd ~/repos/aleph-cloud-app
 git add docs/
-git commit -m "docs: seed ARCHITECTURE/DECISIONS/BACKLOG and plan directories"
+git commit -m "docs: customize template skeletons with Cloud Alpha content"
 ```
 
 ---
