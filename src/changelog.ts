@@ -11,9 +11,19 @@ export type VersionEntry = {
   changes: ChangeEntry[];
 };
 
-export const CURRENT_VERSION = "0.32.2";
+export const CURRENT_VERSION = "0.32.3";
 
 export const CHANGELOG: VersionEntry[] = [
+  {
+    version: "0.32.3",
+    date: "2026-05-29",
+    changes: [
+      {
+        type: "fix",
+        text: "Searching the VMs page (by hash, name, or owner address) now surfaces matches in the All tab regardless of status — previously a `scheduled` or other inactive VM showed only under its status pill and read as missing from All. An explicit lookup now bypasses the default \"Show inactive VMs\" cull the same way clicking a status pill does.",
+      },
+    ],
+  },
   {
     version: "0.32.2",
     date: "2026-05-24",
