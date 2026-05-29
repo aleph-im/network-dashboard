@@ -136,42 +136,61 @@ describe("VMTable — owner filter", () => {
   });
 });
 
-describe("VMTable — search bypasses the inactive-VM filter", () => {
+describe("VMTable — retention window", () => {
   beforeEach(() => {
     vi.useFakeTimers({ shouldAdvanceTime: true });
     replaceMock.mockReset();
     useVMsMock.mockReset();
   });
-
   afterEach(() => {
     vi.useRealTimers();
   });
 
-  it("surfaces a scheduled (inactive) VM in the All tab when its hash is searched", async () => {
-    const scheduled = makeVm({
-      hash: "scheduledhash000000000000000000000000000000000000000000000scheduled",
-      status: "scheduled",
-    });
-    const dispatched = makeVm({ hash: "dispatchedhashaaaa", status: "dispatched" });
-    useVMsMock.mockReturnValue({
-      data: [scheduled, dispatched],
-      isLoading: false,
-    });
+  const daysAgo = (n: number) =>
+    new Date(Date.now() - n * 86_400_000).toISOString();
 
+  it("default 7d window hides a VM whose last activity is older than 7 days", () => {
+    const stale = makeVm({
+      hash: "stalehash00000000",
+      status: "unscheduled",
+      lastObservedAt: daysAgo(40),
+      updatedAt: daysAgo(40),
+    });
+    useVMsMock.mockReturnValue({ data: [stale], isLoading: false });
+    renderWithQuery(<VMTable onSelectVM={() => {}} />);
+    // No row → its status badge is absent.
+    expect(screen.queryByText("unscheduled")).toBeNull();
+  });
+
+  it("a hash search surfaces an out-of-window VM (lookup bypasses the window)", async () => {
+    const stale = makeVm({
+      hash: "needlehash0000000000000000000000000000000000000000000000needle",
+      status: "unscheduled",
+      lastObservedAt: daysAgo(40),
+      updatedAt: daysAgo(40),
+    });
+    useVMsMock.mockReturnValue({ data: [stale], isLoading: false });
     const user = userEvent.setup({ advanceTimers: vi.advanceTimersByTime });
     renderWithQuery(<VMTable onSelectVM={() => {}} />);
 
-    // Default All tab hides inactive statuses — the scheduled VM is absent.
-    expect(screen.queryByText("scheduled")).toBeNull();
-
+    expect(screen.queryByText("unscheduled")).toBeNull();
     const search = screen.getByPlaceholderText("Search hash, name, node...");
-    await user.type(search, scheduled.hash);
+    await user.type(search, stale.hash);
     await act(async () => {
       vi.advanceTimersByTime(500);
     });
+    expect(screen.getByText("unscheduled")).toBeInTheDocument();
+  });
 
-    // An explicit hash search must surface the match even though its status
-    // is outside ACTIVE_VM_STATUSES — same bypass clicking a status pill gets.
-    expect(screen.getByText("scheduled")).toBeInTheDocument();
+  it("seeds the window from initialRetention=all and shows everything", () => {
+    const stale = makeVm({
+      hash: "stalehash11111111",
+      status: "unscheduled",
+      lastObservedAt: daysAgo(400),
+      updatedAt: daysAgo(400),
+    });
+    useVMsMock.mockReturnValue({ data: [stale], isLoading: false });
+    renderWithQuery(<VMTable onSelectVM={() => {}} initialRetention="all" />);
+    expect(screen.getByText("unscheduled")).toBeInTheDocument();
   });
 });
