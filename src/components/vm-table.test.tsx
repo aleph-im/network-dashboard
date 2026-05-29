@@ -12,6 +12,28 @@ import {
 import type { ReactElement } from "react";
 
 import { VMTable } from "@/components/vm-table";
+import type { VM } from "@/api/types";
+
+const makeVm = (overrides: Partial<VM> = {}): VM => ({
+  hash: "vm_hash_001",
+  type: "micro_vm",
+  allocatedNode: null,
+  observedNodes: [],
+  status: "dispatched",
+  requirements: { vcpus: 2, memoryMb: 1024, diskMb: 10000 },
+  paymentStatus: null,
+  updatedAt: "2026-01-01T00:00:00Z",
+  allocatedAt: null,
+  lastObservedAt: null,
+  paymentType: null,
+  gpuRequirements: [],
+  requiresConfidential: false,
+  schedulingStatus: null,
+  migrationTarget: null,
+  migrationStartedAt: null,
+  owner: null,
+  ...overrides,
+});
 
 // Stub router so we can observe URL writes without a real Next.js runtime.
 const replaceMock = vi.fn();
@@ -23,7 +45,7 @@ vi.mock("next/navigation", () => ({
 
 // Stub the VM-fetching hook so we can assert filter shape without network.
 const useVMsMock = vi.fn((_filters?: unknown) => ({
-  data: [],
+  data: [] as VM[],
   isLoading: false,
 }));
 vi.mock("@/hooks/use-vms", () => ({
@@ -111,5 +133,45 @@ describe("VMTable — owner filter", () => {
 
     const lastCall = useVMsMock.mock.calls.at(-1);
     expect(lastCall?.[0]).toEqual({ owner: validAddress });
+  });
+});
+
+describe("VMTable — search bypasses the inactive-VM filter", () => {
+  beforeEach(() => {
+    vi.useFakeTimers({ shouldAdvanceTime: true });
+    replaceMock.mockReset();
+    useVMsMock.mockReset();
+  });
+
+  afterEach(() => {
+    vi.useRealTimers();
+  });
+
+  it("surfaces a scheduled (inactive) VM in the All tab when its hash is searched", async () => {
+    const scheduled = makeVm({
+      hash: "scheduledhash000000000000000000000000000000000000000000000scheduled",
+      status: "scheduled",
+    });
+    const dispatched = makeVm({ hash: "dispatchedhashaaaa", status: "dispatched" });
+    useVMsMock.mockReturnValue({
+      data: [scheduled, dispatched],
+      isLoading: false,
+    });
+
+    const user = userEvent.setup({ advanceTimers: vi.advanceTimersByTime });
+    renderWithQuery(<VMTable onSelectVM={() => {}} />);
+
+    // Default All tab hides inactive statuses — the scheduled VM is absent.
+    expect(screen.queryByText("scheduled")).toBeNull();
+
+    const search = screen.getByPlaceholderText("Search hash, name, node...");
+    await user.type(search, scheduled.hash);
+    await act(async () => {
+      vi.advanceTimersByTime(500);
+    });
+
+    // An explicit hash search must surface the match even though its status
+    // is outside ACTIVE_VM_STATUSES — same bypass clicking a status pill gets.
+    expect(screen.getByText("scheduled")).toBeInTheDocument();
   });
 });

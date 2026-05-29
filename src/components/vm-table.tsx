@@ -333,13 +333,19 @@ export function VMTable({
       );
       const fCounts = countByStatus(afterAdvanced, (v) => v.status);
 
-      // Apply the inactive-VM filter only on the All tab. When the user
-      // explicitly clicks a non-active status pill (e.g. Unknown), they want
-      // to see those VMs — bypass the filter so per-status pills always
-      // resolve to their true counts.
+      // Apply the inactive-VM filter only on the All tab. Bypass it when the
+      // user explicitly clicks a non-active status pill (e.g. Unknown) or runs
+      // an explicit lookup (hash/name search or owner address) — both are
+      // requests to find a specific VM, and hiding the match behind the
+      // browse-mode cull reads as "not found" (e.g. a `scheduled` instance
+      // showing under the Scheduled pill but absent from All). Advanced filters
+      // like GPU/vCPU ranges are browse-refinement, not lookup, so they keep
+      // the active-only default.
       const showInactive = advanced.showInactive ?? false;
+      const hasLookupQuery =
+        debouncedQuery.trim() !== "" || validOwner !== "";
       const beforeStatusPill =
-        statusFilter || showInactive
+        statusFilter || showInactive || hasLookupQuery
           ? afterAdvanced
           : applyInactiveVmFilter(afterAdvanced, false);
 
@@ -352,7 +358,7 @@ export function VMTable({
         filteredCounts: fCounts,
         unfilteredCounts: uCounts,
       };
-    }, [allVms, debouncedQuery, advanced, statusFilter, messageInfo, filterMaxes]);
+    }, [allVms, debouncedQuery, validOwner, advanced, statusFilter, messageInfo, filterMaxes]);
 
   const tableColumns = useMemo(
     () => buildColumns(messageInfo, compact),
@@ -400,6 +406,12 @@ export function VMTable({
 
   function formatCount(status: VmStatus | undefined): string {
     const showInactive = advanced.showInactive === true;
+    // An explicit lookup bypasses the inactive cull (see the filter pipeline),
+    // so the All tab then spans every status — count it that way too, or the
+    // numerator wouldn't be a subset of the denominator.
+    const hasLookupQuery =
+      debouncedQuery.trim() !== "" || validOwner !== "";
+    const spanAllStatuses = showInactive || hasLookupQuery;
 
     if (status !== undefined) {
       // Per-status pills are unaffected by the inactive filter — clicking
@@ -412,11 +424,12 @@ export function VMTable({
       return `${unfiltered}`;
     }
 
-    // All tab: when showInactive is off, count only active-status VMs.
-    const filteredAll = showInactive
+    // All tab: when the cull is active (no lookup, toggle off), count only
+    // active-status VMs; otherwise count across every status.
+    const filteredAll = spanAllStatuses
       ? Object.values(filteredCounts).reduce((a, b) => a + b, 0)
       : sumActive(filteredCounts);
-    const unfilteredAll = showInactive
+    const unfilteredAll = spanAllStatuses
       ? Object.values(unfilteredCounts).reduce((a, b) => a + b, 0)
       : sumActive(unfilteredCounts);
 
