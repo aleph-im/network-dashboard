@@ -20,7 +20,7 @@ import type {
   VmDetail,
   VmFilters,
 } from "@/api/types";
-import { ACTIVE_VM_STATUSES } from "@/lib/filters";
+import { applyRetentionWindow, DEFAULT_RETENTION } from "@/lib/filters";
 
 export function getBaseUrl(): string {
   if (typeof window !== "undefined") {
@@ -274,8 +274,7 @@ export async function getOverviewStats(): Promise<OverviewStats> {
       .length,
     removedNodes: nodes.filter((n) => n.status === "removed")
       .length,
-    totalVMs: vms.filter((v) => ACTIVE_VM_STATUSES.has(v.status))
-      .length,
+    totalVMs: applyRetentionWindow(vms, DEFAULT_RETENTION, Date.now()).length,
     dispatchedVMs: vms.filter((v) => v.status === "dispatched")
       .length,
     missingVMs: vms.filter((v) => v.status === "missing").length,

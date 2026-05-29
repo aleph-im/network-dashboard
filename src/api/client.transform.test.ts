@@ -1,6 +1,7 @@
 import { describe, expect, it } from "vitest";
 import { transformVm } from "@/api/client";
-import type { ApiVmRow } from "@/api/types";
+import { applyRetentionWindow } from "@/lib/filters";
+import type { ApiVmRow, VM } from "@/api/types";
 
 function makeRow(overrides?: Partial<ApiVmRow>): ApiVmRow {
   return {
@@ -57,5 +58,27 @@ describe("transformVm", () => {
   it("accepts `migrating` as a valid status value", () => {
     const vm = transformVm(makeRow({ status: "migrating" }));
     expect(vm.status).toBe("migrating");
+  });
+});
+
+describe("overview totalVMs window rule", () => {
+  const NOW = new Date("2026-05-29T00:00:00Z").getTime();
+  const daysAgo = (n: number) => new Date(NOW - n * 86_400_000).toISOString();
+  const vm = (over: Partial<VM>): VM =>
+    ({
+      hash: "h", type: "instance", allocatedNode: null, observedNodes: [],
+      status: "dispatched", requirements: { vcpus: 1, memoryMb: 1, diskMb: 1 },
+      paymentStatus: null, updatedAt: daysAgo(1), allocatedAt: null,
+      lastObservedAt: daysAgo(1), paymentType: null, gpuRequirements: [],
+      requiresConfidential: false, schedulingStatus: null, migrationTarget: null,
+      migrationStartedAt: null, owner: null, ...over,
+    }) as VM;
+
+  it("counts only VMs active within 7d", () => {
+    const vms = [
+      vm({ hash: "live", lastObservedAt: daysAgo(1), updatedAt: daysAgo(1) }),
+      vm({ hash: "dead", status: "unscheduled", lastObservedAt: daysAgo(40), updatedAt: daysAgo(40) }),
+    ];
+    expect(applyRetentionWindow(vms, "7d", NOW)).toHaveLength(1);
   });
 });
