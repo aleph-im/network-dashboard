@@ -1,6 +1,7 @@
 import { useCallback, useMemo } from "react";
 import { useVMs } from "@/hooks/use-vms";
 import { useNodes } from "@/hooks/use-nodes";
+import { applyRetentionWindow, ISSUES_RETENTION } from "@/lib/filters";
 import type { VM, Node, VmStatus } from "@/api/types";
 
 export type DiscrepancyStatus = "orphaned" | "missing" | "unschedulable" | "duplicated" | "misplaced";
@@ -85,7 +86,7 @@ export function useIssues() {
   }, [refetchVMs, refetchNodes]);
 
   const result = useMemo(() => {
-    const vms = allVMs ?? [];
+    const vms = applyRetentionWindow(allVMs ?? [], ISSUES_RETENTION, Date.now());
     const nodes = allNodes ?? [];
     const nodeMap = new Map(nodes.map((n) => [n.hash, n]));
 

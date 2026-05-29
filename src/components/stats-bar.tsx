@@ -223,7 +223,7 @@ export function StatsBar() {
           label="Total"
           value={stats?.totalVMs}
           total={undefined}
-          subtitle="VMs currently active across the network"
+          subtitle="VMs active in the last 7 days"
           isLoading={isLoading}
           href="/vms"
           index={2}

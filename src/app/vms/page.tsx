@@ -9,6 +9,7 @@ import { VMTable } from "@/components/vm-table";
 import { VMDetailPanel } from "@/components/vm-detail-panel";
 import { VMDetailView } from "@/components/vm-detail-view";
 import { useVMs } from "@/hooks/use-vms";
+import { RETENTION_WINDOWS, type RetentionWindow } from "@/lib/filters";
 import type { VmStatus } from "@/api/types";
 
 const VALID_VM_STATUSES = new Set<string>([
@@ -36,7 +37,12 @@ function VMsContent() {
       : undefined;
 
   const queryParam = searchParams.get("q") ?? "";
-  const showInactiveParam = searchParams.get("showInactive") === "true";
+  const retentionParam = searchParams.get("retention");
+  const initialRetention = RETENTION_WINDOWS.includes(
+    retentionParam as RetentionWindow,
+  )
+    ? (retentionParam as RetentionWindow)
+    : undefined;
   const ownerParam = searchParams.get("owner") ?? "";
 
   const selectedParam = searchParams.get("selected");
@@ -96,7 +102,7 @@ function VMsContent() {
       {...(initialStatus ? { initialStatus } : {})}
       initialQuery={queryParam}
       initialOwner={ownerParam}
-      {...(showInactiveParam ? { initialShowInactive: true } : {})}
+      {...(initialRetention ? { initialRetention } : {})}
       {...(selectedVM ? { selectedKey: selectedVM } : {})}
       compact={!!selectedVM}
       sidePanel={

@@ -66,3 +66,24 @@ describe("useIssues — migrating exclusion", () => {
     expect(hashes).not.toContain("vm-mig");
   });
 });
+
+describe("useIssues — retention window", () => {
+  const daysAgo = (n: number) => new Date(Date.now() - n * 86_400_000).toISOString();
+
+  it("excludes discrepancy VMs whose last activity is older than 30d", () => {
+    useVMsMock.mockReturnValue({
+      data: [
+        makeVm({ hash: "recent-orphan", status: "orphaned", lastObservedAt: daysAgo(5), updatedAt: daysAgo(5) }),
+        makeVm({ hash: "old-orphan", status: "orphaned", lastObservedAt: daysAgo(120), updatedAt: daysAgo(120) }),
+      ],
+      isLoading: false,
+    } as unknown as ReturnType<typeof useVMs>);
+    useNodesMock.mockReturnValue({
+      data: [] as Node[],
+      isLoading: false,
+    } as unknown as ReturnType<typeof useNodes>);
+
+    const { result } = renderHook(() => useIssues(), { wrapper });
+    expect(result.current.issueVMs.map((v) => v.hash)).toEqual(["recent-orphan"]);
+  });
+});

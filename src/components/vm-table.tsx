@@ -23,13 +23,16 @@ import { useDebounce } from "@/hooks/use-debounce";
 import { FilterToolbar } from "@/components/filter-toolbar";
 import { FilterPanel } from "@/components/filter-panel";
 import { CopyableText } from "@aleph-front/ds/copyable-text";
+import { Tabs, TabsList, TabsTrigger } from "@aleph-front/ds/tabs";
 import {
   textSearch,
   countByStatus,
-  applyInactiveVmFilter,
+  applyRetentionWindow,
   applyVmAdvancedFilters,
   computeVmFilterMaxes,
-  ACTIVE_VM_STATUSES,
+  DEFAULT_RETENTION,
+  RETENTION_WINDOWS,
+  type RetentionWindow,
   type VmAdvancedFilters,
 } from "@/lib/filters";
 import { applySort, type SortDirection } from "@/lib/sort";
@@ -228,7 +231,7 @@ type VMTableProps = {
   initialStatus?: VmStatus;
   initialQuery?: string;
   initialOwner?: string;
-  initialShowInactive?: boolean;
+  initialRetention?: RetentionWindow;
   selectedKey?: string;
   compact?: boolean;
   sidePanel?: React.ReactNode;
@@ -239,7 +242,7 @@ export function VMTable({
   initialStatus,
   initialQuery,
   initialOwner,
-  initialShowInactive,
+  initialRetention,
   selectedKey,
   compact,
   sidePanel,
@@ -266,6 +269,11 @@ export function VMTable({
     VmStatus | undefined
   >(initialStatus);
 
+  // Retention window — the primary "how far back" lens.
+  const [retention, setRetention] = useState<RetentionWindow>(
+    initialRetention ?? DEFAULT_RETENTION,
+  );
+
   // Sort (controlled — sort runs over the full filtered dataset, then paginated)
   const [sortColumn, setSortColumn] = useState<string | undefined>();
   const [sortDirection, setSortDirection] =
@@ -273,9 +281,7 @@ export function VMTable({
 
   // Advanced filters
   const [filtersOpen, setFiltersOpen] = useState(false);
-  const [advanced, setAdvanced] = useState<VmAdvancedFilters>(
-    initialShowInactive ? { showInactive: true } : {},
-  );
+  const [advanced, setAdvanced] = useState<VmAdvancedFilters>({});
 
   // Data — fetch full dataset (or owner-filtered subset when valid)
   const { data: allVms, isLoading } = useVMs(
@@ -307,9 +313,16 @@ export function VMTable({
     advanced.memoryGbRange != null &&
       (advanced.memoryGbRange[0] > 0 ||
         advanced.memoryGbRange[1] < filterMaxes.memoryGb),
-    advanced.showInactive === true,
     validOwner !== "",
   ].filter(Boolean).length;
+
+  // An explicit lookup (hash/name search or owner address) bypasses the
+  // retention window — it's a request to find a specific VM, so the match must
+  // surface regardless of how recently it was active. Advanced filters like
+  // GPU/vCPU ranges are browse-refinement, not lookup, so they stay inside the
+  // window.
+  const hasLookupQuery =
+    debouncedQuery.trim() !== "" || validOwner !== "";
 
   // Filter pipeline
   const { displayedRows, filteredCounts, unfilteredCounts } =
@@ -321,44 +334,31 @@ export function VMTable({
         ...VM_BASE_SEARCH_FIELDS(v),
         messageInfo?.get(v.hash)?.name,
       ];
-      const afterSearch = textSearch(
-        all,
-        debouncedQuery,
-        vmSearchFields,
-      );
+      const afterSearch = textSearch(all, debouncedQuery, vmSearchFields);
       const afterAdvanced = applyVmAdvancedFilters(
         afterSearch,
         advanced,
         filterMaxes,
       );
-      const fCounts = countByStatus(afterAdvanced, (v) => v.status);
 
-      // Apply the inactive-VM filter only on the All tab. Bypass it when the
-      // user explicitly clicks a non-active status pill (e.g. Unknown) or runs
-      // an explicit lookup (hash/name search or owner address) — both are
-      // requests to find a specific VM, and hiding the match behind the
-      // browse-mode cull reads as "not found" (e.g. a `scheduled` instance
-      // showing under the Scheduled pill but absent from All). Advanced filters
-      // like GPU/vCPU ranges are browse-refinement, not lookup, so they keep
-      // the active-only default.
-      const showInactive = advanced.showInactive ?? false;
-      const hasLookupQuery =
-        debouncedQuery.trim() !== "" || validOwner !== "";
-      const beforeStatusPill =
-        statusFilter || showInactive || hasLookupQuery
-          ? afterAdvanced
-          : applyInactiveVmFilter(afterAdvanced, false);
+      // The window is the always-on lens — unless an explicit lookup
+      // (search/owner) is active, which shows matches regardless of age.
+      const afterWindow = hasLookupQuery
+        ? afterAdvanced
+        : applyRetentionWindow(afterAdvanced, retention, Date.now());
+
+      const fCounts = countByStatus(afterWindow, (v) => v.status);
 
       const afterStatus = statusFilter
-        ? beforeStatusPill.filter((v) => v.status === statusFilter)
-        : beforeStatusPill;
+        ? afterWindow.filter((v) => v.status === statusFilter)
+        : afterWindow;
 
       return {
         displayedRows: afterStatus,
         filteredCounts: fCounts,
         unfilteredCounts: uCounts,
       };
-    }, [allVms, debouncedQuery, validOwner, advanced, statusFilter, messageInfo, filterMaxes]);
+    }, [allVms, debouncedQuery, validOwner, hasLookupQuery, retention, advanced, statusFilter, messageInfo, filterMaxes]);
 
   const tableColumns = useMemo(
     () => buildColumns(messageInfo, compact),
@@ -377,7 +377,7 @@ export function VMTable({
 
   useEffect(() => {
     setPage(1);
-  }, [debouncedQuery, advanced, statusFilter, validOwner, setPage]);
+  }, [debouncedQuery, advanced, statusFilter, validOwner, retention, setPage]);
 
   // Persist ?owner= in the URL. Reflects raw input (not just valid) so a
   // reload after a typo restores what the user actually typed.
@@ -395,59 +395,23 @@ export function VMTable({
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [ownerInput, router, pathname]);
 
-  const hasNonStatusFilters =
-    debouncedQuery.trim() !== "" || activeAdvancedCount > 0;
-
-  function sumActive(counts: Record<string, number>): number {
-    let s = 0;
-    for (const status of ACTIVE_VM_STATUSES) s += counts[status] ?? 0;
-    return s;
-  }
-
   function formatCount(status: VmStatus | undefined): string {
-    const showInactive = advanced.showInactive === true;
-    // An explicit lookup bypasses the inactive cull (see the filter pipeline),
-    // so the All tab then spans every status — count it that way too, or the
-    // numerator wouldn't be a subset of the denominator.
-    const hasLookupQuery =
-      debouncedQuery.trim() !== "" || validOwner !== "";
-    const spanAllStatuses = showInactive || hasLookupQuery;
-
     if (status !== undefined) {
-      // Per-status pills are unaffected by the inactive filter — clicking
-      // Unknown should show the true count of Unknown VMs.
       const filtered = filteredCounts[status] ?? 0;
-      const unfiltered = unfilteredCounts[status] ?? 0;
-      if (hasNonStatusFilters && filtered !== unfiltered) {
-        return `${filtered}/${unfiltered}`;
+      if (hasLookupQuery) {
+        // Lookup bypasses the window → compare against the all-time count.
+        const unfiltered = unfilteredCounts[status] ?? 0;
+        return filtered !== unfiltered ? `${filtered}/${unfiltered}` : `${unfiltered}`;
       }
-      return `${unfiltered}`;
+      return `${filtered}`;
     }
 
-    // All tab: when the cull is active (no lookup, toggle off), count only
-    // active-status VMs; otherwise count across every status.
-    const filteredAll = spanAllStatuses
-      ? Object.values(filteredCounts).reduce((a, b) => a + b, 0)
-      : sumActive(filteredCounts);
-    const unfilteredAll = spanAllStatuses
-      ? Object.values(unfilteredCounts).reduce((a, b) => a + b, 0)
-      : sumActive(unfilteredCounts);
-
-    // Plain count when only the default-on inactive-hide is culling
-    // (no search, no other advanced filters).
-    const onlyInactiveCulling =
-      !showInactive &&
-      activeAdvancedCount === 0 &&
-      debouncedQuery.trim() === "";
-
-    if (onlyInactiveCulling) {
-      return `${filteredAll}`;
+    const filteredAll = Object.values(filteredCounts).reduce((a, b) => a + b, 0);
+    if (hasLookupQuery) {
+      const unfilteredAll = Object.values(unfilteredCounts).reduce((a, b) => a + b, 0);
+      return filteredAll !== unfilteredAll ? `${filteredAll}/${unfilteredAll}` : `${unfilteredAll}`;
     }
-
-    if (hasNonStatusFilters && filteredAll !== unfilteredAll) {
-      return `${filteredAll}/${unfilteredAll}`;
-    }
-    return `${unfilteredAll}`;
+    return `${filteredAll}`;
   }
 
   function toggleVmType(type: VmType) {
@@ -501,8 +465,21 @@ export function VMTable({
       setOwnerInput("");
     });
     const params = new URLSearchParams(searchParams.toString());
-    params.delete("showInactive");
     params.delete("owner");
+    const qs = params.toString();
+    router.replace(qs ? `${pathname}?${qs}` : pathname);
+  }
+
+  // Retention is a primary lens, not an advanced filter — it has its own pill
+  // selector and URL param, and Reset leaves it untouched.
+  function setRetentionAndUrl(w: RetentionWindow) {
+    startTransition(() => setRetention(w));
+    const params = new URLSearchParams(searchParams.toString());
+    if (w === DEFAULT_RETENTION) {
+      params.delete("retention");
+    } else {
+      params.set("retention", w);
+    }
     const qs = params.toString();
     router.replace(qs ? `${pathname}?${qs}` : pathname);
   }
@@ -520,6 +497,20 @@ export function VMTable({
   return (
     <TooltipProvider>
       <FilterToolbar
+        leading={
+          <Tabs
+            value={retention}
+            onValueChange={(v) => setRetentionAndUrl(v as RetentionWindow)}
+          >
+            <TabsList variant="pill" size="sm">
+              {RETENTION_WINDOWS.map((w) => (
+                <TabsTrigger key={w} value={w}>
+                  {w === "all" ? "All" : w}
+                </TabsTrigger>
+              ))}
+            </TabsList>
+          </Tabs>
+        }
         statuses={STATUS_PILLS}
         activeStatus={statusFilter}
         onStatusChange={(s) => {
@@ -671,34 +662,6 @@ export function VMTable({
                     Requires Confidential
                     <span className="ml-1.5 text-xs font-normal text-muted-foreground/50">
                       — requires TEE
-                    </span>
-                  </span>
-                </label>
-                <label className="flex cursor-pointer items-center gap-2.5 text-sm font-semibold text-muted-foreground select-none">
-                  <Checkbox
-                    size="sm"
-                    checked={advanced.showInactive ?? false}
-                    onCheckedChange={(v) => {
-                      updateAdvanced((p) => {
-                        const { showInactive: _, ...rest } = p;
-                        return v === true
-                          ? { ...rest, showInactive: true }
-                          : rest;
-                      });
-                      const params = new URLSearchParams(searchParams.toString());
-                      if (v === true) {
-                        params.set("showInactive", "true");
-                      } else {
-                        params.delete("showInactive");
-                      }
-                      const qs = params.toString();
-                      router.replace(qs ? `${pathname}?${qs}` : pathname);
-                    }}
-                  />
-                  <span>
-                    Show inactive VMs
-                    <span className="ml-1.5 text-xs font-normal text-muted-foreground/50">
-                      — include scheduled, unscheduled, orphaned, and unknown VMs
                     </span>
                   </span>
                 </label>

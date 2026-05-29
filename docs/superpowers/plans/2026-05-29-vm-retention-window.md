@@ -1,3 +1,10 @@
+---
+status: done
+branch: feature/vm-retention-window
+date: 2026-05-29
+note: all 7 tasks implemented, pnpm check green (332 tests); awaiting preview verification before ship
+---
+
 # VM Retention Window Implementation Plan
 
 > **For agentic workers:** REQUIRED SUB-SKILL: Use superpowers:subagent-driven-development (recommended) or superpowers:executing-plans to implement this plan task-by-task. Steps use checkbox (`- [ ]`) syntax for tracking.

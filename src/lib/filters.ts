@@ -1,4 +1,4 @@
-import type { Node, VM, VmStatus, VmType } from "@/api/types";
+import type { Node, VM, VmType } from "@/api/types";
 import { computeNodeCuTotal } from "@/lib/compute-units";
 
 /** Generic text search: matches if any field contains the query. */
@@ -186,7 +186,6 @@ export type VmAdvancedFilters = {
   requiresConfidential?: boolean;
   vcpusRange?: [number, number];
   memoryGbRange?: [number, number];
-  showInactive?: boolean;
 };
 
 export type VmFilterMaxes = {
@@ -278,34 +277,50 @@ export function applyVmAdvancedFilters(
   return result;
 }
 
-/**
- * VM statuses that count as "active" — running, expected, or awaiting placement.
- * Mirrors the Overview Total VMs definition (Decision #65).
- *
- * Anything outside this set is operational long-tail: scheduled-but-never-observed,
- * deliberately unscheduled, orphaned, or unknown — the noise the "Show inactive
- * VMs" toggle hides by default.
- */
-export const ACTIVE_VM_STATUSES: ReadonlySet<VmStatus> = new Set<VmStatus>([
-  "dispatched",
-  "migrating",
-  "duplicated",
-  "misplaced",
-  "missing",
-  "unschedulable",
-]);
+/** Selectable retention window for the VMs view. `all` disables the window. */
+export type RetentionWindow = "7d" | "30d" | "90d" | "all";
+
+/** Ordered set of window options for the pill selector + URL validation. */
+export const RETENTION_WINDOWS: readonly RetentionWindow[] = [
+  "7d",
+  "30d",
+  "90d",
+  "all",
+] as const;
+
+/** Default window on the VMs page and the Overview headline. */
+export const DEFAULT_RETENTION: RetentionWindow = "7d";
+
+/** Wider default for the Issues page so recent-but-not-this-week issues show. */
+export const ISSUES_RETENTION: RetentionWindow = "30d";
+
+const RETENTION_MS: Record<Exclude<RetentionWindow, "all">, number> = {
+  "7d": 7 * 86_400_000,
+  "30d": 30 * 86_400_000,
+  "90d": 90 * 86_400_000,
+};
+
+function lastActivityMs(v: VM): number {
+  const t = (s: string | null) =>
+    s ? new Date(s).getTime() : Number.NEGATIVE_INFINITY;
+  return Math.max(t(v.lastObservedAt), t(v.updatedAt), t(v.allocatedAt));
+}
 
 /**
- * Hide VMs that aren't in an active status (default state).
+ * Keep VMs whose most-recent activity is within `window` of `now`.
  *
- * `showInactive=true` returns the input unchanged. Otherwise filters to VMs
- * whose `status` is in `ACTIVE_VM_STATUSES`. This is the All-tab default — the
- * baseline "what's actually running on the network" view.
+ * "Activity" is the max of `lastObservedAt` (a node still sees it),
+ * `updatedAt` (any projection change), and `allocatedAt` (covers a freshly
+ * scheduled VM not yet observed). `window === "all"` returns the input
+ * unchanged. `now` is injected so callers can pass `Date.now()` and tests can
+ * pin a fixed clock.
  */
-export function applyInactiveVmFilter(
+export function applyRetentionWindow(
   vms: VM[],
-  showInactive: boolean,
+  window: RetentionWindow,
+  now: number,
 ): VM[] {
-  if (showInactive) return vms;
-  return vms.filter((v) => ACTIVE_VM_STATUSES.has(v.status));
+  if (window === "all") return vms;
+  const cutoff = now - RETENTION_MS[window];
+  return vms.filter((v) => lastActivityMs(v) >= cutoff);
 }

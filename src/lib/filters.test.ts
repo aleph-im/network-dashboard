@@ -4,10 +4,9 @@ import {
   countByStatus,
   applyNodeAdvancedFilters,
   applyVmAdvancedFilters,
-  applyInactiveVmFilter,
+  applyRetentionWindow,
   computeNodeFilterMaxes,
   computeVmFilterMaxes,
-  ACTIVE_VM_STATUSES,
   NODE_FILTER_MAX_FLOOR,
   VM_FILTER_MAX_FLOOR,
 } from "@/lib/filters";
@@ -573,57 +572,65 @@ describe("CU filter", () => {
   });
 });
 
-describe("applyInactiveVmFilter", () => {
-  it("returns identity when showInactive=true", () => {
+describe("applyRetentionWindow", () => {
+  // Fixed clock: 2026-05-29T00:00:00Z
+  const NOW = new Date("2026-05-29T00:00:00Z").getTime();
+  const daysAgo = (n: number) =>
+    new Date(NOW - n * 86_400_000).toISOString();
+
+  it("returns identity for window 'all'", () => {
     const vms = [
-      makeVm({ hash: "v1", status: "dispatched" }),
-      makeVm({ hash: "v2", status: "unknown" }),
-      makeVm({ hash: "v3", status: "orphaned" }),
+      makeVm({ hash: "v1", updatedAt: daysAgo(400) }),
+      makeVm({ hash: "v2", updatedAt: daysAgo(1) }),
     ];
-    expect(applyInactiveVmFilter(vms, true)).toEqual(vms);
+    expect(applyRetentionWindow(vms, "all", NOW)).toEqual(vms);
   });
 
-  it("keeps only active-status VMs when showInactive=false", () => {
+  it("keeps VMs observed within the window, drops older ones", () => {
     const vms = [
-      makeVm({ hash: "v-dispatched", status: "dispatched" }),
-      makeVm({ hash: "v-duplicated", status: "duplicated" }),
-      makeVm({ hash: "v-misplaced", status: "misplaced" }),
-      makeVm({ hash: "v-missing", status: "missing" }),
-      makeVm({ hash: "v-unschedulable", status: "unschedulable" }),
-      makeVm({ hash: "v-scheduled", status: "scheduled" }),
-      makeVm({ hash: "v-unscheduled", status: "unscheduled" }),
-      makeVm({ hash: "v-orphaned", status: "orphaned" }),
-      makeVm({ hash: "v-unknown", status: "unknown" }),
+      makeVm({ hash: "recent", lastObservedAt: daysAgo(2), updatedAt: daysAgo(2) }),
+      makeVm({ hash: "stale", lastObservedAt: daysAgo(20), updatedAt: daysAgo(20) }),
     ];
-    const result = applyInactiveVmFilter(vms, false);
-    expect(result.map((v) => v.hash).sort()).toEqual([
-      "v-dispatched",
-      "v-duplicated",
-      "v-misplaced",
-      "v-missing",
-      "v-unschedulable",
-    ].sort());
+    const result = applyRetentionWindow(vms, "7d", NOW);
+    expect(result.map((v) => v.hash)).toEqual(["recent"]);
   });
 
-  it("does not depend on allocatedNode", () => {
-    const vms = [
-      makeVm({ hash: "v-allocated", status: "dispatched", allocatedNode: "node-ok" }),
-      makeVm({ hash: "v-orphan", status: "orphaned", allocatedNode: null }),
-    ];
-    const result = applyInactiveVmFilter(vms, false);
-    expect(result.map((v) => v.hash)).toEqual(["v-allocated"]);
+  it("uses the most-recent of lastObservedAt / updatedAt / allocatedAt", () => {
+    // last observed long ago, but updatedAt is fresh (e.g. just unscheduled)
+    const vm = makeVm({
+      hash: "fresh-update",
+      lastObservedAt: daysAgo(60),
+      updatedAt: daysAgo(3),
+      allocatedAt: null,
+    });
+    expect(applyRetentionWindow([vm], "7d", NOW).map((v) => v.hash)).toEqual([
+      "fresh-update",
+    ]);
   });
 
-  it("ACTIVE_VM_STATUSES includes dispatched, migrating, duplicated, misplaced, missing, unschedulable", () => {
-    expect([...ACTIVE_VM_STATUSES].sort()).toEqual(
-      [
-        "dispatched",
-        "migrating",
-        "duplicated",
-        "misplaced",
-        "missing",
-        "unschedulable",
-      ].sort(),
-    );
+  it("keeps a never-observed but recently-allocated VM (scheduled, no observation yet)", () => {
+    const vm = makeVm({
+      hash: "scheduled-fresh",
+      status: "scheduled",
+      lastObservedAt: null,
+      allocatedAt: daysAgo(1),
+      updatedAt: daysAgo(1),
+    });
+    expect(applyRetentionWindow([vm], "7d", NOW).map((v) => v.hash)).toEqual([
+      "scheduled-fresh",
+    ]);
+  });
+
+  it("includes a VM exactly at the cutoff boundary", () => {
+    const vm = makeVm({ hash: "boundary", lastObservedAt: daysAgo(7), updatedAt: daysAgo(7) });
+    expect(applyRetentionWindow([vm], "7d", NOW).map((v) => v.hash)).toEqual([
+      "boundary",
+    ]);
+  });
+
+  it("widens with the window length (30d keeps what 7d drops)", () => {
+    const vms = [makeVm({ hash: "v", lastObservedAt: daysAgo(20), updatedAt: daysAgo(20) })];
+    expect(applyRetentionWindow(vms, "7d", NOW)).toHaveLength(0);
+    expect(applyRetentionWindow(vms, "30d", NOW)).toHaveLength(1);
   });
 });

@@ -11,9 +11,23 @@ export type VersionEntry = {
   changes: ChangeEntry[];
 };
 
-export const CURRENT_VERSION = "0.32.3";
+export const CURRENT_VERSION = "0.33.0";
 
 export const CHANGELOG: VersionEntry[] = [
+  {
+    version: "0.33.0",
+    date: "2026-05-29",
+    changes: [
+      {
+        type: "feature",
+        text: "The VMs page now has a retention-window selector (7d / 30d / 90d / All, default 7d) that replaces the \"Show inactive VMs\" toggle. The window is the always-on lens — status pills slice within it — keying on each VM's most recent activity (last observed, updated, or allocated). An explicit lookup (hash/name search or owner address) bypasses the window so a specific VM always surfaces. The window persists via `?retention=`.",
+      },
+      {
+        type: "ui",
+        text: "Overview \"Total VMs\" now counts VMs active in the last 7 days (was: all active-status VMs ever), and the Issues page scopes discrepancies to the last 30 days — so stale long-tail rows no longer inflate either surface.",
+      },
+    ],
+  },
   {
     version: "0.32.3",
     date: "2026-05-29",
