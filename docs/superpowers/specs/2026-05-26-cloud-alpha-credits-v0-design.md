@@ -387,7 +387,7 @@ Six phases, mostly sequential because each builds on the previous. ~10–12 days
 - Smoke flows #4, #5 (`open-topup-estimation`, `topup-min-amount`) added and passing
 - Docs: ARCHITECTURE adds "Top-up Flow" section, DECISIONS logs the resume strategy
 
-**Exit gate:** real $1 mainnet top-up completes end-to-end; balance increases by 1,000,000 credits; smoke flows 4+5 pass.
+**Exit gate:** real $1 mainnet top-up completes end-to-end; balance increases by 1 credit (1,000,000 smallest units); smoke flows 4+5 pass.
 
 ### Phase 5 — ProductStrip integration into Network (0.5 day, depends on Phase 4 deployed)
 
@@ -455,7 +455,7 @@ To prevent scope creep:
 - **Cloud Alpha** — working name of the new app being built. Renamed to "Cloud" once parity is reached.
 - **`@aleph-front/ds`** — the design system used by this repo and the new app. Different from `@aleph-front/core` (used by the old `front-aleph-cloud-page`).
 - **`feat/credits-ui` branch** — the credits-only WIP branch on `aleph-im/front-aleph-cloud-page`. Reference for design intent in Phase 2–4. NOT `main`, which still has hold-tier and PAYG code paths.
-- **Credits** — Aleph's unit of paid usage. 1 credit = $0.000001 (10⁻⁶ USD). `MIN_CREDITS_TOPUP = 1,000,000` = $1.
+- **Credits** — Aleph's unit of paid usage. 1 credit = $1 (USD). Credits are stored in 6-decimal smallest units (USDC convention), so 1 credit = 1,000,000 smallest units and `MIN_CREDITS_TOPUP = 1,000,000` smallest units = $1 (one credit).
 - **Privy** — embedded-wallet provider supporting email / social / passkey login.
 - **Reown** — WalletConnect-derived provider for external wallets (MetaMask, etc.).
 - **`/dio:smoke`** — globally-installed Claude Code skill that runs Playwright MCP against a deployed app, driven by `docs/smoke/SMOKE.md`.
