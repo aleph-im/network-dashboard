@@ -38,5 +38,6 @@ describe("useOwnerRewards", () => {
     expect(d.lastPaid!.aleph).toBeCloseTo(82.28);
     expect(d.lastPaid!.txHash).toBe("0xtx");
     expect(result.current.isBreakdownLoading).toBe(false);
+    expect(result.current.isError).toBe(false);
   });
 });

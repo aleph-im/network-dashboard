@@ -11,5 +11,6 @@ export function useRewards(address: string, fromSec: number, toSec: number) {
     enabled: !!address && toSec > fromSec,
     staleTime: 5 * 60_000,
     placeholderData: keepPreviousData,
+    retry: 1,
   });
 }

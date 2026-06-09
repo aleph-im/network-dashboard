@@ -29,7 +29,12 @@ export async function getRewardsTimeSeries(
     bucketSize: "1y", // single aggregate bucket; we read `total`
   });
   const url = `${getCreditApiBaseUrl()}/api/v0/rewards/time-series?${params}`;
-  const res = await fetch(url);
+  let res: Response;
+  try {
+    res = await fetch(url, { signal: AbortSignal.timeout(12_000) });
+  } catch {
+    throw new Error("Rewards API unreachable (timeout)");
+  }
   if (!res.ok) throw new Error(`Rewards API error: ${res.status}`);
   const data = (await res.json()) as TimeSeriesResponse;
   const t = data.total;
@@ -75,7 +80,12 @@ export async function getDistributions(): Promise<DistributionCycle | null> {
     sort_order: "-1",
   });
   const url = `${getAlephBaseUrl()}/api/v0/messages.json?${params}`;
-  const res = await fetch(url);
+  let res: Response;
+  try {
+    res = await fetch(url, { signal: AbortSignal.timeout(12_000) });
+  } catch {
+    throw new Error("Rewards API unreachable (timeout)");
+  }
   if (!res.ok) throw new Error(`Aleph API error: ${res.status}`);
   const data = (await res.json()) as { messages: DistMessage[] };
 

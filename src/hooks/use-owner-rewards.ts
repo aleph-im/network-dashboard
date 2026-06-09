@@ -15,6 +15,7 @@ export function useOwnerRewards(address: string): {
   data: OwnerRewards | undefined;
   isLoading: boolean;
   isBreakdownLoading: boolean;
+  isError: boolean;
 } {
   const { data: cycle, isLoading: cycleLoading } = useDistributions();
 
@@ -24,7 +25,7 @@ export function useOwnerRewards(address: string): {
   // DATA_START-wide fetch that gets replaced once the real cycle window is known.
   const fromSec = cycleLoading ? nowSec : (cycle?.endSec ?? DATA_START_SEC);
 
-  const { data: rewards, isLoading: rewardsLoading } = useRewards(address, fromSec, nowSec);
+  const { data: rewards, isLoading: rewardsLoading, isError: rewardsError } = useRewards(address, fromSec, nowSec);
   const { data: expenses, isLoading: expLoading } = useCreditExpenses(fromSec, nowSec);
   const { data: nodeState, isLoading: nsLoading } = useNodeState();
 
@@ -56,5 +57,6 @@ export function useOwnerRewards(address: string): {
     data,
     isLoading: cycleLoading || rewardsLoading || nsLoading,
     isBreakdownLoading: expLoading,
+    isError: rewardsError,
   };
 }

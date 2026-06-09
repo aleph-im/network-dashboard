@@ -545,7 +545,7 @@ function WalletContent() {
     refresh: refreshActivity,
     dataUpdatedAt,
   } = useWalletActivity(address);
-  const { data: ownerRewards, isLoading: rewardsLoading, isBreakdownLoading } =
+  const { data: ownerRewards, isLoading: rewardsLoading, isBreakdownLoading, isError: rewardsError } =
     useOwnerRewards(address);
   const { data: granted } = useAuthorizations(
     address,
@@ -694,6 +694,13 @@ function WalletContent() {
         <Skeleton className="h-32 w-full rounded-lg" />
       ) : ownerRewards ? (
         <WalletRevenueCard rewards={ownerRewards} breakdownLoading={isBreakdownLoading} />
+      ) : rewardsError ? (
+        <Card padding="md">
+          <h3 className="mb-1 text-xs font-semibold uppercase tracking-wider text-muted-foreground">Node revenue</h3>
+          <p className="text-sm text-muted-foreground">
+            Revenue data is temporarily unavailable — the rewards service isn&apos;t responding. It&apos;ll appear once the service is back.
+          </p>
+        </Card>
       ) : null}
 
       {/* Permissions */}
