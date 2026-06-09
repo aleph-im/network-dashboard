@@ -11,9 +11,23 @@ export type VersionEntry = {
   changes: ChangeEntry[];
 };
 
-export const CURRENT_VERSION = "0.33.0";
+export const CURRENT_VERSION = "0.34.0";
 
 export const CHANGELOG: VersionEntry[] = [
+  {
+    version: "0.34.0",
+    date: "2026-06-09",
+    changes: [
+      {
+        type: "feature",
+        text: "The wallet view's rewards section is now a node-owner revenue view sourced from the protocol's authoritative rewards feed (credit.aleph.im /rewards/time-series, algoVersion v2) instead of a client-side reconstruction. It surfaces the wage subsidy — the \"minimum wage\" that decays to zero over time, previously invisible and worth ~18–22% of node-owner revenue — and is framed around the ~10-day payout cycle: an owed-this-cycle total with a next-payment countdown, a by-source breakdown (credits / holder tier / wage), a per-node breakdown, and a last-payment panel showing the on-chain distribution amount and status.",
+      },
+      {
+        type: "refactor",
+        text: "Wallet reward numbers are now anchored to the per-address totals from the rewards API and split per node using api2 execution node_id weights (CRN, exact) and score weights (CCN). The old hardcoded 60/15/20 distribution split is retired for the wallet path — computeWalletRewards and the useWalletRewards hook were removed.",
+      },
+    ],
+  },
   {
     version: "0.33.0",
     date: "2026-05-29",

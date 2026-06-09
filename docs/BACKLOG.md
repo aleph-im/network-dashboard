@@ -57,6 +57,16 @@ Intent is agreed but there are open questions, design choices, or multi-step
 coordination required. Needs a brainstorm or spec before someone can execute.
 Multi-day / multi-PR work.
 
+### 2026-06-09 - Plan B: Node Earnings tab re-source onto the rewards layer
+**Source:** Phase 1A owner revenue view (Decision #111) shipped the shared data layer; the Node Earnings tab still uses the old reconstruction.
+**Description:** Re-source the `/nodes?view=<hash>&tab=earnings` KPI, by-source, and the per-node ALEPH-over-time chart from the new rewards layer (`useRewards` + `apportionOwnerRewards`), including each node's wage slice. The chart is the heaviest piece: per-node per-bucket values are apportioned from the API's per-address per-bucket totals via per-bucket api2 weights. Add an inline by-source bar under the "ALEPH accrued" KPI (treatment A). Spec section "② Node Earnings tab" in `docs/superpowers/specs/2026-06-09-node-owner-revenue-view-design.md`.
+**Priority:** High
+
+### 2026-06-09 - Phase 2: migrate credits page + network panels to the rewards source of truth
+**Source:** Deferred from Decision #111 (Phase 1A scoped to wallet owner view + Node Earnings tab).
+**Description:** Migrate the remaining reward surfaces off the client-side reconstruction: the Credits recipient table (needs ≤100-address batching of `/rewards/time-series`, since the API caps addresses per request), the credit flow diagram + summary cards (network rollup via no-address query), and the network detail-panel CRN/CCN earnings sparklines. Retire `computeDistributionSummary`/`distributeExpense` once these are migrated. Also add a dedicated api2 WebSocket subscription to FOUNDATION distribution messages (additive over the Phase-1 polling fallback — invalidates the same query key, reuses the same parser).
+**Priority:** Medium
+
 ### 2026-05-29 - Phase 2: scheduler `active_since` param (server-side retention window)
 **Source:** VM retention window Phase 1 (Decision #110) shipped the window client-side; the server-side half is tracked in aleph-vm-scheduler#179 and brief `docs/superpowers/briefs/2026-05-29-scheduler-vms-time-filter.md`.
 **Description:** Once the scheduler exposes an `active_since` (time-filter) query param on the VM list endpoint, drop the client-side `applyRetentionWindow` call on the VMs page and request the window server-side via `getVMs({ activeSince })` instead — the same selective server-side pattern as the owner filter (Decision #88). This shrinks the payload (no longer fetching the full cumulative-ever VM list just to filter to 7d in memory) with no UX change. Overview/Issues window counts would follow. Blocked on the scheduler param landing.
