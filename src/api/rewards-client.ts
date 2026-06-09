@@ -22,8 +22,8 @@ export async function getRewardsTimeSeries(
 ): Promise<AddressRewards> {
   const addr = address.toLowerCase();
   const params = new URLSearchParams({
-    from: String(Math.floor(fromSec)),
-    to: String(Math.floor(toSec)),
+    from: new Date(Math.floor(fromSec) * 1000).toISOString(),
+    to: new Date(Math.floor(toSec) * 1000).toISOString(),
     address: addr,
     detail: "2",
     bucketSize: "1y", // single aggregate bucket; we read `total`

@@ -35,6 +35,8 @@ describe("getRewardsTimeSeries", () => {
     expect(url).toContain("/api/v0/rewards/time-series");
     expect(url).toContain("address=0xabc"); // lowercased
     expect(url).toContain("detail=2");
+    expect(url).toContain("from=2026-05-01"); // ISO, not raw epoch
+    expect(url).not.toContain("from=1777593611"); // must not send epoch seconds
   });
 
   it("throws on non-200", async () => {
