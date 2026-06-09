@@ -1,3 +1,10 @@
+---
+status: done
+branch: feature/node-owner-revenue-view
+date: 2026-06-09
+note: All 12 tasks + independent-review fixes complete; pnpm check green. Awaiting preview + ship. Follow-ups — Plan B (Node Earnings tab re-source) and Phase 2 (credits page + network panels) in BACKLOG; deferred minors — useOwnerRewards error state, cycleEndSec naming.
+---
+
 # Owner Revenue View (Phase 1A) Implementation Plan
 
 > **For agentic workers:** REQUIRED SUB-SKILL: Use superpowers:subagent-driven-development (recommended) or superpowers:executing-plans to implement this plan task-by-task. Steps use checkbox (`- [ ]`) syntax for tracking.
