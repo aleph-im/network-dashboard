@@ -33,4 +33,10 @@ describe("WalletRevenueCard", () => {
     );
     expect(container.firstChild).toBeNull();
   });
+
+  it("shows skeleton and label but not node rows when breakdownLoading is true", () => {
+    render(<WalletRevenueCard rewards={OWNER} breakdownLoading />);
+    expect(screen.getByText(/By node/i)).toBeInTheDocument();
+    expect(screen.queryByText("node-alpha")).toBeNull();
+  });
 });

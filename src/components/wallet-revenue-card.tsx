@@ -3,6 +3,7 @@
 import { Card } from "@aleph-front/ds/card";
 import { Badge } from "@aleph-front/ds/badge";
 import { CopyableText } from "@aleph-front/ds/copyable-text";
+import { Skeleton } from "@aleph-front/ds/ui/skeleton";
 import { formatAleph } from "@/lib/format";
 import { nextPaymentEstimate, cycleProgress } from "@/lib/payout-cycle";
 import type { BySource, OwnerRewards, RewardSource } from "@/api/rewards-types";
@@ -51,7 +52,7 @@ const STATUS_LABEL = {
 
 const STATUS_COLOR = { pending: "text-warning-500", confirmed: "text-success-500", failed: "text-error-500" } as const;
 
-export function WalletRevenueCard({ rewards }: { rewards: OwnerRewards }) {
+export function WalletRevenueCard({ rewards, breakdownLoading = false }: { rewards: OwnerRewards; breakdownLoading?: boolean }) {
   if (rewards.totalAleph === 0 && !rewards.lastPaid) return null;
 
   const nowSec = Math.floor(Date.now() / 1000);
@@ -116,7 +117,12 @@ export function WalletRevenueCard({ rewards }: { rewards: OwnerRewards }) {
       </div>
       <SourceBar bySource={rewards.bySource} />
 
-      {(rewards.byNode.length > 0 || rewards.stakingAleph > 0 || rewards.unattributedAleph > 0) && (
+      {breakdownLoading ? (
+        <>
+          <div className="mt-4 text-[10px] font-semibold uppercase tracking-wider text-muted-foreground">By node · this cycle</div>
+          <Skeleton className="mt-1 h-24 w-full bg-edge" />
+        </>
+      ) : (rewards.byNode.length > 0 || rewards.stakingAleph > 0 || rewards.unattributedAleph > 0) ? (
         <>
           <div className="mt-4 text-[10px] font-semibold uppercase tracking-wider text-muted-foreground">
             By node · this cycle
@@ -174,7 +180,7 @@ export function WalletRevenueCard({ rewards }: { rewards: OwnerRewards }) {
             </tbody>
           </table>
         </>
-      )}
+      ) : null}
 
       <p className="mt-3 text-[11px] italic text-muted-foreground">
         Owed amounts accrued from the protocol&apos;s authoritative rewards feed (algoVersion v2),

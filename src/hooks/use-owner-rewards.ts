@@ -14,11 +14,15 @@ const DATA_START_SEC = Math.floor(Date.UTC(2026, 4, 1) / 1000); // 2026-05-01
 export function useOwnerRewards(address: string): {
   data: OwnerRewards | undefined;
   isLoading: boolean;
+  isBreakdownLoading: boolean;
 } {
   const { data: cycle, isLoading: cycleLoading } = useDistributions();
 
-  const fromSec = cycle?.endSec ?? DATA_START_SEC;
   const nowSec = useMemo(() => Math.floor(Date.now() / 300_000) * 300, []); // 5-min rounded
+  // While the cycle is still loading, use a degenerate window (from === to) so
+  // useRewards / useCreditExpenses stay disabled and we don't fire a throwaway
+  // DATA_START-wide fetch that gets replaced once the real cycle window is known.
+  const fromSec = cycleLoading ? nowSec : (cycle?.endSec ?? DATA_START_SEC);
 
   const { data: rewards, isLoading: rewardsLoading } = useRewards(address, fromSec, nowSec);
   const { data: expenses, isLoading: expLoading } = useCreditExpenses(fromSec, nowSec);
@@ -50,6 +54,7 @@ export function useOwnerRewards(address: string): {
 
   return {
     data,
-    isLoading: cycleLoading || rewardsLoading || expLoading || nsLoading,
+    isLoading: cycleLoading || rewardsLoading || nsLoading,
+    isBreakdownLoading: expLoading,
   };
 }

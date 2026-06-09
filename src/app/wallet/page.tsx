@@ -545,7 +545,7 @@ function WalletContent() {
     refresh: refreshActivity,
     dataUpdatedAt,
   } = useWalletActivity(address);
-  const { data: ownerRewards, isLoading: rewardsLoading } =
+  const { data: ownerRewards, isLoading: rewardsLoading, isBreakdownLoading } =
     useOwnerRewards(address);
   const { data: granted } = useAuthorizations(
     address,
@@ -693,7 +693,7 @@ function WalletContent() {
       {rewardsLoading ? (
         <Skeleton className="h-32 w-full rounded-lg" />
       ) : ownerRewards ? (
-        <WalletRevenueCard rewards={ownerRewards} />
+        <WalletRevenueCard rewards={ownerRewards} breakdownLoading={isBreakdownLoading} />
       ) : null}
 
       {/* Permissions */}

@@ -57,6 +57,11 @@ Intent is agreed but there are open questions, design choices, or multi-step
 coordination required. Needs a brainstorm or spec before someone can execute.
 Multi-day / multi-PR work.
 
+### 2026-06-09 - Owner view: fetch execution-only expenses for per-node weights
+**Source:** Owner revenue view load-delay fix (Task 15) — the per-node apportionment only needs execution `node_id` weights, but `useCreditExpenses` pulls the full feed including storage messages (~15k entries each), making the by-node breakdown slow.
+**Description:** Add a lighter expense fetch for the owner view that pulls only `type_execution` messages (storage carries no `node_id` and is unused for per-node weights). Needs investigation into whether api2 `messages.json` can filter by content tag; if not, consider a server-side aggregate. Would cut the by-node payload ~20×.
+**Priority:** Medium
+
 ### 2026-06-09 - Plan B: Node Earnings tab re-source onto the rewards layer
 **Source:** Phase 1A owner revenue view (Decision #111) shipped the shared data layer; the Node Earnings tab still uses the old reconstruction.
 **Description:** Re-source the `/nodes?view=<hash>&tab=earnings` KPI, by-source, and the per-node ALEPH-over-time chart from the new rewards layer (`useRewards` + `apportionOwnerRewards`), including each node's wage slice. The chart is the heaviest piece: per-node per-bucket values are apportioned from the API's per-address per-bucket totals via per-bucket api2 weights. Add an inline by-source bar under the "ALEPH accrued" KPI (treatment A). Spec section "② Node Earnings tab" in `docs/superpowers/specs/2026-06-09-node-owner-revenue-view-design.md`.
