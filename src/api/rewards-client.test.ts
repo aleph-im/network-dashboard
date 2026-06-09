@@ -1,5 +1,5 @@
 import { describe, it, expect, vi, afterEach } from "vitest";
-import { getRewardsTimeSeries } from "@/api/rewards-client";
+import { getRewardsTimeSeries, getDistributions } from "@/api/rewards-client";
 
 const SAMPLE = {
   request: { addresses: ["0xabc"], detail: 2 },
@@ -40,5 +40,62 @@ describe("getRewardsTimeSeries", () => {
   it("throws on non-200", async () => {
     vi.spyOn(globalThis, "fetch").mockResolvedValue(new Response("", { status: 500 }));
     await expect(getRewardsTimeSeries("0xabc", 1, 2)).rejects.toThrow(/Rewards API error: 500/);
+  });
+});
+
+const DIST_MSG = {
+  messages: [
+    {
+      item_hash: "h1",
+      time: 1780312916,
+      channel: "FOUNDATION",
+      content: {
+        type: "credit-rewards-distribution",
+        content: {
+          status: "distribution",
+          start_time: 1777593611,
+          end_time: 1780306643,
+          rewards: { "0x0062D7a318E64B4DF6563490F8DB2177bDADfc5F": 82.28 },
+          targets: [
+            {
+              chain: "ETH",
+              status: "pending",
+              success: true,
+              tx: "0xtx",
+              targets: { "0x0062D7a318E64B4DF6563490F8DB2177bDADfc5F": 82.28 },
+            },
+          ],
+        },
+      },
+    },
+    {
+      item_hash: "h0",
+      time: 1779000000,
+      channel: "FOUNDATION",
+      content: { type: "staking-rewards-distribution", content: { status: "distribution" } },
+    },
+  ],
+};
+
+describe("getDistributions", () => {
+  it("returns the latest credit-rewards-distribution cycle, ignoring legacy type", async () => {
+    vi.spyOn(globalThis, "fetch").mockResolvedValue(
+      new Response(JSON.stringify(DIST_MSG), { status: 200 }),
+    );
+    const cycle = await getDistributions();
+    expect(cycle).not.toBeNull();
+    expect(cycle!.startSec).toBe(1777593611);
+    expect(cycle!.endSec).toBe(1780306643);
+    expect(cycle!.rewards.get("0x0062d7a318e64b4df6563490f8db2177bdadfc5f")).toBeCloseTo(82.28);
+    const oc = cycle!.onChain.get("0x0062d7a318e64b4df6563490f8db2177bdadfc5f");
+    expect(oc!.txHash).toBe("0xtx");
+    expect(oc!.status).toBe("pending");
+  });
+
+  it("returns null when no credit-rewards-distribution exists", async () => {
+    vi.spyOn(globalThis, "fetch").mockResolvedValue(
+      new Response(JSON.stringify({ messages: [DIST_MSG.messages[1]!] }), { status: 200 }),
+    );
+    expect(await getDistributions()).toBeNull();
   });
 });
