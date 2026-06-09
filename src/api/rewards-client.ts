@@ -70,7 +70,8 @@ export async function getDistributions(): Promise<DistributionCycle | null> {
   const params = new URLSearchParams({
     msgType: "POST",
     addresses: FOUNDATION_DISTRIBUTION_SENDER,
-    pagination: "20",
+    contentTypes: DISTRIBUTION_POST_TYPE,
+    pagination: "50",
     sort_order: "-1",
   });
   const url = `${getAlephBaseUrl()}/api/v0/messages.json?${params}`;

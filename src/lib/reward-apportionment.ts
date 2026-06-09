@@ -14,6 +14,7 @@ type Args = {
 type Apportioned = {
   byNode: OwnerNodeReward[];
   stakingAleph: number;
+  unattributedAleph: number;
 };
 
 /** Per-CRN execution weight from api2 node_id ALEPH over the window, scoped to
@@ -97,5 +98,8 @@ export function apportionOwnerRewards({ address, rewards, expenses, nodeState }:
     wage.staker;
 
   const byNode = [...node.values()].sort((a, b) => b.totalAleph - a.totalAleph);
-  return { byNode, stakingAleph };
+  const attributed =
+    byNode.reduce((s, n) => s + n.totalAleph, 0) + stakingAleph;
+  const unattributedAleph = Math.max(0, rewards.totalAleph - attributed);
+  return { byNode, stakingAleph, unattributedAleph };
 }

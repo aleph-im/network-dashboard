@@ -27,7 +27,7 @@ export function useOwnerRewards(address: string): {
   const data = useMemo<OwnerRewards | undefined>(() => {
     if (!rewards || !nodeState) return undefined;
     const lower = address.toLowerCase();
-    const { byNode, stakingAleph } = apportionOwnerRewards({
+    const { byNode, stakingAleph, unattributedAleph } = apportionOwnerRewards({
       address, rewards, expenses: expenses ?? [], nodeState,
     });
     const paidAleph = cycle?.rewards.get(lower);
@@ -40,6 +40,7 @@ export function useOwnerRewards(address: string): {
       bySource: rewards.bySource,
       byNode,
       stakingAleph,
+      unattributedAleph,
       lastPaid:
         cycle && paidAleph !== undefined
           ? { aleph: paidAleph, timeSec: cycle.endSec, txHash: oc?.txHash ?? null, status: oc?.status ?? "pending" }

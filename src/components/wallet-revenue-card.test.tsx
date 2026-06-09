@@ -14,6 +14,7 @@ const OWNER: OwnerRewards = {
     { hash: "ccnX", name: "node-bravo", role: "ccn", totalAleph: 418, bySource: { credit_revenue: 300, holder_tier: 30, wage_subsidy: 88 } },
   ],
   stakingAleph: 254,
+  unattributedAleph: 0,
   lastPaid: { aleph: 82.28, timeSec: Math.floor(Date.UTC(2026, 5, 1) / 1000), txHash: "0xtx", status: "pending" },
 };
 

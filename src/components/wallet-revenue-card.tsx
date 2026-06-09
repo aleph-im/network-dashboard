@@ -49,6 +49,8 @@ const STATUS_LABEL = {
   failed: "⚠ transfer failed",
 } as const;
 
+const STATUS_COLOR = { pending: "text-warning-500", confirmed: "text-success-500", failed: "text-error-500" } as const;
+
 export function WalletRevenueCard({ rewards }: { rewards: OwnerRewards }) {
   if (rewards.totalAleph === 0 && !rewards.lastPaid) return null;
 
@@ -103,7 +105,7 @@ export function WalletRevenueCard({ rewards }: { rewards: OwnerRewards }) {
                 year: "numeric",
               })}
             </div>
-            <div className="mt-1 text-warning-500">{STATUS_LABEL[rewards.lastPaid.status]}</div>
+            <div className={`mt-1 ${STATUS_COLOR[rewards.lastPaid.status]}`}>{STATUS_LABEL[rewards.lastPaid.status]}</div>
           </div>
         )}
       </div>
@@ -114,7 +116,7 @@ export function WalletRevenueCard({ rewards }: { rewards: OwnerRewards }) {
       </div>
       <SourceBar bySource={rewards.bySource} />
 
-      {(rewards.byNode.length > 0 || rewards.stakingAleph > 0) && (
+      {(rewards.byNode.length > 0 || rewards.stakingAleph > 0 || rewards.unattributedAleph > 0) && (
         <>
           <div className="mt-4 text-[10px] font-semibold uppercase tracking-wider text-muted-foreground">
             By node · this cycle
@@ -159,6 +161,14 @@ export function WalletRevenueCard({ rewards }: { rewards: OwnerRewards }) {
                   <td className="py-1.5 text-right font-mono tabular-nums">
                     {formatAleph(rewards.stakingAleph)}
                   </td>
+                </tr>
+              )}
+              {rewards.unattributedAleph > 0 && (
+                <tr>
+                  <td className="py-1.5 pr-4 text-xs text-muted-foreground">
+                    Unattributed <span className="opacity-60">(no current node)</span>
+                  </td>
+                  <td className="py-1.5 text-right font-mono tabular-nums">{formatAleph(rewards.unattributedAleph)}</td>
                 </tr>
               )}
             </tbody>

@@ -66,7 +66,7 @@ describe("apportionOwnerRewards", () => {
     expect(x.bySource.wage_subsidy).toBeCloseTo(30);
     expect(r.stakingAleph).toBeCloseTo(50);
     const nodeSum = r.byNode.reduce((s, n) => s + n.totalAleph, 0);
-    expect(nodeSum + r.stakingAleph).toBeCloseTo(rewards(full).totalAleph);
+    expect(nodeSum + r.stakingAleph + r.unattributedAleph).toBeCloseTo(rewards(full).totalAleph);
   });
 
   it("single CRN gets the whole CRN slice exactly", () => {
@@ -82,5 +82,23 @@ describe("apportionOwnerRewards", () => {
     const r = apportionOwnerRewards({ address: "0xnobody", rewards: rewards(full), expenses: [], nodeState: { crns: new Map(), ccns: new Map() } });
     expect(r.byNode).toHaveLength(0);
     expect(r.stakingAleph).toBeCloseTo(60);
+  });
+
+  it("captures role totals with no owned node as unattributed (conserves total)", () => {
+    const full = FULL({
+      credit_revenue: { execution_crn: 50, execution_ccn: 0, execution_staker: 0, storage_ccn: 0, storage_staker: 0 },
+      wage_subsidy: { crn: 0, ccn: 0, staker: 0 },
+    });
+    const r = apportionOwnerRewards({
+      address: "0xowner",
+      rewards: rewards(full),
+      expenses: [],
+      nodeState: { crns: new Map(), ccns: new Map() }, // owns nothing
+    });
+    expect(r.byNode).toHaveLength(0);
+    expect(r.stakingAleph).toBeCloseTo(0);
+    expect(r.unattributedAleph).toBeCloseTo(50);
+    const nodeSum = r.byNode.reduce((s, n) => s + n.totalAleph, 0);
+    expect(nodeSum + r.stakingAleph + r.unattributedAleph).toBeCloseTo(rewards(full).totalAleph);
   });
 });

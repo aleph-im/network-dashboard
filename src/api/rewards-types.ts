@@ -70,5 +70,9 @@ export type OwnerRewards = {
   bySource: BySource;
   byNode: OwnerNodeReward[];
   stakingAleph: number;
+  /** ALEPH from authoritative role totals that mapped to no currently-owned
+   *  node (e.g. a deregistered node, or a node missing from the corechannel
+   *  snapshot). Kept so the breakdown always reconciles with totalAleph. */
+  unattributedAleph: number;
   lastPaid: AddressLastPaid | null;
 };
