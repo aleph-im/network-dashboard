@@ -154,16 +154,3 @@ export type DistributionSummary = {
     { aleph: number; nodeId: string; source: CreditEntrySource }
   >;
 };
-
-export type WalletNodeReward = {
-  nodeHash: string;
-  nodeName: string;
-  role: "crn" | "ccn";
-  aleph: number;
-};
-
-export type WalletRewards = {
-  nodes: WalletNodeReward[];
-  stakerAleph: number;
-  totalAleph: number;
-};
