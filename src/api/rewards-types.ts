@@ -64,8 +64,9 @@ export type OwnerNodeReward = {
 
 export type OwnerRewards = {
   address: string;
-  cycleStartSec: number;
-  cycleEndSec: number | null; // null until first distribution is known
+  /** Start of the current accrual window = the previous distribution's end.
+   *  null until the first distribution is known (no cycle framing yet). */
+  accrualStartSec: number | null;
   totalAleph: number;
   bySource: BySource;
   byNode: OwnerNodeReward[];

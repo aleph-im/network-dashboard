@@ -179,6 +179,11 @@ actionable yet; captured so they're not lost. Might never ship in current
 form, or might mature into a **Needs planning** entry once the surrounding
 context lands.
 
+### 2026-06-09 - Owner revenue view: deferred quality polish
+**Source:** Code-quality review of the owner revenue view (Phase 1A).
+**Description:** Low-priority cleanups deferred from the review: (1) extract a shared `fetchJson(url, label)` helper in `rewards-client.ts` once a 3rd rewards endpoint exists (currently 2 occurrences of the timeout+try/catch block); (2) consider promoting the owner-view colored bars (source breakdown + cycle progress) to a reusable DS bar/progress primitive — DS has no such component today, so this is a DS-repo effort; (3) snake_case wire types (`execution_crn`, etc.) flow into the app domain rather than being camel-transformed at the client boundary — document the deliberate pass-through or transform.
+**Priority:** Low
+
 ### 2026-03-11 - Wallet identity hub (User Command Center evolution)
 **Source:** Wallet view brainstorming
 **Description:** Expand the wallet view beyond ops/debugging into a richer identity hub: wallet balance, ALEPH staking, transaction history, etc. Part of a broader evolution from an ops dashboard to a User Command Center. Build on top of the Phase 1 ops-focused wallet view.

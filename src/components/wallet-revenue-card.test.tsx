@@ -5,8 +5,7 @@ import type { OwnerRewards } from "@/api/rewards-types";
 
 const OWNER: OwnerRewards = {
   address: "0xowner",
-  cycleStartSec: Math.floor(Date.UTC(2026, 5, 1) / 1000),
-  cycleEndSec: Math.floor(Date.UTC(2026, 5, 1) / 1000),
+  accrualStartSec: Math.floor(Date.UTC(2026, 5, 1) / 1000),
   totalAleph: 1284,
   bySource: { credit_revenue: 796, holder_tier: 103, wage_subsidy: 385 },
   byNode: [

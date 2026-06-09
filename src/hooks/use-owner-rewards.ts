@@ -39,8 +39,7 @@ export function useOwnerRewards(address: string): {
     const oc = cycle?.onChain.get(lower);
     return {
       address: lower,
-      cycleStartSec: fromSec,
-      cycleEndSec: cycle?.endSec ?? null,
+      accrualStartSec: cycle?.endSec ?? null,
       totalAleph: rewards.totalAleph,
       bySource: rewards.bySource,
       byNode,

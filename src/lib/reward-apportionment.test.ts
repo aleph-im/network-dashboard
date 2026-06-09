@@ -84,6 +84,23 @@ describe("apportionOwnerRewards", () => {
     expect(r.stakingAleph).toBeCloseTo(60);
   });
 
+  it("even-splits a role total across owned CRNs when none have execution credits in the window", () => {
+    const full = FULL({
+      credit_revenue: { execution_crn: 80, execution_ccn: 0, execution_staker: 0, storage_ccn: 0, storage_staker: 0 },
+      wage_subsidy: { crn: 0, ccn: 0, staker: 0 },
+    });
+    const r = apportionOwnerRewards({
+      address: "0xowner",
+      rewards: rewards(full),
+      expenses: [], // no execution credits → all CRN weights 0
+      nodeState: nodeState(), // owns crnA + crnB (+ ccnX)
+    });
+    const a = r.byNode.find((n) => n.hash === "crnA")!;
+    const b = r.byNode.find((n) => n.hash === "crnB")!;
+    expect(a.bySource.credit_revenue).toBeCloseTo(40);
+    expect(b.bySource.credit_revenue).toBeCloseTo(40);
+  });
+
   it("captures role totals with no owned node as unattributed (conserves total)", () => {
     const full = FULL({
       credit_revenue: { execution_crn: 50, execution_ccn: 0, execution_staker: 0, storage_ccn: 0, storage_staker: 0 },

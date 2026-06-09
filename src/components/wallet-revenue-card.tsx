@@ -3,15 +3,17 @@
 import { Card } from "@aleph-front/ds/card";
 import { Badge } from "@aleph-front/ds/badge";
 import { CopyableText } from "@aleph-front/ds/copyable-text";
+import { StatusDot } from "@aleph-front/ds/status-dot";
 import { Skeleton } from "@aleph-front/ds/ui/skeleton";
+import { Clock } from "@phosphor-icons/react";
 import { formatAleph } from "@/lib/format";
 import { nextPaymentEstimate, cycleProgress } from "@/lib/payout-cycle";
 import type { BySource, OwnerRewards, RewardSource } from "@/api/rewards-types";
 
-const SOURCE_META: { key: RewardSource; label: string; bar: string; dot: string }[] = [
-  { key: "credit_revenue", label: "Credits", bar: "bg-success-500", dot: "🟢" },
-  { key: "holder_tier", label: "Holder", bar: "bg-primary-500", dot: "🟣" },
-  { key: "wage_subsidy", label: "Min. wage", bar: "bg-warning-500", dot: "🟡" },
+const SOURCE_META: { key: RewardSource; label: string; bar: string }[] = [
+  { key: "credit_revenue", label: "Credits", bar: "bg-success-500" },
+  { key: "holder_tier", label: "Holder", bar: "bg-primary-500" },
+  { key: "wage_subsidy", label: "Min. wage", bar: "bg-warning-500" },
 ];
 
 function SourceBar({ bySource }: { bySource: BySource }) {
@@ -27,9 +29,10 @@ function SourceBar({ bySource }: { bySource: BySource }) {
       </div>
       <div className="text-xs text-muted-foreground">
         {SOURCE_META.map((m, i) => (
-          <span key={m.key}>
-            {i > 0 ? " · " : ""}
-            {m.dot} {m.label} {formatAleph(bySource[m.key])}
+          <span key={m.key} className="inline-flex items-center gap-1">
+            {i > 0 ? <span> · </span> : null}
+            <span className={`inline-block h-2 w-2 rounded-full ${m.bar}`} />
+            {m.label} {formatAleph(bySource[m.key])}
           </span>
         ))}
         {total > 0 && bySource.wage_subsidy > 0 && (
@@ -45,19 +48,23 @@ function daysUntil(targetSec: number, nowSec: number): number {
 }
 
 const STATUS_LABEL = {
-  pending: "⏳ on-chain pending",
-  confirmed: "✓ on-chain confirmed",
-  failed: "⚠ transfer failed",
+  pending: "on-chain pending",
+  confirmed: "on-chain confirmed",
+  failed: "transfer failed",
 } as const;
 
-const STATUS_COLOR = { pending: "text-warning-500", confirmed: "text-success-500", failed: "text-error-500" } as const;
+const STATUS_DOT = {
+  pending: "degraded",
+  confirmed: "healthy",
+  failed: "error",
+} as const satisfies Record<string, "healthy" | "degraded" | "error">;
 
 export function WalletRevenueCard({ rewards, breakdownLoading = false }: { rewards: OwnerRewards; breakdownLoading?: boolean }) {
   if (rewards.totalAleph === 0 && !rewards.lastPaid) return null;
 
   const nowSec = Math.floor(Date.now() / 1000);
-  const nextSec = rewards.cycleEndSec ? nextPaymentEstimate(rewards.cycleEndSec) : null;
-  const progress = nextSec ? cycleProgress(rewards.cycleStartSec, nextSec, nowSec) : 0;
+  const nextSec = rewards.accrualStartSec ? nextPaymentEstimate(rewards.accrualStartSec) : null;
+  const progress = nextSec && rewards.accrualStartSec ? cycleProgress(rewards.accrualStartSec, nextSec, nowSec) : 0;
 
   return (
     <Card padding="md">
@@ -67,8 +74,10 @@ export function WalletRevenueCard({ rewards, breakdownLoading = false }: { rewar
 
       <div className="flex flex-wrap gap-5">
         <div className="min-w-[240px] flex-[2]">
-          <div className="text-[10px] font-semibold uppercase tracking-wider text-muted-foreground">
-            Owed this cycle <span className="text-success-500">● live</span>
+          <div className="flex items-center gap-1 text-[10px] font-semibold uppercase tracking-wider text-muted-foreground">
+            Owed this cycle
+            <span className="inline-block h-2 w-2 rounded-full bg-success-500 align-middle" />
+            <span>live</span>
           </div>
           <div className="font-mono text-3xl font-semibold tabular-nums">
             {formatAleph(rewards.totalAleph)}{" "}
@@ -81,8 +90,9 @@ export function WalletRevenueCard({ rewards, breakdownLoading = false }: { rewar
             />
           </div>
           {nextSec && (
-            <div className="text-sm text-muted-foreground">
-              ⏱ Next payment in ~{daysUntil(nextSec, nowSec)} days
+            <div className="flex items-center gap-1 text-sm text-muted-foreground">
+              <Clock size={14} />
+              Next payment in ~{daysUntil(nextSec, nowSec)} days
             </div>
           )}
           <div className="text-[11px] text-muted-foreground opacity-60">
@@ -106,7 +116,10 @@ export function WalletRevenueCard({ rewards, breakdownLoading = false }: { rewar
                 year: "numeric",
               })}
             </div>
-            <div className={`mt-1 ${STATUS_COLOR[rewards.lastPaid.status]}`}>{STATUS_LABEL[rewards.lastPaid.status]}</div>
+            <div className="mt-1 flex items-center gap-1 text-xs text-muted-foreground">
+              <StatusDot status={STATUS_DOT[rewards.lastPaid.status]} />
+              {STATUS_LABEL[rewards.lastPaid.status]}
+            </div>
           </div>
         )}
       </div>

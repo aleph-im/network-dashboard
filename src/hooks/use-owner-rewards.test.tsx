@@ -32,7 +32,7 @@ describe("useOwnerRewards", () => {
     const { result } = renderHook(() => useOwnerRewards("0xOWNER"), { wrapper });
     await waitFor(() => expect(result.current.data).toBeDefined());
     const d = result.current.data!;
-    expect(d.cycleEndSec).toBe(2000);
+    expect(d.accrualStartSec).toBe(2000);
     expect(d.totalAleph).toBeCloseTo(60);
     expect(d.stakingAleph).toBeCloseTo(60);
     expect(d.lastPaid!.aleph).toBeCloseTo(82.28);
