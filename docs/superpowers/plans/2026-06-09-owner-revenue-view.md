@@ -1,8 +1,20 @@
 ---
-status: done
+status: blocked
 branch: feature/node-owner-revenue-view
-date: 2026-06-09
-note: All 12 tasks + independent-review fixes complete; pnpm check green. Awaiting preview + ship. Follow-ups — Plan B (Node Earnings tab re-source) and Phase 2 (credits page + network panels) in BACKLOG; deferred minors — useOwnerRewards error state, cycleEndSec naming.
+date: 2026-06-10
+note: |
+  Implementation COMPLETE (Tasks 1–17) + 2 independent reviews + 3 preview-bug fixes
+  (epoch→ISO dates, instant headline + progressive by-node, graceful "API unavailable" card)
+  + DS/clarity refactor (emoji→StatusDot/tokens/Phosphor, cycleEndSec→accrualStartSec).
+  `pnpm check` green (47 files / 351 tests); graceful-degradation path verified live via Playwright.
+  BLOCKED: credit.aleph.im rewards API fully DOWN since 2026-06-09 (Angel fixing/redeploying) →
+  happy-path preview UNVERIFIED.
+  RESUME when API is up: re-verify happy path at
+  localhost:3001/wallet?address=0xf379b2f8c29eedc1fc7d189240d0ad7c9164af64 (preview or Playwright)
+  — confirm owed-this-cycle total, non-zero wage segment, and by-node breakdown render — then
+  /dio:ship (push → PR → squash-merge). Branch is LOCAL ONLY (preview gate not passed; nothing pushed).
+  Follow-ups in BACKLOG: Plan B (Node Earnings tab re-source), Phase 2 (credits + network panels),
+  execution-only expense payload, deferred quality lows.
 ---
 
 # Owner Revenue View (Phase 1A) Implementation Plan
