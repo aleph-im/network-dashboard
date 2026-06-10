@@ -257,13 +257,17 @@ export async function getVM(hash: string): Promise<VmDetail> {
 }
 
 export async function getOverviewStats(): Promise<OverviewStats> {
+  // Headline totals come from the single cheap /stats call. The VM/node
+  // page fan-outs (dozens of requests) only feed derived breakdowns, so a
+  // transient failure there degrades those to empty (null → []) instead
+  // of rejecting the whole query and rendering the headline as "0 / 0".
   const [stats, rawVms, rawNodes] = await Promise.all([
     fetchApi<ApiStats>("/api/v1/stats"),
-    fetchAllPages<ApiVmRow>("/api/v1/vms"),
-    fetchAllPages<ApiNodeRow>("/api/v1/nodes"),
+    fetchAllPages<ApiVmRow>("/api/v1/vms").catch(() => null),
+    fetchAllPages<ApiNodeRow>("/api/v1/nodes").catch(() => null),
   ]);
-  const nodes = rawNodes.map(transformNode);
-  const vms = rawVms.map(transformVm);
+  const nodes = (rawNodes ?? []).map(transformNode);
+  const vms = (rawVms ?? []).map(transformVm);
   return {
     totalNodes: stats.total_nodes,
     healthyNodes: stats.healthy_nodes,
@@ -274,7 +278,12 @@ export async function getOverviewStats(): Promise<OverviewStats> {
       .length,
     removedNodes: nodes.filter((n) => n.status === "removed")
       .length,
-    totalVMs: applyRetentionWindow(vms, DEFAULT_RETENTION, Date.now()).length,
+    // Retention-window count when the VM list is available (Decision
+    // #110); all-time total from /stats when the fan-out failed, so the
+    // headline never collapses to 0 on a transient error.
+    totalVMs: rawVms
+      ? applyRetentionWindow(vms, DEFAULT_RETENTION, Date.now()).length
+      : stats.total_vms,
     dispatchedVMs: vms.filter((v) => v.status === "dispatched")
       .length,
     missingVMs: vms.filter((v) => v.status === "missing").length,
