@@ -17,6 +17,7 @@ type StatProps = {
   total: number | undefined;
   subtitle: string;
   isLoading: boolean;
+  isError: boolean;
   color?: string | undefined;
   tint?: string | undefined;
   icon?: React.ReactNode;
@@ -89,11 +90,15 @@ function StatCard({
   total,
   subtitle,
   isLoading,
+  isError,
   color,
   tint,
   icon,
 }: Omit<StatProps, "href">) {
   const showRing = color && !isLoading && value !== undefined && total;
+  // No value to show (initial fetch failed and there is no cached data):
+  // render an explicit "unavailable" state instead of coercing to 0.
+  const unavailable = !isLoading && isError && value === undefined;
 
   return (
     <div
@@ -125,6 +130,13 @@ function StatCard({
       </div>
       {isLoading ? (
         <Skeleton className="mt-3 h-11 w-24" />
+      ) : unavailable ? (
+        <p
+          aria-label="Data unavailable"
+          className="mt-3 font-heading text-4xl font-extrabold tracking-tight text-muted-foreground/40"
+        >
+          —
+        </p>
       ) : (
         <p
           className="mt-3 font-heading text-4xl font-extrabold tabular-nums tracking-tight"
@@ -134,7 +146,7 @@ function StatCard({
         </p>
       )}
       <p className="mt-auto pt-2 text-xs leading-relaxed text-muted-foreground/60">
-        {subtitle}
+        {unavailable ? "Data unavailable" : subtitle}
       </p>
     </div>
   );
@@ -187,7 +199,7 @@ const iconCheck = (
 );
 
 export function StatsBar() {
-  const { data: stats, isLoading } = useOverviewStats();
+  const { data: stats, isLoading, isError } = useOverviewStats();
 
   const hasDispatched = (stats?.dispatchedVMs ?? 0) > 0;
 
@@ -201,6 +213,7 @@ export function StatsBar() {
           total={undefined}
           subtitle="Compute nodes registered with the scheduler"
           isLoading={isLoading}
+          isError={isError}
           href="/nodes"
           index={0}
         />
@@ -210,6 +223,7 @@ export function StatsBar() {
           total={stats?.totalNodes}
           subtitle="Nodes that passed their last health check"
           isLoading={isLoading}
+          isError={isError}
           color="var(--color-success-500)"
           tint="var(--color-success-500)"
           icon={iconCheck}
@@ -225,6 +239,7 @@ export function StatsBar() {
           total={undefined}
           subtitle="VMs active in the last 7 days"
           isLoading={isLoading}
+          isError={isError}
           href="/vms"
           index={2}
         />
@@ -234,6 +249,7 @@ export function StatsBar() {
           total={stats?.totalVMs}
           subtitle="VMs running on their correct assigned node"
           isLoading={isLoading}
+          isError={isError}
           icon={iconCheck}
           href="/vms?status=dispatched"
           index={3}
