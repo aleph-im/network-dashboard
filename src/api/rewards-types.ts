@@ -27,6 +27,17 @@ export type AddressRewards = {
   totalAleph: number;
   bySource: BySource;
   full: RewardsFull;
+  /** Present only when the query asked for a bucketed series. */
+  buckets?: RewardsBucket[];
+};
+
+/** One time-series bucket (detail=2). Same sparse-wire→dense rules as totals. */
+export type RewardsBucket = {
+  startSec: number;
+  endSec: number;
+  aleph: number;
+  bySource: BySource;
+  full: RewardsFull;
 };
 
 // --- FOUNDATION distribution messages (api2) ---

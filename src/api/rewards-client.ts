@@ -9,12 +9,25 @@ import type {
   BySource,
   CreditRoleFull,
   DistributionCycle,
+  RewardsBucket,
   WageRoleFull,
 } from "@/api/rewards-types";
 
 /** The API omits breakdown keys (or whole role objects) when a source is zero —
  *  e.g. an address with no credit revenue gets `full: { credit_revenue: {} }`.
  *  The wire shape is sparse; we normalize to dense zeros before it reaches the app. */
+type WireBucket = {
+  start: string;
+  end: string;
+  totals?: { aleph?: number };
+  bySource?: Partial<BySource>;
+  full?: {
+    credit_revenue?: Partial<CreditRoleFull>;
+    holder_tier?: Partial<CreditRoleFull>;
+    wage_subsidy?: Partial<WageRoleFull>;
+  };
+};
+
 type TimeSeriesResponse = {
   total: {
     totals?: { aleph?: number };
@@ -25,6 +38,7 @@ type TimeSeriesResponse = {
       wage_subsidy?: Partial<WageRoleFull>;
     };
   };
+  buckets?: WireBucket[];
 };
 
 function denseCreditRole(r: Partial<CreditRoleFull> | undefined): CreditRoleFull {
@@ -51,11 +65,14 @@ function toHourBound(sec: number): string {
   return new Date(Math.floor(sec) * 1000).toISOString().slice(0, 13);
 }
 
-/** Authoritative per-address rewards over [fromSec, toSec]. Single address only. */
+/** Authoritative per-address rewards over [fromSec, toSec]. Single address only.
+ *  Optional `bucketSize` (`"1h"`/`"1d"`) returns the bucketed series alongside
+ *  the totals. */
 export async function getRewardsTimeSeries(
   address: string,
   fromSec: number,
   toSec: number,
+  bucketSize?: string,
 ): Promise<AddressRewards> {
   const addr = address.toLowerCase();
   const params = new URLSearchParams({
@@ -63,7 +80,8 @@ export async function getRewardsTimeSeries(
     to: toHourBound(toSec),
     address: addr,
     detail: "2",
-    bucketSize: "1y", // single aggregate bucket; we read `total`
+    // No caller bucketSize → one aggregate bucket; we read only `total`.
+    bucketSize: bucketSize ?? "1y",
   });
   const url = `${getCreditApiBaseUrl()}/api/v0/rewards/time-series?${params}`;
   let res: Response;
@@ -75,7 +93,7 @@ export async function getRewardsTimeSeries(
   if (!res.ok) throw new Error(`Rewards API error: ${res.status}`);
   const data = (await res.json()) as TimeSeriesResponse;
   const t = data.total;
-  return {
+  const base: AddressRewards = {
     address: addr,
     totalAleph: t.totals?.aleph ?? 0,
     bySource: {
@@ -89,6 +107,23 @@ export async function getRewardsTimeSeries(
       wage_subsidy: denseWageRole(t.full?.wage_subsidy),
     },
   };
+  if (!bucketSize) return base;
+  const buckets: RewardsBucket[] = (data.buckets ?? []).map((b) => ({
+    startSec: Math.floor(Date.parse(b.start) / 1000),
+    endSec: Math.floor(Date.parse(b.end) / 1000),
+    aleph: b.totals?.aleph ?? 0,
+    bySource: {
+      credit_revenue: b.bySource?.credit_revenue ?? 0,
+      holder_tier: b.bySource?.holder_tier ?? 0,
+      wage_subsidy: b.bySource?.wage_subsidy ?? 0,
+    },
+    full: {
+      credit_revenue: denseCreditRole(b.full?.credit_revenue),
+      holder_tier: denseCreditRole(b.full?.holder_tier),
+      wage_subsidy: denseWageRole(b.full?.wage_subsidy),
+    },
+  }));
+  return { ...base, buckets };
 }
 
 type DistMessage = {

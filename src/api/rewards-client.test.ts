@@ -84,6 +84,50 @@ describe("getRewardsTimeSeries", () => {
     await expect(getRewardsTimeSeries("0xabc", 1, 2)).rejects.toThrow(/credit\.aleph\.im/);
     await expect(getDistributions()).rejects.toThrow(/distribution messages/);
   });
+
+  it("parses buckets when bucketSize is provided (sparse-keyed, like totals)", async () => {
+    const withBuckets = {
+      total: SAMPLE.total,
+      buckets: [
+        {
+          start: "2026-06-09T00:00:00.000Z",
+          end: "2026-06-09T23:59:59.999Z",
+          partial: false,
+          totals: { aleph: 2.87 },
+          bySource: { credit_revenue: 1.3, wage_subsidy: 1.22 },
+          full: {
+            credit_revenue: { execution_crn: 1.3 },
+            wage_subsidy: { crn: 1.22 },
+          },
+        },
+        // Zero bucket: API omits everything but the bounds.
+        { start: "2026-06-10T00:00:00.000Z", end: "2026-06-10T23:59:59.999Z", partial: false },
+      ],
+    };
+    const fetchSpy = vi
+      .spyOn(globalThis, "fetch")
+      .mockResolvedValue(new Response(JSON.stringify(withBuckets), { status: 200 }));
+
+    const r = await getRewardsTimeSeries("0xabc", 1780617600, 1780790400, "1d");
+
+    expect((fetchSpy.mock.calls[0]![0] as string)).toContain("bucketSize=1d");
+    expect(r.buckets).toHaveLength(2);
+    expect(r.buckets![0]!.startSec).toBe(Math.floor(Date.parse("2026-06-09T00:00:00.000Z") / 1000));
+    expect(r.buckets![0]!.aleph).toBeCloseTo(2.87);
+    expect(r.buckets![0]!.full.credit_revenue.execution_crn).toBeCloseTo(1.3);
+    expect(r.buckets![0]!.full.credit_revenue.execution_ccn).toBe(0); // densified
+    expect(r.buckets![0]!.bySource.holder_tier).toBe(0); // densified
+    expect(r.buckets![1]!.aleph).toBe(0);
+    expect(r.buckets![1]!.full.wage_subsidy.crn).toBe(0);
+  });
+
+  it("omits buckets and collapses to a single aggregate when no bucketSize", async () => {
+    vi.spyOn(globalThis, "fetch").mockResolvedValue(
+      new Response(JSON.stringify(SAMPLE), { status: 200 }),
+    );
+    const r = await getRewardsTimeSeries("0xabc", 1777593611, 1780306643);
+    expect(r.buckets).toBeUndefined();
+  });
 });
 
 const DIST_MSG = {
