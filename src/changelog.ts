@@ -20,7 +20,7 @@ export const CHANGELOG: VersionEntry[] = [
     changes: [
       {
         type: "feature",
-        text: "The wallet view's rewards section is now a node-owner revenue view sourced from the protocol's authoritative rewards feed (credit.aleph.im /rewards/time-series, algoVersion v2) instead of a client-side reconstruction. It surfaces the wage subsidy — the \"minimum wage\" that decays to zero over time, previously invisible and worth ~18–22% of node-owner revenue — and is framed around the ~10-day payout cycle: an owed-this-cycle total with a next-payment countdown, a by-source breakdown (credits / holder tier / wage), a per-node breakdown, and a last-payment panel showing the on-chain distribution amount and status.",
+        text: "The wallet view's rewards section is now a node-owner revenue view sourced from the protocol's authoritative rewards feed (credit.aleph.im /rewards/time-series) instead of a client-side reconstruction. It surfaces the wage subsidy — the \"minimum wage\" that decays to zero over time, previously invisible and worth ~18–22% of node-owner revenue — framed around the payout cycle: an owed-this-cycle total with a days-since-last-distribution accrual line, a by-source breakdown (credits / holder tier / wage), a per-node breakdown, and a last-payment panel showing the latest distribution amount and date.",
       },
       {
         type: "refactor",
@@ -29,6 +29,14 @@ export const CHANGELOG: VersionEntry[] = [
       {
         type: "fix",
         text: "The wallet \"by node this cycle\" breakdown now loads reliably, and the rewards query is faster. Per-node weighting uses each CRN's live VM count instead of downloading the full network credit-expense feed (which reached ~750MB for a payout cycle and could hang the panel), and rewards time-series requests are aligned to whole-hour bounds so the rewards API serves them from cache.",
+      },
+      {
+        type: "fix",
+        text: "Per-node revenue figures no longer show NaN for addresses with a zero source (e.g. no credit revenue) — the rewards API omits breakdown keys for zero sources and the missing values poisoned the per-node math. Sparse responses are now normalized to zeros, and a floating-point residue no longer renders as a tiny scientific-notation \"Unattributed\" row.",
+      },
+      {
+        type: "ui",
+        text: "Status dots that duplicated an adjacent status badge were removed on the Nodes table, the Issues node perspective, and the wallet's Nodes list — the badge alone carries the status. Dots remain where they are the only status signal (detail headers, network panels, health rows).",
       },
     ],
   },

@@ -1,25 +1,18 @@
 ---
-status: in-progress
+status: done
 branch: feature/node-owner-revenue-view
 date: 2026-06-11
 note: |
-  Implementation COMPLETE (Tasks 1–17) + 2 independent reviews + 3 preview-bug fixes
-  (epoch→ISO dates, instant headline + progressive by-node, graceful "API unavailable" card)
-  + DS/clarity refactor (emoji→StatusDot/tokens/Phosphor, cycleEndSec→accrualStartSec).
-  2026-06-11 session: credit.aleph.im appears RESTORED (rewards rendered during review). Fixed the
-  one happy-path bug that surfaced once data flowed — the "By node · this cycle" breakdown hung on its
-  Skeleton because per-CRN weights fetched the whole-cycle credit-expense feed (~750MB). Now weights by
-  live vmCount from useNodes() (Decision #112). Also: hour-truncated rewards time-series bounds for the
-  API hour-cache (Angel's feedback); fixed an unrelated date-drift in use-issues.test fixture.
-  `pnpm check` green (47 files / 351 tests). 3 new commits on the branch, still LOCAL ONLY (nothing pushed).
-  RESUME → happy-path preview at
-  localhost:3001/wallet?address=0xf379b2f8c29eedc1fc7d189240d0ad7c9164af64 (preview or Playwright)
-  — confirm owed-this-cycle total, non-zero wage segment, AND that the by-node breakdown now renders
-  (multi-CRN owner) — then /dio:ship (push → PR → squash-merge). Preview gate not yet passed.
-  Follow-ups in BACKLOG: Plan B (② Node Earnings tab re-source) — note its per-bucket weights hit the
-  same 750MB trap, fetch bounded/execution-only/timeout-protected; Phase 2 (credits + network panels) —
-  /credits still calls getCreditExpenses directly, its 30d range is a latent multi-GB hang; deferred
-  quality lows.
+  Shipped 2026-06-11 after the happy-path preview passed (credit.aleph.im restored).
+  Preview-driven refinements in the final session: count-up accrual line replaces the
+  10-day-cadence countdown + progress bar, stale on-chain status dropped from Last payment
+  (Decision #113); sparse rewards-API payload normalized to dense zeros (NaN fix for
+  zero-credit addresses) + float-residue clamp on unattributedAleph; section spacing,
+  wage-decay caption removed, footnote dimmed; status dots next to status badges removed
+  on Nodes / Issues / Wallet tables. Follow-ups in BACKLOG: Plan B (② Node Earnings tab
+  re-source — its per-bucket weights hit the same 750MB trap, fetch bounded/execution-only/
+  timeout-protected), Phase 2 (credits + network panels; /credits 30d range is a latent
+  multi-GB hang), deferred quality lows.
 ---
 
 # Owner Revenue View (Phase 1A) Implementation Plan
