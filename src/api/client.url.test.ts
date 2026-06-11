@@ -1,6 +1,6 @@
 import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
 
-import { getVMs } from "@/api/client";
+import { getVMs, getExecutionExpenses } from "@/api/client";
 import type { PaginatedResponse, ApiVmRow } from "@/api/types";
 
 function emptyPage(): PaginatedResponse<ApiVmRow> {
@@ -84,5 +84,21 @@ describe("getVMs URL construction", () => {
     await getVMs({ owner: "" });
     const url = new URL(lastUrl());
     expect(url.searchParams.has("owners")).toBe(false);
+  });
+});
+
+describe("getExecutionExpenses", () => {
+  afterEach(() => vi.restoreAllMocks());
+
+  it("requests only execution-tagged expense messages with a bounded window", async () => {
+    const fetchSpy = vi.spyOn(globalThis, "fetch").mockResolvedValue(
+      new Response(JSON.stringify({ messages: [] }), { status: 200 }),
+    );
+    await getExecutionExpenses(1781000000, 1781086400);
+    const url = fetchSpy.mock.calls[0]![0] as string;
+    expect(url).toContain("tags=type_execution");
+    expect(url).toContain("contentTypes=aleph_credit_expense");
+    expect(url).toContain("startDate=1781000000");
+    expect(url).toContain("endDate=1781086400");
   });
 });
