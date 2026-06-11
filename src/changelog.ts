@@ -20,7 +20,7 @@ export const CHANGELOG: VersionEntry[] = [
     changes: [
       {
         type: "ui",
-        text: "The Earnings tab's VM count is now range-true: \"VMs earning (24h/7d)\" counts the VMs that actually generated earnings in the selected window — matching the per-VM table below — with \"of N scheduled\" as context and a quiet \"see Issues\" link when scheduled VMs aren't running. The old \"VMs hosted (avg)\" number replayed the scheduler's allocation ledger, which never drops missing VMs, so a node whose VMs all died a week ago still showed ~24 hosted next to near-zero earnings. The chart line and panel-spark caption are relabeled \"VMs scheduled\" since allocation history is what they show.",
+        text: "The Earnings tab's VM count is now range-true: \"VMs earning (24h/7d)\" counts the VMs that actually generated earnings in the selected window, matching the per-VM table below. At 30d the count is omitted with a note that the 30d execution feed is too heavy to load (~250 MB). The old \"VMs hosted (avg)\" number replayed the scheduler's allocation ledger, which never drops missing VMs, so a node whose VMs all died a week ago still showed ~24 hosted next to near-zero earnings. The chart line and panel-spark caption are relabeled \"VMs scheduled\" since allocation history is what they show.",
       },
     ],
   },
