@@ -28,8 +28,8 @@ env:
   # Delegated writes must land on the channel the owner's security aggregate
   # authorizes, or the CCN rejects them.
   CHANNEL: ALEPH-CLOUDSOLUTIONS
-  ALEPH_CLI_VERSION: v0.10.3
-  ALEPH_CLI_SHA256: 68eeae468344ae3a02fed2caa55e8fc1c4a7b07c9e9dd08bee0d6fd37a4349c8
+  ALEPH_CLI_VERSION: v0.13.0
+  ALEPH_CLI_SHA256: f48f03093ae5d1c60f4abe0c1c3dc9d8f4252b3cf80e8b71fc2e94fdf6ce1e1f
 
 jobs:
   deploy:
