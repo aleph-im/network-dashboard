@@ -11,9 +11,19 @@ export type VersionEntry = {
   changes: ChangeEntry[];
 };
 
-export const CURRENT_VERSION = "0.34.0";
+export const CURRENT_VERSION = "0.34.1";
 
 export const CHANGELOG: VersionEntry[] = [
+  {
+    version: "0.34.1",
+    date: "2026-06-11",
+    changes: [
+      {
+        type: "fix",
+        text: "The wallet Refresh button now also refetches the node revenue card (rewards + distribution queries were missing from its invalidation set), and the revenue accrual window advances while the page stays open instead of freezing at its mount time — previously the \"live\" numbers only updated on a full page reload.",
+      },
+    ],
+  },
   {
     version: "0.34.0",
     date: "2026-06-09",

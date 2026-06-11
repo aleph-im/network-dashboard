@@ -42,6 +42,8 @@ const WALLET_QUERY_KEYS = [
   "authorizations",
   "credit-expenses",
   "node-state",
+  "rewards",
+  "distributions",
 ] as const;
 
 // --- Summary Stats ---

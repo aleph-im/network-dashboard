@@ -78,6 +78,12 @@ describe("getRewardsTimeSeries", () => {
     vi.spyOn(globalThis, "fetch").mockResolvedValue(new Response("", { status: 500 }));
     await expect(getRewardsTimeSeries("0xabc", 1, 2)).rejects.toThrow(/Rewards API error: 500/);
   });
+
+  it("names the upstream in timeout errors (credit.aleph.im vs api2)", async () => {
+    vi.spyOn(globalThis, "fetch").mockRejectedValue(new DOMException("timeout", "TimeoutError"));
+    await expect(getRewardsTimeSeries("0xabc", 1, 2)).rejects.toThrow(/credit\.aleph\.im/);
+    await expect(getDistributions()).rejects.toThrow(/distribution messages/);
+  });
 });
 
 const DIST_MSG = {
