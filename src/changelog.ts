@@ -11,9 +11,35 @@ export type VersionEntry = {
   changes: ChangeEntry[];
 };
 
-export const CURRENT_VERSION = "0.34.1";
+export const CURRENT_VERSION = "0.35.0";
 
 export const CHANGELOG: VersionEntry[] = [
+  {
+    version: "0.35.0",
+    date: "2026-06-11",
+    changes: [
+      {
+        type: "feature",
+        text: "The Node Earnings tab now sources its numbers from the protocol's authoritative rewards feed instead of a client-side reconstruction — including the wage subsidy, previously invisible on this tab (for CCNs it is often the dominant source). The ALEPH-accrued KPI gains a by-source bar (Credits / Holder / Min. wage), matching the wallet revenue card's vocabulary.",
+      },
+      {
+        type: "feature",
+        text: "Per-VM earnings figures now reflect the realized execution share from the rewards feed instead of the hardcoded 60% split. For reward addresses with multiple CRNs, the chart splits per-node values by exact per-bucket execution weights at 24h/7d (from an execution-only expense slice, ~10MB instead of the ~112MB unfiltered feed) and falls back to a live VM-count proxy at 30d, where the per-VM table covers the trailing 7 days.",
+      },
+      {
+        type: "ui",
+        text: "The earnings chart renders immediately from rewards data and refines its multi-node split when execution data arrives (a small \"Refining node split…\" hint shows meanwhile). The per-VM breakdown has its own loading and error states, so an execution-feed timeout no longer blocks the headline numbers, and both tabs show a clear message when the rewards feed is unreachable.",
+      },
+      {
+        type: "fix",
+        text: "Node and network-panel earnings sparklines no longer download the network-wide credit-expense feed — they now cost two lightweight rewards queries. A floating-point residue no longer renders as a scientific-notation \"Other CRNs\" segment in the reward address breakdown.",
+      },
+      {
+        type: "refactor",
+        text: "The bucket-options machinery (SummaryOptions, perNodeBuckets, perVmInWindow) was removed from computeDistributionSummary — the credits page is its only remaining consumer.",
+      },
+    ],
+  },
   {
     version: "0.34.1",
     date: "2026-06-11",

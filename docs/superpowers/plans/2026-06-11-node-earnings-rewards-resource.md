@@ -1,3 +1,10 @@
+---
+status: done
+branch: feature/node-earnings-rewards-resource
+date: 2026-06-11
+note: all 12 tasks complete; live-smoked CRN 24h/30d + CCN + sparks + wallet; awaiting preview
+---
+
 # Node Earnings Tab — Rewards Layer Re-source (Plan B) Implementation Plan
 
 > **For agentic workers:** REQUIRED SUB-SKILL: Use superpowers:subagent-driven-development (recommended) or superpowers:executing-plans to implement this plan task-by-task. Steps use checkbox (`- [ ]`) syntax for tracking.

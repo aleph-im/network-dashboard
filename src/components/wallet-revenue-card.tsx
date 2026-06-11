@@ -6,36 +6,8 @@ import { CopyableText } from "@aleph-front/ds/copyable-text";
 import { Skeleton } from "@aleph-front/ds/ui/skeleton";
 import { Clock } from "@phosphor-icons/react";
 import { formatAleph } from "@/lib/format";
-import type { BySource, OwnerRewards, RewardSource } from "@/api/rewards-types";
-
-const SOURCE_META: { key: RewardSource; label: string; bar: string }[] = [
-  { key: "credit_revenue", label: "Credits", bar: "bg-success-500" },
-  { key: "holder_tier", label: "Holder", bar: "bg-primary-500" },
-  { key: "wage_subsidy", label: "Min. wage", bar: "bg-warning-500" },
-];
-
-function SourceBar({ bySource }: { bySource: BySource }) {
-  return (
-    <>
-      <div className="my-2 flex h-2 overflow-hidden rounded">
-        {SOURCE_META.map((m) =>
-          bySource[m.key] > 0 ? (
-            <div key={m.key} className={m.bar} style={{ flex: bySource[m.key] }} />
-          ) : null,
-        )}
-      </div>
-      <div className="text-xs text-muted-foreground">
-        {SOURCE_META.map((m, i) => (
-          <span key={m.key} className="inline-flex items-center gap-1">
-            {i > 0 ? <span> · </span> : null}
-            <span className={`inline-block h-2 w-2 rounded-full ${m.bar}`} />
-            {m.label} {formatAleph(bySource[m.key])}
-          </span>
-        ))}
-      </div>
-    </>
-  );
-}
+import { RewardSourceBar } from "@/components/reward-source-bar";
+import type { OwnerRewards } from "@/api/rewards-types";
 
 function daysSince(startSec: number, nowSec: number): number {
   return Math.max(0, Math.floor((nowSec - startSec) / 86400));
@@ -103,7 +75,7 @@ export function WalletRevenueCard({ rewards, breakdownLoading = false }: { rewar
       <div className="text-[10px] font-semibold uppercase tracking-wider text-muted-foreground">
         By source · this cycle
       </div>
-      <SourceBar bySource={rewards.bySource} />
+      <RewardSourceBar bySource={rewards.bySource} />
 
       {breakdownLoading ? (
         <>

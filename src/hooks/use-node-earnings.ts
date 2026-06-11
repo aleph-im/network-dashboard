@@ -1,22 +1,35 @@
 "use client";
 
 import { useMemo } from "react";
-import {
-  useCreditExpenses,
-  RANGE_SECONDS,
-  getStableExpenseRange,
-  type CreditRange,
-} from "@/hooks/use-credit-expenses";
+import { useRewards, getStableHourRange } from "@/hooks/use-rewards";
+import { useExecutionExpenses } from "@/hooks/use-execution-expenses";
 import { useNodeState } from "@/hooks/use-node-state";
 import { useNode, useNodes } from "@/hooks/use-nodes";
 import {
-  computeDistributionSummary,
   getRewardAddress,
+  computeScoreMultiplier,
 } from "@/lib/credit-distribution";
+import {
+  roleTotals,
+  computeExecutionBucketWeights,
+  apportionNodeBuckets,
+  computePerVmEarnings,
+} from "@/lib/reward-apportionment";
 import { replayVmCountTimeline } from "@/lib/node-vm-history";
+import { RANGE_SECONDS, type CreditRange } from "@/hooks/use-credit-expenses";
+import type { BySource } from "@/api/rewards-types";
 import type { CreditEntrySource } from "@/api/credit-types";
 
-const CRN_SHARE = 0.6;
+/** Execution-expense windows are capped at 7d — a 30d execution-only fetch is
+ *  ~300MB (Decision #112 territory). At 30d the per-VM table covers the
+ *  trailing 7d and chart weights fall back to the vmCount proxy. */
+const EXEC_WINDOW_CAP_SEC = 7 * 86400;
+
+const BUCKET_SIZE: Record<CreditRange, string> = {
+  "24h": "1h",
+  "7d": "1d",
+  "30d": "1d",
+};
 
 export type NodeEarningsBucket = {
   time: number;
@@ -49,104 +62,173 @@ export type Reconciliation = {
 export type NodeEarnings = {
   role: "crn" | "ccn";
   totalAleph: number;
+  bySource: BySource;
   delta: { aleph: number; secondaryCount: number };
   buckets: NodeEarningsBucket[];
+  /** True when the multi-node split uses exact per-bucket execution weights
+   *  (or the address has a single node of this role, where no weights are
+   *  needed). False while proxy weights apply. */
+  weightsExact: boolean;
   perVm?: NodeEarningsPerVm[];
   linkedCrns?: NodeEarningsLinkedCrn[];
   reconciliation: Reconciliation | null;
 };
 
-const BUCKET_COUNT: Record<CreditRange, number> = {
-  "24h": 24,
-  "7d": 7,
-  "30d": 30,
+export type UseNodeEarningsOptions = {
+  /** "proxy" skips the execution-expense fetch entirely (panel sparks);
+   *  multi-node splits use live vmCount / score weights. Default "exact". */
+  weights?: "exact" | "proxy";
 };
 
 export function useNodeEarnings(
   hash: string,
   range: CreditRange,
+  options: UseNodeEarningsOptions = {},
 ): {
   data: NodeEarnings | undefined;
   isLoading: boolean;
   isPlaceholderData: boolean;
+  isError: boolean;
+  isPerVmLoading: boolean;
+  isPerVmError: boolean;
 } {
+  const wantExact = options.weights !== "proxy";
   const rangeSec = RANGE_SECONDS[range];
 
-  const current = useMemo(() => getStableExpenseRange(rangeSec), [rangeSec]);
+  const current = useMemo(() => getStableHourRange(rangeSec), [rangeSec]);
   const previous = useMemo(
     () => ({ start: current.start - rangeSec, end: current.start }),
     [current.start, rangeSec],
   );
 
-  const expensesQuery = useCreditExpenses(current.start, current.end);
-  const prevExpensesQuery = useCreditExpenses(previous.start, previous.end);
   const { data: nodeState } = useNodeState();
   const { data: node } = useNode(hash);
   const { data: allNodes } = useNodes();
 
-  const data = useMemo<NodeEarnings | undefined>(() => {
-    if (!expensesQuery.data || !nodeState) return undefined;
+  const isCcn = !!nodeState?.ccns.has(hash);
+  const isCrn = !isCcn && !!nodeState?.crns.has(hash);
+  const selfNode = isCcn
+    ? nodeState?.ccns.get(hash)
+    : nodeState?.crns.get(hash);
+  const rewardAddr = selfNode ? getRewardAddress(selfNode) : "";
 
-    const isCcn = nodeState.ccns.has(hash);
-    const isCrn = nodeState.crns.has(hash);
+  const rewardsQuery = useRewards(
+    rewardAddr,
+    current.start,
+    current.end,
+    BUCKET_SIZE[range],
+  );
+  const prevQuery = useRewards(rewardAddr, previous.start, previous.end);
+
+  const execWindow = useMemo(
+    () => ({
+      start: Math.max(current.start, current.end - EXEC_WINDOW_CAP_SEC),
+      end: current.end,
+    }),
+    [current.start, current.end],
+  );
+  const execEnabled = isCrn && wantExact;
+  const execQuery = useExecutionExpenses(
+    execWindow.start,
+    execWindow.end,
+    execEnabled,
+  );
+
+  // 30d only: the per-VM scaling factor needs the address's exec totals over
+  // the trailing-7d table window — one extra cheap total-only rewards query.
+  // Degenerate window (from === to) keeps it disabled on other ranges.
+  const tableWindowDiffers = execEnabled && execWindow.start !== current.start;
+  const tableRewardsQuery = useRewards(
+    rewardAddr,
+    tableWindowDiffers ? execWindow.start : current.end,
+    current.end,
+  );
+
+  const data = useMemo<NodeEarnings | undefined>(() => {
+    if (!nodeState || !selfNode || !rewardsQuery.data) return undefined;
     if (!isCcn && !isCrn) return undefined;
 
     const role: "crn" | "ccn" = isCcn ? "ccn" : "crn";
-    const selfNode = isCcn
-      ? nodeState.ccns.get(hash)!
-      : nodeState.crns.get(hash)!;
-    const rewardAddr = getRewardAddress(selfNode);
-    const bucketCount = BUCKET_COUNT[range];
+    const rewards = rewardsQuery.data;
+    const buckets = rewards.buckets ?? [];
+    const lower = rewardAddr.toLowerCase();
 
-    const currentSummary = computeDistributionSummary(
-      expensesQuery.data,
-      nodeState,
-      {
-        bucketCount,
-        startTime: current.start,
-        endTime: current.end,
-      },
+    // Same-role siblings sharing this reward address.
+    const ownedCrns = [...nodeState.crns.values()].filter(
+      (c) => getRewardAddress(c).toLowerCase() === lower,
     );
+    const ownedCcns = [...nodeState.ccns.values()].filter(
+      (c) => getRewardAddress(c).toLowerCase() === lower,
+    );
+    const ownedCrnHashes = new Set(ownedCrns.map((c) => c.hash));
 
-    const prevSummary = prevExpensesQuery.data
-      ? computeDistributionSummary(prevExpensesQuery.data, nodeState, {
-          bucketCount,
-          startTime: previous.start,
-          endTime: previous.end,
-        })
-      : undefined;
-
-    const buckets = currentSummary.perNodeBuckets?.get(hash) ?? [];
-    const totalAleph = buckets.reduce((s, b) => s + b.aleph, 0);
-    const prevTotal =
-      prevSummary?.perNodeBuckets?.get(hash)?.reduce((s, b) => s + b.aleph, 0) ?? 0;
-
-    let secondaryCurrent: number[];
-    let secondaryPrev: number[];
+    // Window-constant weights: vmCount proxy (CRN) / score (CCN).
+    const staticWeights = new Map<string, number>();
     if (role === "crn") {
-      const currentVms = node?.vms.length ?? 0;
-      const history = node?.history ?? [];
-      const bucketStarts = buckets.map((b) => b.time);
+      const vmCounts = new Map((allNodes ?? []).map((n) => [n.hash, n.vmCount]));
+      for (const c of ownedCrns) staticWeights.set(c.hash, vmCounts.get(c.hash) ?? 0);
+    } else {
+      for (const c of ownedCcns) staticWeights.set(c.hash, computeScoreMultiplier(c.score));
+    }
+
+    // Exact per-bucket weights only when execution data covers the full window.
+    const exactWeightsUsable =
+      role === "crn" &&
+      wantExact &&
+      !!execQuery.data &&
+      execWindow.start === current.start;
+    const perBucketWeights = exactWeightsUsable
+      ? computeExecutionBucketWeights(execQuery.data!, ownedCrnHashes, buckets)
+      : null;
+
+    const apportioned = apportionNodeBuckets({
+      nodeHash: hash,
+      role,
+      buckets,
+      perBucketWeights,
+      staticWeights,
+    });
+
+    const sameRoleCount = role === "crn" ? ownedCrns.length : ownedCcns.length;
+    const curRoles = roleTotals(rewards.full);
+    const curRoleTotal = role === "crn" ? curRoles.crn : curRoles.ccn;
+
+    // Previous-window delta: apportion the prev address totals with the current
+    // window's realized share (prev-window execution data isn't fetched —
+    // doubling the payload for a delta isn't worth it; exact for single-node
+    // addresses regardless).
+    const frac =
+      curRoleTotal > 0
+        ? apportioned.totalAleph / curRoleTotal
+        : sameRoleCount > 0
+          ? 1 / sameRoleCount
+          : 0;
+    const prevRoles = prevQuery.data ? roleTotals(prevQuery.data.full) : null;
+    const prevNodeAleph = prevRoles
+      ? (role === "crn" ? prevRoles.crn : prevRoles.ccn) * frac
+      : 0;
+
+    // Secondary line: VM-count replay (CRN) / linked-CRN flat line (CCN).
+    const bucketStarts = apportioned.buckets.map((b) => b.time);
+    const currentVms = node?.vms.length ?? 0;
+    let secondaryCurrent: number[];
+    if (role === "crn") {
       secondaryCurrent = bucketStarts.length
         ? replayVmCountTimeline({
-            history,
+            history: node?.history ?? [],
             currentVmCount: currentVms,
             bucketStarts,
             windowEndSec: current.end,
           })
         : [];
-      // History from the API only covers recent events; we can't reconstruct
-      // the previous window accurately. Fall back to the current VM count.
-      secondaryPrev = secondaryCurrent.map(() => currentVms);
     } else {
-      const linked = Array.from(nodeState.crns.values()).filter(
+      const linked = [...nodeState.crns.values()].filter(
         (c) => c.parent === hash,
       ).length;
-      secondaryCurrent = buckets.map(() => linked);
-      secondaryPrev = secondaryCurrent;
+      secondaryCurrent = bucketStarts.map(() => linked);
     }
 
-    const bucketsOut: NodeEarningsBucket[] = buckets.map((b, i) => ({
+    const bucketsOut: NodeEarningsBucket[] = apportioned.buckets.map((b, i) => ({
       time: b.time,
       aleph: b.aleph,
       secondaryCount: secondaryCurrent[i] ?? 0,
@@ -156,52 +238,57 @@ export function useNodeEarnings(
       secondaryCurrent.length === 0
         ? 0
         : secondaryCurrent.reduce((s, n) => s + n, 0) / secondaryCurrent.length;
-    const avgPrev =
-      secondaryPrev.length === 0
-        ? 0
-        : secondaryPrev.reduce((s, n) => s + n, 0) / secondaryPrev.length;
-
+    // History only covers recent events; previous-window counts flat-line to
+    // the current count (same approximation as before the re-source).
     const delta = {
-      aleph: totalAleph - prevTotal,
-      secondaryCount: avgCurr - avgPrev,
+      aleph: apportioned.totalAleph - prevNodeAleph,
+      secondaryCount: role === "crn" ? avgCurr - currentVms : 0,
     };
 
+    // Clamp float residue (≈1e-13 for single-node addresses) so it doesn't
+    // render as a scientific-notation "Other CRNs" segment.
+    const otherSameKindAleph = curRoleTotal - apportioned.totalAleph;
+    const reconciliation: Reconciliation = {
+      rewardAddr,
+      windowAleph: rewards.totalAleph,
+      thisNode: apportioned.totalAleph,
+      otherSameKind: {
+        aleph: otherSameKindAleph > 1e-6 ? otherSameKindAleph : 0,
+        count: Math.max(0, sameRoleCount - 1),
+      },
+      crossKind: {
+        aleph: role === "crn" ? curRoles.ccn : curRoles.crn,
+        role: role === "crn" ? "ccn" : "crn",
+      },
+      staker: curRoles.staker,
+    };
+
+    const weightsExact =
+      role === "ccn" || sameRoleCount <= 1 || exactWeightsUsable;
+
     if (role === "crn") {
-      const perVmMap = currentSummary.perVmInWindow ?? new Map();
-      const perVm: NodeEarningsPerVm[] = [];
-      for (const [vmHash, entry] of perVmMap) {
-        if (entry.nodeId === hash) {
-          perVm.push({
-            vmHash,
-            aleph: entry.aleph * CRN_SHARE,
-            source: entry.source,
-          });
-        }
+      let perVm: NodeEarningsPerVm[] | undefined;
+      const tableRewards = tableWindowDiffers
+        ? tableRewardsQuery.data
+        : rewards;
+      if (execQuery.data && tableRewards) {
+        const tf = tableRewards.full;
+        perVm = computePerVmEarnings({
+          nodeHash: hash,
+          expenses: execQuery.data,
+          addressExecAleph:
+            tf.credit_revenue.execution_crn + tf.holder_tier.execution_crn,
+          ownedCrnHashes,
+        });
       }
-      perVm.sort((a, b) => b.aleph - a.aleph);
-      const recipient = currentSummary.recipients.find(
-        (r) => r.address === rewardAddr,
-      );
-      const reconciliation: Reconciliation | null = recipient
-        ? {
-            rewardAddr,
-            thisNode: totalAleph,
-            otherSameKind: {
-              aleph: recipient.crnAleph - totalAleph,
-              count: Math.max(0, recipient.crnCount - 1),
-            },
-            crossKind: { aleph: recipient.ccnAleph, role: "ccn" },
-            staker: recipient.stakerAleph,
-            windowAleph:
-              recipient.crnAleph + recipient.ccnAleph + recipient.stakerAleph,
-          }
-        : null;
       return {
         role,
-        totalAleph,
+        totalAleph: apportioned.totalAleph,
+        bySource: apportioned.bySource,
         delta,
         buckets: bucketsOut,
-        perVm,
+        weightsExact,
+        ...(perVm ? { perVm } : {}),
         reconciliation,
       };
     }
@@ -217,50 +304,44 @@ export function useNodeEarnings(
         vmCount: live?.vmCount ?? 0,
       });
     }
-    const recipient = currentSummary.recipients.find(
-      (r) => r.address === rewardAddr,
-    );
-    const reconciliation: Reconciliation | null = recipient
-      ? {
-          rewardAddr,
-          thisNode: totalAleph,
-          otherSameKind: {
-            aleph: recipient.ccnAleph - totalAleph,
-            count: Math.max(0, recipient.ccnCount - 1),
-          },
-          crossKind: { aleph: recipient.crnAleph, role: "crn" },
-          staker: recipient.stakerAleph,
-          windowAleph:
-            recipient.crnAleph + recipient.ccnAleph + recipient.stakerAleph,
-        }
-      : null;
     return {
       role,
-      totalAleph,
+      totalAleph: apportioned.totalAleph,
+      bySource: apportioned.bySource,
       delta,
       buckets: bucketsOut,
+      weightsExact,
       linkedCrns,
       reconciliation,
     };
   }, [
     hash,
-    range,
-    expensesQuery.data,
-    prevExpensesQuery.data,
     nodeState,
-    node,
+    selfNode,
+    isCcn,
+    isCrn,
+    rewardAddr,
+    rewardsQuery.data,
+    prevQuery.data,
+    execQuery.data,
+    tableRewardsQuery.data,
+    tableWindowDiffers,
     allNodes,
+    node,
+    wantExact,
+    execWindow.start,
     current.start,
     current.end,
-    previous.start,
-    previous.end,
   ]);
 
   return {
     data,
-    isLoading:
-      expensesQuery.isLoading ||
-      (prevExpensesQuery.isLoading && !prevExpensesQuery.data),
-    isPlaceholderData: !!expensesQuery.isPlaceholderData,
+    isLoading: rewardsQuery.isLoading,
+    isPlaceholderData: !!rewardsQuery.isPlaceholderData,
+    isError: rewardsQuery.isError,
+    isPerVmLoading:
+      execEnabled &&
+      (execQuery.isLoading || (tableWindowDiffers && tableRewardsQuery.isLoading)),
+    isPerVmError: execEnabled && execQuery.isError,
   };
 }

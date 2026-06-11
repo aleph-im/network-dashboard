@@ -1,5 +1,12 @@
-import type { AddressRewards, BySource, OwnerNodeReward, RewardSource } from "@/api/rewards-types";
-import type { NodeState } from "@/api/credit-types";
+import type {
+  AddressRewards,
+  BySource,
+  OwnerNodeReward,
+  RewardSource,
+  RewardsBucket,
+  RewardsFull,
+} from "@/api/rewards-types";
+import type { CreditEntrySource, CreditExpense, NodeState } from "@/api/credit-types";
 import { getRewardAddress, computeScoreMultiplier } from "@/lib/credit-distribution";
 
 const ZERO_SOURCE: BySource = { credit_revenue: 0, holder_tier: 0, wage_subsidy: 0 };
@@ -104,4 +111,169 @@ export function apportionOwnerRewards({ address, rewards, crnVmCounts, nodeState
   const residual = rewards.totalAleph - attributed;
   const unattributedAleph = residual > 1e-6 ? residual : 0;
   return { byNode, stakingAleph, unattributedAleph };
+}
+
+/** Per-role node-owner totals from a `full` split, wage included. */
+export function roleTotals(full: RewardsFull): {
+  crn: number;
+  ccn: number;
+  staker: number;
+} {
+  const cr = full.credit_revenue;
+  const ht = full.holder_tier;
+  const w = full.wage_subsidy;
+  return {
+    crn: cr.execution_crn + ht.execution_crn + w.crn,
+    ccn:
+      cr.execution_ccn + cr.storage_ccn +
+      ht.execution_ccn + ht.storage_ccn +
+      w.ccn,
+    staker:
+      cr.execution_staker + cr.storage_staker +
+      ht.execution_staker + ht.storage_staker +
+      w.staker,
+  };
+}
+
+/**
+ * Per-bucket execution ALEPH per owned CRN. Bucketed by the parent expense's
+ * message time (entry `timeSec` is an execution duration, not a timestamp).
+ * Every owned CRN is seeded at 0 in every bucket so `distribute()` falls back
+ * to an even split instead of dropping idle nodes.
+ */
+export function computeExecutionBucketWeights(
+  expenses: CreditExpense[],
+  ownedCrnHashes: Set<string>,
+  buckets: { startSec: number; endSec: number }[],
+): Map<string, number>[] {
+  const out = buckets.map(() => {
+    const m = new Map<string, number>();
+    for (const h of ownedCrnHashes) m.set(h, 0);
+    return m;
+  });
+  for (const e of expenses) {
+    if (e.type !== "execution") continue;
+    const idx = buckets.findIndex(
+      (b) => e.time >= b.startSec && e.time < b.endSec,
+    );
+    if (idx < 0) continue;
+    const w = out[idx]!;
+    for (const c of e.credits) {
+      if (!c.nodeId || !ownedCrnHashes.has(c.nodeId)) continue;
+      w.set(c.nodeId, (w.get(c.nodeId) ?? 0) + c.alephCost);
+    }
+  }
+  return out;
+}
+
+export type ApportionedNode = {
+  buckets: { time: number; aleph: number }[];
+  totalAleph: number;
+  bySource: BySource;
+};
+
+const SOURCES: RewardSource[] = ["credit_revenue", "holder_tier", "wage_subsidy"];
+
+function bucketRolePools(
+  b: RewardsBucket,
+  role: "crn" | "ccn",
+): Record<RewardSource, number> {
+  const cr = b.full.credit_revenue;
+  const ht = b.full.holder_tier;
+  const w = b.full.wage_subsidy;
+  if (role === "crn") {
+    return {
+      credit_revenue: cr.execution_crn,
+      holder_tier: ht.execution_crn,
+      wage_subsidy: w.crn,
+    };
+  }
+  return {
+    credit_revenue: cr.execution_ccn + cr.storage_ccn,
+    holder_tier: ht.execution_ccn + ht.storage_ccn,
+    wage_subsidy: w.ccn,
+  };
+}
+
+function shareFraction(weights: Map<string, number>, hash: string): number {
+  let sum = 0;
+  for (const v of weights.values()) sum += v;
+  if (sum > 0) return (weights.get(hash) ?? 0) / sum;
+  if (weights.size > 0 && weights.has(hash)) return 1 / weights.size;
+  return 0;
+}
+
+/**
+ * Apportion an address's per-bucket role pools to one node. With
+ * `perBucketWeights` (aligned with `buckets`) the split is exact per bucket;
+ * otherwise `staticWeights` (vmCount proxy / score) applies to every bucket.
+ * Wage is apportioned by the same weights as the role (no per-node grain
+ * exists for wage). A single-node address gets share = 1 either way.
+ */
+export function apportionNodeBuckets(args: {
+  nodeHash: string;
+  role: "crn" | "ccn";
+  buckets: RewardsBucket[];
+  perBucketWeights: Map<string, number>[] | null;
+  staticWeights: Map<string, number>;
+}): ApportionedNode {
+  const { nodeHash, role, buckets, perBucketWeights, staticWeights } = args;
+  const bySource: BySource = { ...ZERO_SOURCE };
+  const out: { time: number; aleph: number }[] = [];
+  let totalAleph = 0;
+  for (let i = 0; i < buckets.length; i++) {
+    const b = buckets[i]!;
+    const weights = perBucketWeights?.[i] ?? staticWeights;
+    const frac = shareFraction(weights, nodeHash);
+    const pools = bucketRolePools(b, role);
+    let aleph = 0;
+    for (const src of SOURCES) {
+      const amt = pools[src] * frac;
+      bySource[src] += amt;
+      aleph += amt;
+    }
+    totalAleph += aleph;
+    out.push({ time: b.startSec, aleph });
+  }
+  return { buckets: out, totalAleph, bySource };
+}
+
+export type PerVmEarning = {
+  vmHash: string;
+  aleph: number;
+  source: CreditEntrySource;
+};
+
+/**
+ * Per-VM earnings for one CRN: raw execution ALEPH per VM, scaled so the
+ * owned-set total matches the address's authoritative execution earnings
+ * (replaces the old hardcoded CRN_SHARE = 0.6 with the realized share).
+ */
+export function computePerVmEarnings(args: {
+  nodeHash: string;
+  expenses: CreditExpense[];
+  /** (credit_revenue + holder_tier).execution_crn over the same window. */
+  addressExecAleph: number;
+  ownedCrnHashes: Set<string>;
+}): PerVmEarning[] {
+  const { nodeHash, expenses, addressExecAleph, ownedCrnHashes } = args;
+  const perVm = new Map<string, { aleph: number; source: CreditEntrySource }>();
+  let ownedRawTotal = 0;
+  for (const e of expenses) {
+    if (e.type !== "execution") continue;
+    for (const c of e.credits) {
+      if (!c.nodeId || !ownedCrnHashes.has(c.nodeId)) continue;
+      ownedRawTotal += c.alephCost;
+      if (c.nodeId !== nodeHash || !c.executionId) continue;
+      const prev = perVm.get(c.executionId);
+      perVm.set(c.executionId, {
+        aleph: (prev?.aleph ?? 0) + c.alephCost,
+        source: c.source,
+      });
+    }
+  }
+  const factor = ownedRawTotal > 0 ? addressExecAleph / ownedRawTotal : 0;
+  return [...perVm.entries()]
+    .map(([vmHash, v]) => ({ vmHash, aleph: v.aleph * factor, source: v.source }))
+    .sort((a, b) => b.aleph - a.aleph);
 }

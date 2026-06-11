@@ -560,6 +560,53 @@ export async function getCreditExpenses(
   return all;
 }
 
+const EXECUTION_EXPENSE_TIMEOUT_MS = 60_000;
+
+/**
+ * Execution-only slice of the credit-expense feed (`tags=type_execution`).
+ * The unfiltered feed is storage-dominated (~112MB/24h); execution-only is
+ * ~10MB/24h, ~70MB/7d — callers must keep windows ≤ 7d. Timeout-protected:
+ * a missing timeout on the unfiltered fetch is what hung the wallet
+ * breakdown (Decision #112).
+ */
+export async function getExecutionExpenses(
+  startDate: number,
+  endDate: number,
+): Promise<CreditExpense[]> {
+  const params = new URLSearchParams({
+    msgType: "POST",
+    contentTypes: "aleph_credit_expense",
+    tags: "type_execution",
+    addresses: CREDIT_EXPENSE_SENDER,
+    startDate: String(Math.floor(startDate)),
+    endDate: String(Math.floor(endDate)),
+    pagination: "10000",
+    sort_order: "1",
+    sort_by: "tx-time",
+  });
+
+  const url = `${getAlephBaseUrl()}/api/v0/messages.json?${params}`;
+  let res: Response;
+  try {
+    res = await fetch(url, {
+      signal: AbortSignal.timeout(EXECUTION_EXPENSE_TIMEOUT_MS),
+    });
+  } catch {
+    throw new Error("Aleph API (execution expenses) unreachable (timeout)");
+  }
+  if (!res.ok) {
+    throw new Error(`Aleph API error: ${res.status}`);
+  }
+  const data = (await res.json()) as { messages: ApiCreditExpenseMessage[] };
+
+  const all: CreditExpense[] = [];
+  for (const msg of data.messages) {
+    const parsed = parseCreditMessage(msg);
+    if (parsed) all.push(parsed);
+  }
+  return all;
+}
+
 export async function getNodeState(): Promise<NodeState> {
   const url = `${getAlephBaseUrl()}/api/v0/aggregates/${CORECHANNEL_SENDER}.json?keys=corechannel`;
   const res = await fetch(url);

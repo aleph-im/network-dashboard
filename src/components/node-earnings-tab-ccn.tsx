@@ -19,6 +19,7 @@ import {
 } from "@/components/node-earnings-kpi-row";
 import { NodeEarningsChart } from "@/components/node-earnings-chart";
 import { NodeEarningsReconciliation } from "@/components/node-earnings-reconciliation";
+import { RewardSourceBar } from "@/components/reward-source-bar";
 import { formatAleph, relativeTime } from "@/lib/format";
 import type { CreditRange } from "@/hooks/use-credit-expenses";
 
@@ -53,6 +54,7 @@ function buildCcnCards(
       secondary: `${deltaArrow(dAleph)} ${formatAleph(Math.abs(dAleph))} vs prev ${range}`,
       tone: dAleph > 0 ? "up" : dAleph < 0 ? "down" : "default",
       loading: rangeLoading,
+      extra: <RewardSourceBar bySource={data.bySource} />,
     },
     {
       label: "Score",
@@ -91,11 +93,19 @@ export function NodeEarningsTabCcn({ hash }: { hash: string }) {
     router.replace(`${pathname}?${params.toString()}`);
   };
 
-  const { data, isLoading, isPlaceholderData } = useNodeEarnings(hash, range);
+  const { data, isLoading, isPlaceholderData, isError } = useNodeEarnings(hash, range);
   const { data: nodeState } = useNodeState();
   const { data: node } = useNode(hash);
 
   const ccn = nodeState?.ccns.get(hash);
+
+  if (isError) {
+    return (
+      <p className="text-sm text-muted-foreground">
+        Rewards feed unreachable — earnings can&apos;t be shown right now.
+      </p>
+    );
+  }
 
   if (isLoading || !data || !ccn) {
     return (
@@ -212,9 +222,9 @@ export function NodeEarningsTabCcn({ hash }: { hash: string }) {
       )}
 
       <p className="text-xs italic text-muted-foreground">
-        Accrued earnings from the credit-expense feed using the protocol&apos;s
-        distribution split. Numbers reflect what this node earned, not yet paid
-        on-chain.
+        Owed amounts accrued from the protocol&apos;s authoritative rewards
+        feed, including the wage subsidy (which decays over time). Per-node
+        figures for reward addresses with multiple nodes are apportioned.
       </p>
     </div>
   );

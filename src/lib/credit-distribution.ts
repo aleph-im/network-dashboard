@@ -1,10 +1,8 @@
 import type {
   CCNInfo,
-  CreditEntrySource,
   CreditExpense,
   DistributionSummary,
   ExpenseDistribution,
-  NodeBucket,
   NodeState,
   RecipientRole,
   RecipientTotal,
@@ -17,42 +15,6 @@ const EXECUTION_CRN_SHARE = 0.6;
 const EXECUTION_CCN_SHARE = 0.15;
 const EXECUTION_STAKER_SHARE = 0.2;
 const DEV_FUND_SHARE = 0.05;
-
-export type SummaryOptions = {
-  bucketCount: number;
-  startTime: number;
-  endTime: number;
-};
-
-function bucketIndexFor(
-  time: number,
-  startTime: number,
-  bucketWidth: number,
-  bucketCount: number,
-): number {
-  const raw = Math.floor((time - startTime) / bucketWidth);
-  if (raw < 0) return 0;
-  if (raw >= bucketCount) return bucketCount - 1;
-  return raw;
-}
-
-function ensureBucketArray(
-  map: Map<string, NodeBucket[]>,
-  hash: string,
-  startTime: number,
-  bucketWidth: number,
-  bucketCount: number,
-): NodeBucket[] {
-  let arr = map.get(hash);
-  if (!arr) {
-    arr = Array.from({ length: bucketCount }, (_, i) => ({
-      time: startTime + i * bucketWidth,
-      aleph: 0,
-    }));
-    map.set(hash, arr);
-  }
-  return arr;
-}
 
 export function computeScoreMultiplier(score: number): number {
   if (score < 0.2) return 0;
@@ -158,7 +120,6 @@ export function distributeExpense(
 export function computeDistributionSummary(
   expenses: CreditExpense[],
   nodeState: NodeState,
-  options?: SummaryOptions,
 ): DistributionSummary {
   const distributions: ExpenseDistribution[] = [];
   const allCrn = new Map<string, number>();
@@ -171,29 +132,6 @@ export function computeDistributionSummary(
   // Per-VM and per-node totals for table integration
   const perVm = new Map<string, number>();
   const perNode = new Map<string, number>();
-
-  // Bucket bookkeeping (only if options provided)
-  const perNodeBuckets = options ? new Map<string, NodeBucket[]>() : undefined;
-  const perVmInWindow = options
-    ? new Map<
-        string,
-        { aleph: number; nodeId: string; source: CreditEntrySource }
-      >()
-    : undefined;
-  const bucketWidth = options
-    ? (options.endTime - options.startTime) / options.bucketCount
-    : 0;
-
-  // Precompute CCN scoring weights once — same denominator the per-expense
-  // path uses, lifted out so the bucket pass doesn't rebuild it per expense.
-  let totalCcnWeight = 0;
-  if (options) {
-    for (const ccn of nodeState.ccns.values()) {
-      if (ccn.status !== "active") continue;
-      const w = computeScoreMultiplier(ccn.score);
-      if (w > 0) totalCcnWeight += w;
-    }
-  }
 
   for (const expense of expenses) {
     const dist = distributeExpense(expense, nodeState);
@@ -222,69 +160,6 @@ export function computeDistributionSummary(
           credit.nodeId,
           credit.alephCost * EXECUTION_CRN_SHARE,
         );
-      }
-    }
-
-    // Bucket pass — only if options provided
-    if (options && perNodeBuckets && perVmInWindow) {
-      const idx = bucketIndexFor(
-        expense.time,
-        options.startTime,
-        bucketWidth,
-        options.bucketCount,
-      );
-      const isStorage = expense.type === "storage";
-
-      // CRN: per-credit, per-node
-      if (!isStorage) {
-        for (const credit of expense.credits) {
-          if (!credit.nodeId) continue;
-          if (!nodeState.crns.has(credit.nodeId)) continue;
-          const arr = ensureBucketArray(
-            perNodeBuckets,
-            credit.nodeId,
-            options.startTime,
-            bucketWidth,
-            options.bucketCount,
-          );
-          arr[idx]!.aleph += credit.alephCost * EXECUTION_CRN_SHARE;
-
-          // Per-VM aggregate (raw alephCost; consumers apply the share split).
-          // `source` tracks which payment path attributed ALEPH to this VM —
-          // a VM is paid by credits OR hold throughout its life, not both, so
-          // the source is uniform across all entries we aggregate here.
-          if (credit.executionId) {
-            const existing = perVmInWindow.get(credit.executionId);
-            const aleph = (existing?.aleph ?? 0) + credit.alephCost;
-            perVmInWindow.set(credit.executionId, {
-              aleph,
-              nodeId: credit.nodeId,
-              source: credit.source,
-            });
-          }
-        }
-      }
-
-      // CCN: score-weighted share of pool, indexed by CCN hash (not reward
-      // address — multiple CCNs can share one reward address, but the chart
-      // is per-node).
-      if (totalCcnWeight > 0) {
-        const ccnShare = isStorage ? STORAGE_CCN_SHARE : EXECUTION_CCN_SHARE;
-        const pool = expense.totalAleph * ccnShare;
-        for (const ccn of nodeState.ccns.values()) {
-          if (ccn.status !== "active") continue;
-          const w = computeScoreMultiplier(ccn.score);
-          if (w <= 0) continue;
-          const share = (pool * w) / totalCcnWeight;
-          const arr = ensureBucketArray(
-            perNodeBuckets,
-            ccn.hash,
-            options.startTime,
-            bucketWidth,
-            options.bucketCount,
-          );
-          arr[idx]!.aleph += share;
-        }
       }
     }
   }
@@ -355,7 +230,5 @@ export function computeDistributionSummary(
     expenses: distributions,
     perVm,
     perNode,
-    ...(perNodeBuckets ? { perNodeBuckets } : {}),
-    ...(perVmInWindow ? { perVmInWindow } : {}),
   };
 }
