@@ -4,15 +4,42 @@ import {
   FOUNDATION_DISTRIBUTION_SENDER,
   DISTRIBUTION_POST_TYPE,
 } from "@/api/client";
-import type { AddressRewards, DistributionCycle } from "@/api/rewards-types";
+import type {
+  AddressRewards,
+  BySource,
+  CreditRoleFull,
+  DistributionCycle,
+  WageRoleFull,
+} from "@/api/rewards-types";
 
+/** The API omits breakdown keys (or whole role objects) when a source is zero —
+ *  e.g. an address with no credit revenue gets `full: { credit_revenue: {} }`.
+ *  The wire shape is sparse; we normalize to dense zeros before it reaches the app. */
 type TimeSeriesResponse = {
   total: {
-    totals: { aleph: number };
-    bySource: AddressRewards["bySource"];
-    full: AddressRewards["full"];
+    totals?: { aleph?: number };
+    bySource?: Partial<BySource>;
+    full?: {
+      credit_revenue?: Partial<CreditRoleFull>;
+      holder_tier?: Partial<CreditRoleFull>;
+      wage_subsidy?: Partial<WageRoleFull>;
+    };
   };
 };
+
+function denseCreditRole(r: Partial<CreditRoleFull> | undefined): CreditRoleFull {
+  return {
+    execution_crn: r?.execution_crn ?? 0,
+    execution_ccn: r?.execution_ccn ?? 0,
+    execution_staker: r?.execution_staker ?? 0,
+    storage_ccn: r?.storage_ccn ?? 0,
+    storage_staker: r?.storage_staker ?? 0,
+  };
+}
+
+function denseWageRole(r: Partial<WageRoleFull> | undefined): WageRoleFull {
+  return { crn: r?.crn ?? 0, ccn: r?.ccn ?? 0, staker: r?.staker ?? 0 };
+}
 
 /**
  * Truncate an epoch-seconds bound to whole-hour granularity (`YYYY-MM-DDTHH`).
@@ -50,9 +77,17 @@ export async function getRewardsTimeSeries(
   const t = data.total;
   return {
     address: addr,
-    totalAleph: t.totals.aleph,
-    bySource: t.bySource,
-    full: t.full,
+    totalAleph: t.totals?.aleph ?? 0,
+    bySource: {
+      credit_revenue: t.bySource?.credit_revenue ?? 0,
+      holder_tier: t.bySource?.holder_tier ?? 0,
+      wage_subsidy: t.bySource?.wage_subsidy ?? 0,
+    },
+    full: {
+      credit_revenue: denseCreditRole(t.full?.credit_revenue),
+      holder_tier: denseCreditRole(t.full?.holder_tier),
+      wage_subsidy: denseWageRole(t.full?.wage_subsidy),
+    },
   };
 }
 

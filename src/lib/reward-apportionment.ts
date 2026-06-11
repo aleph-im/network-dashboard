@@ -99,6 +99,9 @@ export function apportionOwnerRewards({ address, rewards, crnVmCounts, nodeState
   const byNode = [...node.values()].sort((a, b) => b.totalAleph - a.totalAleph);
   const attributed =
     byNode.reduce((s, n) => s + n.totalAleph, 0) + stakingAleph;
-  const unattributedAleph = Math.max(0, rewards.totalAleph - attributed);
+  // Clamp float residue (≈1e-13 when fully attributed) so it doesn't render
+  // as a scientific-notation "Unattributed" row.
+  const residual = rewards.totalAleph - attributed;
+  const unattributedAleph = residual > 1e-6 ? residual : 0;
   return { byNode, stakingAleph, unattributedAleph };
 }

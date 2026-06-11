@@ -43,6 +43,37 @@ describe("getRewardsTimeSeries", () => {
     expect(url).not.toContain("%3A"); // no sub-hour precision (encoded colon) leaks
   });
 
+  it("normalizes sparse full breakdowns to dense zeros", async () => {
+    // Live shape for an address with zero credit revenue: the API returns
+    // `credit_revenue: {}` and omits the other roles' missing keys. Reading
+    // those as undefined produced NaN per-node figures downstream.
+    const sparse = {
+      total: {
+        totals: { aleph: 3170.56 },
+        bySource: { credit_revenue: 0, holder_tier: 1444.79, wage_subsidy: 1725.77 },
+        full: {
+          credit_revenue: {},
+          holder_tier: { execution_crn: 1444.79 },
+          wage_subsidy: { crn: 1725.77 },
+        },
+      },
+      buckets: [],
+    };
+    vi.spyOn(globalThis, "fetch").mockResolvedValue(
+      new Response(JSON.stringify(sparse), { status: 200 }),
+    );
+
+    const r = await getRewardsTimeSeries("0xabc", 1777593611, 1780306643);
+
+    expect(r.full.credit_revenue.execution_crn).toBe(0);
+    expect(r.full.credit_revenue.storage_staker).toBe(0);
+    expect(r.full.holder_tier.execution_crn).toBeCloseTo(1444.79);
+    expect(r.full.holder_tier.execution_ccn).toBe(0);
+    expect(r.full.wage_subsidy.crn).toBeCloseTo(1725.77);
+    expect(r.full.wage_subsidy.ccn).toBe(0);
+    expect(r.full.wage_subsidy.staker).toBe(0);
+  });
+
   it("throws on non-200", async () => {
     vi.spyOn(globalThis, "fetch").mockResolvedValue(new Response("", { status: 500 }));
     await expect(getRewardsTimeSeries("0xabc", 1, 2)).rejects.toThrow(/Rewards API error: 500/);
