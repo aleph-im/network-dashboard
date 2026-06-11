@@ -50,6 +50,8 @@ describe("NodeEarningsTabCcn", () => {
       data: {
         role: "ccn",
         totalAleph: 7.42,
+        bySource: { credit_revenue: 5, holder_tier: 1.42, wage_subsidy: 1 },
+        weightsExact: true,
         delta: { aleph: 0.5, secondaryCount: 0 },
         buckets: Array.from({ length: 24 }, (_, i) => ({
           time: i * 3600,
@@ -64,6 +66,9 @@ describe("NodeEarningsTabCcn", () => {
       },
       isLoading: false,
       isPlaceholderData: false,
+      isError: false,
+      isPerVmLoading: false,
+      isPerVmError: false,
     });
     render(<NodeEarningsTabCcn hash="ccn1" />);
 
