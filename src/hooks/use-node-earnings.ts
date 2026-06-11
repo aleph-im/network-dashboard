@@ -245,12 +245,15 @@ export function useNodeEarnings(
       secondaryCount: role === "crn" ? avgCurr - currentVms : 0,
     };
 
+    // Clamp float residue (≈1e-13 for single-node addresses) so it doesn't
+    // render as a scientific-notation "Other CRNs" segment.
+    const otherSameKindAleph = curRoleTotal - apportioned.totalAleph;
     const reconciliation: Reconciliation = {
       rewardAddr,
       windowAleph: rewards.totalAleph,
       thisNode: apportioned.totalAleph,
       otherSameKind: {
-        aleph: Math.max(0, curRoleTotal - apportioned.totalAleph),
+        aleph: otherSameKindAleph > 1e-6 ? otherSameKindAleph : 0,
         count: Math.max(0, sameRoleCount - 1),
       },
       crossKind: {
