@@ -21,6 +21,7 @@ import {
 import { NodeEarningsChart } from "@/components/node-earnings-chart";
 import { NodeEarningsReconciliation } from "@/components/node-earnings-reconciliation";
 import { MobileTableCardRow } from "@/components/mobile-table-card-row";
+import { RewardSourceBar } from "@/components/reward-source-bar";
 import { formatAleph, relativeTime } from "@/lib/format";
 import type { CreditRange } from "@/hooks/use-credit-expenses";
 
@@ -55,6 +56,7 @@ function buildCrnCards(
       secondary: `${deltaArrow(dAleph)} ${formatAleph(Math.abs(dAleph))} vs prev ${range}`,
       tone: dAleph > 0 ? "up" : dAleph < 0 ? "down" : "default",
       loading: rangeLoading,
+      extra: <RewardSourceBar bySource={data.bySource} />,
     },
     {
       label: "VMs hosted (avg)",
@@ -95,7 +97,8 @@ export function NodeEarningsTab({ hash }: { hash: string }) {
     router.replace(`${pathname}?${params.toString()}`);
   };
 
-  const { data, isLoading, isPlaceholderData } = useNodeEarnings(hash, range);
+  const { data, isLoading, isPlaceholderData, isError, isPerVmLoading, isPerVmError } =
+    useNodeEarnings(hash, range);
   const { data: nodeState } = useNodeState();
   const { data: node } = useNode(hash);
   const { data: vmMessageInfo } = useVMMessageInfo(
@@ -103,6 +106,14 @@ export function NodeEarningsTab({ hash }: { hash: string }) {
   );
 
   const crn = nodeState?.crns.get(hash);
+
+  if (isError) {
+    return (
+      <p className="text-sm text-muted-foreground">
+        Rewards feed unreachable — earnings can&apos;t be shown right now.
+      </p>
+    );
+  }
 
   if (isLoading || !data || !crn) {
     return (
@@ -128,6 +139,8 @@ export function NodeEarningsTab({ hash }: { hash: string }) {
   const rest = perVm.slice(TOP_N);
   const restAleph = rest.reduce((s, v) => s + v.aleph, 0);
   const visibleVms = expandedBreakdown ? perVm : perVm.slice(0, TOP_N);
+  // Execution-only table; data.totalAleph also includes the wage subsidy.
+  const perVmTotal = perVm.reduce((s, v) => s + v.aleph, 0);
 
   return (
     <div className="space-y-4">
@@ -159,6 +172,11 @@ export function NodeEarningsTab({ hash }: { hash: string }) {
               }
             : {})}
         />
+        {!data.weightsExact && isPerVmLoading && (
+          <p className="mt-1 text-[11px] italic text-muted-foreground">
+            Refining node split from execution data…
+          </p>
+        )}
       </Card>
 
       <NodeEarningsReconciliation
@@ -168,11 +186,37 @@ export function NodeEarningsTab({ hash }: { hash: string }) {
         loading={isPlaceholderData}
       />
 
-      {perVm.length > 0 && (
+      {isPerVmLoading ? (
         <Card padding="md">
           <div className="mb-2 text-[10px] font-semibold uppercase tracking-wider text-muted-foreground">
             Hosted VMs — earnings breakdown
           </div>
+          <div className="space-y-2">
+            <Skeleton className="h-5 w-full bg-edge" />
+            <Skeleton className="h-5 w-full bg-edge" />
+            <Skeleton className="h-5 w-2/3 bg-edge" />
+          </div>
+        </Card>
+      ) : isPerVmError ? (
+        <Card padding="md">
+          <div className="mb-2 text-[10px] font-semibold uppercase tracking-wider text-muted-foreground">
+            Hosted VMs — earnings breakdown
+          </div>
+          <p className="text-xs italic text-muted-foreground">
+            Per-VM detail unavailable — the execution-expense feed timed out.
+            The headline numbers above are unaffected.
+          </p>
+        </Card>
+      ) : perVm.length > 0 ? (
+        <Card padding="md">
+          <div className="mb-2 text-[10px] font-semibold uppercase tracking-wider text-muted-foreground">
+            Hosted VMs — earnings breakdown
+          </div>
+          {range === "30d" && (
+            <p className="mb-2 text-xs italic text-muted-foreground">
+              Per-VM detail covers the last 7 days.
+            </p>
+          )}
           <div className="space-y-3 md:hidden">
             {visibleVms.map((v) => {
               const vmName = vmMessageInfo?.get(v.vmHash)?.name;
@@ -237,7 +281,7 @@ export function NodeEarningsTab({ hash }: { hash: string }) {
                 <Skeleton className="h-4 w-20 bg-edge" />
               ) : (
                 <span className="font-mono tabular-nums">
-                  {formatAleph(data.totalAleph)}
+                  {formatAleph(perVmTotal)}
                 </span>
               )}
             </div>
@@ -318,19 +362,19 @@ export function NodeEarningsTab({ hash }: { hash: string }) {
                   {isPlaceholderData ? (
                     <Skeleton className="ml-auto h-4 w-20 bg-edge" />
                   ) : (
-                    formatAleph(data.totalAleph)
+                    formatAleph(perVmTotal)
                   )}
                 </td>
               </tr>
             </tfoot>
           </table>
         </Card>
-      )}
+      ) : null}
 
       <p className="text-xs italic text-muted-foreground">
-        Accrued earnings from the credit-expense feed using the protocol&apos;s
-        distribution split. Numbers reflect what this node earned, not yet paid
-        on-chain.
+        Owed amounts accrued from the protocol&apos;s authoritative rewards
+        feed, including the wage subsidy (which decays over time). Per-node
+        figures for reward addresses with multiple nodes are apportioned.
       </p>
     </div>
   );

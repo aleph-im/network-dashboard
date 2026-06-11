@@ -2,6 +2,7 @@
 
 import { Card } from "@aleph-front/ds/card";
 import { Skeleton } from "@aleph-front/ds/ui/skeleton";
+import type { ReactNode } from "react";
 
 export type KpiCard = {
   label: string;
@@ -11,6 +12,8 @@ export type KpiCard = {
   tone?: "default" | "up" | "down" | "warning";
   /** When true, render skeletons for primary + secondary (e.g. mid-refetch). */
   loading?: boolean;
+  /** Optional content rendered under the secondary line (e.g. source bar). */
+  extra?: ReactNode;
 };
 
 const TONE_CLASS: Record<NonNullable<KpiCard["tone"]>, string> = {
@@ -43,6 +46,7 @@ export function NodeEarningsKpiRow({ cards }: { cards: KpiCard[] }) {
               >
                 {c.secondary}
               </div>
+              {c.extra}
             </>
           )}
         </Card>

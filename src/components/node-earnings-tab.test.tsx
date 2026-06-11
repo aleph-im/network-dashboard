@@ -51,6 +51,8 @@ describe("NodeEarningsTab (CRN)", () => {
       data: {
         role: "crn",
         totalAleph: 12.84,
+        bySource: { credit_revenue: 10, holder_tier: 2, wage_subsidy: 0.84 },
+        weightsExact: true,
         delta: { aleph: 1.2, secondaryCount: -2 },
         buckets: Array.from({ length: 24 }, (_, i) => ({
           time: i * 3600,
@@ -65,6 +67,9 @@ describe("NodeEarningsTab (CRN)", () => {
       },
       isLoading: false,
       isPlaceholderData: false,
+      isError: false,
+      isPerVmLoading: false,
+      isPerVmError: false,
     });
 
     render(<NodeEarningsTab hash="crn1" />);
@@ -74,7 +79,7 @@ describe("NodeEarningsTab (CRN)", () => {
     expect(screen.getAllByText("12.84").length).toBeGreaterThan(0);
     // Footnote
     expect(
-      screen.getByText(/accrued.*not yet paid on-chain/i),
+      screen.getByText(/authoritative rewards\s*feed/i),
     ).toBeInTheDocument();
     // Per-VM hashes appear (CopyableText renders truncated representation)
     expect(screen.getAllByText(/vmA|vmB/).length).toBeGreaterThan(0);
@@ -95,6 +100,8 @@ describe("NodeEarningsTab (CRN)", () => {
       data: {
         role: "crn",
         totalAleph: perVm.reduce((s, v) => s + v.aleph, 0),
+        bySource: { credit_revenue: 49, holder_tier: 0, wage_subsidy: 0 },
+        weightsExact: true,
         delta: { aleph: 0, secondaryCount: 0 },
         buckets: Array.from({ length: 24 }, (_, i) => ({
           time: i * 3600,
@@ -106,6 +113,9 @@ describe("NodeEarningsTab (CRN)", () => {
       },
       isLoading: false,
       isPlaceholderData: false,
+      isError: false,
+      isPerVmLoading: false,
+      isPerVmError: false,
     });
 
     render(<NodeEarningsTab hash="crn1" />);
@@ -130,6 +140,9 @@ describe("NodeEarningsTab (CRN)", () => {
       data: undefined,
       isLoading: true,
       isPlaceholderData: false,
+      isError: false,
+      isPerVmLoading: false,
+      isPerVmError: false,
     });
     const { container } = render(<NodeEarningsTab hash="crn1" />);
     expect(
