@@ -3,7 +3,6 @@
 import { useState, useTransition, useMemo, useEffect } from "react";
 import { useRouter, usePathname, useSearchParams } from "next/navigation";
 import { Table, type Column } from "@aleph-front/ds/table";
-import { StatusDot } from "@aleph-front/ds/status-dot";
 import {
   Tooltip,
   TooltipTrigger,
@@ -34,10 +33,7 @@ import {
   type NodeAdvancedFilters,
 } from "@/lib/filters";
 import { applySort, type SortDirection } from "@/lib/sort";
-import {
-  nodeStatusToDot,
-  NODE_STATUS_VARIANT,
-} from "@/lib/status-map";
+import { NODE_STATUS_VARIANT } from "@/lib/status-map";
 import type { Node, NodeStatus } from "@/api/types";
 
 const STATUS_PILLS: { value: NodeStatus | undefined; label: string; tooltip?: string }[] = [
@@ -51,14 +47,6 @@ const STATUS_PILLS: { value: NodeStatus | undefined; label: string; tooltip?: st
 const NODE_SEARCH_FIELDS = (n: Node) => [n.hash, n.owner, n.name];
 
 const columns: Column<Node>[] = [
-  {
-    header: "",
-    accessor: (r) => (
-      <StatusDot status={nodeStatusToDot(r.status)} size="sm" />
-    ),
-    width: "40px",
-    align: "center",
-  },
   {
     header: "Status",
     accessor: (r) => (

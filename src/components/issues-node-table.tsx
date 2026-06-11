@@ -50,15 +50,12 @@ const columns: Column<IssueNode>[] = [
   {
     header: "Status",
     accessor: (r) => (
-      <span className="inline-flex items-center gap-2">
-        <StatusDot status={nodeStatusToDot(r.node.status)} size="sm" />
-        <Badge fill="outline"
-          variant={NODE_STATUS_VARIANT[r.node.status]}
-          size="sm"
-        >
-          {r.node.status}
-        </Badge>
-      </span>
+      <Badge fill="outline"
+        variant={NODE_STATUS_VARIANT[r.node.status]}
+        size="sm"
+      >
+        {r.node.status}
+      </Badge>
     ),
     sortable: true,
     sortValue: (r) => r.node.status,

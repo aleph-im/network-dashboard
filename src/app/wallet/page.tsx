@@ -7,7 +7,6 @@ import { Card } from "@aleph-front/ds/card";
 import { Badge } from "@aleph-front/ds/badge";
 import { Button } from "@aleph-front/ds/button";
 import { CopyableText } from "@aleph-front/ds/copyable-text";
-import { StatusDot } from "@aleph-front/ds/status-dot";
 import { Skeleton } from "@aleph-front/ds/ui/skeleton";
 import { usePageHeader } from "@aleph-front/ds/page-header";
 import { ArrowClockwise, ArrowUpRight } from "@phosphor-icons/react/dist/ssr";
@@ -30,7 +29,6 @@ import {
 import { useOwnerRewards } from "@/hooks/use-owner-rewards";
 import { WalletRevenueCard } from "@/components/wallet-revenue-card";
 import {
-  nodeStatusToDot,
   NODE_STATUS_VARIANT,
   VM_STATUS_VARIANT,
   MESSAGE_TYPE_VARIANT,
@@ -110,19 +108,13 @@ function NodesSection({ nodes }: { nodes: Node[] }) {
               {
                 label: "Status",
                 value: (
-                  <span className="inline-flex items-center gap-1.5">
-                    <StatusDot
-                      status={nodeStatusToDot(node.status)}
-                      size="sm"
-                    />
-                    <Badge
-                      fill="outline"
-                      variant={NODE_STATUS_VARIANT[node.status]}
-                      size="sm"
-                    >
-                      {node.status}
-                    </Badge>
-                  </span>
+                  <Badge
+                    fill="outline"
+                    variant={NODE_STATUS_VARIANT[node.status]}
+                    size="sm"
+                  >
+                    {node.status}
+                  </Badge>
                 ),
               },
               {
@@ -172,18 +164,12 @@ function NodesSection({ nodes }: { nodes: Node[] }) {
                   {node.name ?? "—"}
                 </td>
                 <td className="py-2 pr-4">
-                  <span className="inline-flex items-center gap-1.5">
-                    <StatusDot
-                      status={nodeStatusToDot(node.status)}
-                      size="sm"
-                    />
-                    <Badge fill="outline"
-                      variant={NODE_STATUS_VARIANT[node.status]}
-                      size="sm"
-                    >
-                      {node.status}
-                    </Badge>
-                  </span>
+                  <Badge fill="outline"
+                    variant={NODE_STATUS_VARIANT[node.status]}
+                    size="sm"
+                  >
+                    {node.status}
+                  </Badge>
                 </td>
                 <td className="py-2 pr-4 text-right text-xs tabular-nums">
                   {node.vmCount}
