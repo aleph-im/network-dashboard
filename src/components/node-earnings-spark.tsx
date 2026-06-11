@@ -15,7 +15,7 @@ function avg(values: number[]): number {
 }
 
 export function NodeEarningsSpark({ hash, height = 56 }: Props) {
-  const { data, isLoading } = useNodeEarnings(hash, "24h");
+  const { data, isLoading } = useNodeEarnings(hash, "24h", { weights: "proxy" });
 
   if (isLoading) {
     return (
