@@ -7,7 +7,6 @@ import { Card } from "@aleph-front/ds/card";
 import { Badge } from "@aleph-front/ds/badge";
 import { Button } from "@aleph-front/ds/button";
 import { CopyableText } from "@aleph-front/ds/copyable-text";
-import { StatusDot } from "@aleph-front/ds/status-dot";
 import { Skeleton } from "@aleph-front/ds/ui/skeleton";
 import { usePageHeader } from "@aleph-front/ds/page-header";
 import { ArrowClockwise, ArrowUpRight } from "@phosphor-icons/react/dist/ssr";
@@ -26,12 +25,10 @@ import {
   relativeTime,
   relativeTimeFromUnix,
   explorerWalletUrl,
-  formatAleph,
 } from "@/lib/format";
-import { useWalletRewards } from "@/hooks/use-wallet-rewards";
-import type { WalletRewards } from "@/api/credit-types";
+import { useOwnerRewards } from "@/hooks/use-owner-rewards";
+import { WalletRevenueCard } from "@/components/wallet-revenue-card";
 import {
-  nodeStatusToDot,
   NODE_STATUS_VARIANT,
   VM_STATUS_VARIANT,
   MESSAGE_TYPE_VARIANT,
@@ -111,19 +108,13 @@ function NodesSection({ nodes }: { nodes: Node[] }) {
               {
                 label: "Status",
                 value: (
-                  <span className="inline-flex items-center gap-1.5">
-                    <StatusDot
-                      status={nodeStatusToDot(node.status)}
-                      size="sm"
-                    />
-                    <Badge
-                      fill="outline"
-                      variant={NODE_STATUS_VARIANT[node.status]}
-                      size="sm"
-                    >
-                      {node.status}
-                    </Badge>
-                  </span>
+                  <Badge
+                    fill="outline"
+                    variant={NODE_STATUS_VARIANT[node.status]}
+                    size="sm"
+                  >
+                    {node.status}
+                  </Badge>
                 ),
               },
               {
@@ -173,18 +164,12 @@ function NodesSection({ nodes }: { nodes: Node[] }) {
                   {node.name ?? "—"}
                 </td>
                 <td className="py-2 pr-4">
-                  <span className="inline-flex items-center gap-1.5">
-                    <StatusDot
-                      status={nodeStatusToDot(node.status)}
-                      size="sm"
-                    />
-                    <Badge fill="outline"
-                      variant={NODE_STATUS_VARIANT[node.status]}
-                      size="sm"
-                    >
-                      {node.status}
-                    </Badge>
-                  </span>
+                  <Badge fill="outline"
+                    variant={NODE_STATUS_VARIANT[node.status]}
+                    size="sm"
+                  >
+                    {node.status}
+                  </Badge>
                 </td>
                 <td className="py-2 pr-4 text-right text-xs tabular-nums">
                   {node.vmCount}
@@ -529,98 +514,6 @@ function PermissionsCard({
   );
 }
 
-// --- Credit Rewards Section ---
-
-const ROLE_VARIANT: Record<string, "info" | "default" | "warning"> = {
-  crn: "info",
-  ccn: "default",
-  staker: "warning",
-};
-
-function RewardsSection({ rewards }: { rewards: WalletRewards }) {
-  if (rewards.totalAleph === 0) return null;
-
-  return (
-    <Card padding="md">
-      <h3 className="mb-3 text-xs font-semibold uppercase tracking-wider text-muted-foreground">
-        Credit Rewards (24h)
-      </h3>
-      <div>
-        <table className="w-full text-sm">
-          <thead>
-            <tr className="border-b border-edge text-left text-xs text-muted-foreground">
-              <th className="pb-2 pr-4 font-medium">Node</th>
-              <th className="pb-2 pr-4 font-medium">Role</th>
-              <th className="pb-2 font-medium text-right">
-                ALEPH
-              </th>
-            </tr>
-          </thead>
-          <tbody className="divide-y divide-edge">
-            {rewards.nodes.map((n) => (
-              <tr key={`${n.nodeHash}-${n.role}`}>
-                <td className="py-2 pr-4">
-                  <div className="flex items-center gap-2">
-                    <CopyableText
-                      text={n.nodeHash}
-                      startChars={8}
-                      endChars={8}
-                      size="sm"
-                      href={`/nodes?view=${n.nodeHash}`}
-                    />
-                    {n.nodeName && (
-                      <span className="text-xs text-muted-foreground">
-                        {n.nodeName}
-                      </span>
-                    )}
-                  </div>
-                </td>
-                <td className="py-2 pr-4">
-                  <Badge
-                    fill="outline"
-                    variant={ROLE_VARIANT[n.role]}
-                    size="sm"
-                  >
-                    {n.role.toUpperCase()}
-                  </Badge>
-                </td>
-                <td className="py-2 text-right tabular-nums">
-                  {formatAleph(n.aleph)}
-                </td>
-              </tr>
-            ))}
-            {rewards.stakerAleph > 0 && (
-              <tr>
-                <td className="py-2 pr-4 text-xs text-muted-foreground">
-                  —
-                </td>
-                <td className="py-2 pr-4">
-                  <Badge fill="outline" variant="warning" size="sm">
-                    STAKER
-                  </Badge>
-                </td>
-                <td className="py-2 text-right tabular-nums">
-                  {formatAleph(rewards.stakerAleph)}
-                </td>
-              </tr>
-            )}
-          </tbody>
-          <tfoot>
-            <tr className="border-t border-edge font-medium">
-              <td colSpan={2} className="pt-2 text-xs text-muted-foreground">
-                Total
-              </td>
-              <td className="pt-2 text-right tabular-nums">
-                {formatAleph(rewards.totalAleph)}
-              </td>
-            </tr>
-          </tfoot>
-        </table>
-      </div>
-    </Card>
-  );
-}
-
 // --- Page Content ---
 
 function WalletContent() {
@@ -638,8 +531,8 @@ function WalletContent() {
     refresh: refreshActivity,
     dataUpdatedAt,
   } = useWalletActivity(address);
-  const { rewards, isLoading: rewardsLoading } =
-    useWalletRewards(address);
+  const { data: ownerRewards, isLoading: rewardsLoading, isBreakdownLoading, isError: rewardsError } =
+    useOwnerRewards(address);
   const { data: granted } = useAuthorizations(
     address,
     "granted",
@@ -782,11 +675,18 @@ function WalletContent() {
         />
       )}
 
-      {/* Credit Rewards */}
+      {/* Node Revenue */}
       {rewardsLoading ? (
         <Skeleton className="h-32 w-full rounded-lg" />
-      ) : rewards ? (
-        <RewardsSection rewards={rewards} />
+      ) : ownerRewards ? (
+        <WalletRevenueCard rewards={ownerRewards} breakdownLoading={isBreakdownLoading} />
+      ) : rewardsError ? (
+        <Card padding="md">
+          <h3 className="mb-1 text-xs font-semibold uppercase tracking-wider text-muted-foreground">Node revenue</h3>
+          <p className="text-sm text-muted-foreground">
+            Revenue data is temporarily unavailable — the rewards service isn&apos;t responding. It&apos;ll appear once the service is back.
+          </p>
+        </Card>
       ) : null}
 
       {/* Permissions */}

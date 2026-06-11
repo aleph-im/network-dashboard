@@ -25,7 +25,9 @@ function makeVm(overrides: Partial<VM> & Pick<VM, "hash" | "status">): VM {
     observedNodes: [],
     requirements: { vcpus: null, memoryMb: null, diskMb: null },
     paymentStatus: null,
-    updatedAt: "2026-05-12T00:00:00Z",
+    // Relative so the default never ages out of the Issues 30d retention
+    // window (a fixed date silently culls these fixtures once it passes 30d).
+    updatedAt: new Date(Date.now() - 86_400_000).toISOString(),
     allocatedAt: null,
     lastObservedAt: null,
     paymentType: null,

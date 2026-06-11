@@ -13,8 +13,8 @@ export const RANGE_SECONDS: Record<CreditRange, number> = {
 
 /**
  * Round to the nearest 5 minutes so the query key stays stable across
- * mounts. Same rounding used by useWalletRewards — both pages share
- * the same React Query cache entry for 24h windows.
+ * mounts — repeated reads within a 5-minute window share the same React
+ * Query cache entry.
  */
 export function getStableExpenseRange(seconds: number): {
   start: number;

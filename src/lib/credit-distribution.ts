@@ -8,8 +8,6 @@ import type {
   NodeState,
   RecipientRole,
   RecipientTotal,
-  WalletNodeReward,
-  WalletRewards,
 } from "@/api/credit-types";
 
 // Distribution shares
@@ -359,113 +357,5 @@ export function computeDistributionSummary(
     perNode,
     ...(perNodeBuckets ? { perNodeBuckets } : {}),
     ...(perVmInWindow ? { perVmInWindow } : {}),
-  };
-}
-
-export function computeWalletRewards(
-  address: string,
-  expenses: CreditExpense[],
-  nodeState: NodeState,
-): WalletRewards {
-  const lower = address.toLowerCase();
-
-  function isOwner(node: { owner: string; reward: string }): boolean {
-    return (
-      node.owner.toLowerCase() === lower ||
-      node.reward.toLowerCase() === lower
-    );
-  }
-
-  // Identify owned nodes
-  const ownedCrns = new Set<string>();
-  for (const [hash, crn] of nodeState.crns) {
-    if (isOwner(crn)) ownedCrns.add(hash);
-  }
-
-  const ownedCcns = new Set<string>();
-  for (const [hash, ccn] of nodeState.ccns) {
-    if (isOwner(ccn)) ownedCcns.add(hash);
-  }
-
-  // Pre-compute CCN score weights (stable across expenses)
-  let totalCcnWeight = 0;
-  const ccnWeightByHash = new Map<string, number>();
-  for (const ccn of nodeState.ccns.values()) {
-    if (ccn.status !== "active") continue;
-    const w = computeScoreMultiplier(ccn.score);
-    if (w > 0) {
-      ccnWeightByHash.set(ccn.hash, w);
-      totalCcnWeight += w;
-    }
-  }
-
-  // Pre-compute staker weights
-  let totalStaked = 0;
-  let addressStaked = 0;
-  for (const ccn of nodeState.ccns.values()) {
-    if (ccn.status !== "active") continue;
-    for (const [addr, amount] of Object.entries(ccn.stakers)) {
-      totalStaked += amount;
-      if (addr.toLowerCase() === lower) addressStaked += amount;
-    }
-  }
-
-  const crnPerNode = new Map<string, number>();
-  const ccnPerNode = new Map<string, number>();
-  let stakerAleph = 0;
-
-  for (const expense of expenses) {
-    const isStorage = expense.type === "storage";
-
-    // CRN rewards (execution only) — per credit entry
-    if (!isStorage) {
-      for (const credit of expense.credits) {
-        if (!credit.nodeId || !ownedCrns.has(credit.nodeId)) continue;
-        addToMap(
-          crnPerNode,
-          credit.nodeId,
-          credit.alephCost * EXECUTION_CRN_SHARE,
-        );
-      }
-    }
-
-    // CCN rewards — score-weighted share of the CCN pool
-    const ccnShare = isStorage ? STORAGE_CCN_SHARE : EXECUTION_CCN_SHARE;
-    const ccnPool = expense.totalAleph * ccnShare;
-    if (totalCcnWeight > 0 && ccnPool > 0) {
-      for (const hash of ownedCcns) {
-        const w = ccnWeightByHash.get(hash);
-        if (w && w > 0) {
-          addToMap(ccnPerNode, hash, (ccnPool * w) / totalCcnWeight);
-        }
-      }
-    }
-
-    // Staker rewards — proportional to staked amount
-    const stakerShare = isStorage
-      ? STORAGE_STAKER_SHARE
-      : EXECUTION_STAKER_SHARE;
-    const stakerPool = expense.totalAleph * stakerShare;
-    if (totalStaked > 0 && stakerPool > 0 && addressStaked > 0) {
-      stakerAleph += (stakerPool * addressStaked) / totalStaked;
-    }
-  }
-
-  // Build sorted result
-  const nodes: WalletNodeReward[] = [];
-  for (const [hash, aleph] of crnPerNode) {
-    const crn = nodeState.crns.get(hash);
-    nodes.push({ nodeHash: hash, nodeName: crn?.name ?? "", role: "crn", aleph });
-  }
-  for (const [hash, aleph] of ccnPerNode) {
-    const ccn = nodeState.ccns.get(hash);
-    nodes.push({ nodeHash: hash, nodeName: ccn?.name ?? "", role: "ccn", aleph });
-  }
-  nodes.sort((a, b) => b.aleph - a.aleph);
-
-  return {
-    nodes,
-    stakerAleph,
-    totalAleph: nodes.reduce((s, n) => s + n.aleph, 0) + stakerAleph,
   };
 }

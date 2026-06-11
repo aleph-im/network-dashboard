@@ -288,10 +288,17 @@ export async function getOverviewStats(): Promise<OverviewStats> {
 
 // --- Aleph Message API (api2.aleph.im) ---
 
-function getAlephBaseUrl(): string {
+export function getAlephBaseUrl(): string {
   return (
     process.env["NEXT_PUBLIC_ALEPH_API_URL"] ??
     "https://api2.aleph.im"
+  );
+}
+
+export function getCreditApiBaseUrl(): string {
+  return (
+    process.env["NEXT_PUBLIC_CREDIT_API_URL"] ??
+    "https://credit.aleph.im"
   );
 }
 
@@ -413,6 +420,10 @@ const CREDIT_EXPENSE_SENDER =
   "0x6aeaEEb08720DEc9d6dae1A8fc49344Dd99391Ac";
 const CORECHANNEL_SENDER =
   "0xa1B3bb7d2332383D96b7796B908fB7f7F3c2Be10";
+// FOUNDATION account that publishes credit-rewards-distribution messages.
+export const FOUNDATION_DISTRIBUTION_SENDER =
+  "0x3a5CC6aBd06B601f4654035d125F9DD2FC992C25";
+export const DISTRIBUTION_POST_TYPE = "credit-rewards-distribution";
 
 type ApiCreditEntryWire = {
   address: string;

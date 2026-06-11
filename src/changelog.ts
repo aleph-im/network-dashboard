@@ -11,9 +11,35 @@ export type VersionEntry = {
   changes: ChangeEntry[];
 };
 
-export const CURRENT_VERSION = "0.33.0";
+export const CURRENT_VERSION = "0.34.0";
 
 export const CHANGELOG: VersionEntry[] = [
+  {
+    version: "0.34.0",
+    date: "2026-06-09",
+    changes: [
+      {
+        type: "feature",
+        text: "The wallet view's rewards section is now a node-owner revenue view sourced from the protocol's authoritative rewards feed (credit.aleph.im /rewards/time-series) instead of a client-side reconstruction. It surfaces the wage subsidy — the \"minimum wage\" that decays to zero over time, previously invisible and worth ~18–22% of node-owner revenue — framed around the payout cycle: an owed-this-cycle total with a days-since-last-distribution accrual line, a by-source breakdown (credits / holder tier / wage), a per-node breakdown, and a last-payment panel showing the latest distribution amount and date.",
+      },
+      {
+        type: "refactor",
+        text: "Wallet reward numbers are now anchored to the per-address totals from the rewards API and split per node by each CRN's live VM count and CCN score weights. The old hardcoded 60/15/20 distribution split is retired for the wallet path — computeWalletRewards and the useWalletRewards hook were removed.",
+      },
+      {
+        type: "fix",
+        text: "The wallet \"by node this cycle\" breakdown now loads reliably, and the rewards query is faster. Per-node weighting uses each CRN's live VM count instead of downloading the full network credit-expense feed (which reached ~750MB for a payout cycle and could hang the panel), and rewards time-series requests are aligned to whole-hour bounds so the rewards API serves them from cache.",
+      },
+      {
+        type: "fix",
+        text: "Per-node revenue figures no longer show NaN for addresses with a zero source (e.g. no credit revenue) — the rewards API omits breakdown keys for zero sources and the missing values poisoned the per-node math. Sparse responses are now normalized to zeros, and a floating-point residue no longer renders as a tiny scientific-notation \"Unattributed\" row.",
+      },
+      {
+        type: "ui",
+        text: "Status dots that duplicated an adjacent status badge were removed on the Nodes table, the Issues node perspective, and the wallet's Nodes list — the badge alone carries the status. Dots remain where they are the only status signal (detail headers, network panels, health rows).",
+      },
+    ],
+  },
   {
     version: "0.33.0",
     date: "2026-05-29",
