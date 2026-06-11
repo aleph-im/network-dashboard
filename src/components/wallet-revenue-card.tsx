@@ -3,11 +3,9 @@
 import { Card } from "@aleph-front/ds/card";
 import { Badge } from "@aleph-front/ds/badge";
 import { CopyableText } from "@aleph-front/ds/copyable-text";
-import { StatusDot } from "@aleph-front/ds/status-dot";
 import { Skeleton } from "@aleph-front/ds/ui/skeleton";
 import { Clock } from "@phosphor-icons/react";
 import { formatAleph } from "@/lib/format";
-import { nextPaymentEstimate, cycleProgress } from "@/lib/payout-cycle";
 import type { BySource, OwnerRewards, RewardSource } from "@/api/rewards-types";
 
 const SOURCE_META: { key: RewardSource; label: string; bar: string }[] = [
@@ -17,7 +15,6 @@ const SOURCE_META: { key: RewardSource; label: string; bar: string }[] = [
 ];
 
 function SourceBar({ bySource }: { bySource: BySource }) {
-  const total = SOURCE_META.reduce((s, m) => s + bySource[m.key], 0);
   return (
     <>
       <div className="my-2 flex h-2 overflow-hidden rounded">
@@ -35,36 +32,23 @@ function SourceBar({ bySource }: { bySource: BySource }) {
             {m.label} {formatAleph(bySource[m.key])}
           </span>
         ))}
-        {total > 0 && bySource.wage_subsidy > 0 && (
-          <span className="opacity-60"> (wage decaying → 0)</span>
-        )}
       </div>
     </>
   );
 }
 
-function daysUntil(targetSec: number, nowSec: number): number {
-  return Math.max(0, Math.round((targetSec - nowSec) / 86400));
+function daysSince(startSec: number, nowSec: number): number {
+  return Math.max(0, Math.floor((nowSec - startSec) / 86400));
 }
 
-const STATUS_LABEL = {
-  pending: "on-chain pending",
-  confirmed: "on-chain confirmed",
-  failed: "transfer failed",
-} as const;
-
-const STATUS_DOT = {
-  pending: "degraded",
-  confirmed: "healthy",
-  failed: "error",
-} as const satisfies Record<string, "healthy" | "degraded" | "error">;
+function formatDay(sec: number): string {
+  return new Date(sec * 1000).toLocaleDateString("en-US", { month: "short", day: "numeric" });
+}
 
 export function WalletRevenueCard({ rewards, breakdownLoading = false }: { rewards: OwnerRewards; breakdownLoading?: boolean }) {
   if (rewards.totalAleph === 0 && !rewards.lastPaid) return null;
 
   const nowSec = Math.floor(Date.now() / 1000);
-  const nextSec = rewards.accrualStartSec ? nextPaymentEstimate(rewards.accrualStartSec) : null;
-  const progress = nextSec && rewards.accrualStartSec ? cycleProgress(rewards.accrualStartSec, nextSec, nowSec) : 0;
 
   return (
     <Card padding="md">
@@ -83,16 +67,11 @@ export function WalletRevenueCard({ rewards, breakdownLoading = false }: { rewar
             {formatAleph(rewards.totalAleph)}{" "}
             <span className="text-base text-muted-foreground">ALEPH</span>
           </div>
-          <div className="my-2 h-2 overflow-hidden rounded bg-muted">
-            <div
-              className="h-full bg-gradient-to-r from-primary-500 to-success-500"
-              style={{ width: `${progress * 100}%` }}
-            />
-          </div>
-          {nextSec && (
-            <div className="flex items-center gap-1 text-sm text-muted-foreground">
+          {rewards.accrualStartSec != null && (
+            <div className="mt-2 flex items-center gap-1 text-sm text-muted-foreground">
               <Clock size={14} />
-              Next payment in ~{daysUntil(nextSec, nowSec)} days
+              Accruing for {daysSince(rewards.accrualStartSec, nowSec)} days · since{" "}
+              {formatDay(rewards.accrualStartSec)}
             </div>
           )}
           <div className="text-[11px] text-muted-foreground opacity-60">
@@ -116,15 +95,11 @@ export function WalletRevenueCard({ rewards, breakdownLoading = false }: { rewar
                 year: "numeric",
               })}
             </div>
-            <div className="mt-1 flex items-center gap-1 text-xs text-muted-foreground">
-              <StatusDot status={STATUS_DOT[rewards.lastPaid.status]} />
-              {STATUS_LABEL[rewards.lastPaid.status]}
-            </div>
           </div>
         )}
       </div>
 
-      <hr className="my-3 border-edge" />
+      <hr className="my-5 border-edge" />
       <div className="text-[10px] font-semibold uppercase tracking-wider text-muted-foreground">
         By source · this cycle
       </div>
@@ -132,12 +107,12 @@ export function WalletRevenueCard({ rewards, breakdownLoading = false }: { rewar
 
       {breakdownLoading ? (
         <>
-          <div className="mt-4 text-[10px] font-semibold uppercase tracking-wider text-muted-foreground">By node · this cycle</div>
+          <div className="mt-6 text-[10px] font-semibold uppercase tracking-wider text-muted-foreground">By node · this cycle</div>
           <Skeleton className="mt-1 h-24 w-full bg-edge" />
         </>
       ) : (rewards.byNode.length > 0 || rewards.stakingAleph > 0 || rewards.unattributedAleph > 0) ? (
         <>
-          <div className="mt-4 text-[10px] font-semibold uppercase tracking-wider text-muted-foreground">
+          <div className="mt-6 text-[10px] font-semibold uppercase tracking-wider text-muted-foreground">
             By node · this cycle
           </div>
           <table className="mt-1 w-full text-sm">
@@ -195,10 +170,10 @@ export function WalletRevenueCard({ rewards, breakdownLoading = false }: { rewar
         </>
       ) : null}
 
-      <p className="mt-3 text-[11px] italic text-muted-foreground">
-        Owed amounts accrued from the protocol&apos;s authoritative rewards feed (algoVersion v2),
-        including the wage subsidy (which decays over time). Per-node figures for addresses with
-        multiple nodes are apportioned. Last payment reflects the on-chain distribution status.
+      <p className="mt-3 text-[11px] italic text-muted-foreground opacity-60">
+        Owed amounts accrued from the protocol&apos;s authoritative rewards feed, including the
+        wage subsidy (which decays over time). Per-node figures for addresses with multiple nodes
+        are apportioned.
       </p>
     </Card>
   );
