@@ -70,7 +70,7 @@ export async function getRewardsTimeSeries(
   try {
     res = await fetch(url, { signal: AbortSignal.timeout(12_000) });
   } catch {
-    throw new Error("Rewards API unreachable (timeout)");
+    throw new Error("Rewards API (credit.aleph.im) unreachable (timeout)");
   }
   if (!res.ok) throw new Error(`Rewards API error: ${res.status}`);
   const data = (await res.json()) as TimeSeriesResponse;
@@ -129,7 +129,7 @@ export async function getDistributions(): Promise<DistributionCycle | null> {
   try {
     res = await fetch(url, { signal: AbortSignal.timeout(12_000) });
   } catch {
-    throw new Error("Rewards API unreachable (timeout)");
+    throw new Error("Aleph API (distribution messages) unreachable (timeout)");
   }
   if (!res.ok) throw new Error(`Aleph API error: ${res.status}`);
   const data = (await res.json()) as { messages: DistMessage[] };
