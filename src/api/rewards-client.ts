@@ -14,6 +14,16 @@ type TimeSeriesResponse = {
   };
 };
 
+/**
+ * Truncate an epoch-seconds bound to whole-hour granularity (`YYYY-MM-DDTHH`).
+ * credit.aleph.im caches results on hour boundaries; sending sub-hour precision
+ * (`…T09:37:23.000Z`) forces it to compute intra-hour sub-ranges, which is slow.
+ * An hour-granular bound is served from cache and returns instantly.
+ */
+function toHourBound(sec: number): string {
+  return new Date(Math.floor(sec) * 1000).toISOString().slice(0, 13);
+}
+
 /** Authoritative per-address rewards over [fromSec, toSec]. Single address only. */
 export async function getRewardsTimeSeries(
   address: string,
@@ -22,8 +32,8 @@ export async function getRewardsTimeSeries(
 ): Promise<AddressRewards> {
   const addr = address.toLowerCase();
   const params = new URLSearchParams({
-    from: new Date(Math.floor(fromSec) * 1000).toISOString(),
-    to: new Date(Math.floor(toSec) * 1000).toISOString(),
+    from: toHourBound(fromSec),
+    to: toHourBound(toSec),
     address: addr,
     detail: "2",
     bucketSize: "1y", // single aggregate bucket; we read `total`

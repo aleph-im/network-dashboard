@@ -35,8 +35,12 @@ describe("getRewardsTimeSeries", () => {
     expect(url).toContain("/api/v0/rewards/time-series");
     expect(url).toContain("address=0xabc"); // lowercased
     expect(url).toContain("detail=2");
-    expect(url).toContain("from=2026-05-01"); // ISO, not raw epoch
     expect(url).not.toContain("from=1777593611"); // must not send epoch seconds
+    // Bounds are truncated to whole-hour granularity (`YYYY-MM-DDTHH`) so the
+    // upstream hour-cache is hit instead of computing intra-hour sub-ranges.
+    expect(url).toContain("from=2026-05-01T00");
+    expect(url).toContain("to=2026-06-01T09");
+    expect(url).not.toContain("%3A"); // no sub-hour precision (encoded colon) leaks
   });
 
   it("throws on non-200", async () => {
