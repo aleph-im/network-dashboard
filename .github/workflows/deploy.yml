@@ -1,13 +1,41 @@
 name: Deploy to IPFS
 
+# Authenticated CARv1 upload straight to the Aleph CCN via the aleph-rs CLI —
+# no public IPFS gateway, no DHT-propagation race. Single command:
+# `aleph website deploy/update`. `aleph website show` selects deploy (first
+# run, creates the `websites` entry + attaches the domain) vs update (every
+# run after, bumps version + auto-re-points the domain).
+
 on:
   workflow_dispatch:
 
+permissions:
+  contents: read
+
+concurrency:
+  group: deploy-${{ github.ref }}
+  cancel-in-progress: true
+
+env:
+  WEBSITE_NAME: scheduler-dashboard
+  DOMAIN: network.aleph.cloud
+  # Owner of the STORE + `websites`/`domains` aggregates, and the wallet
+  # whose credits pay for the pin. The signer (ALEPH_PRIVATE_KEY) is
+  # authorized as a delegate in this address's `security` aggregate for
+  # STORE + AGGREGATE keys [domains, websites] on the ALEPH-CLOUDSOLUTIONS
+  # channel.
+  OWNER: "0xB136a85c95a0ea573793AB9739c7dF8682B87fCa"
+  # Delegated writes must land on the channel the owner's security aggregate
+  # authorizes, or the CCN rejects them.
+  CHANNEL: ALEPH-CLOUDSOLUTIONS
+  ALEPH_CLI_VERSION: v0.10.3
+  ALEPH_CLI_SHA256: 68eeae468344ae3a02fed2caa55e8fc1c4a7b07c9e9dd08bee0d6fd37a4349c8
+
 jobs:
   deploy:
+    name: Build & deploy to Aleph
     runs-on: ubuntu-latest
-    permissions:
-      contents: read
+    timeout-minutes: 15
 
     steps:
       - name: Checkout
@@ -30,7 +58,7 @@ jobs:
       - name: Build
         run: pnpm build
         env:
-          NEXT_PUBLIC_API_URL: https://rust-scheduler.aleph.im
+          NEXT_PUBLIC_API_URL: https://scheduler.api.aleph.cloud
 
       - name: Extract version
         id: version
@@ -38,38 +66,68 @@ jobs:
           VERSION=$(grep -E '^export const CURRENT_VERSION' src/changelog.ts | sed -E 's/.*"([^"]+)".*/\1/')
           echo "version=$VERSION" >> "$GITHUB_OUTPUT"
 
-      - name: Setup Python
-        uses: actions/setup-python@a309ff8b426b58ec0e2a45f0f869d46889d02405 # v6.2.0
-        with:
-          python-version: "3.12"
-
-      - name: Install system dependencies
-        run: sudo apt-get update && sudo apt-get install -y libsecp256k1-dev
-
-      - name: Install aleph-client
-        run: pip install "aleph-client>=1.0.0" "requests>=2.32.0,<3.0"
-
-      - name: Upload to IPFS
-        id: upload
+      - name: Install aleph-rs CLI
         run: |
-          python3 scripts/deploy-ipfs.py out/
+          set -euo pipefail
+          url="https://github.com/aleph-im/aleph-rs/releases/download/${ALEPH_CLI_VERSION}/aleph-cli-linux-x86_64"
+          curl -fsSL "$url" -o /usr/local/bin/aleph
+          echo "${ALEPH_CLI_SHA256}  /usr/local/bin/aleph" | sha256sum -c -
+          chmod +x /usr/local/bin/aleph
+          aleph --version
+
+      - name: Deploy to Aleph
         env:
-          # Stream logs live in CI — Python block-buffers stdout by default,
-          # which makes mid-run hangs opaque (prints flush only on exit).
-          PYTHONUNBUFFERED: "1"
           ALEPH_PRIVATE_KEY: ${{ secrets.ALEPH_PRIVATE_KEY }}
-          ALEPH_OWNER_ADDRESS: "0xB136a85c95a0ea573793AB9739c7dF8682B87fCa"
-          ALEPH_WEBSITE_NAME: "scheduler-dashboard"
-          ALEPH_DOMAIN: ${{ vars.ALEPH_DOMAIN }}
-
-      - name: Write job summary
+          BUILD_VERSION: ${{ steps.version.outputs.version }}
         run: |
-          cat >> "$GITHUB_STEP_SUMMARY" <<EOF
-          ## Deployed to IPFS
+          set -euo pipefail
+          out=out
+          [ -d "$out" ] || { echo "::error::build output $out not found"; exit 1; }
 
-          | | |
-          |---|---|
-          | **Version** | \`v${{ steps.version.outputs.version }}\` |
-          | **CID** | \`${{ steps.upload.outputs.cid }}\` |
-          | **Gateway** | https://${{ steps.upload.outputs.cid }}.ipfs.aleph.sh/ |
-          EOF
+          # Load-balanced endpoint. If deploys start failing with
+          # error_code 4 / add_car hangs, pin a verified-healthy node here
+          # (see stasho-app deploy-frontend.yml for the incident history).
+          CCN_URL=https://api.aleph.im
+
+          # First run creates the `websites` entry (deploy, also attaches the
+          # --domain); later runs bump it (update, auto-re-points domains).
+          # `aleph website show` exits non-zero when the entry is absent.
+          if aleph --ccn "$CCN_URL" website show "$WEBSITE_NAME" --address "$OWNER" --json >/dev/null 2>&1; then
+            verb=update
+          else
+            verb=deploy
+          fi
+          echo "Running: aleph website $verb $WEBSITE_NAME on $CCN_URL"
+
+          if [ "$verb" = deploy ]; then
+            aleph --ccn "$CCN_URL" website deploy "$WEBSITE_NAME" "$out" \
+              --payment-type credit \
+              --domain "$DOMAIN" \
+              --framework nextjs \
+              --on-behalf-of "$OWNER" \
+              --channel "$CHANNEL" \
+              --chain eth \
+              --json | tee result.json
+          else
+            aleph --ccn "$CCN_URL" website update "$WEBSITE_NAME" "$out" \
+              --payment-type credit \
+              --on-behalf-of "$OWNER" \
+              --channel "$CHANNEL" \
+              --chain eth \
+              --json | tee result.json
+          fi
+
+          volume=$(jq -r '.volume_id // .new_volume_id // "?"' result.json)
+          cid=$(jq -r '.ipfs_cid // ""' result.json)
+          version=$(jq -r '.version // "?"' result.json)
+          {
+            echo "## Deployed to IPFS — $verb"
+            echo ""
+            echo "| Field | Value |"
+            echo "|------|------|"
+            echo "| Build version | \`v${BUILD_VERSION}\` |"
+            echo "| Website version | \`$version\` |"
+            echo "| Volume (STORE) | \`$volume\` |"
+            [ -n "$cid" ] && echo "| IPFS CID | \`$cid\` |"
+            echo "| Live URL | https://${DOMAIN} |"
+          } >> "$GITHUB_STEP_SUMMARY"

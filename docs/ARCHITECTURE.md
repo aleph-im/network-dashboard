@@ -113,7 +113,6 @@ src/
 scripts/
 ├── build-country-centroids.ts  # One-shot: world-countries → src/data/country-centroids.json
 ├── build-node-locations.ts     # Pre-build: resolves CCN multiaddr IPs + CRN hostnames to country codes
-├── deploy-ipfs.py              # IPFS deployment via aleph-client
 ├── preview.sh                  # CLI for multi-branch preview (start/stop/list)
 └── preview-dashboard.mjs       # Preview dashboard server (port 3000)
 ```
@@ -464,10 +463,10 @@ See "Network Health Page" above. URL remains `/status`.
 ### Deploying to IPFS
 
 **Context:** Static export deployed to IPFS via Aleph Cloud with delegated billing.
-**Approach:** Manual `workflow_dispatch` trigger in GitHub Actions. The workflow builds the site, uploads `out/` to IPFS via the Aleph SDK (not CLI — the CLI lacks delegation support), and prints the gateway URL in the job summary. Uses `aiohttp.FormData` with explicit filenames for correct MIME type inference. CIDv0→CIDv1 conversion for subdomain gateway format.
-**Key files:** `.github/workflows/deploy.yml`, `scripts/deploy-ipfs.py`
-**Auth:** CI wallet signs messages, main wallet (`0xB136...`) pays via `address` parameter in `create_store()`. CI wallet private key stored as `ALEPH_PRIVATE_KEY` GitHub Actions secret.
-**Gateway URL format:** `https://<cidv1>.ipfs.aleph.sh/`
+**Approach:** Manual `workflow_dispatch` trigger in GitHub Actions. The workflow builds the site and runs the **aleph-rs CLI** (`aleph website update scheduler-dashboard out/` — `deploy` on first run): an authenticated CARv1 upload straight to the CCN (`https://api.aleph.im`), no public-gateway hop, no DHT-propagation race; the single command pins the content, bumps the `websites` aggregate, and re-points the `domains` entry for `network.aleph.cloud`. The CLI binary is pinned (`ALEPH_CLI_VERSION` + SHA256 check) in the workflow env. Replaced the previous Python `aleph-client` SDK script (`scripts/deploy-ipfs.py`, deleted) — same pattern as stasho-app's `deploy-frontend.yml` (Decision #116). The build bakes `NEXT_PUBLIC_API_URL=https://scheduler.api.aleph.cloud` (was the retired `rust-scheduler.aleph.im` until this migration).
+**Key files:** `.github/workflows/deploy.yml`
+**Auth:** CI delegate wallet signs (`ALEPH_PRIVATE_KEY` secret), owner wallet (`0xB136…fCa`) pays via `--on-behalf-of`; the delegate must be authorized in the owner's `security` aggregate for STORE + AGGREGATE keys `[domains, websites]` on the `ALEPH-CLOUDSOLUTIONS` channel (`--channel` must match or the CCN rejects the writes).
+**Verify a deploy landed:** job summary table (website version + volume) and the `websites` aggregate version advancing — a green job alone isn't proof (delegated writes can be dropped async).
 
 ### Adding a New API Endpoint
 
