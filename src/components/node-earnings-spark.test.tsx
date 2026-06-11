@@ -66,7 +66,7 @@ describe("NodeEarningsSpark", () => {
     expect(screen.getByText(/No earnings · last 24h/i)).toBeInTheDocument();
   });
 
-  it("renders the chart + CRN caption (X.XX ALEPH · N.N VMs avg)", () => {
+  it("renders the chart + CRN caption (X.XX ALEPH · N.N VMs scheduled avg)", () => {
     useNodeEarningsMock.mockReturnValue({
       data: {
         role: "crn",
@@ -91,7 +91,7 @@ describe("NodeEarningsSpark", () => {
     const { container } = render(<NodeEarningsSpark hash="crn1" />);
     expect(container.querySelectorAll("path[data-line]")).toHaveLength(2);
     expect(screen.getByText(/12\.40 ALEPH/)).toBeInTheDocument();
-    expect(screen.getByText(/3\.5 VMs avg/)).toBeInTheDocument();
+    expect(screen.getByText(/3\.5 VMs scheduled avg/)).toBeInTheDocument();
   });
 
   it("renders the chart + CCN caption (X.XX ALEPH · N CRNs linked)", () => {

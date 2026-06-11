@@ -36,7 +36,7 @@ export function NodeEarningsSpark({ hash, height = 56 }: Props) {
     );
   }
 
-  const secondaryLabel = data.role === "crn" ? "VMs avg" : "CRNs linked";
+  const secondaryLabel = data.role === "crn" ? "VMs scheduled avg" : "CRNs linked";
   const secondaryValue =
     data.role === "crn"
       ? avg(data.buckets.map((b) => b.secondaryCount)).toFixed(1)

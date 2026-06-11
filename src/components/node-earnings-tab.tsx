@@ -40,14 +40,13 @@ function buildCrnCards(
   status: string,
   updatedAt: string | undefined,
   rangeLoading: boolean,
+  vms: { earning: number | null; earningLoading: boolean },
 ): KpiCard[] {
   const dAleph = data.delta.aleph;
-  const dCount = data.delta.secondaryCount;
-  const avgVms =
-    data.buckets.length === 0
-      ? 0
-      : data.buckets.reduce((s, b) => s + b.secondaryCount, 0) /
-        data.buckets.length;
+  // The earning count comes from the execution-expense slice, which is only
+  // fetched up to 7d (a 30d window is ~250MB) — at 30d the count is omitted
+  // rather than mislabeled.
+  const tooHeavy = range === "30d";
 
   return [
     {
@@ -59,11 +58,19 @@ function buildCrnCards(
       extra: <RewardSourceBar bySource={data.bySource} />,
     },
     {
-      label: "VMs hosted (avg)",
-      primary: avgVms.toFixed(1),
-      secondary: `${deltaArrow(dCount)} ${Math.abs(dCount).toFixed(1)} vs prev ${range}`,
-      tone: dCount > 0 ? "up" : dCount < 0 ? "down" : "default",
-      loading: rangeLoading,
+      label: `VMs earning (${range})`,
+      primary: tooHeavy || vms.earning === null ? "—" : String(vms.earning),
+      secondary: "",
+      loading: !tooHeavy && (rangeLoading || vms.earningLoading),
+      ...(tooHeavy
+        ? {
+            extra: (
+              <p className="mt-1 text-[11px] italic text-muted-foreground">
+                30d VM count is too heavy to load (~250 MB)
+              </p>
+            ),
+          }
+        : {}),
     },
     {
       label: "Score",
@@ -132,6 +139,11 @@ export function NodeEarningsTab({ hash }: { hash: string }) {
     node?.status ?? crn.status,
     node?.updatedAt,
     isPlaceholderData,
+    {
+      // Count of VMs with billable execution in the window = the table below.
+      earning: isPerVmError ? null : (data.perVm?.length ?? null),
+      earningLoading: !isPerVmError && data.perVm === undefined,
+    },
   );
 
   const perVm = data.perVm ?? [];
@@ -163,7 +175,7 @@ export function NodeEarningsTab({ hash }: { hash: string }) {
         <NodeEarningsChart
           buckets={data.buckets}
           primaryLabel="ALEPH"
-          secondaryLabel="VMs hosted"
+          secondaryLabel="VMs scheduled"
           loading={isPlaceholderData}
           {...(crn.parent === null
             ? {

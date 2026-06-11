@@ -11,9 +11,19 @@ export type VersionEntry = {
   changes: ChangeEntry[];
 };
 
-export const CURRENT_VERSION = "0.35.0";
+export const CURRENT_VERSION = "0.35.1";
 
 export const CHANGELOG: VersionEntry[] = [
+  {
+    version: "0.35.1",
+    date: "2026-06-11",
+    changes: [
+      {
+        type: "ui",
+        text: "The Earnings tab's VM count is now range-true: \"VMs earning (24h/7d)\" counts the VMs that actually generated earnings in the selected window, matching the per-VM table below. At 30d the count is omitted with a note that the 30d execution feed is too heavy to load (~250 MB). The old \"VMs hosted (avg)\" number replayed the scheduler's allocation ledger, which never drops missing VMs, so a node whose VMs all died a week ago still showed ~24 hosted next to near-zero earnings. The chart line and panel-spark caption are relabeled \"VMs scheduled\" since allocation history is what they show.",
+      },
+    ],
+  },
   {
     version: "0.35.0",
     date: "2026-06-11",

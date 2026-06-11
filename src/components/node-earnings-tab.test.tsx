@@ -32,10 +32,11 @@ vi.mock("@/hooks/use-nodes", () => ({
     data: { hash: "crn1", status: "healthy", updatedAt: "2026-05-12T00:00:00Z" },
   })),
 }));
+let mockSearch = "";
 vi.mock("next/navigation", () => ({
   useRouter: () => ({ replace: vi.fn() }),
   usePathname: () => "/nodes",
-  useSearchParams: () => new URLSearchParams(),
+  useSearchParams: () => new URLSearchParams(mockSearch),
 }));
 vi.mock("@/hooks/use-vm-creation-times", () => ({
   useVMMessageInfo: () => ({ data: undefined }),
@@ -43,8 +44,33 @@ vi.mock("@/hooks/use-vm-creation-times", () => ({
 
 import { useNodeEarnings } from "@/hooks/use-node-earnings";
 
+const BASE_EARNINGS = {
+  data: {
+    role: "crn" as const,
+    totalAleph: 26,
+    bySource: { credit_revenue: 4.27, holder_tier: 20.95, wage_subsidy: 0.78 },
+    weightsExact: true,
+    delta: { aleph: 0, secondaryCount: 0 },
+    buckets: Array.from({ length: 24 }, (_, i) => ({
+      time: i * 3600,
+      aleph: 1,
+      secondaryCount: 24,
+    })),
+    perVm: [],
+    reconciliation: null,
+  },
+  isLoading: false,
+  isPlaceholderData: false,
+  isError: false,
+  isPerVmLoading: false,
+  isPerVmError: false,
+};
+
 describe("NodeEarningsTab (CRN)", () => {
-  beforeEach(() => vi.clearAllMocks());
+  beforeEach(() => {
+    vi.clearAllMocks();
+    mockSearch = "";
+  });
 
   it("renders KPI row, chart, per-VM table", () => {
     (useNodeEarnings as ReturnType<typeof vi.fn>).mockReturnValue({
@@ -133,6 +159,32 @@ describe("NodeEarningsTab (CRN)", () => {
     // Now all 7 rows should be visible — and both triggers flip to "Show less".
     expect(screen.getAllByRole("button", { name: /show less/i }).length).toBe(2);
     expect(screen.queryByRole("button", { name: /\+ 2 more/i })).not.toBeInTheDocument();
+  });
+
+  it("counts earning VMs in the window — bare count matching the table", () => {
+    (useNodeEarnings as ReturnType<typeof vi.fn>).mockReturnValue({
+      ...BASE_EARNINGS,
+      data: {
+        ...BASE_EARNINGS.data,
+        perVm: [{ vmHash: "vmX", aleph: 25.22, source: "hold" as const }],
+      },
+    });
+    render(<NodeEarningsTab hash="crn1" />);
+    expect(screen.getByText("VMs earning (24h)")).toBeInTheDocument();
+    expect(screen.getByText("1")).toBeInTheDocument(); // = the table's row count
+    expect(screen.queryByText(/of \d+ scheduled/)).not.toBeInTheDocument();
+    expect(screen.queryByRole("link", { name: /see issues/i })).not.toBeInTheDocument();
+  });
+
+  it("omits the 30d count with a too-heavy note instead of mislabeling", () => {
+    mockSearch = "earningsRange=30d";
+    (useNodeEarnings as ReturnType<typeof vi.fn>).mockReturnValue(BASE_EARNINGS);
+    render(<NodeEarningsTab hash="crn1" />);
+    expect(screen.getByText("VMs earning (30d)")).toBeInTheDocument();
+    expect(screen.getByText("—")).toBeInTheDocument();
+    expect(
+      screen.getByText(/30d VM count is too heavy to load/i),
+    ).toBeInTheDocument();
   });
 
   it("renders loading skeleton when data is undefined", () => {
