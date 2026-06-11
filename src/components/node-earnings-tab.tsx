@@ -41,15 +41,18 @@ function buildCrnCards(
   status: string,
   updatedAt: string | undefined,
   rangeLoading: boolean,
-  vmDiscrepancy: { notRunning: number; scheduled: number },
+  vms: {
+    earning: number | null;
+    earningLoading: boolean;
+    scheduled: number;
+    notRunning: number;
+  },
 ): KpiCard[] {
   const dAleph = data.delta.aleph;
-  const dCount = data.delta.secondaryCount;
-  const avgVms =
-    data.buckets.length === 0
-      ? 0
-      : data.buckets.reduce((s, b) => s + b.secondaryCount, 0) /
-        data.buckets.length;
+  // The per-VM data (and so this count) covers at most the trailing 7d — the
+  // execution feed is too heavy for a 30d window. Label the range the number
+  // actually reflects, matching the table caption below.
+  const earningRange = range === "30d" ? "7d" : range;
 
   return [
     {
@@ -61,23 +64,19 @@ function buildCrnCards(
       extra: <RewardSourceBar bySource={data.bySource} />,
     },
     {
-      label: "VMs hosted (avg)",
-      primary: avgVms.toFixed(1),
-      secondary: `${deltaArrow(dCount)} ${Math.abs(dCount).toFixed(1)} vs prev ${range}`,
-      tone: dCount > 0 ? "up" : dCount < 0 ? "down" : "default",
-      loading: rangeLoading,
-      // The count tracks scheduler *allocations*; earnings track observed
-      // executions. When allocated VMs aren't actually running, the two read
-      // as contradictory — say so instead of letting the user reconcile them.
-      ...(vmDiscrepancy.notRunning > 0
+      label: `VMs earning (${earningRange})`,
+      primary: vms.earning === null ? "—" : String(vms.earning),
+      secondary: `of ${vms.scheduled} scheduled`,
+      loading: rangeLoading || vms.earningLoading,
+      ...(vms.notRunning > 0
         ? {
             extra: (
-              <p className="mt-1 text-[11px] text-warning-500">
-                {vmDiscrepancy.notRunning} of {vmDiscrepancy.scheduled} scheduled
-                VMs not running, so they don&apos;t earn —{" "}
+              <p className="mt-1 text-[11px] text-muted-foreground">
+                {vms.notRunning} scheduled VM{vms.notRunning === 1 ? "" : "s"} not
+                running —{" "}
                 <Link
                   href="/issues?perspective=nodes"
-                  className="underline underline-offset-2 hover:text-warning-400"
+                  className="underline underline-offset-2 hover:text-foreground"
                 >
                   see Issues
                 </Link>
@@ -148,7 +147,7 @@ export function NodeEarningsTab({ hash }: { hash: string }) {
 
   // VMs allocated to this node that aren't observed running on it: `missing`
   // (running nowhere) and `misplaced` (running on a different node). These
-  // inflate the hosted count without contributing to earnings.
+  // are scheduled but contribute nothing to earnings.
   const scheduledVms = node?.vms ?? [];
   const notRunning = scheduledVms.filter(
     (v) => v.status === "missing" || v.status === "misplaced",
@@ -161,7 +160,13 @@ export function NodeEarningsTab({ hash }: { hash: string }) {
     node?.status ?? crn.status,
     node?.updatedAt,
     isPlaceholderData,
-    { notRunning, scheduled: scheduledVms.length },
+    {
+      // Count of VMs with billable execution in the window = the table below.
+      earning: isPerVmError ? null : (data.perVm?.length ?? null),
+      earningLoading: !isPerVmError && data.perVm === undefined,
+      scheduled: scheduledVms.length,
+      notRunning,
+    },
   );
 
   const perVm = data.perVm ?? [];
@@ -193,7 +198,7 @@ export function NodeEarningsTab({ hash }: { hash: string }) {
         <NodeEarningsChart
           buckets={data.buckets}
           primaryLabel="ALEPH"
-          secondaryLabel="VMs hosted"
+          secondaryLabel="VMs scheduled"
           loading={isPlaceholderData}
           {...(crn.parent === null
             ? {

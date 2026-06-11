@@ -20,7 +20,7 @@ export const CHANGELOG: VersionEntry[] = [
     changes: [
       {
         type: "ui",
-        text: "The Earnings tab's \"VMs hosted (avg)\" KPI now flags when scheduled VMs aren't actually running: an amber note (\"N of M scheduled VMs not running, so they don't earn — see Issues\") appears under the count, linking to the Issues page. The hosted count tracks scheduler allocations while earnings track observed executions, so a node full of missing VMs previously showed a high VM count next to near-zero earnings with no explanation.",
+        text: "The Earnings tab's VM count is now range-true: \"VMs earning (24h/7d)\" counts the VMs that actually generated earnings in the selected window — matching the per-VM table below — with \"of N scheduled\" as context and a quiet \"see Issues\" link when scheduled VMs aren't running. The old \"VMs hosted (avg)\" number replayed the scheduler's allocation ledger, which never drops missing VMs, so a node whose VMs all died a week ago still showed ~24 hosted next to near-zero earnings. The chart line and panel-spark caption are relabeled \"VMs scheduled\" since allocation history is what they show.",
       },
     ],
   },

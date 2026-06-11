@@ -32,10 +32,11 @@ vi.mock("@/hooks/use-nodes", () => ({
     data: { hash: "crn1", status: "healthy", updatedAt: "2026-05-12T00:00:00Z" },
   })),
 }));
+let mockSearch = "";
 vi.mock("next/navigation", () => ({
   useRouter: () => ({ replace: vi.fn() }),
   usePathname: () => "/nodes",
-  useSearchParams: () => new URLSearchParams(),
+  useSearchParams: () => new URLSearchParams(mockSearch),
 }));
 vi.mock("@/hooks/use-vm-creation-times", () => ({
   useVMMessageInfo: () => ({ data: undefined }),
@@ -78,7 +79,10 @@ function nodeWithVms(statuses: string[]) {
 }
 
 describe("NodeEarningsTab (CRN)", () => {
-  beforeEach(() => vi.clearAllMocks());
+  beforeEach(() => {
+    vi.clearAllMocks();
+    mockSearch = "";
+  });
 
   it("renders KPI row, chart, per-VM table", () => {
     (useNodeEarnings as ReturnType<typeof vi.fn>).mockReturnValue({
@@ -169,8 +173,14 @@ describe("NodeEarningsTab (CRN)", () => {
     expect(screen.queryByRole("button", { name: /\+ 2 more/i })).not.toBeInTheDocument();
   });
 
-  it("flags scheduled-but-not-running VMs on the hosted KPI", () => {
-    (useNodeEarnings as ReturnType<typeof vi.fn>).mockReturnValue(BASE_EARNINGS);
+  it("counts earning VMs in the window and quietly notes not-running scheduled VMs", () => {
+    (useNodeEarnings as ReturnType<typeof vi.fn>).mockReturnValue({
+      ...BASE_EARNINGS,
+      data: {
+        ...BASE_EARNINGS.data,
+        perVm: [{ vmHash: "vmX", aleph: 25.22, source: "hold" as const }],
+      },
+    });
     (useNode as ReturnType<typeof vi.fn>).mockReturnValue(
       nodeWithVms([
         ...Array.from({ length: 22 }, () => "missing"),
@@ -179,9 +189,10 @@ describe("NodeEarningsTab (CRN)", () => {
       ]),
     );
     render(<NodeEarningsTab hash="crn1" />);
-    expect(
-      screen.getByText(/23 of 24 scheduled\s*VMs not running/i),
-    ).toBeInTheDocument();
+    expect(screen.getByText("VMs earning (24h)")).toBeInTheDocument();
+    expect(screen.getByText("1")).toBeInTheDocument(); // = the table's row count
+    expect(screen.getByText("of 24 scheduled")).toBeInTheDocument();
+    expect(screen.getByText(/23 scheduled VMs not\s*running/i)).toBeInTheDocument();
     expect(screen.getByRole("link", { name: /see issues/i })).toHaveAttribute(
       "href",
       "/issues?perspective=nodes",
@@ -194,7 +205,15 @@ describe("NodeEarningsTab (CRN)", () => {
       nodeWithVms(["dispatched", "dispatched", "duplicated"]),
     );
     render(<NodeEarningsTab hash="crn1" />);
-    expect(screen.queryByText(/not running/i)).not.toBeInTheDocument();
+    expect(screen.queryByText(/not\s*running/i)).not.toBeInTheDocument();
+  });
+
+  it("labels the earning count 7d on the 30d range (per-VM data covers 7d)", () => {
+    mockSearch = "earningsRange=30d";
+    (useNodeEarnings as ReturnType<typeof vi.fn>).mockReturnValue(BASE_EARNINGS);
+    (useNode as ReturnType<typeof vi.fn>).mockReturnValue(nodeWithVms(["dispatched"]));
+    render(<NodeEarningsTab hash="crn1" />);
+    expect(screen.getByText("VMs earning (7d)")).toBeInTheDocument();
   });
 
   it("renders loading skeleton when data is undefined", () => {
