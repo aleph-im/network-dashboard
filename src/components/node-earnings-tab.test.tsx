@@ -42,6 +42,40 @@ vi.mock("@/hooks/use-vm-creation-times", () => ({
 }));
 
 import { useNodeEarnings } from "@/hooks/use-node-earnings";
+import { useNode } from "@/hooks/use-nodes";
+
+const BASE_EARNINGS = {
+  data: {
+    role: "crn" as const,
+    totalAleph: 26,
+    bySource: { credit_revenue: 4.27, holder_tier: 20.95, wage_subsidy: 0.78 },
+    weightsExact: true,
+    delta: { aleph: 0, secondaryCount: 0 },
+    buckets: Array.from({ length: 24 }, (_, i) => ({
+      time: i * 3600,
+      aleph: 1,
+      secondaryCount: 24,
+    })),
+    perVm: [],
+    reconciliation: null,
+  },
+  isLoading: false,
+  isPlaceholderData: false,
+  isError: false,
+  isPerVmLoading: false,
+  isPerVmError: false,
+};
+
+function nodeWithVms(statuses: string[]) {
+  return {
+    data: {
+      hash: "crn1",
+      status: "healthy",
+      updatedAt: "2026-05-12T00:00:00Z",
+      vms: statuses.map((status, i) => ({ hash: `vm${i}`, status })),
+    },
+  };
+}
 
 describe("NodeEarningsTab (CRN)", () => {
   beforeEach(() => vi.clearAllMocks());
@@ -133,6 +167,34 @@ describe("NodeEarningsTab (CRN)", () => {
     // Now all 7 rows should be visible — and both triggers flip to "Show less".
     expect(screen.getAllByRole("button", { name: /show less/i }).length).toBe(2);
     expect(screen.queryByRole("button", { name: /\+ 2 more/i })).not.toBeInTheDocument();
+  });
+
+  it("flags scheduled-but-not-running VMs on the hosted KPI", () => {
+    (useNodeEarnings as ReturnType<typeof vi.fn>).mockReturnValue(BASE_EARNINGS);
+    (useNode as ReturnType<typeof vi.fn>).mockReturnValue(
+      nodeWithVms([
+        ...Array.from({ length: 22 }, () => "missing"),
+        "misplaced",
+        "dispatched",
+      ]),
+    );
+    render(<NodeEarningsTab hash="crn1" />);
+    expect(
+      screen.getByText(/23 of 24 scheduled\s*VMs not running/i),
+    ).toBeInTheDocument();
+    expect(screen.getByRole("link", { name: /see issues/i })).toHaveAttribute(
+      "href",
+      "/issues?perspective=nodes",
+    );
+  });
+
+  it("hides the not-running note when every scheduled VM is observed", () => {
+    (useNodeEarnings as ReturnType<typeof vi.fn>).mockReturnValue(BASE_EARNINGS);
+    (useNode as ReturnType<typeof vi.fn>).mockReturnValue(
+      nodeWithVms(["dispatched", "dispatched", "duplicated"]),
+    );
+    render(<NodeEarningsTab hash="crn1" />);
+    expect(screen.queryByText(/not running/i)).not.toBeInTheDocument();
   });
 
   it("renders loading skeleton when data is undefined", () => {

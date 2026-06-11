@@ -1,6 +1,7 @@
 "use client";
 
 import { useState } from "react";
+import Link from "next/link";
 import { useSearchParams, useRouter, usePathname } from "next/navigation";
 import { Badge } from "@aleph-front/ds/badge";
 import { Card } from "@aleph-front/ds/card";
@@ -40,6 +41,7 @@ function buildCrnCards(
   status: string,
   updatedAt: string | undefined,
   rangeLoading: boolean,
+  vmDiscrepancy: { notRunning: number; scheduled: number },
 ): KpiCard[] {
   const dAleph = data.delta.aleph;
   const dCount = data.delta.secondaryCount;
@@ -64,6 +66,25 @@ function buildCrnCards(
       secondary: `${deltaArrow(dCount)} ${Math.abs(dCount).toFixed(1)} vs prev ${range}`,
       tone: dCount > 0 ? "up" : dCount < 0 ? "down" : "default",
       loading: rangeLoading,
+      // The count tracks scheduler *allocations*; earnings track observed
+      // executions. When allocated VMs aren't actually running, the two read
+      // as contradictory — say so instead of letting the user reconcile them.
+      ...(vmDiscrepancy.notRunning > 0
+        ? {
+            extra: (
+              <p className="mt-1 text-[11px] text-warning-500">
+                {vmDiscrepancy.notRunning} of {vmDiscrepancy.scheduled} scheduled
+                VMs not running, so they don&apos;t earn —{" "}
+                <Link
+                  href="/issues?perspective=nodes"
+                  className="underline underline-offset-2 hover:text-warning-400"
+                >
+                  see Issues
+                </Link>
+              </p>
+            ),
+          }
+        : {}),
     },
     {
       label: "Score",
@@ -125,6 +146,14 @@ export function NodeEarningsTab({ hash }: { hash: string }) {
     );
   }
 
+  // VMs allocated to this node that aren't observed running on it: `missing`
+  // (running nowhere) and `misplaced` (running on a different node). These
+  // inflate the hosted count without contributing to earnings.
+  const scheduledVms = node?.vms ?? [];
+  const notRunning = scheduledVms.filter(
+    (v) => v.status === "missing" || v.status === "misplaced",
+  ).length;
+
   const cards = buildCrnCards(
     data,
     range,
@@ -132,6 +161,7 @@ export function NodeEarningsTab({ hash }: { hash: string }) {
     node?.status ?? crn.status,
     node?.updatedAt,
     isPlaceholderData,
+    { notRunning, scheduled: scheduledVms.length },
   );
 
   const perVm = data.perVm ?? [];

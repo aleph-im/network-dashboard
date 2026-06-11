@@ -11,9 +11,19 @@ export type VersionEntry = {
   changes: ChangeEntry[];
 };
 
-export const CURRENT_VERSION = "0.35.0";
+export const CURRENT_VERSION = "0.35.1";
 
 export const CHANGELOG: VersionEntry[] = [
+  {
+    version: "0.35.1",
+    date: "2026-06-11",
+    changes: [
+      {
+        type: "ui",
+        text: "The Earnings tab's \"VMs hosted (avg)\" KPI now flags when scheduled VMs aren't actually running: an amber note (\"N of M scheduled VMs not running, so they don't earn — see Issues\") appears under the count, linking to the Issues page. The hosted count tracks scheduler allocations while earnings track observed executions, so a node full of missing VMs previously showed a high VM count next to near-zero earnings with no explanation.",
+      },
+    ],
+  },
   {
     version: "0.35.0",
     date: "2026-06-11",
