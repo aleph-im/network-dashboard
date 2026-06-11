@@ -24,7 +24,11 @@ export const CHANGELOG: VersionEntry[] = [
       },
       {
         type: "refactor",
-        text: "Wallet reward numbers are now anchored to the per-address totals from the rewards API and split per node using api2 execution node_id weights (CRN, exact) and score weights (CCN). The old hardcoded 60/15/20 distribution split is retired for the wallet path — computeWalletRewards and the useWalletRewards hook were removed.",
+        text: "Wallet reward numbers are now anchored to the per-address totals from the rewards API and split per node by each CRN's live VM count and CCN score weights. The old hardcoded 60/15/20 distribution split is retired for the wallet path — computeWalletRewards and the useWalletRewards hook were removed.",
+      },
+      {
+        type: "fix",
+        text: "The wallet \"by node this cycle\" breakdown now loads reliably, and the rewards query is faster. Per-node weighting uses each CRN's live VM count instead of downloading the full network credit-expense feed (which reached ~750MB for a payout cycle and could hang the panel), and rewards time-series requests are aligned to whole-hour bounds so the rewards API serves them from cache.",
       },
     ],
   },
