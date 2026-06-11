@@ -4,7 +4,7 @@ import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
 import type { ReactNode } from "react";
 import { useOwnerRewards } from "@/hooks/use-owner-rewards";
 import * as rc from "@/api/rewards-client";
-import * as ce from "@/hooks/use-credit-expenses";
+import * as un from "@/hooks/use-nodes";
 import * as ns from "@/hooks/use-node-state";
 
 afterEach(() => vi.restoreAllMocks());
@@ -26,7 +26,7 @@ describe("useOwnerRewards", () => {
       bySource: { credit_revenue: 50, holder_tier: 0, wage_subsidy: 10 },
       full: { credit_revenue: { execution_crn: 0, execution_ccn: 0, execution_staker: 50, storage_ccn: 0, storage_staker: 0 }, holder_tier: { execution_crn: 0, execution_ccn: 0, execution_staker: 0, storage_ccn: 0, storage_staker: 0 }, wage_subsidy: { crn: 0, ccn: 0, staker: 10 } },
     });
-    vi.spyOn(ce, "useCreditExpenses").mockReturnValue({ data: [], isLoading: false, isPlaceholderData: false } as never);
+    vi.spyOn(un, "useNodes").mockReturnValue({ data: [], isLoading: false } as never);
     vi.spyOn(ns, "useNodeState").mockReturnValue({ data: { crns: new Map(), ccns: new Map() }, isLoading: false } as never);
 
     const { result } = renderHook(() => useOwnerRewards("0xOWNER"), { wrapper });

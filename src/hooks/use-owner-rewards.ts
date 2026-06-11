@@ -3,7 +3,7 @@
 import { useMemo } from "react";
 import { useRewards } from "@/hooks/use-rewards";
 import { useDistributions } from "@/hooks/use-distributions";
-import { useCreditExpenses } from "@/hooks/use-credit-expenses";
+import { useNodes } from "@/hooks/use-nodes";
 import { useNodeState } from "@/hooks/use-node-state";
 import { apportionOwnerRewards } from "@/lib/reward-apportionment";
 import type { OwnerRewards } from "@/api/rewards-types";
@@ -21,19 +21,21 @@ export function useOwnerRewards(address: string): {
 
   const nowSec = useMemo(() => Math.floor(Date.now() / 300_000) * 300, []); // 5-min rounded
   // While the cycle is still loading, use a degenerate window (from === to) so
-  // useRewards / useCreditExpenses stay disabled and we don't fire a throwaway
-  // DATA_START-wide fetch that gets replaced once the real cycle window is known.
+  // useRewards stays disabled and we don't fire a throwaway DATA_START-wide
+  // fetch that gets replaced once the real cycle window is known.
   const fromSec = cycleLoading ? nowSec : (cycle?.endSec ?? DATA_START_SEC);
 
   const { data: rewards, isLoading: rewardsLoading, isError: rewardsError } = useRewards(address, fromSec, nowSec);
-  const { data: expenses, isLoading: expLoading } = useCreditExpenses(fromSec, nowSec);
+  const { data: nodes, isLoading: nodesLoading } = useNodes();
   const { data: nodeState, isLoading: nsLoading } = useNodeState();
 
   const data = useMemo<OwnerRewards | undefined>(() => {
     if (!rewards || !nodeState) return undefined;
     const lower = address.toLowerCase();
+    const crnVmCounts = new Map<string, number>();
+    for (const n of nodes ?? []) crnVmCounts.set(n.hash, n.vmCount);
     const { byNode, stakingAleph, unattributedAleph } = apportionOwnerRewards({
-      address, rewards, expenses: expenses ?? [], nodeState,
+      address, rewards, crnVmCounts, nodeState,
     });
     const paidAleph = cycle?.rewards.get(lower);
     const oc = cycle?.onChain.get(lower);
@@ -50,12 +52,12 @@ export function useOwnerRewards(address: string): {
           ? { aleph: paidAleph, timeSec: cycle.endSec, txHash: oc?.txHash ?? null, status: oc?.status ?? "pending" }
           : null,
     };
-  }, [address, rewards, expenses, nodeState, cycle, fromSec]);
+  }, [address, rewards, nodes, nodeState, cycle, fromSec]);
 
   return {
     data,
     isLoading: cycleLoading || rewardsLoading || nsLoading,
-    isBreakdownLoading: expLoading,
+    isBreakdownLoading: nodesLoading,
     isError: rewardsError,
   };
 }

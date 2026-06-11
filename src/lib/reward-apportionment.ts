@@ -1,5 +1,5 @@
 import type { AddressRewards, BySource, OwnerNodeReward, RewardSource } from "@/api/rewards-types";
-import type { CreditExpense, NodeState } from "@/api/credit-types";
+import type { NodeState } from "@/api/credit-types";
 import { getRewardAddress, computeScoreMultiplier } from "@/lib/credit-distribution";
 
 const ZERO_SOURCE: BySource = { credit_revenue: 0, holder_tier: 0, wage_subsidy: 0 };
@@ -7,7 +7,12 @@ const ZERO_SOURCE: BySource = { credit_revenue: 0, holder_tier: 0, wage_subsidy:
 type Args = {
   address: string;
   rewards: AddressRewards;
-  expenses: CreditExpense[];
+  /** Current VM count per CRN hash (from useNodes), the per-CRN execution-share
+   *  proxy. Deriving exact per-CRN execution ALEPH would mean downloading the
+   *  whole network's ~750MB credit-expense feed for the cycle just to rank this
+   *  address's handful of CRNs; VM count is already cached and good enough to
+   *  split the authoritative per-source totals. */
+  crnVmCounts: Map<string, number>;
   nodeState: NodeState;
 };
 
@@ -17,17 +22,12 @@ type Apportioned = {
   unattributedAleph: number;
 };
 
-/** Per-CRN execution weight from api2 node_id ALEPH over the window, scoped to
- *  this address's CRNs. Exact attribution (node_id present on every exec entry). */
-function crnExecWeights(ownedCrnHashes: Set<string>, expenses: CreditExpense[]): Map<string, number> {
+/** Per-CRN execution weight = current VM count, scoped to this address's CRNs.
+ *  Every owned CRN is seeded (0 when it hosts no VMs) so `distribute` falls back
+ *  to an even split rather than dropping a node. */
+function crnVmWeights(ownedCrnHashes: Set<string>, crnVmCounts: Map<string, number>): Map<string, number> {
   const w = new Map<string, number>();
-  for (const expense of expenses) {
-    if (expense.type !== "execution") continue;
-    for (const c of expense.credits) {
-      if (!c.nodeId || !ownedCrnHashes.has(c.nodeId)) continue;
-      w.set(c.nodeId, (w.get(c.nodeId) ?? 0) + c.alephCost);
-    }
-  }
+  for (const h of ownedCrnHashes) w.set(h, crnVmCounts.get(h) ?? 0);
   return w;
 }
 
@@ -45,7 +45,7 @@ function distribute(total: number, weights: Map<string, number>): Map<string, nu
   return out;
 }
 
-export function apportionOwnerRewards({ address, rewards, expenses, nodeState }: Args): Apportioned {
+export function apportionOwnerRewards({ address, rewards, crnVmCounts, nodeState }: Args): Apportioned {
   const lower = address.toLowerCase();
   const owns = (n: { owner: string; reward: string }) =>
     getRewardAddress(n).toLowerCase() === lower || n.owner.toLowerCase() === lower;
@@ -69,8 +69,7 @@ export function apportionOwnerRewards({ address, rewards, expenses, nodeState }:
     wage_subsidy: wage.ccn,
   };
 
-  const crnW = crnExecWeights(ownedCrnHashes, expenses);
-  for (const h of ownedCrnHashes) if (!crnW.has(h)) crnW.set(h, 0);
+  const crnW = crnVmWeights(ownedCrnHashes, crnVmCounts);
   const ccnW = new Map<string, number>();
   for (const c of ownedCcns) ccnW.set(c.hash, computeScoreMultiplier(c.score));
 
