@@ -8,6 +8,9 @@ const APP_DESCRIPTION =
   "Operations dashboard for monitoring the Aleph Cloud scheduler — node health, VM scheduling, and real-time events.";
 
 export const metadata: Metadata = {
+  metadataBase: new URL(
+    process.env["NEXT_PUBLIC_SITE_URL"] ?? "https://network.aleph.cloud",
+  ),
   title: {
     default: APP_NAME,
     template: `%s | ${APP_NAME}`,
