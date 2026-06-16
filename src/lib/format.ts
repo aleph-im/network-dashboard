@@ -75,6 +75,20 @@ export function explorerWalletUrl(address: string): string {
   return `https://explorer.aleph.cloud/address/ETH/${address}`;
 }
 
+/**
+ * Format a USD amount. Whole-dollar figures drop the cents; sub-dollar
+ * figures keep two decimals so small purchases stay legible.
+ */
+export function formatUsd(value: number): string {
+  const fractionDigits = value !== 0 && Math.abs(value) < 1 ? 2 : 0;
+  return value.toLocaleString("en-US", {
+    style: "currency",
+    currency: "USD",
+    minimumFractionDigits: fractionDigits,
+    maximumFractionDigits: fractionDigits,
+  });
+}
+
 export function formatGpuLabel(
   gpus: { model: string; deviceName: string }[],
 ): string {

@@ -11,9 +11,19 @@ export type VersionEntry = {
   changes: ChangeEntry[];
 };
 
-export const CURRENT_VERSION = "0.35.1";
+export const CURRENT_VERSION = "0.36.0";
 
 export const CHANGELOG: VersionEntry[] = [
+  {
+    version: "0.36.0",
+    date: "2026-06-16",
+    changes: [
+      {
+        type: "feature",
+        text: "New Revenue page (/revenue) showing the buy side of credits: total USD revenue with a cumulative sparkline, completed purchases, ALEPH distributed to the network and ALEPH market-bought from stable-coin payments, a paid-in split (ALEPH vs stable coins), a recent-purchases list, and a monthly breakdown. It reads the signed `buyflow` aggregate published hourly by the buy-flow pipeline — the buy-side counterpart to the spend-side Credits page.",
+      },
+    ],
+  },
   {
     version: "0.35.1",
     date: "2026-06-11",
