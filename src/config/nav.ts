@@ -3,6 +3,7 @@ export type NavIconName =
   | "server"
   | "cpu"
   | "coins"
+  | "revenue"
   | "network"
   | "signal"
   | "warning";
@@ -32,6 +33,7 @@ export const NAV_SECTIONS: NavSectionConfig[] = [
       { label: "Nodes",   href: "/nodes",   icon: "server" },
       { label: "VMs",     href: "/vms",     icon: "cpu" },
       { label: "Credits", href: "/credits", icon: "coins" },
+      { label: "Revenue", href: "/revenue", icon: "revenue" },
     ],
   },
   {

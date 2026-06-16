@@ -480,6 +480,7 @@ import type {
   ApiCorechannelNode,
   ApiResourceNode,
 } from "@/api/credit-types";
+import type { BuyflowData } from "@/api/buyflow-types";
 
 function toCreditEntry(
   c: ApiCreditEntryWire,
@@ -664,6 +665,24 @@ export async function getNodeState(): Promise<NodeState> {
   }
 
   return { ccns, crns };
+}
+
+// Deploy wallet that publishes the signed `buyflow` aggregate (the buy-side
+// revenue mirror). See aleph-buyflow-dashboard.
+const BUYFLOW_SENDER = "0x246B97e5Ce59E445C6206cE5BB8663e2Bae06a50";
+
+export async function getBuyflow(): Promise<BuyflowData> {
+  const url = `${getAlephBaseUrl()}/api/v0/aggregates/${BUYFLOW_SENDER}.json?keys=buyflow`;
+  const res = await fetch(url);
+  if (!res.ok) {
+    throw new Error(`Aleph API error: ${res.status} for buyflow aggregate`);
+  }
+  const body = (await res.json()) as { data?: { buyflow?: BuyflowData } };
+  const buyflow = body.data?.buyflow;
+  if (!buyflow) {
+    throw new Error("buyflow aggregate is empty");
+  }
+  return buyflow;
 }
 
 export async function getMessagesByHashes(

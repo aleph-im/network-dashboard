@@ -28,6 +28,12 @@ export function NavIcon({ name }: { name: NavIconName }) {
           <path strokeLinecap="round" strokeLinejoin="round" d="M20 6c0 1.657-3.582 3-8 3S4 7.657 4 6m16 0c0-1.657-3.582-3-8-3S4 4.343 4 6m16 0v4c0 1.657-3.582 3-8 3S4 11.657 4 10V6m16 8c0 1.657-3.582 3-8 3s-8-1.343-8-3m16-4v8c0 1.657-3.582 3-8 3s-8-1.343-8-3v-8" />
         </svg>
       );
+    case "revenue":
+      return (
+        <svg className="size-4" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
+          <path strokeLinecap="round" strokeLinejoin="round" d="M3 17l6-6 4 4 8-8m0 0h-5m5 0v5" />
+        </svg>
+      );
     case "network":
       return (
         <svg className="size-4" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
