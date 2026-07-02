@@ -35,9 +35,9 @@ describe("WalletRevenueHistoryCard", () => {
     expect(container.firstChild).toBeNull();
   });
 
-  it("renders nothing on error (page-level revenue card surfaces the outage)", () => {
-    vi.spyOn(h, "useOwnerRewardsHistory").mockReturnValue({ months: [], isLoading: false, isError: true });
-    const { container } = render(<WalletRevenueHistoryCard address="0xowner" />);
-    expect(container.firstChild).toBeNull();
+  it("keeps showing the chart on a transient error with retained data", () => {
+    vi.spyOn(h, "useOwnerRewardsHistory").mockReturnValue({ months: MONTHS, isLoading: false, isError: true });
+    render(<WalletRevenueHistoryCard address="0xowner" />);
+    expect(screen.getByText("Jun")).toBeInTheDocument();
   });
 });

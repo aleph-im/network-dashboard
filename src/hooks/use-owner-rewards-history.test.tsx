@@ -64,4 +64,30 @@ describe("useOwnerRewardsHistory", () => {
     expect(result.current.months).toEqual([]);
     expect(result.current.isLoading).toBe(false);
   });
+
+  it("appends a 2-digit year suffix only when the bucket's year differs from now", async () => {
+    const now = new Date();
+    const thisYear = now.getUTCFullYear();
+    const nextYear = thisYear + 1;
+    const sameYearStart = new Date(Date.UTC(thisYear, 0, 1)).toISOString();
+    const sameYearEnd = new Date(Date.UTC(thisYear, 1, 1)).toISOString();
+    const nextYearStart = new Date(Date.UTC(nextYear, 0, 1)).toISOString();
+    const nextYearEnd = new Date(Date.UTC(nextYear, 1, 1)).toISOString();
+
+    vi.spyOn(rc, "getRewardsTimeSeries").mockResolvedValue({
+      address: "0xowner",
+      totalAleph: 0,
+      bySource: { credit_revenue: 0, holder_tier: 0, wage_subsidy: 0 },
+      full: ZERO_FULL,
+      buckets: [
+        bucket(sameYearStart, sameYearEnd, 10, 0, 0),
+        bucket(nextYearStart, nextYearEnd, 20, 0, 0),
+      ],
+    });
+
+    const { result } = renderHook(() => useOwnerRewardsHistory("0xOWNER"), { wrapper });
+    await waitFor(() => expect(result.current.months.length).toBe(2));
+    expect(result.current.months[0]!.label).not.toMatch(/'\d\d$/);
+    expect(result.current.months[1]!.label).toMatch(/'\d\d$/);
+  });
 });

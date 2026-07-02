@@ -7,7 +7,7 @@ import { REWARD_SOURCE_META } from "@/lib/reward-source-meta";
 import { useOwnerRewardsHistory } from "@/hooks/use-owner-rewards-history";
 
 export function WalletRevenueHistoryCard({ address }: { address: string }) {
-  const { months, isLoading, isError } = useOwnerRewardsHistory(address);
+  const { months, isLoading } = useOwnerRewardsHistory(address);
   const hasData = months.some((m) => m.total > 0);
 
   if (isLoading) {
@@ -21,9 +21,11 @@ export function WalletRevenueHistoryCard({ address }: { address: string }) {
     );
   }
 
-  // Non-earning wallet, or an isolated history-feed error the page-level revenue
-  // card already reports — render nothing rather than an empty/duplicate card.
-  if (isError || !hasData) return null;
+  // Non-earning wallet, or the feed never loaded (page-level revenue card
+  // surfaces that outage) — render nothing rather than an empty/duplicate card.
+  // A transient error with retained placeholder data falls through and keeps
+  // showing the last-good chart, matching WalletRevenueCard's behavior.
+  if (!hasData) return null;
 
   return (
     <Card padding="md">
