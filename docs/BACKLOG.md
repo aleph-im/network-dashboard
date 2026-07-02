@@ -44,6 +44,21 @@ to medium size (one PR, one focused session).
 **Description:** The DS `CopyableText` component only renders the arrow icon for external URLs (`isExternalUrl` check). Internal links should also show the arrow (without `target="_blank"`). Patched locally in `node_modules`; needs to be applied in `@aleph-front/ds`.
 **Priority:** High
 
+### 2026-07-02 - Mobile tap on revenue-history chart clears on pointer-lift
+**Source:** Wallet revenue history implementation (`RewardHistoryChart`)
+**Description:** The chart's inline mobile readout is driven by `onPointerEnter`/`onPointerMove`/`onPointerLeave` on each bar's hit rect. On touch, lifting the finger fires a `pointerleave`, so the readout clears the instant the user taps instead of staying visible for a press-and-hold read. Needs pointer-type-aware handling (e.g. keep the last touch selection until the next tap elsewhere, rather than clearing on `pointerleave` for `pointerType === "touch"`). Verify on a real device — simulators don't reliably reproduce touch pointer event ordering.
+**Priority:** Medium
+
+### 2026-07-02 - Month-over-month delta caption on revenue-history chart
+**Source:** `docs/superpowers/specs/2026-07-02-wallet-revenue-history-design.md` — explicit Phase-2 follow-up
+**Description:** Add a small caption calling out the delta vs. the previous full month (e.g. "+188% vs May") next to the chart or in the legend area, once the base chart has been live long enough to gauge whether operators want the number spelled out explicitly rather than reading it off the bars.
+**Priority:** Low
+
+### 2026-07-02 - RewardSourceBar should import the shared REWARD_SOURCE_META
+**Source:** Wallet revenue history implementation — `src/lib/reward-source-meta.ts` was added as a new shared vocabulary but `src/components/reward-source-bar.tsx` still defines its own source labels/colors independently
+**Description:** Dedupe the reward-source vocabulary (key/label/CSS-var/dot-class per source) by having `RewardSourceBar` import `REWARD_SOURCE_META` instead of maintaining a parallel copy. Low-risk mechanical refactor; the two are currently kept manually in sync.
+**Priority:** Low
+
 ---
 
 ## Needs planning
@@ -56,6 +71,21 @@ Multi-day / multi-PR work.
 **Source:** Deferred from Decision #111 (Phase 1A scoped to wallet owner view + Node Earnings tab).
 **Description:** Migrate the remaining reward surfaces off the client-side reconstruction: the Credits recipient table (needs ≤100-address batching of `/rewards/time-series`, since the API caps addresses per request) and the credit flow diagram + summary cards (network rollup via no-address query). ~~The network detail-panel CRN/CCN earnings sparklines~~ — ④ done by Plan B (Decision #114): sparks consume `useNodeEarnings(hash, "24h", { weights: "proxy" })` on the rewards layer with no execution fetch. Retire `computeDistributionSummary`/`distributeExpense` once the credits page is migrated. Also add a dedicated api2 WebSocket subscription to FOUNDATION distribution messages (additive over the Phase-1 polling fallback — invalidates the same query key, reuses the same parser).
 **Priority:** Medium
+
+### 2026-07-02 - USD lens toggle for the wallet revenue-history chart
+**Source:** `docs/superpowers/specs/2026-07-02-wallet-revenue-history-design.md` — explicit v1 non-goal (Decision #118)
+**Description:** Add a toggle to switch the "Node revenue history" chart between ALEPH and USD denomination. This is exactly what would have let the operator who prompted this feature (2026-07-01 incident) separate a real revenue-composition shift from ALEPH price movement. Needs a per-month historical ALEPH→USD price source the app doesn't currently carry — design that data source (and its caching/staleness story) before implementing the toggle.
+**Priority:** Medium
+
+### 2026-07-02 - Per-node-over-time breakdown for the wallet revenue-history chart
+**Source:** `docs/superpowers/specs/2026-07-02-wallet-revenue-history-design.md` — explicit v1 non-goal (Decision #118)
+**Description:** Split each monthly bar by owned node instead of (or in addition to) by source, for reward addresses with multiple CRNs/CCNs. Requires per-bucket per-node apportionment (the expensive path — see `computeExecutionBucketWeights` in `reward-apportionment.ts` for the equivalent Node Earnings tab machinery), which is unnecessary for the current diagnostic (the current-cycle `WalletRevenueCard` already does per-node for "now"). Needs a design pass on how per-node segments would render alongside per-source stacking without the chart becoming unreadable.
+**Priority:** Low
+
+### 2026-07-02 - Revenue-history chart y-scale assumes aleph == sum(bySource)
+**Source:** Code review of the wallet revenue history implementation
+**Description:** `RewardHistoryChart` scales its y-axis off `bucket.total` (the API's `aleph` field) while the stacked bar segments are drawn from `bucket.bySource`. This is only correct while the rewards API guarantees `aleph == credit_revenue + holder_tier + wage_subsidy` for every bucket. If that contract ever loosens (e.g. a new source added to `bySource` without a corresponding total, or rounding drift), bars would visually over/under-fill the y-scale. Not actionable now — watch item to revisit if a future rewards-API change breaks the invariant (e.g. add a runtime assertion or derive the scale from `bySource` directly).
+**Priority:** Low
 
 ### 2026-05-29 - Phase 2: scheduler `active_since` param (server-side retention window)
 **Source:** VM retention window Phase 1 (Decision #110) shipped the window client-side; the server-side half is tracked in aleph-vm-scheduler#179 and brief `docs/superpowers/briefs/2026-05-29-scheduler-vms-time-filter.md`.

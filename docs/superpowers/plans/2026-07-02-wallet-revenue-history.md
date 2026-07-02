@@ -1,3 +1,10 @@
+---
+status: done
+branch: feature/wallet-revenue-history
+date: 2026-07-02
+note: implemented subagent-driven; final review applied (transient-error fix); awaiting preview + ship
+---
+
 # Wallet Revenue History Implementation Plan
 
 > **For agentic workers:** REQUIRED SUB-SKILL: Use superpowers:subagent-driven-development (recommended) or superpowers:executing-plans to implement this plan task-by-task. Steps use checkbox (`- [ ]`) syntax for tracking.
