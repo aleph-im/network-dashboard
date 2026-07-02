@@ -11,9 +11,19 @@ export type VersionEntry = {
   changes: ChangeEntry[];
 };
 
-export const CURRENT_VERSION = "0.36.0";
+export const CURRENT_VERSION = "0.36.1";
 
 export const CHANGELOG: VersionEntry[] = [
+  {
+    version: "0.36.1",
+    date: "2026-07-02",
+    changes: [
+      {
+        type: "ui",
+        text: "The reward by-source breakdown (wallet revenue card + Node Earnings KPI) relabels \"Min. wage\" to \"Wage subsidy\", with a tooltip explaining it is the emission actually paid over the window — which decays toward zero over time, so it reads lower than the undecayed \"min wage\" figure in the economics calculator. The old label invited an apples-to-oranges comparison between a realized, decaying amount and a nominal design target.",
+      },
+    ],
+  },
   {
     version: "0.36.0",
     date: "2026-06-16",

@@ -24,7 +24,9 @@ describe("WalletRevenueCard", () => {
     render(<WalletRevenueCard rewards={OWNER} />);
     expect(screen.getByText(/Owed this cycle/i)).toBeInTheDocument();
     expect(screen.getByText("node-alpha")).toBeInTheDocument();
-    expect(screen.getByText(/Min\. wage/i)).toBeInTheDocument();
+    // Exact string (not regex) so it targets the caption label span only, not
+    // the footnote sentence "…including the wage subsidy (which decays…)".
+    expect(screen.getByText("Wage subsidy")).toBeInTheDocument();
     expect(screen.getByText(/Last payment/i)).toBeInTheDocument();
     expect(screen.getByText(/Accruing for 10 days/i)).toBeInTheDocument();
     // The distribution message's on-chain status is stale upstream — not rendered.
