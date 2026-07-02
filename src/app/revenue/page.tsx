@@ -21,8 +21,9 @@ export default function RevenuePage() {
       <div className="mb-10">
         <h1 className="text-4xl">Revenue</h1>
         <p className="mt-2 text-base text-muted-foreground">
-          Credit purchases flowing into Aleph Cloud — paid in ALEPH or stable
-          coins, swapped to ALEPH, then distributed to the network.
+          Payments flowing into Aleph Cloud — credit purchases and consolidated
+          pay-as-you-go revenue, paid in ALEPH or stable coins, swapped to
+          ALEPH, then distributed to the network.
         </p>
       </div>
 

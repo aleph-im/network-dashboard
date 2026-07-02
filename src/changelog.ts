@@ -11,9 +11,19 @@ export type VersionEntry = {
   changes: ChangeEntry[];
 };
 
-export const CURRENT_VERSION = "0.36.1";
+export const CURRENT_VERSION = "0.37.0";
 
 export const CHANGELOG: VersionEntry[] = [
+  {
+    version: "0.37.0",
+    date: "2026-07-02",
+    changes: [
+      {
+        type: "fix",
+        text: "Revenue page: the Total Revenue headline now counts every payment processed by the on-chain payment contract (the buyflow aggregate's new revenue.totalUsd), not just Credit-API purchases — most revenue reaches the processor as direct ALEPH transfers (consolidated pay-as-you-go and off-API payments), so the old figure understated revenue ~15x. Credit purchases get their own card, and the monthly table now splits Purchased vs Revenue Processed.",
+      },
+    ],
+  },
   {
     version: "0.36.1",
     date: "2026-07-02",

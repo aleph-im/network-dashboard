@@ -31,12 +31,21 @@ const columns: Column<BuyflowMonth>[] = [
     align: "right",
   },
   {
-    header: "Revenue",
-    accessor: (m) => (
-      <span className="font-semibold tabular-nums">{formatUsd(m.usd)}</span>
-    ),
+    header: "Purchased",
+    accessor: (m) => <span className="tabular-nums">{formatUsd(m.usd)}</span>,
     sortable: true,
     sortValue: (m) => m.usd,
+    align: "right",
+  },
+  {
+    header: "Revenue Processed",
+    accessor: (m) => (
+      <span className="font-semibold tabular-nums">
+        {formatUsd(m.processedUsd ?? 0)}
+      </span>
+    ),
+    sortable: true,
+    sortValue: (m) => m.processedUsd ?? 0,
     align: "right",
   },
 ];

@@ -58,6 +58,25 @@ export type BuyflowChainEvent = {
   toDevelopers: number;
   alephReceived: number;
   alephToDistribution: number;
+  /**
+   * USD value of the run — stables at face value, ALEPH at the platform's
+   * credit-pricing rate nearest the processing time. Null when no rate was
+   * available.
+   */
+  usdValue?: number | null;
+};
+
+/**
+ * Network revenue headline: USD value of ALL payments processed by the
+ * contract. Credit purchases are only a subset of what reaches the processor
+ * (consolidated PAYG / off-API revenue arrives as direct ALEPH transfers), so
+ * this — not credits.totalUsd — is the real revenue figure.
+ */
+export type BuyflowRevenue = {
+  totalUsd: number;
+  alephProcessed: number;
+  /** Processing runs that could not be valued in USD (no rate available). */
+  unpricedRuns: number;
 };
 
 export type BuyflowChain = {
@@ -67,15 +86,20 @@ export type BuyflowChain = {
   burnActivated: boolean;
   deployBlock: number;
   processingRuns: number;
+  /** USD value of all processed payments (same as revenue.totalUsd). */
+  processedUsd?: number;
   events: BuyflowChainEvent[];
 };
 
 export type BuyflowMonth = {
   /** "YYYY-MM". */
   month: string;
+  /** USD paid for credit purchases created this month (Credit API only). */
   usd: number;
   credits: number;
   purchases: number;
+  /** USD value of payments processed on-chain this month (all sources). */
+  processedUsd?: number;
   alephBought?: number;
   alephBurned?: number;
   alephDistributed?: number;
@@ -84,6 +108,8 @@ export type BuyflowMonth = {
 export type BuyflowData = {
   schemaVersion: number;
   contract: string;
+  /** Absent from aggregates published before 2026-07. */
+  revenue?: BuyflowRevenue;
   credits: BuyflowCredits;
   chain: BuyflowChain;
   monthly: BuyflowMonth[];

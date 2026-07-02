@@ -84,15 +84,21 @@ export function RevenueSummaryBar({ data, isLoading }: Props) {
     <div className="grid grid-cols-2 gap-4 lg:grid-cols-4">
       <RevenueStatCard
         label="Total Revenue"
-        display={credits ? formatUsd(credits.totalUsd) : undefined}
-        subtitle="all-time"
+        display={
+          data ? formatUsd(data.revenue?.totalUsd ?? data.credits.totalUsd) : undefined
+        }
+        subtitle="all payments processed on-chain"
         isLoading={isLoading}
         sparklineData={sparklineData}
       />
       <RevenueStatCard
-        label="Purchases"
-        display={credits ? credits.completedPurchases.toLocaleString("en-US") : undefined}
-        subtitle="completed"
+        label="Credit Purchases"
+        display={credits ? formatUsd(credits.totalUsd) : undefined}
+        subtitle={
+          credits
+            ? `${credits.completedPurchases.toLocaleString("en-US")} completed via Credit API`
+            : "completed via Credit API"
+        }
         color="var(--color-accent-500)"
         isLoading={isLoading}
       />
