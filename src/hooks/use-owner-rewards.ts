@@ -1,15 +1,12 @@
 "use client";
 
 import { useEffect, useMemo, useState } from "react";
-import { useRewards } from "@/hooks/use-rewards";
+import { useRewards, DATA_START_SEC } from "@/hooks/use-rewards";
 import { useDistributions } from "@/hooks/use-distributions";
 import { useNodes } from "@/hooks/use-nodes";
 import { useNodeState } from "@/hooks/use-node-state";
 import { apportionOwnerRewards } from "@/lib/reward-apportionment";
 import type { OwnerRewards } from "@/api/rewards-types";
-
-/** Data-start floor for the rewards API. */
-const DATA_START_SEC = Math.floor(Date.UTC(2026, 4, 1) / 1000); // 2026-05-01
 
 const NOW_ROUND_MS = 300_000; // 5 min — keeps the query key stable across remounts
 
