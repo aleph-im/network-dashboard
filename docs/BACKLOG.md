@@ -67,6 +67,11 @@ Intent is agreed but there are open questions, design choices, or multi-step
 coordination required. Needs a brainstorm or spec before someone can execute.
 Multi-day / multi-PR work.
 
+### 2026-07-02 - Flaky owner-filter test in `vm-table.test.tsx`
+**Source:** Observed during the wallet revenue-history ship (PR #148) — the full `pnpm check` intermittently failed on this one test under heavy parallel load.
+**Description:** `VMTable — owner filter > "passes owner to useVMs and writes ?owner= once the address is valid"` times out and fails under load (observed 6.8s for the assertion, 17.6s for the file) but passes 6/6 in isolation. It exercises the 500ms-debounced owner filter, so it's timing-sensitive. Investigate whether it relies on real timers + `waitFor` and would be more deterministic with `vi.useFakeTimers()` driving the debounce, or whether the per-test timeout should be raised. Unrelated to any feature — pure test reliability.
+**Priority:** Low
+
 ### 2026-06-09 - Phase 2: migrate credits page + network panels to the rewards source of truth
 **Source:** Deferred from Decision #111 (Phase 1A scoped to wallet owner view + Node Earnings tab).
 **Description:** Migrate the remaining reward surfaces off the client-side reconstruction: the Credits recipient table (needs ≤100-address batching of `/rewards/time-series`, since the API caps addresses per request) and the credit flow diagram + summary cards (network rollup via no-address query). ~~The network detail-panel CRN/CCN earnings sparklines~~ — ④ done by Plan B (Decision #114): sparks consume `useNodeEarnings(hash, "24h", { weights: "proxy" })` on the rewards layer with no execution fetch. Retire `computeDistributionSummary`/`distributeExpense` once the credits page is migrated. Also add a dedicated api2 WebSocket subscription to FOUNDATION distribution messages (additive over the Phase-1 polling fallback — invalidates the same query key, reuses the same parser).
