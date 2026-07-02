@@ -5,6 +5,7 @@ import { Skeleton } from "@aleph-front/ds/ui/skeleton";
 import { useBuyflow } from "@/hooks/use-buyflow";
 import { formatUsd } from "@/lib/format";
 import { RevenueSummaryBar } from "@/components/revenue-summary-bar";
+import { RevenuePaymentsTable } from "@/components/revenue-payments-table";
 import { RevenuePurchasesTable } from "@/components/revenue-purchases-table";
 import { RevenueMonthlyTable } from "@/components/revenue-monthly-table";
 
@@ -55,10 +56,30 @@ export default function RevenuePage() {
             </div>
           ) : null}
 
+          {/* On-chain payments processed — includes the direct ALEPH
+              transfers the Credit API never sees; this is what the Total
+              Revenue headline is summed from. */}
+          <section className="mt-12">
+            <h2 className="mb-4 font-heading text-xl font-bold tracking-tight">
+              Payments processed on-chain
+            </h2>
+            <p className="mb-4 text-sm text-muted-foreground">
+              Every processing run of the payment contract — credit purchases
+              and direct ALEPH payments (consolidated pay-as-you-go and
+              off-API revenue). The Total Revenue figure is the sum of these
+              rows.
+            </p>
+            {isLoading ? (
+              <Skeleton className="h-64 w-full rounded-lg" />
+            ) : (
+              <RevenuePaymentsTable events={data?.chain.events ?? []} />
+            )}
+          </section>
+
           {/* Recent purchases */}
           <section className="mt-12">
             <h2 className="mb-4 font-heading text-xl font-bold tracking-tight">
-              Recent purchases
+              Recent credit purchases
             </h2>
             {isLoading ? (
               <Skeleton className="h-64 w-full rounded-lg" />

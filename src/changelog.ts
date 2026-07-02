@@ -11,9 +11,19 @@ export type VersionEntry = {
   changes: ChangeEntry[];
 };
 
-export const CURRENT_VERSION = "0.37.0";
+export const CURRENT_VERSION = "0.37.1";
 
 export const CHANGELOG: VersionEntry[] = [
+  {
+    version: "0.37.1",
+    date: "2026-07-02",
+    changes: [
+      {
+        type: "feature",
+        text: "Revenue page: new \"Payments processed on-chain\" table listing every processing run of the payment contract with its USD value, ALEPH sent to the network, market-buy vs direct-ALEPH type, and Etherscan link. The direct ALEPH transfers that make up most of the revenue were previously only counted in the headline, not visible as line items.",
+      },
+    ],
+  },
   {
     version: "0.37.0",
     date: "2026-07-02",
