@@ -3,6 +3,10 @@
 import { useQuery, keepPreviousData } from "@tanstack/react-query";
 import { getRewardsTimeSeries } from "@/api/rewards-client";
 
+/** Data-start floor for the rewards API — credit.aleph.im has no data before
+ *  2026-05-01 (credits launched then). Reward windows clamp to this. */
+export const DATA_START_SEC = Math.floor(Date.UTC(2026, 4, 1) / 1000); // 2026-05-01
+
 /**
  * Hour-stable window ending at the start of the current hour. The rewards API
  * truncates bounds to whole hours anyway (hour-cache); deriving the window

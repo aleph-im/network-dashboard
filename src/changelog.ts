@@ -11,9 +11,19 @@ export type VersionEntry = {
   changes: ChangeEntry[];
 };
 
-export const CURRENT_VERSION = "0.37.1";
+export const CURRENT_VERSION = "0.38.0";
 
 export const CHANGELOG: VersionEntry[] = [
+  {
+    version: "0.38.0",
+    date: "2026-07-02",
+    changes: [
+      {
+        type: "feature",
+        text: "New \"Node revenue history\" card on the Wallet page shows reward accrual as stacked monthly bars split by source (Credits / Holder / Wage subsidy), in ALEPH, since May 2026. Hover a bar for exact per-source figures and the month total; the current month is dimmed with an \"MTD\" tag since it's still in progress. Helps operators tell whether a jump in owed rewards came from a source shift — e.g. the holder-tier subsidy ramping up — rather than a change in their own VM count.",
+      },
+    ],
+  },
   {
     version: "0.37.1",
     date: "2026-07-02",
