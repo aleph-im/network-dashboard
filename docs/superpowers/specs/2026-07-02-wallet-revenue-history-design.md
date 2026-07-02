@@ -99,26 +99,45 @@ the other rewards hooks).
 
 ### 2. Presentational chart — `RewardHistoryChart`
 
-`src/components/reward-history-chart.tsx`. A bespoke SVG stacked-bar chart, matching
-how this codebase already builds charts (`Sparkline`, `DualLineChart`,
-`node-earnings-chart`). Props: `months: MonthlyReward[]`, plus hover state.
+`src/components/reward-history-chart.tsx`. A bespoke SVG stacked-bar chart. This is a
+**local dashboard-specific composition, not a DS component** — the correct home under
+the Component Policy, since every existing chart primitive (`Sparkline`,
+`DualLineChart`, `NodeEarningsChart`, `CreditFlowDiagram`) is local and **none** live
+in `@aleph-front/ds`. Props: `months: MonthlyReward[]`, plus hover state.
 
 - One vertical **stacked bar per month**, segments ordered Credits → Holder → Wage
-  subsidy (bottom→top), colored with the **exact `RewardSourceBar` vocabulary**:
-  `credit_revenue`→`success-500`, `holder_tier`→`primary-500`,
-  `wage_subsidy`→`warning-500`. Bars share a common y-scale (max month total).
+  subsidy (bottom→top), colored from the **DS token layer via the exact
+  `RewardSourceBar` mapping** (no raw hex): `credit_revenue`→`success-500`,
+  `holder_tier`→`primary-500`, `wage_subsidy`→`warning-500`. Bars share a common
+  y-scale (max month total).
 - The **partial current month** is visually distinguished (reduced fill opacity +
   an "MTD" tick/label) so a 2-day bar is never misread as a collapse.
-- Hover a bar → crosshair/emphasis + a floating tooltip card (reusing the
-  `node-earnings-chart` tooltip idiom): month label, per-source ALEPH, month total.
-- Respects `prefers-reduced-motion`; SVG-only, no chart lib dependency.
+- Hover a bar → crosshair/emphasis + a **custom floating tooltip card styled with DS
+  tokens** (`border-edge` / `bg-surface` / `shadow-lg`), following the established
+  `node-earnings-chart.tsx` pattern — **not** DS `Tooltip`, which is trigger-anchored
+  and can't track chart geometry. Content: month label, per-source ALEPH, month total.
+- Respects `prefers-reduced-motion`; SVG-only, no chart-lib dependency.
 
 ### 3. Card composition — `WalletRevenueHistoryCard`
 
-`src/components/wallet-revenue-history-card.tsx`. Owns title, the chart, a legend
-(reuse the `RewardSourceBar` swatch/label vocabulary — the two components must speak
-the same language), and the loading/empty/error states. Rendered on the wallet page
-directly beneath `WalletRevenueCard`, gated on the same `address`.
+`src/components/wallet-revenue-history-card.tsx`. Container chrome is **DS-only**,
+mirroring `WalletRevenueCard`: DS `Card` (`@aleph-front/ds/card`) as the surface, DS
+`Skeleton` (`@aleph-front/ds/ui/skeleton`) for loading, DS `Badge`
+(`@aleph-front/ds/badge`) for any inline chips. Owns title, the chart, a legend (reuse
+the `RewardSourceBar` swatch/label vocabulary — the two components must speak the same
+language), and the loading/empty/error states. Rendered on the wallet page directly
+beneath `WalletRevenueCard`, gated on the same `address`.
+
+### Design-system compliance
+
+Per the Component Policy: **all container/chrome UI is DS** (`Card`, `Skeleton`,
+`Badge`, and DS `Tooltip` where a trigger-anchored tip is wanted — e.g. the legend's
+wage-decay note via `RewardSourceBar`). The **only** local addition is
+`RewardHistoryChart`, a bespoke SVG data-viz composition — legitimate under the policy
+because SVG charts are dashboard-specific and every existing one is local; its colors
+resolve through DS tokens, and its hover uses the DS-token floating-card pattern, not
+raw styling. **No new component is added to `@aleph-front/ds`**, so the DS "Adding a
+New Component" recipe (preview page, five-doc update) does **not** apply to this work.
 
 ## Visual design
 
