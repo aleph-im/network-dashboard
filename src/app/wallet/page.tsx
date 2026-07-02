@@ -28,6 +28,7 @@ import {
 } from "@/lib/format";
 import { useOwnerRewards } from "@/hooks/use-owner-rewards";
 import { WalletRevenueCard } from "@/components/wallet-revenue-card";
+import { WalletRevenueHistoryCard } from "@/components/wallet-revenue-history-card";
 import {
   NODE_STATUS_VARIANT,
   VM_STATUS_VARIANT,
@@ -690,6 +691,9 @@ function WalletContent() {
           </p>
         </Card>
       ) : null}
+
+      {/* Node Revenue History */}
+      <WalletRevenueHistoryCard address={address} />
 
       {/* Permissions */}
       <div className="grid gap-6 lg:grid-cols-2">
