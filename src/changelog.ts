@@ -11,9 +11,19 @@ export type VersionEntry = {
   changes: ChangeEntry[];
 };
 
-export const CURRENT_VERSION = "0.38.0";
+export const CURRENT_VERSION = "0.38.1";
 
 export const CHANGELOG: VersionEntry[] = [
+  {
+    version: "0.38.1",
+    date: "2026-07-03",
+    changes: [
+      {
+        type: "ui",
+        text: "Revenue page tables aligned with the rest of the dashboard: transaction hashes are now copyable and link to Etherscan with the standard link treatment, the on-chain payments table paginates (25/50/100 per page) with full-dataset column sorting, and it renders as stacked cards on mobile instead of squeezing seven columns. In-table badges match the outline style used everywhere else.",
+      },
+    ],
+  },
   {
     version: "0.38.0",
     date: "2026-07-02",

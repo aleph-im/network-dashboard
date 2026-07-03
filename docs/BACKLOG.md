@@ -54,6 +54,11 @@ to medium size (one PR, one focused session).
 **Description:** Add a small caption calling out the delta vs. the previous full month (e.g. "+188% vs May") next to the chart or in the legend area, once the base chart has been live long enough to gauge whether operators want the number spelled out explicitly rather than reading it off the bars.
 **Priority:** Low
 
+### 2026-07-03 - Dedupe RevenueStatCard / CreditStatCard (possible DS StatCard promotion)
+**Source:** DS-convention review of the Revenue page (deviations 1–3 fixed in `fix/revenue-ds-conventions`; this was deviation 4, deferred)
+**Description:** `RevenueStatCard` (`src/components/revenue-summary-bar.tsx`) is a near-verbatim copy of `CreditStatCard` (`src/components/credit-summary-bar.tsx`) — same `stat-card` markup, skeleton, and sparkline slot, differing only in taking a pre-formatted `display` string vs a numeric `value`. Two hand-rolled copies of reusable stat-card UI brushes against the Component Policy. Decide between a shared local component (quick) or promoting a `StatCard` primitive to `@aleph-front/ds` (cross-repo, benefits other consumers); the DS route should follow the "Adding a New Component" recipe.
+**Priority:** Low
+
 ### 2026-07-02 - RewardSourceBar should import the shared REWARD_SOURCE_META
 **Source:** Wallet revenue history implementation — `src/lib/reward-source-meta.ts` was added as a new shared vocabulary but `src/components/reward-source-bar.tsx` still defines its own source labels/colors independently
 **Description:** Dedupe the reward-source vocabulary (key/label/CSS-var/dot-class per source) by having `RewardSourceBar` import `REWARD_SOURCE_META` instead of maintaining a parallel copy. Low-risk mechanical refactor; the two are currently kept manually in sync.

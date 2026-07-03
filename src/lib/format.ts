@@ -75,6 +75,10 @@ export function explorerWalletUrl(address: string): string {
   return `https://explorer.aleph.cloud/address/ETH/${address}`;
 }
 
+export function etherscanTxUrl(txHash: string): string {
+  return `https://etherscan.io/tx/${txHash}`;
+}
+
 /**
  * Format a USD amount. Whole-dollar figures drop the cents; sub-dollar
  * figures keep two decimals so small purchases stay legible.
