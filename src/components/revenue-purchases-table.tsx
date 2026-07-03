@@ -2,7 +2,8 @@
 
 import { Table, type Column } from "@aleph-front/ds/table";
 import { Badge } from "@aleph-front/ds/badge";
-import { formatUsd, relativeTimeFromUnix, truncateHash } from "@/lib/format";
+import { CopyableText } from "@aleph-front/ds/copyable-text";
+import { etherscanTxUrl, formatUsd, relativeTimeFromUnix } from "@/lib/format";
 import type { BuyflowPurchase } from "@/api/buyflow-types";
 
 const CREDITS_COMPACT = new Intl.NumberFormat("en-US", {
@@ -23,7 +24,11 @@ const columns: Column<BuyflowPurchase>[] = [
   },
   {
     header: "Paid in",
-    accessor: (p) => <Badge variant={currencyVariant(p.currency)}>{p.currency}</Badge>,
+    accessor: (p) => (
+      <Badge fill="outline" variant={currencyVariant(p.currency)} size="sm">
+        {p.currency}
+      </Badge>
+    ),
     sortable: true,
     sortValue: (p) => p.currency,
   },
@@ -50,15 +55,13 @@ const columns: Column<BuyflowPurchase>[] = [
   {
     header: "Tx",
     accessor: (p) => (
-      <a
-        href={`https://etherscan.io/tx/${p.txHash}`}
-        target="_blank"
-        rel="noreferrer"
-        className="font-mono text-xs text-primary hover:underline"
-        onClick={(e) => e.stopPropagation()}
-      >
-        {truncateHash(p.txHash, 10)}
-      </a>
+      <CopyableText
+        text={p.txHash}
+        startChars={8}
+        endChars={8}
+        size="sm"
+        href={etherscanTxUrl(p.txHash)}
+      />
     ),
   },
 ];
