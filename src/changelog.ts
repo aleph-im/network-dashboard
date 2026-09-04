@@ -11,9 +11,19 @@ export type VersionEntry = {
   changes: ChangeEntry[];
 };
 
-export const CURRENT_VERSION = "0.38.1";
+export const CURRENT_VERSION = "0.38.2";
 
 export const CHANGELOG: VersionEntry[] = [
+  {
+    version: "0.38.2",
+    date: "2026-09-04",
+    changes: [
+      {
+        type: "fix",
+        text: "Nodes the scheduler flagged as removed more than 30 days ago no longer appear anywhere in the dashboard. The scheduler never purges deregistered nodes, so the Nodes list, its header count, the Overview node total and Healthy ratio, the Wallet nodes list, and the Issues node view were all carrying months-old entries. Recently removed nodes still show under the Removed pill so a removal that just happened can be traced; a direct link to an older one still opens its detail page.",
+      },
+    ],
+  },
   {
     version: "0.38.1",
     date: "2026-07-03",

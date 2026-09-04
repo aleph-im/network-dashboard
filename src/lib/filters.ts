@@ -324,3 +324,20 @@ export function applyRetentionWindow(
   const cutoff = now - RETENTION_MS[window];
   return vms.filter((v) => lastActivityMs(v) >= cutoff);
 }
+
+/** How long a `removed` node stays listed after the scheduler flags it. */
+export const REMOVED_NODE_RETENTION: Exclude<RetentionWindow, "all"> = "30d";
+
+/**
+ * Drop `removed` nodes whose `updatedAt` (the moment the scheduler flagged
+ * them) is older than `REMOVED_NODE_RETENTION`. The scheduler never purges
+ * deregistered nodes, so without this the list and totals accumulate
+ * months-old entries. Other statuses pass through untouched — an unreachable
+ * node is still infrastructure, however long it has been down.
+ */
+export function dropStaleRemovedNodes(nodes: Node[], now: number): Node[] {
+  const cutoff = now - RETENTION_MS[REMOVED_NODE_RETENTION];
+  return nodes.filter(
+    (n) => n.status !== "removed" || new Date(n.updatedAt).getTime() >= cutoff,
+  );
+}

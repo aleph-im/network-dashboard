@@ -20,7 +20,11 @@ import type {
   VmDetail,
   VmFilters,
 } from "@/api/types";
-import { applyRetentionWindow, DEFAULT_RETENTION } from "@/lib/filters";
+import {
+  applyRetentionWindow,
+  DEFAULT_RETENTION,
+  dropStaleRemovedNodes,
+} from "@/lib/filters";
 
 export function getBaseUrl(): string {
   if (typeof window !== "undefined") {
@@ -205,7 +209,7 @@ export async function getNodes(
   filters?: NodeFilters,
 ): Promise<Node[]> {
   const raw = await fetchAllPages<ApiNodeRow>("/api/v1/nodes");
-  const nodes = raw.map(transformNode);
+  const nodes = dropStaleRemovedNodes(raw.map(transformNode), Date.now());
   return applyNodeFilters(nodes, filters);
 }
 
@@ -266,10 +270,15 @@ export async function getOverviewStats(): Promise<OverviewStats> {
     fetchAllPages<ApiVmRow>("/api/v1/vms").catch(() => null),
     fetchAllPages<ApiNodeRow>("/api/v1/nodes").catch(() => null),
   ]);
-  const nodes = (rawNodes ?? []).map(transformNode);
+  const nodes = dropStaleRemovedNodes(
+    (rawNodes ?? []).map(transformNode),
+    Date.now(),
+  );
   const vms = (rawVms ?? []).map(transformVm);
   return {
-    totalNodes: stats.total_nodes,
+    // /stats.total_nodes counts every removed node ever; use the retained
+    // list when the fan-out succeeded so the headline matches /nodes.
+    totalNodes: rawNodes ? nodes.length : stats.total_nodes,
     healthyNodes: stats.healthy_nodes,
     unreachableNodes: nodes.filter(
       (n) => n.status === "unreachable",
