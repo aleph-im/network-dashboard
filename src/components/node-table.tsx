@@ -41,7 +41,7 @@ const STATUS_PILLS: { value: NodeStatus | undefined; label: string; tooltip?: st
   { value: "healthy", label: "Healthy", tooltip: "Online and responding normally" },
   { value: "unreachable", label: "Unreachable", tooltip: "Not responding to health checks" },
   { value: "unknown", label: "Unknown", tooltip: "Status could not be determined" },
-  { value: "removed", label: "Removed", tooltip: "Deregistered from the scheduler" },
+  { value: "removed", label: "Removed", tooltip: "Deregistered from the scheduler within the last 30 days" },
 ];
 
 const NODE_SEARCH_FIELDS = (n: Node) => [n.hash, n.owner, n.name];

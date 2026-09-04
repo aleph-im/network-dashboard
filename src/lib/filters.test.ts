@@ -5,6 +5,7 @@ import {
   applyNodeAdvancedFilters,
   applyVmAdvancedFilters,
   applyRetentionWindow,
+  dropStaleRemovedNodes,
   computeNodeFilterMaxes,
   computeVmFilterMaxes,
   NODE_FILTER_MAX_FLOOR,
@@ -632,5 +633,32 @@ describe("applyRetentionWindow", () => {
     const vms = [makeVm({ hash: "v", lastObservedAt: daysAgo(20), updatedAt: daysAgo(20) })];
     expect(applyRetentionWindow(vms, "7d", NOW)).toHaveLength(0);
     expect(applyRetentionWindow(vms, "30d", NOW)).toHaveLength(1);
+  });
+});
+
+describe("dropStaleRemovedNodes", () => {
+  const NOW = new Date("2026-09-04T00:00:00Z").getTime();
+  const daysAgo = (n: number) =>
+    new Date(NOW - n * 86_400_000).toISOString();
+
+  it("drops removed nodes flagged more than 30 days ago", () => {
+    const nodes = [
+      makeNode({ hash: "old", status: "removed", updatedAt: daysAgo(120) }),
+      makeNode({ hash: "fresh", status: "removed", updatedAt: daysAgo(3) }),
+      makeNode({ hash: "boundary", status: "removed", updatedAt: daysAgo(30) }),
+    ];
+    expect(dropStaleRemovedNodes(nodes, NOW).map((n) => n.hash)).toEqual([
+      "fresh",
+      "boundary",
+    ]);
+  });
+
+  it("never drops non-removed nodes, however stale", () => {
+    const nodes = [
+      makeNode({ hash: "h", status: "healthy", updatedAt: daysAgo(400) }),
+      makeNode({ hash: "u", status: "unreachable", updatedAt: daysAgo(400) }),
+      makeNode({ hash: "k", status: "unknown", updatedAt: daysAgo(400) }),
+    ];
+    expect(dropStaleRemovedNodes(nodes, NOW)).toEqual(nodes);
   });
 });
