@@ -65,13 +65,13 @@ const ALEPH_ENDPOINTS: AlephEndpointDef[] = [
   {
     path: "/api/v0/aggregates/:address.json",
     probePath:
-      "/api/v0/aggregates/0xa1B3bb7d2332383D96b7796B908fB7f7F3c2Be10.json?keys=corechannel&limit=1",
+      "/api/v0/aggregates/0xF45f6F13BF2A2Eb6Afa83FCC9e530DcF238b5D74.json?keys=corechannel&limit=1",
     label: "Aggregates (corechannel)",
   },
   {
     path: "/api/v0/authorizations/:direction/:address.json",
     probePath:
-      "/api/v0/authorizations/granted/0xa1B3bb7d2332383D96b7796B908fB7f7F3c2Be10.json",
+      "/api/v0/authorizations/granted/0xF45f6F13BF2A2Eb6Afa83FCC9e530DcF238b5D74.json",
     label: "Authorizations",
   },
 ];

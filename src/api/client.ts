@@ -434,10 +434,14 @@ export async function getAuthorizations(
 
 // --- Credit Expense API ---
 
-const CREDIT_EXPENSE_SENDER =
-  "0x6aeaEEb08720DEc9d6dae1A8fc49344Dd99391Ac";
+// The expense signer rotated on 2026-10-22; query both so trailing windows
+// that span the rotation still include the historical messages.
+const CREDIT_EXPENSE_SENDERS = [
+  "0x6aeaEEb08720DEc9d6dae1A8fc49344Dd99391Ac",
+  "0x7173A783Fa40c609d78aD450Ee4b4aFb697cE254",
+];
 const CORECHANNEL_SENDER =
-  "0xa1B3bb7d2332383D96b7796B908fB7f7F3c2Be10";
+  "0xF45f6F13BF2A2Eb6Afa83FCC9e530DcF238b5D74";
 // FOUNDATION account that publishes credit-rewards-distribution messages.
 export const FOUNDATION_DISTRIBUTION_SENDER =
   "0x3a5CC6aBd06B601f4654035d125F9DD2FC992C25";
@@ -553,7 +557,7 @@ export async function getCreditExpenses(
   const params = new URLSearchParams({
     msgType: "POST",
     contentTypes: "aleph_credit_expense",
-    addresses: CREDIT_EXPENSE_SENDER,
+    addresses: CREDIT_EXPENSE_SENDERS.join(","),
     startDate: String(Math.floor(startDate)),
     endDate: String(Math.floor(endDate)),
     pagination: "10000",
@@ -596,7 +600,7 @@ export async function getExecutionExpenses(
     msgType: "POST",
     contentTypes: "aleph_credit_expense",
     tags: "type_execution",
-    addresses: CREDIT_EXPENSE_SENDER,
+    addresses: CREDIT_EXPENSE_SENDERS.join(","),
     startDate: String(Math.floor(startDate)),
     endDate: String(Math.floor(endDate)),
     pagination: "10000",

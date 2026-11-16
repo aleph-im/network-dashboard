@@ -9,7 +9,7 @@ import {
 
 ip3country.init();
 
-const CORECHANNEL_SENDER = "0xa1B3bb7d2332383D96b7796B908fB7f7F3c2Be10";
+const CORECHANNEL_SENDER = "0xF45f6F13BF2A2Eb6Afa83FCC9e530DcF238b5D74";
 const URL_API =
   `https://api2.aleph.im/api/v0/aggregates/${CORECHANNEL_SENDER}.json?keys=corechannel`;
 const OUT = "src/data/node-locations.json";
@@ -96,12 +96,20 @@ async function main() {
   const ccnPairs = await Promise.all(ccnNodes.map(ccnEntry));
   const crnPairs = await Promise.all(crnNodes.map(crnEntry));
 
+  const prev = loadPrevious();
+  const currentHashes = new Set<string>();
+  for (const node of [...ccnNodes, ...crnNodes]) {
+    if (node.hash) currentHashes.add(node.hash);
+  }
+
   const out: Record<string, LocationEntry> = {};
+  for (const [hash, entry] of Object.entries(prev)) {
+    if (currentHashes.has(hash)) out[hash] = entry;
+  }
   for (const pair of [...ccnPairs, ...crnPairs]) {
     if (pair) out[pair[0]] = pair[1];
   }
 
-  const prev = loadPrevious();
   const prevCount = Object.keys(prev).length;
   const newCount = Object.keys(out).length;
   if (prevCount > 0 && newCount < prevCount * ABORT_FRACTION) {
