@@ -36,6 +36,16 @@ Operations dashboard for monitoring the [Aleph Cloud](https://aleph.im/) schedul
 pnpm install
 ```
 
+To install without exposing your home directory or running package scripts, use the bubblewrap sandbox:
+
+```bash
+pnpm sandbox:audit    # audit the lockfile without installing
+pnpm sandbox:resolve  # update pnpm-lock.yaml without installing
+pnpm sandbox:install  # audit, then pnpm install --frozen-lockfile --ignore-scripts
+```
+
+Any command can run sandboxed: `pnpm sandbox -- <cmd>` (add `--net` for network access, `--ro` for a read-only project, `--tty` for interactive sessions).
+
 ### Development
 
 ```bash
@@ -62,6 +72,9 @@ Outputs a static site to `out/` ready for IPFS deployment.
 | `pnpm lint` | Lint (oxlint) |
 | `pnpm typecheck` | Type check (tsc) |
 | `pnpm check` | Lint + typecheck + test |
+| `pnpm sandbox:install` | Sandboxed `pnpm install --ignore-scripts` |
+| `pnpm sandbox:audit` | Sandboxed `pnpm audit --audit-level=high` |
+| `pnpm sandbox -- <cmd>` | Run any command inside the bubblewrap sandbox |
 
 ## Project Structure
 
