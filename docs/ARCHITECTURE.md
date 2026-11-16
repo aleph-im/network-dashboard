@@ -299,6 +299,13 @@ Wallet (`["wallet-vms", …]`, `["wallet-activity", …]`) and credit-expense (`
 
 **Notes:** The `getNodeState()` parser in `src/api/client.ts` previously dropped CCN→CRN parent links; this branch reinstates them via a `parent` field on `CrnNode` and a `resourceNodes: string[]` field on `CcnNode`, used by the graph builder. Static export requires the page to wrap `<NetworkContent>` in `<Suspense>` because of `useSearchParams()` (Next.js 16 errors otherwise).
 
+### Dependency Sandbox
+
+**Context:** Package installs run lifecycle scripts with the user's full filesystem and network access, and audit results arrived only after packages were already linked into `node_modules`.
+**Approach:** `scripts/sandbox.sh` wraps any command in bubblewrap: `/nix`, `/etc`, `/usr`, `/bin`, `/lib*`, and `/run/current-system` are read-only, `/home` is a tmpfs, the project is bind-mounted at `/workspace`, and only the pnpm store/cache/state plus an isolated `~/.npm` cache are writable. Network is denied unless `--net` is passed; `--ro` mounts the project read-only; `--tty` keeps interactive sessions usable. The dependency flow is `sandbox:resolve` (update `pnpm-lock.yaml` without installing) → `sandbox:audit` (fail on high severity) → `sandbox:install` (`--frozen-lockfile --ignore-scripts`, gated by the audit).
+**Key files:** `scripts/sandbox.sh`, `package.json` (`sandbox*` scripts).
+**Notes:** `--ignore-scripts` blocks `postinstall`/`prepare` hooks; esbuild and sharp still work because their platform binaries arrive as optional dependencies (verified by `sandbox:build`). `sandbox:install` audits the lockfile before touching `node_modules`, so affected packages are never linked.
+
 ### CSS Token Guard
 
 **Context:** A mobile-menu animation referenced `var(--duration-default)` — a token that doesn't exist in `globals.css` or `@aleph-front/ds`'s `tokens.css`. The browser fell back to the property's initial value (`0s`) and the animation collapsed to instant. The bad reference came from a plan file that had copied it from earlier code; nobody verified the token existed at write time. CSS references look valid to TS and oxlint, so the bug is silent until someone notices the broken UI.

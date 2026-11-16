@@ -256,6 +256,10 @@ pnpm lint         # oxlint
 pnpm typecheck    # tsc --noEmit
 pnpm check:tokens # Validate every var(--…) reference resolves to a declared CSS token
 pnpm check        # lint + typecheck + check:tokens + test
+pnpm sandbox:audit   # sandboxed pnpm audit --audit-level=high
+pnpm sandbox:resolve # update pnpm-lock.yaml without installing
+pnpm sandbox:install # audit, then pnpm install --frozen-lockfile --ignore-scripts
+pnpm sandbox -- <cmd> # run any command in the bubblewrap sandbox (--net / --ro / --tty)
 ```
 
 ### Key Directories

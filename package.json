@@ -13,7 +13,17 @@
     "test": "vitest run",
     "check:tokens": "tsx scripts/check-css-tokens.ts",
     "check": "pnpm lint && pnpm typecheck && pnpm check:tokens && pnpm test",
-    "preview": "bash scripts/preview.sh"
+    "preview": "bash scripts/preview.sh",
+    "sandbox": "bash scripts/sandbox.sh",
+    "sandbox:install": "pnpm sandbox:audit && bash scripts/sandbox.sh --net -- pnpm install --frozen-lockfile --ignore-scripts",
+    "sandbox:audit": "bash scripts/sandbox.sh --net --ro -- pnpm audit --audit-level=high",
+    "sandbox:build": "bash scripts/sandbox.sh --net -- pnpm build",
+    "sandbox:lint": "bash scripts/sandbox.sh --ro -- pnpm lint",
+    "sandbox:typecheck": "bash scripts/sandbox.sh -- pnpm typecheck",
+    "sandbox:test": "bash scripts/sandbox.sh -- pnpm test",
+    "sandbox:dev": "bash scripts/sandbox.sh --net --tty -- pnpm dev",
+    "sandbox:shell": "bash scripts/sandbox.sh --tty -- bash",
+    "sandbox:resolve": "bash scripts/sandbox.sh --net -- pnpm install --lockfile-only --ignore-scripts"
   },
   "dependencies": {
     "@aleph-front/ds": "0.23.1",
@@ -28,13 +38,13 @@
     "d3-transition": "^3.0.1",
     "d3-zoom": "^3.0.0",
     "ip3country": "5.0.0",
-    "next": "16.1.6",
+    "next": "16.4.6",
     "react": "19.2.4",
     "react-dom": "19.2.4"
   },
   "devDependencies": {
-    "@tailwindcss/postcss": "4.2.1",
-    "@testing-library/jest-dom": "6.6.3",
+    "@tailwindcss/postcss": "4.3.5",
+    "@testing-library/jest-dom": "7.0.1",
     "@testing-library/react": "16.3.2",
     "@testing-library/user-event": "14.6.1",
     "@types/d3-drag": "^3.0.7",
@@ -47,18 +57,21 @@
     "@types/react": "19.2.14",
     "@types/react-dom": "19.2.3",
     "@vitejs/plugin-react": "5.1.4",
-    "jsdom": "28.1.0",
+    "jsdom": "31.0.1",
     "oxlint": "1.50.0",
-    "tailwindcss": "4.2.1",
-    "tsx": "4.21.0",
+    "tailwindcss": "4.3.5",
+    "tsx": "4.23.15",
     "typescript": "5.9.3",
-    "vitest": "4.0.18",
+    "vitest": "4.1.12",
     "world-countries": "5.1.0"
   },
   "pnpm": {
     "onlyBuiltDependencies": [
       "esbuild",
       "sharp"
-    ]
+    ],
+    "overrides": {
+      "vite": "7.3.8"
+    }
   }
 }
