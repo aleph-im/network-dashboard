@@ -434,10 +434,15 @@ export async function getAuthorizations(
 
 // --- Credit Expense API ---
 
-const CREDIT_EXPENSE_SENDER =
-  "0x6aeaEEb08720DEc9d6dae1A8fc49344Dd99391Ac";
+// Historical expenses were copied to the current signer after the
+// 2026-10-22 rotation, so only that signer is queried. Messages from any
+// other sender are dropped defensively.
+const CREDIT_EXPENSE_SENDER_CURRENT =
+  "0x7173A783Fa40c609d78aD450Ee4b4aFb697cE254";
+const CREDIT_EXPENSE_ROTATION_SEC = Date.UTC(2026, 9, 22) / 1000;
+const CREDIT_EXPENSE_SENDERS = CREDIT_EXPENSE_SENDER_CURRENT;
 const CORECHANNEL_SENDER =
-  "0xa1B3bb7d2332383D96b7796B908fB7f7F3c2Be10";
+  "0xF45f6F13BF2A2Eb6Afa83FCC9e530DcF238b5D74";
 // FOUNDATION account that publishes credit-rewards-distribution messages.
 export const FOUNDATION_DISTRIBUTION_SENDER =
   "0x3a5CC6aBd06B601f4654035d125F9DD2FC992C25";
@@ -456,8 +461,13 @@ type ApiCreditEntryWire = {
 
 type ApiCreditExpenseMessage = {
   item_hash: string;
+  sender?: string;
   time: number;
   content: {
+    // Copies made during the signer migration keep the original post time in
+    // `content.time` and a `ref` back to the original message.
+    time?: number;
+    ref?: string;
     content: {
       tags: string[];
       expense: {
@@ -544,6 +554,19 @@ export function parseCreditMessage(
   };
 }
 
+function isTrustedExpenseMessage(msg: ApiCreditExpenseMessage): boolean {
+  if (msg.sender !== CREDIT_EXPENSE_SENDER_CURRENT) return false;
+  // A migrated copy must carry the original time at the top level. Early
+  // copies were stamped with the posting time; drop those because the API's
+  // range filter and the expense timestamp both use the top-level time.
+  const misdatedCopy =
+    msg.content.ref !== undefined &&
+    msg.content.time !== undefined &&
+    msg.content.time < CREDIT_EXPENSE_ROTATION_SEC &&
+    msg.time >= CREDIT_EXPENSE_ROTATION_SEC;
+  return !misdatedCopy;
+}
+
 export async function getCreditExpenses(
   startDate: number,
   endDate: number,
@@ -553,7 +576,7 @@ export async function getCreditExpenses(
   const params = new URLSearchParams({
     msgType: "POST",
     contentTypes: "aleph_credit_expense",
-    addresses: CREDIT_EXPENSE_SENDER,
+    addresses: CREDIT_EXPENSE_SENDERS,
     startDate: String(Math.floor(startDate)),
     endDate: String(Math.floor(endDate)),
     pagination: "10000",
@@ -572,6 +595,7 @@ export async function getCreditExpenses(
 
   const all: CreditExpense[] = [];
   for (const msg of data.messages) {
+    if (!isTrustedExpenseMessage(msg)) continue;
     const parsed = parseCreditMessage(msg);
     if (parsed) all.push(parsed);
   }
@@ -596,7 +620,7 @@ export async function getExecutionExpenses(
     msgType: "POST",
     contentTypes: "aleph_credit_expense",
     tags: "type_execution",
-    addresses: CREDIT_EXPENSE_SENDER,
+    addresses: CREDIT_EXPENSE_SENDERS,
     startDate: String(Math.floor(startDate)),
     endDate: String(Math.floor(endDate)),
     pagination: "10000",
@@ -620,6 +644,7 @@ export async function getExecutionExpenses(
 
   const all: CreditExpense[] = [];
   for (const msg of data.messages) {
+    if (!isTrustedExpenseMessage(msg)) continue;
     const parsed = parseCreditMessage(msg);
     if (parsed) all.push(parsed);
   }

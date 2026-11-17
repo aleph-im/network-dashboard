@@ -11,9 +11,23 @@ export type VersionEntry = {
   changes: ChangeEntry[];
 };
 
-export const CURRENT_VERSION = "0.38.2";
+export const CURRENT_VERSION = "0.38.3";
 
 export const CHANGELOG: VersionEntry[] = [
+  {
+    version: "0.38.3",
+    date: "2026-11-17",
+    changes: [
+      {
+        type: "fix",
+        text: "Credit expense data is complete again after the 2026-10-22 signer rotation. Every historical expense was migrated to the current signer, and the Credits page and the per-VM breakdown on the node Earnings tab now read only that signer, so windows that span the rotation show the full distribution. A misdated early copy is excluded.",
+      },
+      {
+        type: "infra",
+        text: "Node metadata, locations, the network graph, and the API status probes now read the current corechannel aggregate. The node-location snapshot was refreshed, and known locations are kept for nodes still in the aggregate when their hostname temporarily fails to resolve.",
+      },
+    ],
+  },
   {
     version: "0.38.2",
     date: "2026-09-04",
