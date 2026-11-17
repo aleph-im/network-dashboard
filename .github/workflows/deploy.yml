@@ -89,9 +89,31 @@ jobs:
           # (see stasho-app deploy-frontend.yml for the incident history).
           CCN_URL=https://api.aleph.im
 
+          run_deploy() {
+            aleph --ccn "$CCN_URL" website deploy "$WEBSITE_NAME" "$out" \
+              --payment-type credit \
+              --domain "$DOMAIN" \
+              --framework nextjs \
+              --on-behalf-of "$OWNER" \
+              --channel "$CHANNEL" \
+              --chain eth \
+              --json
+          }
+
+          run_update() {
+            aleph --ccn "$CCN_URL" website update "$WEBSITE_NAME" "$out" \
+              --payment-type credit \
+              --on-behalf-of "$OWNER" \
+              --channel "$CHANNEL" \
+              --chain eth \
+              --json
+          }
+
           # First run creates the `websites` entry (deploy, also attaches the
           # --domain); later runs bump it (update, auto-re-points domains).
-          # `aleph website show` exits non-zero when the entry is absent.
+          # `aleph website show` exits non-zero when the entry is absent, but
+          # treat it as a hint only: a false negative here previously sent an
+          # existing site through `deploy`, which fails with "already exists".
           if aleph --ccn "$CCN_URL" website show "$WEBSITE_NAME" --address "$OWNER" --json >/dev/null 2>&1; then
             verb=update
           else
@@ -100,21 +122,18 @@ jobs:
           echo "Running: aleph website $verb $WEBSITE_NAME on $CCN_URL"
 
           if [ "$verb" = deploy ]; then
-            aleph --ccn "$CCN_URL" website deploy "$WEBSITE_NAME" "$out" \
-              --payment-type credit \
-              --domain "$DOMAIN" \
-              --framework nextjs \
-              --on-behalf-of "$OWNER" \
-              --channel "$CHANNEL" \
-              --chain eth \
-              --json | tee result.json
+            if ! run_deploy > result.json 2> deploy.err; then
+              if grep -qi 'already exist' result.json deploy.err; then
+                echo "Website already exists; switching to update"
+                verb=update
+                run_update > result.json
+              else
+                cat result.json deploy.err >&2
+                exit 1
+              fi
+            fi
           else
-            aleph --ccn "$CCN_URL" website update "$WEBSITE_NAME" "$out" \
-              --payment-type credit \
-              --on-behalf-of "$OWNER" \
-              --channel "$CHANNEL" \
-              --chain eth \
-              --json | tee result.json
+            run_update > result.json
           fi
 
           volume=$(jq -r '.volume_id // .new_volume_id // "?"' result.json)
